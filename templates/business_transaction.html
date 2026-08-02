@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Business Transaction Receipt - PerkMiner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      .receipt-card { max-width: 520px; margin: 1.5em auto; }
+      .receipt-summary { font-size: 1.08em; padding: 16px 12px; border-radius: 14px; background: #f9fafb; box-shadow: 0 2px 10px #e1e8ed; margin: 16px 0 30px 0;}
+      .receipt-summary b { min-width: 135px; display: inline-block;}
+      @media (max-width: 600px) {
+        .btn, .btn-primary, .btn-secondary { width: 100% !important; margin-bottom: 12px; }
+        .receipt-card { padding: 1em !important;}
+      }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <div class="card receipt-card shadow-sm p-4 mb-4">
+      <h4 class="text-center mb-4">Business Transaction Receipt</h4>
+      <div class="receipt-summary">
+        <div><b>Date/Time:</b> {{ now.strftime('%Y-%m-%d %I:%M %p') if now else transaction.date_time.strftime('%Y-%m-%d %I:%M %p') }}</div>
+        <div><b>Gross Sale:</b> ${{ summary.amount }}</div>
+        <div><b>Advertising Fee (10%):</b> ${{ summary.ad_fee }}</div>
+        <div><b>Net Gross:</b> ${{ summary.net_gross }}</div>
+        <div><b>Marketing ROI:</b> {{ summary.marketing_roi }}%</div>
+        <div><b>Marketing ROI Ratio:</b> {{ summary.marketing_ratio }}:1 Marketing ROI Ratio</div>
+        <div class="text-info"><b>Business Cashback (1% cap $25):</b> ${{ summary.business_cash_back }}
+          {% if summary.business_cash_back|float >= 24.99 %}
+            <span class="badge bg-warning text-dark ms-1">Max Reached</span>
+          {% endif %}
+        </div>
+        <hr>
+        <div><b>Tier 2 (0.25% cap $6.25):</b> ${{ summary.tier2_business_commission }}{% if summary.tier2_business_commission|float >= 6.24 %} <span class="badge bg-warning text-dark ms-1">Max</span>{% endif %}</div>
+        <div><b>Tier 3 (0.25% cap $6.25):</b> ${{ summary.tier3_business_commission }}{% if summary.tier3_business_commission|float >= 6.24 %} <span class="badge bg-warning text-dark ms-1">Max</span>{% endif %}</div>
+        <div><b>Tier 4 (0.25% cap $6.25):</b> ${{ summary.tier4_business_commission }}{% if summary.tier4_business_commission|float >= 6.24 %} <span class="badge bg-warning text-dark ms-1">Max</span>{% endif %}</div>
+        <div><b>Tier 5 (1% cap $25):</b> ${{ summary.tier5_business_commission }}{% if summary.tier5_business_commission|float >= 24.99 %} <span class="badge bg-warning text-dark ms-1">Max</span>{% endif %}</div>
+      </div>
+      <form method="post" action="{{ url_for('end_session', interaction_id=interaction.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-danger w-100 mb-2">End Session</button>
+      </form>
+      <a href="{{ url_for('biz_user_interactions') }}" class="btn btn-primary w-100">Back to Dashboard</a>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

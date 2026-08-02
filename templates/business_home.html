@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Advertise With PerkMiner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <style>
+      .pm-feature-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(60,60,100,0.08);
+        min-height: 280px;
+        max-height: 767px;
+      }
+      @media (max-width: 991px) {
+        .pm-feature-img {
+          max-height: 767px;
+          min-height: 170px;
+        }
+      }
+      @media (max-width: 767px) {
+        .pm-split-row {
+          flex-direction: column !important;
+        }
+        .pm-feature-img {
+          margin-bottom: 18px;
+          max-height: 767px;
+        }
+      }
+      .how-it-works-section {
+        position: relative;
+        margin: 40px 0 0 0;
+        padding: 0;
+      }
+      .how-it-works-bg {
+        width: 100%;
+        min-height: 260px;
+        max-height: 360px;
+        object-fit: cover;
+        filter: brightness(0.72);
+        border-radius: 15px;
+      }
+      .how-it-works-btn-outer {
+        position: absolute;
+        left: 0; top: 0; right: 0; bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+      }
+      .how-it-works-btn-inner {
+        background: rgba(255,255,255,0.84);
+        border-radius: 2rem;
+        padding: 1.3rem 2.5rem;
+        box-shadow: 0 3px 24px rgba(40,40,40,0.1);
+      }
+      @media (max-width: 575px) {
+        .how-it-works-bg { min-height: 150px; max-height: 170px; }
+        .how-it-works-btn-inner { padding: .7rem 1.2rem; font-size: 1.09em;}
+      }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">PerkMiner</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link active" href="{{ url_for('home') }}">Home</a>
+                    <a class="nav-link" href="{{ url_for('login') }}">User Login</a>
+                    <a class="nav-link" href="{{ url_for('register') }}">User Register</a>
+                    <a class="nav-link" href="{{ url_for('about') }}">About Us</a>
+                    <a class="nav-link" href="{{ url_for('news') }}">News</a>
+                    <a class="nav-link" href="{{ url_for('faq') }}">FAQ</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <main class="container pb-5">
+        <div class="text-center mb-4">
+            <h1 class="display-5 fw-bold mb-2">Grow Your Business</br>With PerkMiner Today!</h1>
+            <div class="lead mb-2">
+                <b>Pay-per-Sale / Pay-per-Close model</b>
+            </div>
+            <div style="font-size:1.2em;color:#FF0000;">
+                (No Sale or No Closed Deal = $0 Fees)
+            </div>
+        </div>
+        <!-- New Split Row Desktop Layout -->
+        <div class="row pm-split-row align-items-stretch mb-5 gy-4 d-flex flex-lg-row flex-column">
+            <!-- Image -->
+            <div class="col-12 col-lg-6 mb-3 mb-lg-0 d-flex align-items-stretch">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1775719494/List-for-Free_pykazg.jpg?fit=crop&w=600&q=80"
+                     alt="Business Growth" class="pm-feature-img mx-auto">
+            </div>
+            <!-- Button Group stacked vertically -->
+            <div class="col-12 col-lg-6 d-flex flex-column justify-content-center align-items-lg-start align-items-center">
+                <div class="mb-4 w-100">
+                    <p class="h5 mb-3 text-lg-start text-center">List Your Business Today:</p>
+                    <div class="d-flex flex-column gap-3 w-100 align-items-center align-items-lg-start">
+                        <a class="btn btn-primary btn-lg w-100" style="max-width:320px;" href="{{ url_for('business_login') }}">Business Login</a>
+                        <a class="btn btn-success btn-lg w-100" style="max-width:320px;" href="{{ url_for('business_register') }}">Register Your Business</a>
+                        <a href="{{ url_for('staff_login') }}" class="btn btn-outline-primary btn-lg w-100" style="max-width:320px;">Staff Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Info Text - always below on desktop and mobile, centered -->
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10">
+            <h2>IT PAYS TO ADVERTISE WITH US!</h2>
+                <ul class="fs-5 ps-3 mb-0 text-left">
+                    <li>Earn cashback for finalizing transactions</br>(For making a sale or closing a deal).</li>
+                    <li><b>Starting Marketing ROI of 900%</b> (Guaranteed).  10:1 Ratio</br>— pay $1 for every $10 sold (max $250) —</li>
+                    <li>No Contracts, No Commitment, No Membership Fees, No Hidden Fees and</br>No Startup Costs, except $25 min to fund your account to pay for advertising fees.</li>
+                    <li><b>PerkMiner pays all Cash Back and Commissions to all Members and Business Advertisers.</b></br>(Up to 84% of ad revenue paid out from every transaction)</li>
+                </ul>
+            </div>
+        </div>
+        <!-- How It Works section with image and overlay button -->
+        <div class="how-it-works-section">
+            <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1774196020/purchase_ntjk5q.jpg?fit=crop&w=900&q=80"
+                 alt="How It Works" class="how-it-works-bg">
+            <div class="how-it-works-btn-outer">
+                <div class="how-it-works-btn-inner">
+                    <a href="{{ url_for('how_it_works') }}" class="btn btn-primary btn-xl fs-4 shadow-lg px-4 py-2">
+                        <i class="bi bi-info-circle"></i> How It Works
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

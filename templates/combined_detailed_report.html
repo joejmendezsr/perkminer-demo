@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Combined Detailed Report - Finance Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container py-4">
+  <!-- HEADER with filters -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Combined Detailed Report</h3>
+    <a href="{{ url_for('finance_dashboard') }}" class="btn btn-outline-primary">Return to Finance Dashboard</a>
+    <a href="{{ url_for('export_combined_detailed_report_csv', interaction_id=interaction_id, user_email=user_email, business_email=business_email, period=period, year=year, month=month) }}" class="btn btn-outline-success mb-2">
+      <i class="bi bi-cloud-arrow-down"></i> Export CSV/Excel
+    </a>
+  </div>
+  <form class="row gy-2 gx-2 mb-3" method="get">
+    <div class="col-12 col-md-2">
+      <input type="text" name="interaction_id" class="form-control" placeholder="Interaction ID" value="{{ interaction_id or '' }}">
+    </div>
+    <div class="col-12 col-md-2">
+      <input type="text" name="user_email" class="form-control" placeholder="User Email" value="{{ user_email or '' }}">
+    </div>
+    <div class="col-12 col-md-2">
+      <input type="text" name="business_email" class="form-control" placeholder="Business Email" value="{{ business_email or '' }}">
+    </div>
+    <div class="col-12 col-md-2">
+      <select class="form-select" name="period">
+        <option value="all" {% if period == 'all' %}selected{% endif %}>All</option>
+        <option value="year" {% if period == 'year' %}selected{% endif %}>Year</option>
+        <option value="month" {% if period == 'month' %}selected{% endif %}>Month</option>
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <select class="form-select" name="month">
+        <option value="">Any Month</option>
+        {% for val, name in months %}
+          <option value="{{ val }}" {% if month == val %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <select class="form-select" name="year">
+        <option value="">Any Year</option>
+        {% for y in years %}
+          <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 mt-1">
+      <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Search</button>
+    </div>
+  </form>
+
+  <!-- SUMMARY ALWAYS AT TOP -->
+  <div class="mb-4">
+    <h5>Summary</h5>
+    <ul class="list-unstyled">
+      <li><b>Total Paid to Members (All User Earnings Tabs):</b> ${{ summary.total_user_paid }}</li>
+      <li><b>Total Paid to Businesses (Tier 1):</b> ${{ summary.total_tier1_biz_paid }}</li>
+      <li><b>Total Paid to Businesses (Tier 2):</b> ${{ summary.total_tier2_biz_paid }}</li>
+      <li><b>Total Paid to Businesses (Tier 3):</b> ${{ summary.total_tier3_biz_paid }}</li>
+      <li><b>Total Paid to Businesses (Tier 4):</b> ${{ summary.total_tier4_biz_paid }}</li>
+      <li><b>Total Paid to Businesses (Tier 5):</b> ${{ summary.total_tier5_biz_paid }}</li>
+      <li class="text-success"><b>Mutual Sponsoree (Downline) Commission Paid:</b> ${{ summary.total_mutual_paid }}</li>
+      <li class="fw-bold text-info"><b>Grand Total Paid Out:</b> ${{ summary.grand_total_paid }}</li>
+    </ul>
+  </div>
+
+  <!-- TABS FOR DETAILS -->
+  <ul class="nav nav-tabs" id="cdtabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#user" type="button" role="tab">User Earnings</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tier1" type="button" role="tab">Tier 1 Biz Cashback</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tier2" type="button" role="tab">Tier 2 Biz Cashback</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tier3" type="button" role="tab">Tier 3 Biz Cashback</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tier4" type="button" role="tab">Tier 4 Biz Cashback</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tier5" type="button" role="tab">Tier 5 Biz Cashback</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mutual" type="button" role="tab">Mutual Sponsoree</button></li>
+  </ul>
+  <div class="tab-content mt-4" id="cdtabsContent">
+
+    <div class="tab-pane fade show active" id="user" role="tabpanel">
+      <h5>User Earnings (per transaction)</h5>
+      <div class="table-responsive mb-4">
+        <table class="table table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Date/Time</th>
+              <th>Interaction ID</th>
+              <th>Referral ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Earning Type</th>
+              <th>Amount</th>
+              <th>Transaction ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in user_rows %}
+            <tr>
+              <td>{{ row.date_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
+              <td>{{ row.interaction_id }}</td>
+              <td>{{ row.user_referral_id }}</td>
+              <td>{{ row.user_name }}</td>
+              <td>{{ row.user_email }}</td>
+              <td>{{ row.tier }}</td>
+              <td>${{ "{:,.2f}".format(row.earning) }}</td>
+              <td>{{ row.transaction_id }}</td>
+            </tr>
+            {% else %}
+              <tr><td colspan="8" class="text-center">No data.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% for tier_label, rows, nice in [
+      ("tier1", tier1_biz_rows, "Tier 1 Biz Cashback"),
+      ("tier2", tier2_biz_rows, "Tier 2 Biz Cashback"),
+      ("tier3", tier3_biz_rows, "Tier 3 Biz Cashback"),
+      ("tier4", tier4_biz_rows, "Tier 4 Biz Cashback"),
+      ("tier5", tier5_biz_rows, "Tier 5 Biz Cashback"),
+      ("mutual", mutual_rows, "Mutual Sponsoree")] %}
+    <div class="tab-pane fade" id="{{ tier_label }}" role="tabpanel">
+      <h5>{{ nice }} (per transaction)</h5>
+      <div class="table-responsive mb-4">
+        <table class="table table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Date/Time</th>
+              <th>Interaction ID</th>
+              <th>Business Referral ID</th>
+              <th>Business Name</th>
+              <th>Business Email</th>
+              <th>Earning</th>
+              <th>Transaction ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td>{{ row.date_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
+              <td>{{ row.interaction_id }}</td>
+              <td>{{ row.business_referral_id }}</td>
+              <td>{{ row.business_name }}</td>
+              <td>{{ row.business_email }}</td>
+              <td>${{ "{:,.2f}".format(row.earning) }}</td>
+              <td>{{ row.transaction_id }}</td>
+            </tr>
+            {% else %}
+              <tr><td colspan="7" class="text-center">No data.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

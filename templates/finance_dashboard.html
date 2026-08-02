@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Finance Dashboard - Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      .summary-card {background:#f7fafb; border-radius:13px; box-shadow:0 1px 6px #e1e9ed; padding:18px 12px 9px 12px; margin:16px 0 28px 0;}
+      .summary-card b {min-width:170px; display:inline-block;}
+      .btn-nav { min-width: 165px;}
+      @media (max-width:600px) { .btn, .btn-nav { width:100% !important; margin-bottom:10px; } .summary-card { font-size:1em;} }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <div class="card shadow p-4" style="max-width:860px; margin:0 auto;">
+        <h2 class="mb-4 text-center">Finance Dashboard</h2>
+        <div class="d-flex flex-wrap gap-2 mb-4 justify-content-center">
+          <a href="{{ url_for('combined_detailed_report') }}" class="btn btn-primary btn-nav">Combined Detailed Report</a>
+          <a href="{{ url_for('commissions_paid') }}" class="btn btn-warning btn-nav">Commissions Paid</a>
+          <a href="{{ url_for('combined_cashback_paid') }}" class="btn btn-warning btn-nav">Combined Cashback Paid</a>
+          <a href="{{ url_for('business_combined_detail_report') }}" class="btn btn-warning btn-nav">Business Detailed Report</a>
+          <a href="{{ url_for('admin_roles_landing') }}" class="btn btn-secondary mt-3 w-100">Back to Admin Area</a></div></b>
+        </div>
+        <form class="row gy-2 gx-2 mb-3" id="filter-form" method="get">
+          <div class="col-12 col-sm-3 mb-2">
+            <select class="form-select" name="period">
+              <option value="all" {% if not period or period == 'all' %}selected{% endif %}>All Time</option>
+              <option value="year" {% if period == 'year' %}selected{% endif %}>Full Year</option>
+              <option value="month" {% if period == 'month' %}selected{% endif %}>Month</option>
+            </select>
+          </div>
+          <div class="col-12 col-sm-3 mb-2">
+            <input type="number" name="year" id="year" class="form-control" placeholder="Year (YYYY)" value="{{ year or '' }}">
+          </div>
+          <div class="col-12 col-sm-3 mb-2">
+            <input type="number" min="1" max="12" name="month" id="month" class="form-control" placeholder="Month (1-12)" value="{{ month or '' }}">
+          </div>
+          <div class="col-12 col-sm-3 mb-2">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Search</button>
+          </div>
+        </form>
+        <div class="summary-card">
+          <b>Total Advertising Revenue:</b> ${{ summary.total_ad_revenue }}<br>
+          <b>Total Number of Transactions:</b> {{ summary.total_transactions }}<br>
+          <b>Total Paid to Members (Tiers 1-5):</b> ${{ summary.total_paid_members }}<br>
+          <b>Total Paid to Businesses (Tiers 1-5 & Mutual):</b> ${{ summary.total_paid_businesses }}<br>
+          <b>Net Gross Ad Revenue (minus Charitable Contributions):</b> ${{ summary.net_gross }}<br>
+          <b>Capital Reserves:</b> ${{ summary.capital_reserves }}<br>
+        </div>
+        <div class="summary-card">
+          <b>Chartitable Contributions</b><br>
+          Charitable Contribution 1 (10%): ${{ summary.charitable_contribution_1 }}<br>
+          Charitable Contribution 2 (0.5%): ${{ summary.charitable_contribution_2 }}<br>
+        </div>
+        <div class="summary-card">
+          <b>Net Gross Allocation</b><br>
+          Operating Capital (45%): ${{ summary.operating_capital }}<br>
+          Silent Partners (45%): ${{ summary.silent_partners }}<br>
+          Legal Services (7%): ${{ summary.legal_services }}<br>
+          Miscellaneous (3%): ${{ summary.miscellaneous }}<br>
+        </div>
+        <div class="summary-card">
+          <b>Operating Capital Breakdown</b><br>
+          Real Estate & Utilities (30%): ${{ summary.real_estate_utilities }}<br>
+          Employees (40%): ${{ summary.employees }}<br>
+          Website/App Fees (15%): ${{ summary.webapp_fees }}<br>
+          Misc Services (15%): ${{ summary.misc_services }}<br>
+        </div>
+        <div class="summary-card">
+          <b>Silent Partners Payouts</b><br>
+          Joe (12.5%, $10M max): ${{ summary.joe }}<br>
+          Marjorie M. (12.5%, $10M max): ${{ summary.marjorie }}<br>
+          Pedro (12%, $1M max): ${{ summary.pedro }}<br>
+          Paul and Tara (5.5%, $500K max): ${{ summary.paul_tara }}<br>
+          James W. (5%, $350K max): ${{ summary.james }}<br>
+          Josh B. (3%, $300K max): ${{ summary.josh }}<br>
+          Angel (2%, $200K max): ${{ summary.angel }}<br>
+          Diego C. (2%, $200K max): ${{ summary.diego }}<br>
+          Esther M. (2%, $200K max): ${{ summary.esther }}<br>
+          Reyna (2%, $200K max): ${{ summary.reyna }}<br>
+          Ramico B. (2%, $200K max): ${{ summary.ramico }}<br>
+          Michael (2%, $200K max): ${{ summary.michael }}<br>
+          Manuela (2%, $200K max): ${{ summary.manuela }}<br>
+          Alex S. (2%, $200K max): ${{ summary.alex_s }}<br>
+          Victor R. (2%, $200K max): ${{ summary.victor_r }}<br>
+          John Paul R. (2%, $200K max): ${{ summary.john_paul }}<br>
+          Ana and Pepe V. (1.5%, $150K max): ${{ summary.ana_pepe }}<br>
+          Karen A. (1.5%, $150K max): ${{ summary.karen }}<br>
+          Raul R. (1.5%, $150K max): ${{ summary.raul }}<br>
+          Genesis P. (2.5%, $500K max): ${{ summary.genesis }}<br>
+          Marjorie C. (Jen)(2.5%, $500K max): ${{ summary.jen }}<br>
+          JJ M. (2.5%, $500K max): ${{ summary.jj }}<br>
+          Dominick M. (2.5%, $500K max): ${{ summary.dominick }}<br>
+          Alex M. (2.5%, $500K max): ${{ summary.alex_m }}<br>
+          Jose M. (2.5%, $500K max): ${{ summary.jose }}<br>
+          Jose L. M. (2.5%, $500K max): ${{ summary.tito }}<br>
+          Loida T. (1.5%, $250K max): ${{ summary.loida }}<br>
+          Milvia T. (1.5%, $250K max): ${{ summary.milvia }}<br>
+          Adela T. (1.5%, $250K max): ${{ summary.adela }}<br>
+          Maria R. (1.5%, $250K max): ${{ summary.nana }}<br>
+          Shelly M. (1.5%, $250K max): ${{ summary.shelly }}<br>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

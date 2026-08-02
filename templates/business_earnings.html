@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Business Earnings - PerkMiner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+      .summary-card { background:#f7fafb; border-radius:13px; box-shadow:0 1px 6px #e1e9ed; padding:18px 12px 9px 12px; margin:16px 0 28px 0;}
+      @media (max-width: 600px) { .table, .btn { font-size: .98em;} }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+    <h3 class="mb-2">Business Earnings</h3>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('export_business_earnings_csv') }}?period={{ summary.period }}&year={{ summary.year }}&month={{ summary.month }}" class="btn btn-outline-success">
+        <i class="bi bi-cloud-arrow-down"></i> Export CSV/Excel
+      </a>
+      <button onclick="window.print()" class="btn btn-outline-secondary">
+        <i class="bi bi-printer"></i> Print / Save as PDF
+      </button>
+    </div>
+  </div>
+  <a href="{{ url_for('business_dashboard') }}" class="btn btn-primary mt-3 w-100">Back to Dashboard</a></div>
+  <form class="row gy-2 gx-2 mb-3" id="filter-form" method="get">
+    <div class="col-12 col-sm-3">
+      <select class="form-select" name="period" onchange="this.form.submit()">
+        <option value="all" {% if not summary.period or summary.period == 'all' %}selected{% endif %}>All Time</option>
+        <option value="year" {% if summary.period == 'year' %}selected{% endif %}>Full Year</option>
+        <option value="month" {% if summary.period == 'month' %}selected{% endif %}>Month</option>
+      </select>
+    </div>
+    <div class="col-12 col-sm-3">
+      <input type="number" name="year" id="year" class="form-control" placeholder="Year (YYYY)" value="{{ summary.year or '' }}">
+    </div>
+    <div class="col-12 col-sm-3">
+      <input type="number" min="1" max="12" name="month" id="month" class="form-control" placeholder="Month (1-12)" value="{{ summary.month or '' }}">
+    </div>
+    <div class="col-12 col-sm-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="Search receipts...">
+    </div>
+  </form>
+  <div class="summary-card">
+    <b>Gross Sales (Tier 1/Self):</b> ${{ summary.gross_earnings }}<br>
+    <b>Advertising Fee (10%, cap $250):</b> ${{ summary.ad_fee }}<br>
+    <b>Net Gross Sales:</b> ${{ summary.net_gross }}<br>
+    <b>Marketing ROI:</b> {{ summary.marketing_roi }}%<br>
+    <b>Marketing ROI Ratio:</b> {{ summary.marketing_ratio }}:1<br>
+    <hr>
+    <b>Tier 1 (Self, 1% Cash Back):</b> ${{ summary.tier1_earnings }}<br>
+    <b>Tier 2 (B2B Commission):</b> ${{ summary.tier2_earnings }}<br>
+    <b>Tier 3 (B2B Commission):</b> ${{ summary.tier3_earnings }}<br>
+    <b>Tier 4 (B2B Commission):</b> ${{ summary.tier4_earnings }}<br>
+    <b>Tier 5 (B2B Commission):</b> ${{ summary.tier5_earnings }}<br>
+    <b>Mutual Earnings (B2B Commission):</b> ${{ summary.sponsoree_mutual_earnings or "0.00" }}<br>
+    <hr>
+    <b>Total Cash Back (All Tiers):</b> ${{ summary.total_cash_back }}
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle" id="receipts-table">
+      <thead class="table-light">
+        <tr>
+          <th>Date/Time</th>
+          <th>Tier 1 (1% Cash Back)</th>
+          <th>Tier 2 (B2B Cash Back Commission)</th>
+          <th>Tier 3 (B2B Cash Back Commission)</th>
+          <th>Tier 4 (B2B Cash Back Commission)</th>
+          <th>Tier 5 (B2B Cash Back Commission)</th>
+          <th>Mutual Sponsoree Commission (B2B Commission)</th>
+          <th>From Business Ad Fee</th>
+          <th>From Business Net Gross</th>
+          <th>From Biz</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for txn in transactions %}
+        <tr>
+          <td>{{ txn.date_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
+          <td>
+            {% if txn.business_referral_id == business.referral_code %}
+                ${{ "{:,.2f}".format(txn.cash_back) }}
+            {% endif %}
+          </td>
+          <td>
+            {% if txn.tier2_business_referral_id == business.referral_code %}
+                ${{ "{:,.2f}".format(txn.tier2_commission) }}
+            {% endif %}
+          </td>
+          <td>
+            {% if txn.tier3_business_referral_id == business.referral_code %}
+                ${{ "{:,.2f}".format(txn.tier3_commission) }}
+            {% endif %}
+          </td>
+          <td>
+            {% if txn.tier4_business_referral_id == business.referral_code %}
+                ${{ "{:,.2f}".format(txn.tier4_commission) }}
+            {% endif %}
+          </td>
+          <td>
+            {% if txn.tier5_business_referral_id == business.referral_code %}
+                ${{ "{:,.2f}".format(txn.tier5_commission) }}
+            {% endif %}
+          </td>
+
+          <td>
+            {% if txn.sponsoree_mutual_referral_id == business.referral_code %}
+              {{ '{:,.2f}'.format(txn.sponsoree_mutual_commission or 0) }}
+            {% else %}
+              $0.00
+            {% endif %}
+          </td>
+
+          <td>${{ "{:,.2f}".format(txn.ad_fee or 0) }}</td>
+          {% set net_gross = txn.amount - (txn.ad_fee or 0) %}
+          <td>${{ "{:,.2f}".format(net_gross) }}</td>
+          <td>
+            {{ txn.business_referral_id }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.getElementById('filter-form').addEventListener('input', function() {
+    const period = document.querySelector('select[name="period"]').value;
+    const year = document.getElementById('year').value;
+    const month = document.getElementById('month').value;
+    const filter = document.getElementById('searchInput').value.toLowerCase();
+
+    document.querySelectorAll('#receipts-table tbody tr').forEach(function(row) {
+        const cells = row.querySelectorAll('td');
+        const rowDate = cells[0].textContent;
+        const rowText = row.textContent.toLowerCase();
+
+        let show = true;
+        if (period === "year" && year) show = rowDate.startsWith(year);
+        if (period === "month" && year && month) show = rowDate.startsWith(year + '-' + month.padStart(2, '0'));
+        if (filter && rowText.indexOf(filter) === -1) show = false;
+
+        row.style.display = show ? "" : "none";
+    });
+});
+</script>
+</body>
+</html>

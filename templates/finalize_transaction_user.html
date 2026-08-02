@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Finalize User Purchase</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      .transaction-summary { font-size: 1.12em; padding: 14px 8px; border-radius: 12px; background: #f9fafb; box-shadow: 0 1px 4px #ddd; margin: 18px 0; }
+      @media (max-width: 600px) {
+        .btn, .btn-success { width: 100% !important; margin-bottom: 12px; }
+        .card { padding: 1.05rem !important; }
+      }
+      .card { max-width: 500px; margin: 0 auto; }
+      .form-label { font-weight: 500;}
+    </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="card shadow-sm p-4">
+    <h4 class="mb-4 text-center">Finalize Your Purchase</h4>
+    {% if not summary %}
+      <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+              <label class="form-label">Transaction Amount ($)</label>
+              <input type="number" name="amount" class="form-control" min="0" step="0.01" placeholder="Enter purchase amount" required value="{{ request.form.amount or '' }}">
+          </div>
+          <div class="mb-3">
+              <label class="form-label">Date & Time</label>
+              <input type="text" class="form-control" readonly value="{{ now.strftime('%Y-%m-%d %I:%M %p') }}">
+          </div>
+          <input type="hidden" name="local_datetime" id="local-datetime">
+          <button type="submit" class="btn btn-success w-100">Finalize My Purchase</button>
+      </form>
+      <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var form = document.querySelector('form[method="post"]');
+        var localInput = document.getElementById('local-datetime');
+        if (form && localInput) {
+          form.addEventListener('submit', function() {
+            var now = new Date();
+            // Example: 2026-04-07 18:34:00
+            var dt = now.getFullYear()
+                    + '-' + String(now.getMonth()+1).padStart(2, '0')
+                    + '-' + String(now.getDate()).padStart(2, '0')
+                    + ' ' + String(now.getHours()).padStart(2, '0')
+                    + ':' + String(now.getMinutes()).padStart(2, '0')
+                    + ':' + String(now.getSeconds()).padStart(2, '0');
+            localInput.value = dt;
+          });
+        }
+      });
+      </script>
+
+    {% endif %}
+
+    {% if summary %}
+      <div class="transaction-summary mt-4">
+        <div><b>Total Transaction:</b> ${{ '%.2f' % summary.amount }}</div>
+        <div class="text-success"><b>Your Cash Back (2%):</b> ${{ '%.2f' % summary.user_cash_back }}</div>
+        <hr>
+        <div><b>Tier 2 (Direct Referral) Commission:</b> ${{ summary.tier2_user_commission }}</div>
+        <div><b>Tier 3 Commission:</b> ${{ summary.tier3_user_commission }}</div>
+        <div><b>Tier 4 Commission:</b> ${{ summary.tier4_user_commission }}</div>
+        <div><b>Tier 5 Commission:</b> ${{ summary.tier5_user_commission }}</div>
+      </div>
+      <div class="alert alert-success text-center">
+        Purchase recorded! Cashback & referral rewards credited.
+      </div>
+    {% endif %}
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-success mt-3 text-center">
+          {% for message in messages %}{{ message }}<br>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <a href="{{ url_for('user_biz_interactions') }}" class="btn btn-secondary w-100 mt-2">Back to Dashboard</a>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var form = document.querySelector('form[method="post"]');
+  var localInput = document.getElementById('local-datetime');
+  if (form && localInput) {
+    form.addEventListener('submit', function() {
+      var now = new Date();
+      var dt = now.getFullYear()
+          + '-' + String(now.getMonth()+1).padStart(2, '0')
+          + '-' + String(now.getDate()).padStart(2, '0')
+          + ' ' + String(now.getHours()).padStart(2, '0')
+          + ':' + String(now.getMinutes()).padStart(2, '0')
+          + ':' + String(now.getSeconds()).padStart(2, '0');
+      localInput.value = dt;
+    });
+  }
+});
+</script>
+</body>
+</html>

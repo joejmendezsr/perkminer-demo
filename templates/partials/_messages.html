@@ -1,0 +1,30 @@
+{% for msg in messages %}
+  <div class="row {% if msg.sender_type == 'user' and is_user or msg.sender_type == 'business' and is_biz %}justify-content-end{% else %}justify-content-start{% endif %} mb-2">
+    <div class="col-auto">
+      <div class="{% if msg.sender_type == 'user' %}msg-bubble-user{% elif msg.sender_type == 'business' %}msg-bubble-biz{% else %}msg-bubble-support{% endif %}">
+        {% if msg.sender_type == "customer_support" %}
+          <span class="fw-bold small text-warning">Customer Support</span>
+        {% elif msg.sender_type == "user" %}
+          <span class="fw-bold small text-primary">{{ interaction.user.name or interaction.user.email }}</span>
+        {% elif msg.sender_type == "business" %}
+          <span class="fw-bold small text-success">{{ interaction.business.business_name }}</span>
+        {% endif %}
+        <span class="msg-time">{{ msg.timestamp.strftime('%Y-%m-%d %I:%M%p') }}</span>
+        <div>{{ msg.text | e }}</div>
+        {% if msg.file_url and msg.file_name and msg.file_name.lower().endswith(('.png','.jpg','.jpeg','.gif','.webp')) %}
+          <a href="{{ msg.file_url }}" target="_blank">
+            <img src="{{ msg.file_url }}" alt="{{ msg.file_name }}" class="chat-img-thumb">
+          </a>
+        {% elif msg.file_url %}
+          <div class="mt-1">
+            <a href="{{ msg.file_url }}" target="_blank">
+              <span class="file-clip">&#128206;</span>{{ msg.file_name or "Download Attachment" }}
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="text-center text-muted fst-italic mt-2">No messages yet. Start the conversation!</div>
+{% endfor %}

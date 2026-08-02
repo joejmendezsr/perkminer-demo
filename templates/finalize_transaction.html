@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Finalize Transaction</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      .transaction-summary { font-size: 1.12em; padding: 14px 8px; border-radius: 12px; background: #f9fafb; box-shadow: 0 1px 4px #ddd; margin: 18px 0; }
+      @media (max-width: 600px) {
+        .btn, .btn-success { width: 100% !important; margin-bottom: 12px; }
+        .card { padding: 1.05rem !important; }
+      }
+      .card { max-width: 500px; margin: 0 auto; }
+      .form-label { font-weight: 500;}
+    </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="card shadow-sm p-4">
+    <h4 class="mb-4 text-center">Finalize Transaction</h4>
+    {% if not summary %}
+      <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+              <label class="form-label">Transaction Amount ($)</label>
+              <input type="number" name="amount" class="form-control" min="0" step="0.01" placeholder="Enter sale amount" required value="{{ request.form.amount or '' }}" data-balance="{{ account_balance }}">
+          </div>
+          <div class="mb-3">
+              <label class="form-label">Date & Time</label>
+              <input type="text" class="form-control" readonly id="local-time-input">
+          </div>
+          <input type="hidden" name="local_datetime" id="local-datetime">
+          <button type="submit" class="btn btn-success w-100">Finalize Transaction</button>
+      </form>
+      <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var form = document.querySelector('form[method="post"]');
+        var localInput = document.getElementById('local-datetime');
+        if (form && localInput) {
+          form.addEventListener('submit', function() {
+            var now = new Date();
+            // Example: 2026-04-07 18:34:00
+            var dt = now.getFullYear()
+                    + '-' + String(now.getMonth()+1).padStart(2, '0')
+                    + '-' + String(now.getDate()).padStart(2, '0')
+                    + ' ' + String(now.getHours()).padStart(2, '0')
+                    + ':' + String(now.getMinutes()).padStart(2, '0')
+                    + ':' + String(now.getSeconds()).padStart(2, '0');
+            localInput.value = dt;
+          });
+        }
+      });
+      </script>
+
+    {% endif %}
+
+    {% if summary %}
+      {% set amt = summary.amount|float %}
+      {% set user_cash_back = amt * 0.02 if amt * 0.02 < 50 else 50 %}
+      {% set ad_fee = amt * 0.10 if amt * 0.10 <= 250 else 250 %}
+      {% set business_cash_back = amt * 0.01 if amt * 0.01 < 25 else 25 %}
+      {% set net_gross = amt - ad_fee %}
+      {% set marketing_roi = (net_gross / ad_fee * 100) if ad_fee else 0 %}
+      {% set marketing_ratio = (amt / ad_fee) if ad_fee else 0 %}
+
+      <div class="transaction-summary mt-4">
+        <div><b>Total Transaction:</b> ${{ '%.2f' % amt }}</div>
+        <div class="text-info"><b>Member Earned (Paid by Perk Miner):</b> ${{ '%.2f' % user_cash_back }}</div>
+        <div class="text-success"><b>Your Business Earned (Paid by Perk Miner):</b> ${{ '%.2f' % business_cash_back }}</div>
+        <div><b>Ad Fee Paid (10% - max $250):</b> ${{ '%.2f' % ad_fee }}</div>
+        <div><b>Net Gross (Sale - Ad Fee):</b> ${{ '%.2f' % net_gross }}</div>
+        <div><b>Marketing ROI:</b> {{ marketing_roi|round(0) }}%</div>
+        <div><b>Marketing ROI Ratio:</b> {{ marketing_ratio|round(2) }} to 1 Ratio</div>
+        <div>(Your business paid $1 for every ${{ marketing_ratio|round(2) }} sold)</div>
+      </div>
+      <div class="alert alert-success text-center">
+        Transaction recorded! Rewards credited.
+      </div>
+      <form method="post" action="
+        {% if session.get('staff_id') %}
+          {{ url_for('staff_dashboard') }}
+        {% else %}
+          {{ url_for('business_dashboard') }}
+        {% endif %}
+      " style="margin-top:18px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-danger w-100">End Session</button>
+      </form>
+    {% endif %}
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-success mt-3 text-center">
+          {% for message in messages %}{{ message }}<br>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    
+    <a href="
+      {% if session.get('staff_id') %}
+        {{ url_for('staff_dashboard') }}
+      {% else %}
+        {{ url_for('business_dashboard') }}
+      {% endif %}
+    " class="btn btn-outline-secondary w-100 mt-2">
+      <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const amountInput = document.querySelector('input[name="amount"]');
+  const balance = parseFloat(amountInput.getAttribute('data-balance')) || 0;
+
+  // Create an alert container after amount input
+  let alertDiv = null;
+
+  amountInput.addEventListener('input', function() {
+    const amount = parseFloat(amountInput.value);
+    let fee = Math.round((amount * 0.10 + Number.EPSILON) * 100) / 100;
+    if (fee > 250) fee = 250;  // Cap at $250
+
+    // Remove any previous alert
+    if (alertDiv) {
+      alertDiv.remove();
+      alertDiv = null;
+    }
+
+    // Defensive check: valid, positive number only
+    if (!isNaN(amount) && amount > 0 && fee > balance) {
+      const needToDeposit = Math.round((fee - balance + Number.EPSILON) * 100) / 100;
+      alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-danger mt-2';
+      alertDiv.innerHTML = `
+        Not enough funds in business account balance to finalize this transaction.  
+        If you are a staff member, contact the business owner immediately so they can add funds to their account.<br>
+        The business owner needs to deposit at least <b>$${needToDeposit.toFixed(2)}</b> to finalize this transaction.<br>
+                <a href="{{ url_for('fund_account') }}" class="btn btn-warning ms-2 flex-shrink-0">
+                  <i class="bi bi-wallet2 me-1"></i>Add Funds
+                </a>
+      `;
+      amountInput.parentNode.appendChild(alertDiv);
+    }
+  });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Set the browser’s local date/time in the finalize form
+  var localTimeInput = document.getElementById('local-time-input');
+  if (localTimeInput) {
+    var now = new Date();
+    // Format as YYYY-MM-DD HH:MM (24-hour, adjust as needed)
+    var y = now.getFullYear();
+    var m = String(now.getMonth() + 1).padStart(2, '0');
+    var d = String(now.getDate()).padStart(2, '0');
+    var h = String(now.getHours()).padStart(2, '0');
+    var min = String(now.getMinutes()).padStart(2, '0');
+    var nice = `${y}-${m}-${d} ${h}:${min}`;
+    localTimeInput.value = nice;
+  }
+});
+</script>
+</body>
+</html>

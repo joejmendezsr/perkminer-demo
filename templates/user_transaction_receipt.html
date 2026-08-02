@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transaction Receipt - PerkMiner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      .receipt-card { max-width: 500px; margin: 0 auto; }
+      .receipt-summary { font-size: 1.12em; padding: 16px 12px; border-radius: 14px; background: #f9fafb; box-shadow: 0 2px 10px #e1e8ed; margin: 22px 0;}
+      .receipt-summary b { min-width: 130px; display: inline-block;}
+      @media (max-width: 600px) {
+        .btn, .btn-primary, .btn-secondary { width: 100% !important; margin-bottom: 12px; }
+        .receipt-card, .card { padding: 1rem !important;}
+      }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="card shadow-sm p-4 receipt-card">
+    <h4 class="mb-4 text-center">Transaction Receipt</h4>
+    <div class="receipt-summary">
+      <div>
+        <b>Date/Time:</b>
+        <span id="local-receipt-time" data-utc="{{ transaction.date_time.strftime('%Y-%m-%dT%H:%M:%S') }}Z"></span>
+      </div>
+      <div><b>Business:</b> {{ interaction.business.business_name }}</div>
+      <div><b>Total Paid:</b> ${{ '%.2f' % transaction.amount }}</div>
+      <div class="text-success fw-bold mt-2">
+        <b>Your Cashback (2% cap $50):</b> ${{ '%.2f' % transaction.cash_back }}
+        {% if transaction.cash_back|float >= 49.99 %}
+          <span class="badge bg-warning text-dark ms-1">Max Reached</span>
+        {% endif %}
+      </div>
+    <div class="alert alert-success text-center">
+      Thank you for your purchase! Your cashback has been credited.
+    </div>
+
+    {% if transaction.status == "available" %}
+      <form action="{{ url_for('process_return', txn_id=transaction.id) }}" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to return/refund this transaction?');">Return / Refund</button>
+      </form>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('end_session', interaction_id=interaction.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-danger w-100 mb-2">End Session</button>
+    </form>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary w-100">Back to Dashboard</a>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var elem = document.getElementById('local-receipt-time');
+  if (elem && elem.dataset.utc) {
+    // Parse the UTC time and format for user's locale
+    var utc = elem.dataset.utc;
+    var dt = new Date(utc);
+    if (!isNaN(dt)) {
+      var opts = { year: 'numeric', month: 'short', day: 'numeric',
+                   hour: '2-digit', minute: '2-digit', hour12: true };
+      elem.textContent = dt.toLocaleString(undefined, opts);
+    }
+  }
+});
+</script>
+</body>
+</html>

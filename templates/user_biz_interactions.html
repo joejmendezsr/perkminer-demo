@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Requests & Sessions</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      #interaction-list {
+        /* Remove max-height; let it grow naturally */
+        overflow-y: auto;
+        max-height: none;
+        min-height: 1px;
+      }
+      @media (max-width: 600px) {
+        .list-group-item, .btn, .btn-primary, .btn-danger { font-size: 1em; padding: 1.07em 0.6em; }
+        #interaction-list { max-height: none; }
+      }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">
+      My Secure Messaging Active Sessions
+      {% if interactions %}
+        ({{ interactions|length }})
+      {% endif %}
+    </h3>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">Return to Dashboard</a>
+  </div>
+  <input type="text" id="searchInput" class="form-control mb-3" placeholder="Filter by business name...">
+  <div id="interaction-list">
+  {% if interactions %}
+    <ul class="list-group">
+      {% for i in interactions %}
+      <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+          <strong>{{ i.business.business_name }}</strong>
+          {% if i.service_type == "Support" %}
+            <span class="badge bg-warning text-dark ms-2">Customer Support</span>
+          {% endif %}
+          <br>
+          <small class="text-muted">
+            {% if i.service_type == "Support" %}
+              Customer Support Session
+            {% else %}
+              {{ i.business.category }} | {{ i.business.address }}
+            {% endif %}
+          </small>
+        </div>
+          <div class="py-1 d-flex flex-column gap-1 align-items-end">
+            <a href="{{ url_for('active_session', interaction_id=i.id) }}" class="btn btn-primary btn-sm mb-1">Select</a>
+            <form method="post" action="{{ url_for('end_session', interaction_id=i.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-danger btn-sm mb-1">End Session</button>
+            </form>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="alert alert-info text-center mt-4">No active sessions yet.</div>
+  {% endif %}
+  </div>
+</div>
+<script>
+document.getElementById('searchInput').addEventListener('keyup', function () {
+    var filter = this.value.toLowerCase();
+    document.querySelectorAll('#interaction-list li').forEach(function(item) {
+        var name = item.textContent || item.innerText;
+        item.style.display = name.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+    });
+});
+</script>
+</body>
+</html>

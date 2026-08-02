@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Member Earnings - PerkMiner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+      @media (max-width: 600px) { .table, .btn { font-size: .98em;} }
+      .summary-card { background:#f7fafb; border-radius:13px; box-shadow:0 1px 6px #e1e9ed; padding:18px 12px 9px 12px; margin:16px 0 28px 0;}
+    </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+    <h3 class="mb-2">My Earnings</h3>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('export_user_earnings_csv') }}?period={{ period }}&year={{ year }}&month={{ month }}" class="btn btn-outline-success">
+        <i class="bi bi-cloud-arrow-down"></i> Export CSV/Excel
+      </a>
+      <button onclick="window.print()" class="btn btn-outline-secondary">
+        <i class="bi bi-printer"></i> Print / Save as PDF
+      </button>
+    </div>
+  </div>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-primary mt-3 w-100">Back to Dashboard</a></div>
+  <form class="row gy-2 gx-2 mb-3" id="filter-form" method="get">
+    <div class="col-12 col-sm-3">
+      <select class="form-select" name="period" onchange="this.form.submit()">
+        <option value="all" {% if not period or period == 'all' %}selected{% endif %}>All Time</option>
+        <option value="year" {% if period == 'year' %}selected{% endif %}>Full Year</option>
+        <option value="month" {% if period == 'month' %}selected{% endif %}>Month</option>
+      </select>
+    </div>
+    <div class="col-12 col-sm-3">
+      <input type="number" name="year" id="year" class="form-control" placeholder="Year (YYYY)" value="{{ year or '' }}">
+    </div>
+    <div class="col-12 col-sm-3">
+      <input type="number" min="1" max="12" name="month" id="month" class="form-control" placeholder="Month (1-12)" value="{{ month or '' }}">
+    </div>
+    <div class="col-12 col-sm-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="Search receipts...">
+    </div>
+  </form>
+  <div class="summary-card">
+    <b>Grand Total Earned:</b> ${{ summary.total }}<br>
+    <b>2% Cash Back (Self/Tier 1):</b> ${{ summary.tier1_earnings }}<br>
+    <b>Total Commission (Tiers 2-5):</b> ${{ summary.commissions_total }}<br>
+    {% if has_invited_business %}
+      <b>Total User-Business Commission (UBC Tiers 1-5):</b> ${{ summary.total_user_business_commission }}<br>
+    {% endif %}
+    <hr>
+    <b>Tier 2 (Commission):</b> ${{ summary.tier2_earnings }}<br>
+    <b>Tier 3 (Commission):</b> ${{ summary.tier3_earnings }}<br>
+    <b>Tier 4 (Commission):</b> ${{ summary.tier4_earnings }}<br>
+    <b>Tier 5 (Commission):</b> ${{ summary.tier5_earnings }}<br>
+    {% if has_invited_business %}
+      <hr>
+      <b>Tier 1 UBC (Businesses referred by you):</b> ${{ summary.tier1_user_business_earnings }}<br>
+      <b>Tier 2 UBC (Referred by T1 Businesses:</b> ${{ summary.tier2_user_business_earnings }}<br>
+      <b>Tier 3 UBC (Referred by T2 Businesses:</b> ${{ summary.tier3_user_business_earnings }}<br>
+      <b>Tier 4 UBC (Referred by T3 Businesses:</b> ${{ summary.tier4_user_business_earnings }}<br>
+      <b>Tier 5 UBC (Referred by T4 Businesses:</b> ${{ summary.tier5_user_business_earnings }}<br>
+    {% endif %}
+  </div>
+<div class="table-responsive">
+  <table class="table table-bordered align-middle" id="receipts-table">
+    <thead class="table-light">
+      <tr>
+        <th>Date/Time</th>
+        <th>Tier 1<br>(2% Cash Back)</th>
+        <th>Tier 2<br>(Commission)</th>
+        <th>Tier 3<br>(Commission)</th>
+        <th>Tier 4<br>(Commission)</th>
+        <th>Tier 5<br>(Commission)</th>
+        {% if has_invited_business %}
+          <th>Tier 1<br>UBC</th>
+          <th>Tier 2<br>UBC</th>
+          <th>Tier 3<br>UBC</th>
+          <th>Tier 4<br>UBC</th>
+          <th>Tier 5<br>UBC</th>
+        {% endif %}
+        <th>From Business</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for txn in transactions %}
+      <tr>
+        <td><span class="local-receipt-time" data-utc="{{ txn.date_time.strftime('%Y-%m-%dT%H:%M:%S') }}Z"></span></td>
+        <td>
+          {% if txn.user_referral_id == current_user.referral_code and txn.cash_back > 0 %}
+              ${{ "{:,.2f}".format(txn.cash_back) }}
+          {% endif %}
+        </td>
+        <td>
+          {% if txn.tier2_user_referral_id == current_user.referral_code %}
+              ${{ "{:,.2f}".format(txn.tier2_commission) }}
+          {% endif %}
+        </td>
+        <td>
+          {% if txn.tier3_user_referral_id == current_user.referral_code %}
+              ${{ "{:,.2f}".format(txn.tier3_commission) }}
+          {% endif %}
+        </td>
+        <td>
+          {% if txn.tier4_user_referral_id == current_user.referral_code %}
+              ${{ "{:,.2f}".format(txn.tier4_commission) }}
+          {% endif %}
+        </td>
+        <td>
+          {% if txn.tier5_user_referral_id == current_user.referral_code %}
+              ${{ "{:,.2f}".format(txn.tier5_commission) }}
+          {% endif %}
+        </td>
+        {% if has_invited_business %}
+        <td>
+          {% if txn.tier1_business_user_referral_id == current_user.referral_code and txn.tier1_business_user_commission > 0 %}
+              ${{ "{:,.2f}".format(txn.tier1_business_user_commission) }}
+          {% endif %}
+        </td>
+        <td>
+          {% if txn.tier2_business_user_referral_id == current_user.referral_code and txn.tier2_business_user_commission > 0 %}
+              ${{ "{:,.2f}".format(txn.tier2_business_user_commission) }}
+          {% endif %}
+        </td>
+        <td>
+          {% if txn.tier3_business_user_referral_id == current_user.referral_code and txn.tier3_business_user_commission > 0 %}
+              ${{ "{:,.2f}".format(txn.tier3_business_user_commission) }}
+          {% endif %}
+        </td>
+        <td>
+          {% if txn.tier4_business_user_referral_id == current_user.referral_code and txn.tier4_business_user_commission > 0 %}
+              ${{ "{:,.2f}".format(txn.tier4_business_user_commission) }}
+          {% endif %}
+        </td>
+        <td>
+          {% if txn.tier5_business_user_referral_id == current_user.referral_code and txn.tier5_business_user_commission > 0 %}
+              ${{ "{:,.2f}".format(txn.tier5_business_user_commission) }}
+          {% endif %}
+        </td>
+        {% endif %}
+        <td>
+          {% if business_lookup and txn.business_referral_id %}
+            {{ business_lookup[txn.business_referral_id].business_name if txn.business_referral_id in business_lookup else txn.business_referral_id }}
+          {% else %}
+            {{ txn.business_referral_id or "N/A" }}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.getElementById('filter-form').addEventListener('input', function() {
+    const period = document.querySelector('select[name="period"]').value;
+    const year = document.getElementById('year').value;
+    const month = document.getElementById('month').value;
+    const filter = document.getElementById('searchInput').value.toLowerCase();
+
+    document.querySelectorAll('#receipts-table tbody tr').forEach(function(row) {
+        const cells = row.querySelectorAll('td');
+        const rowDate = cells[0].textContent;
+        const rowText = row.textContent.toLowerCase();
+
+        let show = true;
+        if (period === "year" && year) show = rowDate.startsWith(year);
+        if (period === "month" && year && month) show = rowDate.startsWith(year + '-' + month.padStart(2, '0'));
+        if (filter && rowText.indexOf(filter) === -1) show = false;
+
+        row.style.display = show ? "" : "none";
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.local-receipt-time').forEach(function(elem) {
+    if (elem.dataset.utc) {
+      var dt = new Date(elem.dataset.utc);
+      if (!isNaN(dt)) {
+        var opts = { year: 'numeric', month: 'short', day: 'numeric',
+                     hour: '2-digit', minute: '2-digit', hour12: true };
+        elem.textContent = dt.toLocaleString(undefined, opts);
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>

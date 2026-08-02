@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Business Register</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      @media (max-width: 600px) {
+        .btn, .btn-success { width: 100% !important; margin-bottom: 10px; }
+        .card { padding: 1.1rem !important; }
+      }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-9 col-md-7 col-lg-6">
+                <div class="card shadow p-4">
+                    <h2 class="mb-4 text-center">Business Registration</h2>
+                    <form method="post" class="mb-3">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            {{ form.business_name(class="form-control", placeholder="Business Name (will be visible)", required=True) }}
+                            {% if form.business_name.errors %}
+                                <div class="text-danger small">{{ form.business_name.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.business_email(class="form-control", placeholder="Business Email", required=True) }}
+                            {% if form.business_email.errors %}
+                                <div class="text-danger small">{{ form.business_email.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.password.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.password(class="form-control", placeholder="Password", required=True, id="password-field") }}
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="toggle-password" tabindex="-1">
+                                    <span id="toggle-password-icon">&#128065;</span>
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">Minimum 8 characters</small>
+                            {% if form.password.errors %}
+                                <div class="text-danger small">{{ form.password.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.referral_code(class="form-control", placeholder="Referral Code (optional)") }}
+                            {% if form.referral_code.errors %}
+                                <div class="text-danger small">{{ form.referral_code.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        {{ form.submit(class="btn btn-success w-100") }}
+                    </form>
+                    <a href="{{ url_for('business_login') }}" class="d-block mb-2 text-center">Already have a business account? Login</a>
+                    {% with messages = get_flashed_messages() %}
+                      {% if messages %}
+                        <div class="alert alert-warning mt-3 text-center">
+                          {% for message in messages %}{{ message }}<br>{% endfor %}
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var pwField = document.getElementById('password-field');
+        var toggleBtn = document.getElementById('toggle-password');
+        var toggleIcon = document.getElementById('toggle-password-icon');
+        if (pwField && toggleBtn && toggleIcon) {
+            toggleBtn.addEventListener('click', function() {
+                if (pwField.type === "password") {
+                    pwField.type = "text";
+                    toggleIcon.innerHTML = "&#128068;";
+                } else {
+                    pwField.type = "password";
+                    toggleIcon.innerHTML = "&#128065;";
+                }
+            });
+        }
+    });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

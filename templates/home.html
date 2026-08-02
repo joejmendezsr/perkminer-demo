@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Perk Miner Marketplace – Cashback Rewards for Real Purchases</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Connect with businesses through secure, private messaging. No crypto—just real cashback rewards. Advertisers pay only when you buy. No sale, no fees.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <style>
+    :root { 
+      --pm-primary: #2a5859; 
+      --pm-accent: #ffd66b; 
+      --pm-bg: #fff; 
+      --pm-text: #222; 
+      --pm-hover: #e6f6f5;
+      --pm-shadow: 0 8px 32px rgba(42,88,89,0.18);
+      --pm-transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    body { background: var(--pm-bg); color: var(--pm-text);}
+    .navbar-brand img.nav-logo { height: 90px; width: auto; max-width: 140px;}
+    .hero-logo { height: 90px; max-width: 280px; width: auto; display: block; margin: 0 auto 18px auto; object-fit: contain;}
+    .hero-section { min-height: 45vh; background: url('https://res.cloudinary.com/dmrntlcfd/image/upload/v1782601402/Cash-Back_rignwa.jpg?auto=format&fit=crop&w=1200&q=60') center/cover no-repeat; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 0;}
+    .hero-section .overlay { position: absolute; inset: 0; background: rgba(42,88,89,.23); z-index: 1; }
+    .hero-content { position: relative; z-index: 2; width: 100%; max-width: 620px; margin: 0 auto; color: #fff; padding-top: 1.5rem; padding-bottom: 1rem; text-align: center;}
+    .dashboard-btn-hero { position: absolute; top: 18px; right: 32px; z-index: 5;}
+    @media (max-width: 700px) { .dashboard-btn-hero { top: 8px; right: 12px; } }
+    .dashboard-btn-hero .btn { font-size: 0.93rem; padding: 0.28rem 0.85rem; border-radius: 15px; box-shadow: 0 2px 10px #e6f4ee; }
+    .totals-section { margin-top: 0.5rem; margin-bottom: 0.8rem;}
+    .totals-mini { background: #fff; border: 1px solid #e7ebed; border-radius: 10px; box-shadow: 0 1px 5px #e6f4ee; padding: .35rem 0.7rem .25rem 0.7rem; min-width: 106px; min-height: 42px; display: inline-block; margin: 0 3px 6px 3px;}
+    .totals-label-mini { font-size: 0.61em; color: #305A5B; font-weight: 600; line-height: 1.07; margin-bottom: -3px;}
+    .totals-value-mini { font-size: 0.95em; font-weight: 700;}
+    .totals-value-mini.text-warning { color: #d8a608 !important; }
+    .totals-value-mini.text-info { color: #1097bb !important; }
+    .search-form .input-group { border-radius: 18px; box-shadow: 0 2px 10px #f2f5f5; background: #fff; overflow: hidden;}
+    .search-form .form-control, .search-form .btn { border-radius: 18px !important; font-size: 1.1em;}
+    
+    /* Categories Section */
+    .categories-section { padding: 3rem 0 4rem; }
+    .categories-title { 
+      font-size: 2.1rem; 
+      font-weight: 700; 
+      color: var(--pm-primary); 
+      text-align: center; 
+      margin-bottom: 2.2rem; 
+      position: relative; 
+    }
+    .categories-title:after {
+      content: '';
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: var(--pm-accent);
+      border-radius: 2px;
+    }
+
+    .categories-scroll-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding: 0 5vw;
+      margin: 0 -5vw;
+    }
+    .categories-scroll-wrap::-webkit-scrollbar { display: none; }
+
+    .categories-row {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 1.1rem;
+      padding: 1rem 0;
+    }
+
+    .category-card-wrapper {
+      scroll-snap-align: start;
+      flex: 0 0 72vw;
+      max-width: 240px;
+      transition: var(--pm-transition);
+    }
+
+    .category-card {
+      border-radius: 16px;
+      overflow: hidden;
+      background: white;
+      box-shadow: var(--pm-shadow);
+      transition: var(--pm-transition);
+      height: 100%;
+      position: relative;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .category-card:hover {
+      transform: translateY(-12px) scale(1.04) rotate(1.2deg);
+      box-shadow: 0 22px 48px rgba(42,88,89,0.26);
+    }
+
+    .category-image-wrap {
+      position: relative;
+      height: 140px;
+      overflow: hidden;
+    }
+
+    .category-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+
+    .category-card:hover .category-image {
+      transform: scale(1.14);
+    }
+
+    .category-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(42,88,89,0.38) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .category-card:hover .category-overlay {
+      opacity: 1;
+    }
+
+    .category-label {
+      padding: 1.1rem 0.9rem 1.3rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--pm-primary);
+      text-align: center;
+      line-height: 1.28;
+      background: linear-gradient(145deg, #ffffff, #f8fbfc);
+    }
+
+    /* Desktop grid */
+    @media (min-width: 992px) {
+      .categories-scroll-wrap, .categories-row {
+        overflow-x: hidden !important;
+        padding: 0;
+        margin: 0;
+      }
+      .categories-row {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 1.6rem 1.8rem;
+      }
+      .category-card-wrapper {
+        flex: 1 1 auto;
+        max-width: none;
+        scroll-snap-align: none;
+      }
+      .category-card {
+        border-radius: 20px;
+      }
+      .category-image-wrap {
+        height: 160px;
+      }
+      .category-label {
+        font-size: 1.12rem;
+        padding: 1.3rem 1.1rem 1.5rem;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .category-card-wrapper { flex: 0 0 78vw; max-width: 260px; }
+      .category-image-wrap { height: 130px; }
+      .categories-title { font-size: 1.75rem; }
+    }
+
+    /* Mobile & tablet: force single row + hide button */
+    @media (max-width: 991.98px) {
+      .more-btn-container {
+        display: none !important;
+      }
+    }
+
+    /* More button */
+    .more-btn-container { 
+      text-align: center; 
+      margin: 2rem 0 1rem; 
+    }
+    .more-btn { 
+      background: var(--pm-primary); 
+      color: white; 
+      border: none; 
+      padding: 0.75rem 2rem; 
+      font-size: 1.1rem; 
+      font-weight: 600; 
+      border-radius: 50px; 
+      box-shadow: 0 6px 20px rgba(42,88,89,0.3); 
+      transition: var(--pm-transition); 
+      cursor: pointer;
+    }
+    .more-btn:hover { 
+      transform: translateY(-4px) scale(1.05); 
+      box-shadow: 0 12px 30px rgba(42,88,89,0.4); 
+      background: #1f4344;
+    }
+    .more-btn.expanded {
+      background: #d9534f;
+    }
+
+    .business-listing-modern {
+      border: none;
+      overflow: hidden;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 4px 18px #e5eceb;
+      transition: box-shadow 0.18s, transform 0.16s;
+      min-height: 360px;
+      max-width: 380px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .biz-feature-img-wrap {
+      width: 100%;
+      height: 180px;
+      overflow: hidden;
+      border-radius: 14px 14px 0 0;
+      background: #f7f7f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .biz-feature-img,
+    .small-listing-modern-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      margin: 0 auto;
+    }
+    .small-listing-modern-img {
+      width: 180px;
+      height: 180px;
+      object-fit: cover;
+    }
+    .biz-services {
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      max-width: 100%;
+      margin: 0 auto;
+      display: block;
+      font-size: .94em;
+      color: #345;
+      font-weight: 500;
+      opacity: .93;
+    }
+
+    .mb-1.small { font-size: .96em; }
+    @media (max-width:600px) {
+      .business-listing-modern { max-width: 97vw; }
+      .biz-services { max-width: 74vw; font-size:.98em;}
+      .biz-feature-img-wrap { height: 160px; }
+      .biz-feature-img,
+      .small-listing-modern-img { 
+        width: 160px; 
+        height: 160px; 
+      }
+    }
+    footer { background: #f8fafb; color: #999; padding: 1.5rem 0; margin-top: 2.3rem; text-align: center; font-size: 1em; border-top: 1px solid #e1e7ea; }
+
+    .marquee-container {
+      --gap: 4rem;
+      width: 100%;
+      overflow: hidden;
+      background: #000;           /* Black */
+      color: #f2f2f2;             /* Light grey/white */
+      padding: 0.9rem 0;
+      margin: 0;
+      border-top: 2px solid var(--pm-accent);
+      border-bottom: 2px solid var(--pm-accent);
+      box-shadow: 0 2px 12px rgba(42,88,89,0.25);
+    }
+
+    .marquee {
+      display: flex;
+      white-space: nowrap;
+      animation: scroll 15s linear infinite; /* fallback if JS breaks */
+    }
+
+    .marquee:hover { animation-play-state: paused; cursor: default; }
+    .marquee-content {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--gap);
+      font-size: 1.35rem;
+      font-weight: 600;
+      padding: 0 2rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .marquee-content span.highlight {
+      color: var(--pm-accent); /* Or change to #fff for plain white */
+      font-weight: 700;
+    }
+
+    @keyframes scroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(calc(-100% - var(--gap))); }
+    }
+
+    @media (max-width: 576px) {
+      .marquee-content { font-size: 1.1rem; }
+      .marquee-container { padding: 0.7rem 0; }
+    }
+
+    .how-it-works-section {
+      position: relative;
+      margin: 48px 0 0 0;
+      padding: 0;
+    }
+    .how-it-works-bg {
+      width: 100%;
+      min-height: 220px;
+      max-height: 360px;
+      object-fit: cover;
+      filter: brightness(0.74);
+      border-radius: 15px;
+      display: block;
+    }
+    .how-it-works-btn-outer {
+      position: absolute;
+      left: 0; top: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .how-it-works-btn-inner {
+      background: rgba(255,255,255,0.92);
+      border-radius: 2rem;
+      padding: 1.17rem 2.7rem;
+      box-shadow: 0 3px 24px rgba(40,40,40,0.12);
+      pointer-events: all;
+    }
+    @media (max-width: 575px) {
+      .how-it-works-bg { min-height: 120px; max-height: 150px; }
+      .how-it-works-btn-inner { padding: .7rem 1.15rem; font-size: 1.09em; }
+    }
+
+  </style>
+</head>
+<body>
+  <section class="hero-section">
+    <div class="overlay"></div>
+    {% if current_user.is_authenticated %}
+      <div class="dashboard-btn-hero">
+        {% if current_user.business_email %}
+          <a href="{{ url_for('business_dashboard') }}" class="btn btn-warning shadow">Return to Dashboard</a>
+        {% else %}
+          <a href="{{ url_for('dashboard') }}" class="btn btn-warning shadow">Return to Dashboard</a>
+        {% endif %}
+      </div>
+    {% elif session.get('business_id') %}
+      <div class="dashboard-btn-hero">
+        <a href="{{ url_for('business_dashboard') }}" class="btn btn-warning shadow">Return to Dashboard</a>
+      </div>
+    {% endif %}
+    <div class="container hero-content">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="hero-logo">
+      <h1>Exclusive Member Perks</br>plus 2% Cashback</h1>
+      <h4>Business No Risk Advertising!</br>No Sale/Close = No Fee For Advertisers!</h4>
+      <p style="font-size:1rem; color:#222; background:#f7f7f7; padding:6px 14px; border-radius:7px; display:inline-block;">
+        Secure ⛨ | Not crypto | Privacy guaranteed
+      </p>
+      <form class="search-form mb-3" method="get" action="/search">
+        <div class="input-group mb-2">
+          <input type="text" class="form-control" name="q" placeholder="Search for products, services, or businesses..." aria-label="Search">
+          <select class="form-select" name="distance" style="max-width:110px;">
+            <option value="">Closest</option>
+            <option value="5">5 mi</option>
+            <option value="10">10 mi</option>
+            <option value="25">25 mi</option>
+            <option value="all">All</option>
+          </select>
+          <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+        <input type="hidden" name="lat" id="search-lat">
+        <input type="hidden" name="lng" id="search-lng">
+      </form>
+      <div class="container-fluid d-flex flex-wrap justify-content-center totals-section px-0">
+        <div class="totals-mini mx-1">
+          <div class="totals-label-mini">Member Cash Back<br>and Commissions Paid</div>
+          <div class="totals-value-mini text-success">${{ "{:,.2f}".format(total_member_paid|default(0, true)) }}</div>
+        </div>
+        <div class="totals-mini mx-1">
+          <div class="totals-label-mini">Business Cash Back<br>and Commissions Paid</div>
+          <div class="totals-value-mini text-primary">${{ "{:,.2f}".format(total_biz_paid|default(0, true)) }}</div>
+        </div>
+        <div class="totals-mini mx-1">
+          <div class="totals-label-mini">Gross Sales Generated<br>By Our Advertisers</div>
+          <div class="totals-value-mini text-dark">${{ "{:,.2f}".format(total_gross_sales|default(0, true)) }}</div>
+        </div>
+        <div class="totals-mini mx-1">
+          <div class="totals-label-mini">Advertising Fees<br>Paid By Advertisers</div>
+          <div class="totals-value-mini text-info">${{ "{:,.2f}".format(total_ad_fees|default(0, true)) }}</div>
+        </div>
+        <div class="totals-mini mx-1">
+          <div class="totals-label-mini">Percent of Ad Revenues<br>Paid To Members & Businesses</div>
+          <div class="totals-value-mini text-warning">
+            {{ percent_fees_paid|default(0, true)|round(1) }}%
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee-container">
+    <div class="marquee">
+      <div class="marquee-content">
+        *** LAUNCHING SOON!! ***<span class="highlight">Free to Join - join early and start earning cashback on real purchases (Paid By Perk Miner)</span>
+      </div>
+    </div>
+  </div>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-0">
+    <div class="container">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <div class="navbar-nav ms-auto">
+          <a class="nav-link" href="/login">Login</a>
+          <a class="nav-link" href="/register">Register</a>
+          <a class="nav-link" href="/business">Advertise with Us</a>
+          <a class="nav-link" href="/about">About Us</a>
+          <a class="nav-link" href="/news">News</a>
+          <a class="nav-link" href="/faq">FAQ</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container my-5">
+    <section class="categories-section">
+      <h2 class="categories-title">Browse by Popular Categories</h2>
+
+      <div class="d-md-none text-center mb-3" style="color:#555; font-style:italic; font-size:0.98rem;">
+        ↔ Swipe to explore all categories
+      </div>
+
+      <div class="categories-scroll-wrap">
+        <div class="categories-row">
+          <!-- 1 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Handyman-Contractor', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Handyman_ig9cin.jpg?auto=format&fit=crop&w=300&q=40" alt="Handyman-Contractor" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Handyman-Contractor</div>
+            </a>
+          </div>
+
+          <!-- 2 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Restaurant-Food-and-Drink', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Restaurant_d1ioep.jpg?auto=format&fit=crop&w=300&q=40" alt="Restaurant" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Restaurant/Food/Drink</div>
+            </a>
+          </div>
+
+          <!-- 3 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Auto-Service-Repair-Parts', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Auto-Service_iamnu3.jpg?auto=format&fit=crop&w=300&q=40" alt="Auto Parts & Service" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Auto Service-Repair-Parts</div>
+            </a>
+          </div>
+
+          <!-- 4 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Home-and-Garden', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Home-Garden_lhssqa.jpg?auto=format&fit=crop&w=300&q=40" alt="Home and Garden" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Home and Garden</div>
+            </a>
+          </div>
+
+          <!-- 5 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Shopping-and-Retail', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Retail_h510gq.jpg?auto=format&fit=crop&w=300&q=40" alt="Retail Outlet" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Shopping and Retail</div>
+            </a>
+          </div>
+
+          <!-- 6 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Health-and-Beauty', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443067/health-and-beauty_pql4ha.jpg?auto=format&fit=crop&w=300&q=40" alt="Health and Beauty" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Health and Beauty</div>
+            </a>
+          </div>
+
+          <!-- 7 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Sports-and-Recreation', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447451/sports_paavlw.jpg?auto=format&fit=crop&w=300&q=40" alt="Sports and Recreation" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Sports and Recreation</div>
+            </a>
+          </div>
+
+          <!-- 8 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Real-Estate', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/real-estate_g40mrz.jpg?auto=format&fit=crop&w=300&q=40" alt="Real Estate" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Real Estate</div>
+            </a>
+          </div>
+
+          <!-- 9 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Pet-Service-and-Supplies', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/pet-services_j2h4pq.jpg?auto=format&fit=crop&w=300&q=40" alt="Pet Service and Supplies" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Pet Service and Supplies</div>
+            </a>
+          </div>
+
+          <!-- 10 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Travel-Lodging-Tourism', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/travel_m7izuq.jpg?auto=format&fit=crop&w=300&q=40" alt="Travel-Lodging-Tourism" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Travel-Lodging-Tourism</div>
+            </a>
+          </div>
+
+          <!-- 11 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Gaming', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772483687/gaming_ymfsap.jpg?auto=format&fit=crop&w=300&q=40" alt="Gaming" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Gaming</div>
+            </a>
+          </div>
+
+          <!-- 12 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Professional-Services', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/professional_iouq8n.jpg?auto=format&fit=crop&w=300&q=40" alt="Financial Services" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Professional Services</div>
+            </a>
+          </div>
+
+          <!-- 13 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Financial-Services', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/financial-services_hwhybm.jpg?auto=format&fit=crop&w=300&q=40" alt="Financial Services" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Financial Services</div>
+            </a>
+          </div>
+
+          <!-- 14 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Events-and-Entertainment', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/entertainment_ubdbpn.jpg?auto=format&fit=crop&w=300&q=40" alt="Events and Entertainment" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Events and Entertainment</div>
+            </a>
+          </div>
+
+          <!-- 15 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Education-and-Training', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/education_k14lj9.jpg?auto=format&fit=crop&w=300&q=40" alt="Education and Training" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Education and Training</div>
+            </a>
+          </div>
+
+          <!-- 16 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Wedding-Services', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/wedding_otioqm.jpg?auto=format&fit=crop&w=300&q=40" alt="Wedding Services" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Wedding Services</div>
+            </a>
+          </div>
+
+          <!-- 17 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Transportation-Services', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/transportation_himjmb.jpg?auto=format&fit=crop&w=300&q=40" alt="Transportation Services" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Transportation Services</div>
+            </a>
+          </div>
+
+          <!-- 18 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Legal-Services', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/legal_rqbeqb.jpg?auto=format&fit=crop&w=300&q=40" alt="Legal Services" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Legal Services</div>
+            </a>
+          </div>
+
+          <!-- 19 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='All-Rentals', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447452/rentals_mllbe2.jpg?auto=format&fit=crop&w=300&q=40" alt="All Rentals" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">All Rentals</div>
+            </a>
+          </div>
+
+          <!-- 20 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Cleaning-Services', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/cleaning_qriysn.jpg?auto=format&fit=crop&w=300&q=40" alt="Cleaning" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Cleaning Services</div>
+            </a>
+          </div>
+
+          <!-- 21 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Moving-and-Delivery', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438233/moving_hbaqgd.jpg?auto=format&fit=crop&w=300&q=40" alt="Moving" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Moving and Delivery</div>
+            </a>
+          </div>
+
+          <!-- 22 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Security-and-Protection', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/security_wuefwm.jpg?auto=format&fit=crop&w=300&q=40" alt="Security" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Security and Protection</div>
+            </a>
+          </div>
+
+          <!-- 23 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Industrial-Services', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/industrial_g8djx5.jpg?auto=format&fit=crop&w=300&q=40" alt="Industrial" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Industrial Services</div>
+            </a>
+          </div>
+
+          <!-- 24 -->
+          <div class="category-card-wrapper">
+            <a href="{{ url_for('category_browse', name='Other', lat=user_lat, lng=user_lng, distance=10) }}">
+              <div class="category-image-wrap">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/other_tnemn7.jpg?auto=format&fit=crop&w=300&q=40" alt="Financial Services" class="category-image">
+                <div class="category-overlay"></div>
+              </div>
+              <div class="category-label">Other</div>
+            </a>
+          </div>
+
+          <div class="more-btn-container">
+            <button class="more-btn" id="toggle-more">More Categories</button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <h3 class="mt-5 mb-3 text-start">Featured Businesses Near You:</h3>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-5 g-4">
+      {% for biz in featured_listings %}
+      <div class="col">
+        <a href="{{ url_for('view_listing', biz_id=biz.id, distance_mi=biz.distance_mi, from_featured=1) }}" style="text-decoration:none;">
+          <div class="small-listing-modern">
+            {% if biz.profile_photo %}
+              <img src="{{ biz.profile_photo }}" class="small-listing-modern-img" alt="{{ biz.business_name }} logo">
+            {% else %}
+              <div class="small-listing-modern-img d-flex align-items-center justify-content-center bg-light border">
+                <i class="bi bi-shop" style="font-size:1.6em; color:#2a5859;"></i>
+              </div>
+            {% endif %}
+
+            <div class="card-body text-center px-3">
+              <h5 class="card-title mb-2">{{ biz.business_name }}</h5>
+              <div class="mb-1 small" style="font-weight:500;">
+                <span class="badge bg-success">{{ biz.category }}</span>
+              </div>
+              {% if biz.distance_mi is defined and biz.distance_mi is not none %}
+                <span class="small-listing-mile-badge">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  {{ biz.distance_mi|round(2) }} mi away
+                </span>
+              {% endif %}
+
+              <div class="mb-1">
+                <strong>Address:</strong> {{ biz.address or "N/A" }}
+              </div>
+              <div class="mb-1 biz-services" title="{{ [biz.service_1, biz.service_2, biz.service_3, biz.service_4, biz.service_5, biz.service_6, biz.service_7, biz.service_8, biz.service_9, biz.service_10]|select|reject('equalto','')|join(', ') }}">
+                <strong>Services:</strong>
+                {% set services = [biz.service_1, biz.service_2, biz.service_3, biz.service_4, biz.service_5, biz.service_6, biz.service_7, biz.service_8, biz.service_9, biz.service_10] %}
+                {{ services|select|reject('equalto','')|join(', ') if services|select|reject('equalto','')|list else 'N/A' }}
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+      {% if featured_listings|length == 0 %}
+      <div class="col-12">
+        <div class="alert alert-warning text-center mt-3">
+          No featured businesses at this time.
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+<!-- Featured Info Section with Banner Image -->
+<div class="perk-info-section mx-auto mt-4" style="max-width:900px;">
+  <!-- Replace with your own banner image when ready -->
+  <div style="width:100%;margin-bottom:2em;">
+    <img 
+      src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1782128475/paradigm_shift_xgamzx.jpg?text=Perk+Miner+is+a+Paradigm+Shift+for+Business+and+Members" 
+      alt="Paradigm Shift Banner" 
+      style="width:100%; height:auto; display:block; margin:0 auto; border-radius:14px; max-width:100%;">
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-6 mb-4">
+      <h3 class="text-center mb-3">Member Perks:</h3>
+      <ul style="list-style:square; padding-left:1.2em; font-size: 1.14em;">
+        <li>Free Membership (Join for free) - no hidden fees, contracts or subscriptions.</li>
+        <li>Exclusive Perks offered by all of our advertisers.</li>
+        <li>Earn unlimited 2% Cashback and referral commissions on up to $2,500 of every purchase (paid by Perk Miner LLC).</li>
+        <li>We give our members total control.</br>Search -> Pay -> Earn Cashback -> Invite -> Earn Generous Referral Commissions.</li>
+        <li>Invite others to become members and also invite business owners to advertise!</br>(Referral Commissions multiplied from real purchases and real sales)</li>
+        <li><b><u>How We Protect Our Members:</u></b></br>We never share or sell member contact information as a lead!  (Businesses never have access to member contact information without your permission).</li>
+        <li>Connect with businesses through secure messaging <b>(1 Member to 1 Business at a time while protecting your privacy!)</b></li>
+        <li>Members decide who to share contact information with and when, and even then, to just one business at a time.</li>
+        <li>No more unsolicited phone calls, spam emails or uninvited people showing up at your door and you don't have to worry about us tracking your browsing history or sending you ads based on your searches.</li>
+      </ul>
+    </div>
+    <div class="col-12 col-md-6 mb-4">
+      <h3 class="text-center mb-3">Business Perks:</h3>
+      <ul style="list-style:square; padding-left:1.2em; font-size: 1.14em;">
+        <li>Zero wasted advertising dollars!<br/>(No Sale or Closed Deal = Zero Fees; Min 900% ROI - pay $1 per $10 sold, $250 max)</li>
+        <li>Earn unlimited 1% Cashback on up to $2,500 of every sale (paid by Perk Miner LLC), <u>which is equal to a 10% return of your advertising fee</u> in exchange for offering at least one perk to our members.</br><b>(All transactions must be finalized)</b></li>
+        <li>Earn referral Business Commissions by inviting other businesses to join</br>(Mutual Commissions Payout - Each business earns from each other's sales)</li>
+        <li>Never pay for leads, traffic, appointments, or meet-ups (Only pay for results).</li>
+        <li>Members pay businesses directly for all purchases and sales.  (Perk Miner LLC does not collect payment on behalf of the advertisers)</li>
+        <li><b><u>Real-Time Analytics</u></b>: See Gross Sales, Ad Fee Paid, Net Gross and ROI instantly</li>
+        <li>No hidden fees, monthly subscriptions, contracts, or commitment</li>
+        <li>No cost to list your business ... ever!</br>It only takes $25 to fund your account to cover the advertising fees to get started ($25 covers up to $250 in sales).</br><b>Note:  You must maintain enough funds in your account balance at all times to cover the advertising fee at all times (10% of the sale capped at $250 per transaction).</b></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="text-center mt-2 mb-3">How Money Flows:</h3>
+  <ol style="padding-left:1.2em; max-width:700px; margin:0 auto;">
+    <li>Member searches for a business/product/service</li>
+    <li>Member is connected to one business at a time</li>
+    <li>Member makes a purchase (pays business)</li>
+    <li>Business finalizes the transaction &amp; Perk Miner 10% fee (max $250) is deducted from the business account balance</li>
+    <li>Fee is split into Cashback/Referral Commissions and Perk Miner platform revenue<br>
+      <span style="font-size:.97em;color:#888;">(Up to 84% paid out from each sale)</span>
+    </li>
+  </ol>
+  <div class="text-center mt-3 mb-0" style="font-weight:500; font-size:1.1em;">
+    <b>Members earn cashback and referral commissions for making real purchases.</b><br>(Up to 6 members receive up to 56% of the advertising revenue received by Perk Miner LLC from every transaction)</br></br>
+    <b>Advertisers earn cashback and referral commissions for finalizing transactions</b> <i>(for making sales)</i></br>(Up to 6 Businesses receive up to 28% of the advertising revenue received by Perk Miner LLC from every transaction)</br></br>
+    <b>Everyone can earn referral commissions</b> (not for inviting people or businesses), but from real sales (transactions must be finalized).
+  </div>
+</div>
+<!-- END of Perk-Info Section -->
+
+  </main>
+
+<!-- How It Works section with image and overlay button -->
+<div class="how-it-works-section container mt-5 mb-4 px-0" style="position:relative;">
+  <div style="width:100%; max-width:950px; margin:0 auto; position:relative;">
+    <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1774196020/purchase_ntjk5q.jpg?fit=crop&w=1200&q=80"
+         alt="How It Works"
+         style="width:100%; border-radius:20px; object-fit:cover; max-height:340px;">
+    <div class="how-it-works-btn-outer" style="position:absolute; left:0;top:0;right:0;bottom:0; display:flex; align-items:center; justify-content:center; z-index:2;">
+      <div class="how-it-works-btn-inner">
+        <a href="{{ url_for('how_it_works') }}" class="btn btn-primary btn-xl fs-4 shadow-lg px-4 py-2" style="font-weight:600;">
+          <i class="bi bi-info-circle"></i> How It Works
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+  <footer>
+    <div>
+      <div class="mb-2">
+        <a href="/" style="color:var(--pm-primary);font-weight:600;text-decoration:none;">
+          <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="hero-logo" style="height:54px;">
+        </a> &copy; 2026</br>Not a crypto mining site
+      </div>
+      <div>
+        <small>Need help? <a href="mailto:fromperkminer@gmail.com" style="color:var(--pm-primary);">Contact Support</a></small>
+      </div>
+      <div class="mt-1">
+        <a href="https://www.perkminer.com/privacy" target="_blank" style="color:#3dbbee; margin:0 6px;text-decoration:none;">Privacy</a>
+        <a href="https://www.perkminer.com/terms" target="_blank" style="color:#3dbbee; margin:0 6px;text-decoration:none;">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Desktop collapse logic
+    const toggleBtn = document.getElementById('toggle-more');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        const cards = document.querySelectorAll('.category-card-wrapper');
+        const isExpanded = toggleBtn.classList.contains('expanded');
+
+        if (isExpanded) {
+          // Collapse - hide cards 5 and beyond
+          Array.from(cards).slice(4).forEach(card => {
+            card.style.display = 'none';
+          });
+          toggleBtn.textContent = 'More Categories';
+          toggleBtn.classList.remove('expanded');
+        } else {
+          // Expand - show all cards
+          Array.from(cards).slice(4).forEach(card => {
+            card.style.display = 'block';
+          });
+          toggleBtn.textContent = 'Show Fewer Categories';
+          toggleBtn.classList.add('expanded');
+        }
+      });
+
+      // Initial state on desktop: hide cards after the first 4
+      if (window.innerWidth >= 992) {
+        const cards = document.querySelectorAll('.category-card-wrapper');
+        Array.from(cards).slice(4).forEach(card => {
+          card.style.display = 'none';
+        });
+      }
+    }
+
+    // Geolocation scripts
+    window.addEventListener('DOMContentLoaded', function() {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            document.getElementById('search-lat').value = position.coords.latitude;
+            document.getElementById('search-lng').value = position.coords.longitude;
+          }
+        );
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', function() {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            var lat = position.coords.latitude;
+            var lng = position.coords.longitude;
+            var url = new URL(window.location.href);
+            var hasLatLng = url.searchParams.has('lat') && url.searchParams.has('lng');
+            if (!hasLatLng) {
+              url.searchParams.set('lat', lat);
+              url.searchParams.set('lng', lng);
+              window.location.replace(url);
+            } else {
+              document.getElementById('search-lat').value = lat;
+              document.getElementById('search-lng').value = lng;
+            }
+          }
+        );
+      }
+    });
+  </script>
+
+<!-- Your existing HTML stays the same -->
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const marquee = document.querySelector('.marquee');
+  const content = document.querySelector('.marquee-content');
+
+  function setMarqueeSpeed() {
+    // Calculate pixels to travel = content width + gap
+    const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 64; // fallback 64px
+    const distance = content.offsetWidth + gap;
+    // Desired speed in pixels per second (adjust as needed)
+    const pxPerSec = 80; // change this for faster/slower
+    const duration = distance / pxPerSec;
+
+    marquee.style.animationDuration = duration + 's';
+  }
+
+  setMarqueeSpeed();
+  window.addEventListener('resize', setMarqueeSpeed);
+});
+</script>
+
+</body>
+</html>

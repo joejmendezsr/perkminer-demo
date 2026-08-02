@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ business.business_name }} Store</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Add Bootstrap and any other stylesheets as needed -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <!-- Inject custom CSS from the builder here -->
+  <style>
+      {{ business.grapesjs_css | safe }}
+  </style>
+</head>
+<body>
+  <!-- Add navigation if needed -->
+  <div class="container py-4">
+    <!-- Output the custom HTML from the builder -->
+    {{ builder_html | safe }}
+  </div>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% if is_user %}View Quote{% else %}Send Quote{% endif %} - PerkMiner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        .card { max-width: 500px; margin: 0 auto; }
+        @media (max-width: 600px) {
+            .btn { width: 100% !important; margin-bottom: 10px; }
+            .card { padding: 1.1rem !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <div class="card shadow-sm p-4">
+        {% if is_user %}
+            <h4 class="mb-3 text-center">Quote from {{ interaction.business.business_name }}</h4>
+        {% else %}
+            <h4 class="mb-3 text-center">{% if quote %}Edit{% else %}Send{% endif %} Quote to {{ interaction.user.name or interaction.user.email }}</h4>
+        {% endif %}
+
+        {# Show error messages from the route #}
+        {% if error_message %}
+          <div class="alert alert-danger text-center">{{ error_message }}</div>
+        {% endif %}
+
+        {# Warn and disable forms on finalized session #}
+        {% if is_finalized %}
+          <div class="alert alert-warning text-center mb-3">
+            This transaction is finalized. No new quotes can be created or edited.
+          </div>
+          <a href="{{ url_for('staff_active_session', interaction_id=interaction.id) if is_staff else url_for('biz_active_session', interaction_id=interaction.id) if is_biz else url_for('active_session', interaction_id=interaction.id) }}" class="btn btn-outline-secondary mt-2 w-100">
+            <i class="bi bi-arrow-left"></i> Back to Session
+          </a>
+        {% else %}
+          {% if quote %}
+            <div class="alert alert-info text-center">A quote has already been sent for this session.</div>
+            <div class="mb-2"><b>Amount:</b> ${{ quote.amount }}</div>
+            <div><b>Details:</b> {{ quote.details }}</div>
+            <div class="text-muted mt-3">Sent on: {{ quote.created_at.strftime('%Y-%m-%d %I:%M %p') }}</div>
+            <form method="post" class="mt-3">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="mb-3">
+                  <label class="form-label">Edit Amount</label>
+                  <input type="number" name="amount" step="0.01" min="0" required class="form-control" placeholder="Enter quote amount" value="{{ quote.amount }}">
+              </div>
+              <div class="mb-3">
+                  <label class="form-label">Edit Quote Details</label>
+                  <textarea name="details" class="form-control" rows="4" required placeholder="Enter quote details">{{ quote.details }}</textarea>
+              </div>
+              <button type="submit" class="btn btn-success w-100">Update Quote</button>
+            </form>
+          {% else %}
+            <form method="post">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="mb-3">
+                  <label class="form-label">Amount</label>
+                  <input type="number" name="amount" step="0.01" min="0" required class="form-control" placeholder="Enter quote amount">
+              </div>
+              <div class="mb-3">
+                  <label class="form-label">Quote Details</label>
+                  <textarea name="details" class="form-control" rows="4" required placeholder="Enter quote details"></textarea>
+              </div>
+              <button type="submit" class="btn btn-success w-100">Send Quote</button>
+            </form>
+          {% endif %}
+          <a href="{{ url_for('staff_active_session', interaction_id=interaction.id) if is_staff else url_for('biz_active_session', interaction_id=interaction.id) if is_biz else url_for('active_session', interaction_id=interaction.id) }}" class="btn btn-outline-secondary mt-3 w-100">
+            <i class="bi bi-arrow-left"></i> Back to Session
+          </a>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>

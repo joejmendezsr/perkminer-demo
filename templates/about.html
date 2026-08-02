@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>About Us — PerkMiner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <style>
+    :root {
+      --pm-primary: #214d4e;
+      --pm-accent: #ffd66b;
+      --pm-bg: #f9fbfa;
+      --pm-text: #1a3132;
+      --pm-muted: #6a8690;
+      --pm-shadow: 0 4px 28px rgba(33,77,78,0.07);
+    }
+    body { background: var(--pm-bg); color: var(--pm-text); font-family: 'Segoe UI',sans-serif; }
+    .navbar-light.bg-light {
+      background: #fff !important;
+      border-bottom: 1px solid #e1e7ea;
+      box-shadow: 0 2px 12px #e0e7eb22;
+    }
+    .navbar-brand img.nav-logo {
+      height: 54px;
+      width: auto;
+      max-width: 130px;
+    }
+    .about-hero {
+      background: linear-gradient(120deg, var(--pm-primary) 85%, var(--pm-accent) 100%);
+      color: #fff; text-align: center; padding: 2.8rem 1.2rem 2rem 1.2rem; box-shadow: var(--pm-shadow);
+      border-radius: 0 0 30px 30px;
+    }
+    .about-hero h1 { font-size: 2.6rem; font-weight: 900; letter-spacing: -1px; }
+    .about-section { max-width: 750px; margin: 2.3rem auto 2.6rem auto; background: #fff; border-radius:20px; box-shadow: var(--pm-shadow); padding: 2.2rem 1.5rem 1.7rem 1.5rem; }
+    .about-title { font-size: 1.5rem; font-weight: 700; color: var(--pm-primary); margin-bottom: 1rem;}
+    .about-text { font-size: 1.13rem; color: var(--pm-text);}
+    .team-grid { display: flex; flex-wrap: wrap; gap:1.6rem; justify-content: center; }
+    .team-card {
+      background: #f8f8fc; border-radius: 15px; box-shadow: 0 2px 12px #dee9e8; max-width:190px;
+      padding: 1.1rem 1rem 1.2rem 1rem; text-align: center;
+    }
+    .team-image {
+      width: 76px; height:76px; border-radius: 50%;
+      object-fit: cover; margin-bottom: 0.7rem; border:3px solid var(--pm-primary); background: #fff;
+    }
+    .team-name { font-weight: 700; color: var(--pm-primary); font-size:1.11rem;}
+    .team-role { color: var(--pm-muted); font-size:0.98em; margin-bottom: 0.56em;}
+    @media (max-width: 600px) {
+      .about-hero h1 { font-size: 1.46rem;}
+      .about-section { padding: 1.2rem 0.5rem; }
+      .team-grid { gap: 0.6rem; }
+      .team-card { max-width: 95vw;}
+    }
+    .founder-section {
+      background: linear-gradient(97deg, #f5f8fa 65%, #f9f5e6 100%);
+      padding: 2.1rem 1.1rem 1.7rem 1.1rem;
+      border-radius: 24px;
+      margin: 2.6rem 0 2.1rem 0;
+      text-align: center;
+      box-shadow: 0 2px 12px #dde7e4;
+    }
+    .founder-img {
+      width: 90px; height:90px; border-radius: 50%;
+      object-fit: cover; border: 3px solid var(--pm-accent);
+      margin-bottom: 0.6rem; background:#fff;
+    }
+    .future-goals-list {
+      margin: 1.2rem 0 0 0; padding: 0; list-style: none;
+    }
+    .future-goal-item {
+      font-size: 1.09em;
+      margin-bottom: 0.8em;
+      background: #f6f8fa;
+      padding: 0.9em 1.2em;
+      border-radius: 12px;
+      color: #305a5b;
+      box-shadow: 0 1px 6px #e8eeea;
+      display: flex; align-items: center; gap:0.7em;
+    }
+    .future-goal-icon { color: var(--pm-accent); font-size: 1.2em;}
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-0">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="/">
+        <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="nav-logo">
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <div class="navbar-nav ms-auto">
+          <a class="nav-link" href="/">Home</a>
+          <a class="nav-link" href="/login">Member Login</a>
+          <a class="nav-link" href="/register">Member Register</a>
+          <a class="nav-link" href="/business">Advertise with Us</a>
+          <a class="nav-link" href="/news">News</a>
+          <a class="nav-link" href="/faq">FAQ</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="about-hero">
+    <h1>About PerkMiner</h1>
+    <div style="font-size:1.14rem; font-weight:500; margin-top:0.9em;">
+
+      Real privacy. Real rewards. Connecting members and businesses for true win-wins.
+
+    </div>
+  </div>
+
+  <!-- Mission Statement -->
+  <section class="about-section" id="mission">
+    <div class="about-title">Our Mission</div>
+    <div class="about-text">
+      For our members:</br>To provide a clean, ad-free and worry-free experience when searching for a business, product or service.  At Perkminer, member privacy is not an option ... it is our absolute standard.  We believe that a member's personal data belong to our members.  Unlike traditional networks that collect, harvest and sell user data to the highest bidder, Perkminer will never collect more than your name and email address for account creation, create a safe and secure platform for members (through secure messaging), where members can search for a business, product or service without having to worry about their data and contact information being compromised, sold, exploited or shared.</br></br>Members and advertisers can enjoy the benefits of earning cashback and referral commissions (members are rewared for making purchases from our advertisers and advertisers are rewared for finalizing transactions after making a sale).</br></br>Just like we value our members, we value our advertisers, which is why business owners are able to advertise and grow their business without experiencing the frustration of wasted advertising dollars (this is a true Pay Per Sale (PPS) / Pay Per Close model where no sale or closed deal = no fee), while providing a guaranteed advertising ROI of 900% of higher and real-time analytics (advertisers only pay 10% of the total sale, capped at $250; we want businesses to succeed without paying a large fee that affects their profit margin).</br></br>Perkminer.com is a platform where everyone (members and business owners) wins — no gimmicks, no membership fees, no contracts, no commitment, honest rewards, real results for businesses, and a trusted digital marketplace for everyone to enjoy.  All cashback and commissions is paid by Perk Miner LLC (from the advertising revenue received) and is real cash that you can withdraw to your bank account (you don't earn points or gift cards).  Perk Miner LLC pays out up to 84% of the advertising revenue received from every transaction.  This is how we prove that we value our members and our advertisers ... by giving you a sense of ownership.  Together, we all win.
+    </div>
+  </section>
+
+  <!-- Team Members -->
+  <section class="about-section" id="team">
+    <div class="about-title">Our Team</div>
+    <div class="team-grid">
+      <div class="team-card">
+        <img class="team-image" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Team Member">
+        <div class="team-name">Alex Rivera</div>
+        <div class="team-role">Engineering Lead</div>
+        <div style="font-size:0.96em; color:#7d8f9d;">Building scalable, secure software for everyone.</div>
+      </div>
+      <div class="team-card">
+        <img class="team-image" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Team Member">
+        <div class="team-name">Priya Nair</div>
+        <div class="team-role">Growth & Partnerships</div>
+        <div style="font-size:0.96em; color:#7d8f9d;">Linking members and partners for maximum perks.</div>
+      </div>
+      <div class="team-card">
+        <img class="team-image" src="https://randomuser.me/api/portraits/men/87.jpg" alt="Team Member">
+        <div class="team-name">Jin Park</div>
+        <div class="team-role">UI/UX Design</div>
+        <div style="font-size:0.96em; color:#7d8f9d;">Crafting modern, joyful interfaces—2026 and beyond.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About the Founder -->
+  <section class="founder-section" id="founder">
+    <img class="founder-img" src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1777423493/IMG_0505_dhvf6h.jpg" alt="Founder">
+    <div style="font-size:1.21rem; font-weight:700; margin-bottom:0.5em; color:var(--pm-primary);">Joe Mendez, Founder</div>
+    <div style="font-size:1.08rem;">
+      Joe is passionate about building honest, results-driven connections between members and businesses, with privacy as a top priority (It's our standard).  Member data is protected in a way that business owners do not have access to a member's contact information, until the member decides to whom and when they want to disclose that information, and even then, only one business gets that information at a time (not sold to multiple competeing businesses who are trying to earn a member's business.
+      Drawing on decades of experience in business, tech, and advertising agencies, he knows the frustration of wasted ad dollars (paying for leads, PPC, SEO, etc.) and getting <b>Zero Sales</b> or having ad fees that drastically reduce your profit margins.</br></br>
+      As a consumer, Joe understands what's it's like having your personal data sold to other companies as a lead (non-stop phone calls, your mail-box getting filled with spam emails, etc.).  That's why Joe incorporated secure messaging as a way for members and businesses to connect without ever comprimising a member's contact information.</br></br>
+      In 2007, Joe created a Pay-Per-Sale/Pay-Per-Close model to help businesses achieve real results without high costs—obtaining a program copyright in 2008. With PerkMiner, he flipped the script: businesses earn cashback from making sales, not purchases, enjoying a minimum 900% ROI (paying $1 or less in fees for every $10 sold - max $250), plus cash back.</br></br>
+      Joe knows real WORD-OF-MOUTH is the best advertising. That’s why PerkMiner pays out up to 87.5% of its ad revenue to reward members and business owners who spread the word and complete sales—so everyone wins.</br></br>
+      Joe is also a U.S. Navy (naval intelligence) and law enforcement (police sergeant) veteran. PerkMiner is his vision for helping businesses grow—with trust and transparency at the center, while providing peace of mind to members that interact with businesses.
+    </div>
+  </section>
+
+  <!-- Future Goals -->
+  <section class="about-section" id="goals">
+    <div class="about-title">Our Future Goals</div>
+    <ul class="future-goals-list">
+      <li class="future-goal-item">
+        <span class="future-goal-icon">🚀</span>
+        Expand the platform nationwide and beyond.
+      </li>
+      <li class="future-goal-item">
+        <span class="future-goal-icon">🔒</span>
+        Set new standards in member privacy and data security.
+      </li>
+      <li class="future-goal-item">
+        <span class="future-goal-icon">🤝</span>
+        Build deeper partnerships with ethical businesses.
+      </li>
+      <li class="future-goal-item">
+        <span class="future-goal-icon">💡</span>
+        Launch more perks and clear, user-first features in 2026.
+      </li>
+    </ul>
+  </section>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

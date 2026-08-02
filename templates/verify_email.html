@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify Email</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <script>
+        function enableResend() {
+            document.getElementById('resend-btn').disabled = false;
+            document.getElementById('wait-msg').style.display = 'none';
+        }
+        window.onload = function() {
+            {% if not can_resend %}
+                setTimeout(enableResend, {{ wait_seconds * 1000 }});
+            {% endif %}
+        }
+    </script>
+    <style>
+      @media (max-width: 600px) {
+        .btn, .btn-primary, .btn-link { width: 100% !important; margin-bottom: 10px; }
+        .card { padding: 1.1rem !important; }
+      }
+      .card { max-width: 430px; margin: 0 auto; }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="card shadow-sm p-4">
+            <h2 class="mb-4 text-center">Check your email for a verification link or code</h2>
+            <form method="post" class="mb-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input name="code" class="form-control mb-2" placeholder="Enter verification code">
+                <button type="submit" class="btn btn-primary w-100">Verify</button>
+            </form>
+            <form method="post" action="{{ url_for('resend_verification') }}" class="mb-2 text-center">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button id="resend-btn" class="btn btn-link" type="submit" {% if not can_resend %}disabled{% endif %}>Resend Code</button>
+                {% if not can_resend %}
+                    <span id="wait-msg" style="color:gray;">You can resend in {{ wait_seconds }}s</span>
+                {% endif %}
+            </form>
+            <div class="alert alert-info mt-2 text-center">
+                If you don't see the message, check your Spam or Junk folder.
+            </div>
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <div class="alert alert-warning mt-3 text-center">
+                  {% for message in messages %}{{ message }}<br>{% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

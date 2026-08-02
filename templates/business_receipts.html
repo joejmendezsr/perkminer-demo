@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Business Invoices - PerkMiner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+      @media (max-width: 600px) {
+        .card, .table { font-size: 0.98em; }
+        .btn { width: 100%; margin-bottom: 10px; }
+      }
+      .print-btn { float: right; }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+    <h3 class="mb-2">Business Invoices</h3>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('export_business_receipts_csv') }}" class="btn btn-outline-success">
+        <i class="bi bi-cloud-arrow-down"></i> Export CSV/Excel
+      </a>
+      <button onclick="window.print()" class="btn btn-outline-secondary">
+        <i class="bi bi-printer"></i> Print / Save as PDF
+      </button>
+    </div>
+  </div>
+
+  <a href="{{ url_for('business_dashboard') }}" class="btn btn-primary mt-3 w-100">Back to Dashboard</a>
+
+  <!-- Filter Controls -->
+  <form class="row gy-2 gx-2 mb-3" id="filter-form" onsubmit="return false;">
+    <div class="col-sm-3">
+      <input type="date" id="min-date" class="form-control" placeholder="Start Date">
+    </div>
+    <div class="col-sm-3">
+      <input type="date" id="max-date" class="form-control" placeholder="End Date">
+    </div>
+    <div class="col-sm-2">
+      <input type="number" step="0.01" id="amount" class="form-control" placeholder="Min Amount">
+    </div>
+    <div class="col-sm-4">
+      <input type="text" id="searchInput" class="form-control" placeholder="Search invoices...">
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle" id="receipts-table">
+      <thead class="table-light">
+        <tr>
+          <th>Date/Time</th>
+          <th>Interaction ID</th>
+          <th>Sale Amount</th>
+          <th>Ad Fee (10%, capped $250)</th>
+          <th>Net Gross</th>
+          <th>Marketing ROI</th>
+          <th>Marketing ROI Ratio</th>
+          <th>Cash Back</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transactions %}
+        <tr>
+          <td>
+            {{ t.local_date_time if t.local_date_time else t.date_time.strftime('%Y-%m-%d %I:%M %p') }}
+          </td>
+          <td>{{ t.interaction_id }}</td>
+          <td>${{ "{:,.2f}".format(t.amount) }}</td>
+          <td>${{ "{:,.2f}".format(t.ad_fee or 0) }}</td>
+          <td>
+            {% set net_gross = t.amount - (t.ad_fee or 0) %}
+            ${{ "{:,.2f}".format(net_gross) }}
+          </td>
+          <td>
+            {% set roi = (net_gross / (t.ad_fee or 1)) * 100 if t.ad_fee else 0 %}
+            {{ roi | round(0) }}%
+          </td>
+          <td>
+            {% set ratio = (net_gross + (t.ad_fee or 0)) / (t.ad_fee or 1) if t.ad_fee else 0 %}
+            {{ ratio|round(1) }}:1
+          </td>
+          <td>${{ "{:,.2f}".format(t.cash_back or 0) }}</td>
+          <td>
+            {% if t.status == "available" %}
+              <span class="badge bg-success">Available</span>
+            {% elif t.status == "pending" %}
+              <span class="badge bg-warning text-dark">Pending</span>
+            {% elif t.status == "reversed" %}
+              <span class="badge bg-danger">Reversed</span>
+            {% else %}
+              {{ t.status }}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.getElementById('filter-form').addEventListener('input', function() {
+    const minDate = document.getElementById('min-date').value;
+    const maxDate = document.getElementById('max-date').value;
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const filter = document.getElementById('searchInput').value.toLowerCase();
+
+    document.querySelectorAll('#receipts-table tbody tr').forEach(function(row) {
+        const cells = row.querySelectorAll('td');
+        const rowDate = cells[0].textContent;
+        const rowAmount = parseFloat(cells[2].textContent.replace(/[^0-9.-]+/g,"")) || 0;
+        const rowText = row.textContent.toLowerCase();
+
+        let show = true;
+
+        if (minDate && new Date(rowDate) < new Date(minDate)) show = false;
+        if (maxDate && new Date(rowDate) > new Date(maxDate + ' 23:59:59')) show = false;
+        if (amount && rowAmount < amount) show = false;
+        if (filter && rowText.indexOf(filter) === -1) show = false;
+
+        row.style.display = show ? "" : "none";
+    });
+});
+</script>
+</body>
+</html>

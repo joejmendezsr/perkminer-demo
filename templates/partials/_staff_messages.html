@@ -1,0 +1,14 @@
+{% for msg in messages %}
+  <div class="mb-2">
+    <span class="fw-bold small {% if msg.sender_label == (interaction.user.name or interaction.user.email) %}text-primary{% else %}text-success{% endif %}">
+      {{ msg.sender_label }}
+    </span>
+    <small class="text-muted">{{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+    <div>{{ msg.text }}</div>
+    {% if msg.file_url %}
+      <div><a href="{{ msg.file_url }}" target="_blank">{{ msg.file_name or "Attachment" }}</a></div>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="fst-italic text-muted">No messages yet.</div>
+{% endfor %}

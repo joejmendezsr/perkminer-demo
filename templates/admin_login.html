@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Login - PerkMiner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      @media (max-width: 600px) {
+        .btn, .btn-primary { width: 100% !important; margin-bottom:10px; }
+        .card { padding: 1.2rem !important; }
+      }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-8 col-md-6 col-lg-5">
+                <div class="card shadow p-4">
+                    <h2 class="mb-4 text-center">Login</h2>
+                    <form method="post" class="mb-3">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.email(class="form-control", placeholder="Email (username)", required=True) }}
+                            {% if form.email.errors %}
+                                <div class="text-danger small">{{ form.email.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3 position-relative">
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control", placeholder="Password", required=True, id="password-field") }}
+                            <button type="button" class="btn btn-outline-secondary btn-sm position-absolute top-50 end-0 translate-middle-y me-2" id="toggle-password" tabindex="-1">
+                                <span id="toggle-password-icon">&#128065;</span>
+                            </button>
+                            {% if form.password.errors %}
+                                <div class="text-danger small">{{ form.password.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        {% if form.recaptcha %}
+                        <div class="mb-3">
+                            {{ form.recaptcha }}
+                            {% for err in form.recaptcha.errors %}
+                                <div class="text-danger small">{{ err }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {{ form.submit(class="btn btn-primary w-100") }}
+                    </form>
+                    <a href="{{ url_for('admin_forgot_password') }}" class="d-block mb-2 text-center">Forgot password?</a>
+                    {% if message %}
+                      <div style="color:red; text-align:center;">{{ message }}</div>
+                    {% endif %}
+                    {% with messages = get_flashed_messages() %}
+                      {% if messages %}
+                        <div class="alert alert-warning mt-3 text-center">
+                          {% for msg in messages %}{{ msg|safe }}<br>{% endfor %}
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var pwField = document.getElementById('password-field');
+        var toggleBtn = document.getElementById('toggle-password');
+        var toggleIcon = document.getElementById('toggle-password-icon');
+        if (pwField && toggleBtn && toggleIcon) {
+            toggleBtn.addEventListener('click', function() {
+                if (pwField.type === "password") {
+                    pwField.type = "text";
+                    toggleIcon.innerHTML = "&#128068;";
+                } else {
+                    pwField.type = "password";
+                    toggleIcon.innerHTML = "&#128065;";
+                }
+            });
+        }
+    });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

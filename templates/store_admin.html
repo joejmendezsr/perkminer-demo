@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Store Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    body { background: #f9fafb; color: #222;}
+    .admin-overview-box { background: #fff; border-radius: 12px; box-shadow: 0 2px 20px #e0e8ee88; margin-bottom: 2rem; padding: 2rem 1.5rem 1rem 1.5rem; }
+    .dash-section-card { background: #fff; border-radius: 9px; box-shadow: 0 2px 12px #e3e9ee; margin-bottom: 1.6rem; padding: 1.15rem 1.1rem; min-width: 150px; min-height: 120px; transition: box-shadow 0.1s; }
+    .dash-section-card:hover { box-shadow: 0 6px 28px #b4d5ee44; }
+    .section-title { font-size: 1.32rem; font-weight: 600; margin-bottom: 1.2rem; color: #245656; }
+    .dash-links a { text-decoration: none; color: #184f7a; font-weight: 500; display: flex; align-items: center; margin-bottom: 0.6rem; transition: color 0.18s; }
+    .dash-links a:hover { color: #166b83; text-decoration: underline; }
+    @media (max-width: 768px) { .admin-overview-box { padding: 1.2rem 0.5rem 0.5rem 0.7rem; } .section-title { font-size: 1.11rem;} }
+  </style>
+</head>
+<body>
+<div class="container my-4">
+  <div class="admin-overview-box">
+    <h2 class="text-center mb-4">Store Admin Dashboard</h2>
+    <div class="row g-4">
+      <!-- Website Builder & Templates -->
+      <div class="col-md-6 col-lg-4">
+        <div class="dash-section-card">
+          <div class="section-title">
+            <i class="bi bi-brush"></i> Website Builder & Templates
+          </div>
+          <div class="dash-links">
+            <a href="{{ url_for('store_builder') }}"><i class="bi bi-chevron-right ms-1 me-2"></i>Create/Edit Website (Drag & Drop)</a>
+            <a href="{{ url_for('store_builder') }}"><i class="bi bi-chevron-right ms-1 me-2"></i>Choose/Preview Template</a>
+          </div>
+          <div class="small text-muted">Pick a theme and build your homepage visually.</div>
+        </div>
+      </div>
+
+<form method="POST" class="mb-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="mb-3">
+    <label for="store_slug" class="form-label">Choose Your Store URL</label>
+    <div class="input-group">
+      <span class="input-group-text">{{ your_base_url or "https://perkminer.com/stores/" }}</span>
+      <input type="text" name="store_slug" id="store_slug" class="form-control" required
+        pattern="[a-z0-9-]{3,60}" maxlength="60"
+        placeholder="your-unique-store" value="{{ business.store_slug or '' }}">
+    </div>
+    <div class="form-text">
+      Your store’s public URL will be: <b>https://perkminer.com/stores/&lt;your-slug&gt;</b> (letters, numbers, dashes only)
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">Save Store URL</button>
+</form>
+
+      <!-- Product Management -->
+      <div class="col-md-6 col-lg-4">
+        <div class="dash-section-card">
+          <div class="section-title">
+            <i class="bi bi-box-seam"></i> Products
+          </div>
+          <div class="dash-links">
+            <a href="{{ url_for('store_products') }}"><i class="bi bi-chevron-right ms-1 me-2"></i>Add / Edit Products</a>
+          </div>
+          <div class="small text-muted">Manage up to 50 active products.</div>
+        </div>
+      </div>
+      <!-- Orders & Fulfillment -->
+      <div class="col-md-6 col-lg-4">
+        <div class="dash-section-card">
+          <div class="section-title">
+            <i class="bi bi-receipt"></i> Orders & Fulfillment
+          </div>
+          <div class="dash-links">
+            <a href="{{ url_for('store_orders') }}"><i class="bi bi-chevron-right ms-1 me-2"></i>View Orders</a>
+            <!-- This is a stub/placeholder; fulfillment is usually per order -->
+          </div>
+          <div class="small text-muted">Track and manage customer orders.</div>
+        </div>
+      </div>
+      <!-- Analytics -->
+      <div class="col-md-6 col-lg-4">
+        <div class="dash-section-card">
+          <div class="section-title"><i class="bi bi-bar-chart"></i> Analytics</div>
+          <div class="dash-links">
+            <a href="{{ url_for('analytics_dashboard') }}"><i class="bi bi-chevron-right ms-1 me-2"></i>View Sales Analytics</a>
+          </div>
+          <div class="small text-muted">Revenue, trends, best sellers, KPIs.</div>
+        </div>
+      </div>
+      <!-- Store Settings -->
+      <div class="col-md-6 col-lg-4">
+        <div class="dash-section-card">
+          <div class="section-title"><i class="bi bi-gear"></i> Settings</div>
+          <div class="dash-links">
+            <a href="#"><i class="bi bi-chevron-right ms-1 me-2"></i>Update Store Profile (Coming Soon)</a>
+            <a href="#"><i class="bi bi-chevron-right ms-1 me-2"></i>Connect Stripe (Coming Soon)</a>
+          </div>
+          <div class="small text-muted">Business info, payments, notifications.</div>
+        </div>
+      </div>
+    </div>
+    <hr>
+    <div class="text-center mt-2">
+      <a class="btn btn-secondary" href="{{ url_for('business_dashboard') }}">← Back to Business Dashboard</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

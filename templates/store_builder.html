@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Store Website Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://unpkg.com/grapesjs/dist/css/grapes.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/tokens.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/swiper@11.1.4/swiper-bundle.min.css">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <style>
+    body { 
+      background: var(--color-bg); 
+      color: var(--color-text); 
+      min-height: 100vh; 
+      font-family: var(--font-main); 
+    }
+    .builder-toolbar { background: #21253b; box-shadow: 0 4px 18px #002f5988; border-radius: 13px; max-width:1350px; margin:24px auto 10px auto; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; padding:0.6em 2em;}
+    .builder-title { font-size: 1.7em; font-weight: bold; background: linear-gradient(93deg, #6afadc, #db8abf, #50cdc1, #5b8dfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;}
+    .theme-toggle { background:#1a293c; color:#89c5ff;border-radius:5px;border:2px solid #2f81d8; padding:5px 17px; font-size:1em; cursor:pointer;}
+    .page-bar {gap: 1.1em; padding: 0.2em 0;}
+    .page-btn {background: #22253a; color: #8ad6f6; border: 1.5px solid #498bf0; border-radius:6px; font-weight:500; padding:4.5px 13px; font-size:1.08em; cursor:pointer;}
+    .page-btn.active, .page-btn:focus {background:#3657a8; color:#ffe25a; border-color: #db8abf;}
+    #builder-main-row {display:flex; gap:32px; max-width:1280px; margin:auto;}
+    #gjs-sidebar {flex-shrink:0;width:175px; background:rgba(14,27,53,0.97); box-shadow: 0 2px 14px #12233eaa; border-radius: 12px; padding:22px 7px 17px 7px; margin-top: 10px;}
+    #gjs { flex:1 1 0px; border-radius: 13px; background: #f6fbfd; box-shadow: 0 8px 48px #03253621; border: 2.5px solid #4373b7; min-height:72vh; margin-bottom:2rem;}
+    .block-list { list-style:none; margin:0; padding:0;}
+    .block-list li { margin-bottom: 1.05rem; }
+    .block-btn { display:flex; align-items:center; gap:7px; background:#111821; border:1.6px solid #5693e0; border-radius:7px; padding:5.5px 8px; font-size:0.98em; color:#ace0fa; cursor:move; box-shadow:0 2px 7px #163a66ad; transition: background .13s, color .13s, border .13s;}
+    .block-btn:hover { background:#2659cf; color:#ffedbd; border:1.7px solid #e4adf7;}
+    .block-btn .bi { font-size:1.12em;}
+    .theme-gallery-wrap {background:#181b24; border-radius:15px; box-shadow:0 2px 14px #0a112084; max-width:1220px; margin:10px auto 3rem auto; padding:22px 18px;}
+    .theme-gallery-title { color:#5bddff;font-size:1.3em;font-weight:700;}
+    .theme-gallery-row {display:flex;gap:1.1em;flex-wrap:wrap;justify-content:center;}
+    .theme-preview-card {width:200px;background:#fff;border-radius:10px;box-shadow:0 2px 14px #89caf029;margin-bottom:16px;}
+    .theme-preview-thumb {width:100%;height:108px;object-fit:cover;border-top-left-radius:10px;border-top-right-radius:10px;}
+    .theme-preview-title {font-weight:700;font-size:1.06em;color:#262e40;padding:0.51em 0 0 1.0em;text-align:left;}
+    .theme-preview-desc {font-size:.93em;color:#4a5979;min-height:36px;padding:0 1em 0.9em 1em;text-align:left;}
+    .theme-preview-btn {
+      display: block;
+      width: 92%;
+      margin: 1em auto 1.1em auto;
+      background: #ffca2c;
+      color: #181b24 !important;
+      border-radius: 7px;
+      border: 2px solid #ffd05b;
+      padding: 12px 0;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.09em;
+      box-shadow: 0 2px 8px #ffe47242;
+      letter-spacing: .01em;
+      cursor: pointer;
+      transition: box-shadow .16s, background .15s, color .12s;
+    }
+    .theme-preview-btn:hover {
+      background: #ffe484;
+      color: #222;
+      box-shadow: 0 6px 18px #ffe77c88;
+      border-color: #ffd05b;
+    }
+    @media (max-width:1000px) { #builder-main-row { flex-direction:column; gap:13px;} #gjs-sidebar {width:100%;margin-bottom:12px;} #gjs {min-height:42vh;} }
+    @media (max-width:600px) { .builder-toolbar {flex-direction:column;gap:6px;padding:1em 0.5em;} #gjs-sidebar{padding:14px 2px;} }
+  </style>
+</head>
+<body>
+<div class="builder-toolbar">
+  <span class="builder-title"><i class="bi bi-cpu me-1"></i> Store Website Builder</span>
+
+  <div class="page-bar">
+    <button class="page-btn active" data-page="home">Home Page</button>
+    <button class="page-btn" data-page="products">Products</button>
+    <button class="page-btn" data-page="contact">Contact</button>
+  </div>
+
+  <button class="theme-toggle" id="themeToggle"><i class="bi bi-lightbulb"></i> Switch Color Scheme</button>
+</div>
+<div id="builder-main-row">
+  <div id="gjs-sidebar">
+    <div class="fw-semibold mb-2" style="color:#75fff0;letter-spacing:1px;">Elements</div>
+<ul class="block-list">
+  <!-- Image Category -->
+  <li>
+    <div class="block-btn" id="btn-image-menu">Image</div>
+    <ul class="sub-list" id="sub-image" style="display:none; margin-top:7px;">
+      <li><div class="block-btn" id="block-img">Single Image</div></li>
+      <li><div class="block-btn" id="block-overlay-img">Overlay Image</div></li>
+      <li><div class="block-btn" id="block-hero">Hero</div></li>
+      <li><div class="block-btn" id="block-carousel">Carousel</div></li>
+      <li><div class="block-btn" id="block-gallery">Gallery (up to 6 images)</div></li>
+      <li><div class="block-btn" id="block-slider">Slider</div></li>
+    </ul>
+  </li>
+  <!-- Layout Category -->
+  <li>
+    <div class="block-btn" id="btn-layout-menu">Layout</div>
+    <ul class="sub-list" id="sub-layout" style="display:none; margin-top:7px;">
+      <li><div class="block-btn" id="block-row-lr">Image Left / Text Right</div></li>
+      <li><div class="block-btn" id="block-row-rl">Text Left / Image Right</div></li>
+    </ul>
+  </li>
+  <!-- Multi-Layer Category -->
+  <li>
+    <div class="block-btn" id="btn-multilayer-menu">Multi-Layer</div>
+    <ul class="sub-list" id="sub-multilayer" style="display:none; margin-top:7px;">
+      <li><div class="block-btn" id="block-img-txt-p">Image Left / Text Right / Paragraph Below</div></li>
+      <li><div class="block-btn" id="block-txt-img-p">Text Left / Image Right / Paragraph Below</div></li>
+    </ul>
+  </li>
+  <!-- Products Category -->
+  <li>
+    <div class="block-btn" id="btn-products-menu">Products</div>
+    <ul class="sub-list" id="sub-products" style="display:none; margin-top:7px;">
+      <li><div class="block-btn" id="block-product-single">Add A Product</div></li>
+      <li><div class="block-btn" id="block-product-multi">Add Multiple Products</div></li>
+    </ul>
+  </li>
+  <!-- Text Category -->
+  <li>
+    <div class="block-btn" id="btn-text-menu">Text</div>
+    <ul class="sub-list" id="sub-text" style="display:none; margin-top:7px;">
+      <li><div class="block-btn" id="block-btn">Single Line</div></li>
+      <li><div class="block-btn" id="block-paragraph">Paragraph</div></li>
+      <li><div class="block-btn" id="block-about">About Us</div></li>
+    </ul>
+  </li>
+  <!-- Menu Category -->
+<li>
+  <div class="block-btn" id="btn-menu-menu">Menu</div>
+  <ul class="sub-list" id="sub-menu" style="display:none; margin-top:7px;">
+    <li><div class="block-btn" id="block-menu-text">Text Menu</div></li>
+    <li><div class="block-btn" id="block-menu-buttons">Button Menu</div></li>
+    <li><div class="block-btn" id="block-dropdown-menu">Drop Down Menu</div></li>
+  </ul>
+</li>
+  <!-- Customization Category -->
+  <li>
+    <div class="block-btn" id="btn-custom-menu">Customization</div>
+    <ul class="sub-list" id="sub-custom" style="display:none; margin-top:7px;">
+      <li><div class="block-btn" id="block-embed-script">Embed Script</div></li>
+      <li><div class="block-btn" id="block-custom-html">Custom HTML</div></li>
+    </ul>
+  </li>
+  <!-- Contact Category -->
+  <li>
+    <div class="block-btn" id="btn-contact-menu">Contact</div>
+    <ul class="sub-list" id="sub-contact" style="display:none; margin-top:7px;">
+      <li><div class="block-btn" id="block-contact-form">Contact Form</div></li>
+      <li><div class="block-btn" id="block-contact-details">Details (Email/Address/Phone)</div></li>
+    </ul>
+  </li>
+
+  <!-- Header/Footer -->
+<li>
+  <div class="block-btn" id="btn-header-footer-menu">Header/Footer</div>
+  <ul class="sub-list" id="sub-header-footer" style="display:none; margin-top:7px;">
+    <li><div class="block-btn" id="block-header-main">Header</div></li>
+    <li><div class="block-btn" id="block-footer-main">Footer</div></li>
+  </ul>
+</li>
+
+  <!-- Map Category -->
+  <li>
+    <div class="block-btn" id="btn-map-menu">Map</div>
+    <ul class="sub-list" id="sub-map" style="display:none; margin-top:7px;">
+      <li><div class="block-btn" id="block-map-small">Small Map</div></li>
+      <li><div class="block-btn" id="block-map-large">Large Map</div></li>
+    </ul>
+  </li>
+</ul>
+  </div> <!-- end of #gjs-sidebar -->
+
+  <div id="gjs" style="height:540px;"></div>
+</div> <!-- end of #builder-main-row -->
+
+<div id="canvas">
+  {{ filled_html | safe }}
+</div>
+
+<!-- THEME GALLERY BELOW BUILDER -->
+<div class="theme-gallery-wrap mb-5">
+  <div class="theme-gallery-title mb-3">⭐ Or pick a full-page template (click "Load"):</div>
+    <div class="theme-gallery-row">
+      {% for theme in themes %}
+        <div class="theme-preview-card card">
+          <img class="theme-preview-thumb card-img-top" src="{{ theme.thumbnail_url or 'https://res.cloudinary.com/dmrntlcfd/image/upload/v1771737549/azzvbyblcytbqtr2vxdn.jpg?text=Theme' }}" alt="{{ theme.name }}">
+          <div class="card-body">
+            <div class="theme-preview-title card-title">{{ theme.name }}</div>
+            <div class="theme-preview-desc card-text">
+              {{ theme.starter_html|striptags|truncate(90, True, '...')|e }}
+            </div>
+            <button
+              type="button"
+              class="btn btn-sm btn-secondary"
+              onclick="openThemePreview('{{ theme.id }}')"
+            >Preview</button>
+            <button
+              type="button"
+              class="btn btn-sm btn-primary"
+              onclick="loadBuilderTheme('{{ theme.id }}')"
+            >Load</button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+<form id="save-html-form" method="POST" action="">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="current_page" id="current_page">
+  <input type="hidden" name="home_html" id="home_html">
+  <input type="hidden" name="home_css" id="home_css">
+  <input type="hidden" name="home_js" id="home_js">
+  <input type="hidden" name="products_html" id="products_html">
+  <input type="hidden" name="products_css" id="products_css">
+  <input type="hidden" name="products_js" id="products_js">
+  <input type="hidden" name="contact_html" id="contact_html">
+  <input type="hidden" name="contact_css" id="contact_css">
+  <input type="hidden" name="contact_js" id="contact_js">
+  <button type="submit" class="btn btn-success mt-3 ms-1">Save Website</button>
+  <a href="{{ url_for('store_admin') }}" class="btn btn-secondary mt-3 ms-2">Back to Store Admin</a>
+</form>
+
+<!-- Place the formatting toolbar here (outside the builder/canvas!) -->
+<div id="format-toolbar" style="display:none;position:absolute;z-index:9999;background:#fff;border:2px solid #5bddff;padding:8px 16px 8px 8px;border-radius:11px;box-shadow:0 8px 28px #4d9be96e;gap:4px;align-items:center;">
+  <!-- ... toolbar controls as previously provided ... -->
+  <select id="toolbar-font" style="margin-right:6px;">
+    <option value="Arial">Arial</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Tahoma">Tahoma</option>
+    <option value="Verdana">Verdana</option>
+    <option value="Times New Roman">Times</option>
+  </select>
+  <select id="toolbar-size" style="margin-right:4px;">
+    <option value="3">Normal</option>
+    <option value="5">Large</option>
+    <option value="7">Very Large</option>
+  </select>
+  <button onclick="document.execCommand('bold')" title="Bold" type="button"><b>B</b></button>
+  <button onclick="document.execCommand('italic')" title="Italic" type="button"><i>I</i></button>
+  <button onclick="document.execCommand('underline')" title="Underline" type="button"><u>U</u></button>
+  <button onclick="document.execCommand('strikeThrough')" ...>S</button>
+  <button onclick="document.execCommand('foreColor',...)" ...>&#9632;</button>
+  <button onclick="document.execCommand('justifyLeft')" ...>&#8672;</button>
+  <button onclick="document.execCommand('justifyCenter')" ...>&#8596;</button>
+  <button onclick="document.execCommand('justifyRight')" ...>&#8674;</button>
+  <!-- New enhanced link button here: -->
+  <button onclick="
+    var sel=window.getSelection();
+    if(sel.rangeCount){
+      var url=prompt('Link URL:','https://');
+      if(url){
+        var target=confirm('Open in new window?') ? '_blank':'_self';
+        document.execCommand('createLink',false,url);
+        setTimeout(()=>{
+          var anchor=document.getSelection().anchorNode && document.getSelection().anchorNode.parentElement;
+          if(anchor && anchor.tagName==='A'){anchor.target=target;}
+        },10);
+      }
+    }
+  " title="Add/Edit Link" type="button" style="color:#4478dd;">&#128279;</button>
+
+</div>
+
+<script src="https://unpkg.com/grapesjs"></script>
+<script src="https://unpkg.com/swiper@11.1.4/swiper-bundle.min.js"></script>
+<script>
+  // Gives JS access to all preview fields for each theme
+  const previewThemes = {{ preview_themes|safe }};
+</script>
+
+
+<script>
+
+// ----- Theme toggle logic with localStorage -----
+const themeToggle = document.getElementById('themeToggle');
+const savedTheme = localStorage.getItem('colorScheme');
+if (savedTheme) {
+  document.body.setAttribute('data-theme', savedTheme);
+}
+themeToggle.addEventListener('click', function () {
+  let nextTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', nextTheme);
+  localStorage.setItem('colorScheme', nextTheme);
+});
+
+// ----- Sidebar submenu toggle -----
+[
+  ['btn-image-menu', 'sub-image'],
+  ['btn-layout-menu', 'sub-layout'],
+  ['btn-multilayer-menu', 'sub-multilayer'],
+  ['btn-products-menu', 'sub-products'],
+  ['btn-text-menu', 'sub-text'],
+  ['btn-menu-menu', 'sub-menu'],
+  ['btn-custom-menu', 'sub-custom'],
+  ['btn-contact-menu', 'sub-contact'],
+  ['btn-map-menu', 'sub-map'],
+  ['btn-header-footer-menu', 'sub-header-footer']
+].forEach(pair => {
+  const [btnId, subId] = pair;
+  const btn = document.getElementById(btnId);
+  const sub = document.getElementById(subId);
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sub-list').forEach(lst => { if (lst !== sub) lst.style.display = 'none'; });
+    sub.style.display = (sub.style.display === 'none') ? 'block' : 'none';
+  });
+});
+
+// ----- Load all saved page content and theme maps -----
+const savedPages = {{ saved_pages | safe }};
+const pages = {
+  home: { html: savedPages.home.html, css: savedPages.home.css },
+  products: { html: savedPages.products.html, css: savedPages.products.css },
+  contact: { html: savedPages.contact.html, css: savedPages.contact.css }
+};
+let currentPageKey = 'home';
+
+// Theme maps for each page
+const themeHtmlMap = {{ theme_html_map | safe }};
+const themeCssMap = {{ theme_css_map | safe }};
+const themeJsMap = {{ theme_js_map | safe }};
+const themeProductsHtmlMap = {{ theme_products_html_map | safe }};
+const themeProductsCssMap = {{ theme_products_css_map | safe }};
+const themeProductsJsMap = {{ theme_products_js_map | safe }};
+const themeContactHtmlMap = {{ theme_contact_html_map | safe }};
+const themeContactCssMap = {{ theme_contact_css_map | safe }};
+const themeContactJsMap = {{ theme_contact_js_map | safe }};
+
+// ----- GrapesJS init, loads current page -----
+const editor = grapesjs.init({
+  container: '#gjs',
+  fromElement: false,
+  height: '540px',
+  width: 'auto',
+  storageManager: false,
+  plugins: [],
+  components: pages[currentPageKey].html,
+  style: pages[currentPageKey].css
+});
+
+// ----- Switch builder pages -----
+function loadPage(pageKey) {
+  currentPageKey = pageKey;
+  const { html, css } = pages[pageKey] || { html: '', css: '' };
+  editor.setComponents(html || '');
+  editor.setStyle(css || '');
+  const currentPageInput = document.getElementById('current_page');
+  if (currentPageInput) {
+    currentPageInput.value = currentPageKey;
+  }  
+    document.querySelectorAll('.page-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.page === pageKey)
+  );
+  attachNavSwitching();
+}
+
+// ----- Internal nav menu switching (in-template anchor links) -----
+function attachNavSwitching() {
+  document.querySelectorAll('.r-link').forEach(link => {
+    link.onclick = function(e) {
+      e.preventDefault();
+      const pageKey = link.dataset.page;
+      if (pageKey) loadPage(pageKey);
+    };
+  });
+}
+attachNavSwitching();
+
+// ----- Top-of-page "Home/Products/Contact" button switching -----
+document.querySelectorAll('.page-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    pages[currentPageKey] = {
+      html: editor.getHtml(),
+      css: editor.getCss()
+    };
+    loadPage(btn.dataset.page);
+  });
+});
+
+// ----- Theme loading per current page -----
+function loadBuilderTheme(themeId) {
+  // Load all three pages at once
+  pages.home = {
+    html: themeHtmlMap[themeId] || '',
+    css: themeCssMap[themeId] || '',
+    js: themeJsMap[themeId] || ''
+  };
+  pages.products = {
+    html: themeProductsHtmlMap[themeId] || '',
+    css: themeProductsCssMap[themeId] || '',
+    js: themeProductsJsMap[themeId] || ''
+  };
+  pages.contact = {
+    html: themeContactHtmlMap[themeId] || '',
+    css: themeContactCssMap[themeId] || '',
+    js: themeContactJsMap[themeId] || ''
+  };
+
+  // Now set the currently active page
+  const { html, css } = pages[currentPageKey];
+  editor.setComponents(html || '');
+  editor.setStyle(css || '');
+  attachNavSwitching && attachNavSwitching();
+}
+
+// ----- Manual Save form handler (saves only current page) -----
+document.getElementById('save-html-form').addEventListener('submit', function(e) {
+  // Always capture latest changes from the current page.
+  pages[currentPageKey] = {
+    html: editor.getHtml(),
+    css: editor.getCss(),
+    js: editor.getJs()
+  };
+
+  // Now put all page data into hidden fields (create these as needed)
+  document.getElementById('home_html').value = pages.home.html;
+  document.getElementById('home_css').value = pages.home.css;
+  document.getElementById('home_js').value = pages.home.js;
+  document.getElementById('products_html').value = pages.products.html;
+  document.getElementById('products_css').value = pages.products.css;
+  document.getElementById('products_js').value = pages.products.js;
+  document.getElementById('contact_html').value = pages.contact.html;
+  document.getElementById('contact_css').value = pages.contact.css;
+  document.getElementById('contact_js').value = pages.contact.js;
+});
+
+// ----- Autosave logic -----
+let saveTimeout;
+editor.on('component:update', () => {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    const html = editor.getHtml();
+    const css = editor.getCss();
+    fetch('/save_homepage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value,
+      },
+      body: JSON.stringify({
+        homepage_html: html,
+        homepage_css: css,
+        homepage_js: js,
+      })
+    })
+    .then(res => res.ok ? console.log("Auto-saved!") : console.error("Save failed"))
+    .catch(err => console.error("Error:", err));
+  }, 2000);
+});
+
+// Swiper auto-initializer for both .mySwiper and .myCarousel blocks AND dropdown support
+function addBlock(html) {
+  editor.addComponents(html);
+    pages[currentPageKey] = {
+        html: editor.getHtml(),
+        css: editor.getCss(),
+        js: editor.getJs()
+      };
+  setTimeout(() => {
+    // Swiper init
+    document.querySelectorAll('.mySwiper, .myCarousel').forEach(el => {
+      try {
+        if (!el._swiper) {
+          el._swiper = new Swiper(el, {
+            pagination: { el: el.querySelector('.swiper-pagination'), clickable: true },
+            navigation: {
+              nextEl: el.querySelector('.swiper-button-next'),
+              prevEl: el.querySelector('.swiper-button-prev')
+            },
+            loop: true,
+            effect: 'slide', // or 'fade'
+            autoplay: { delay: 5000 } // 5000ms = 5sec, can modify per-user!
+          });
+        }
+      } catch(e){}
+    });
+
+    // Dropdown menu support
+    document.querySelectorAll('.dropdown-nav').forEach(menu => {
+      menu.querySelectorAll('.dd-btn').forEach(btn => {
+        btn.onclick = function(event) {
+          event.stopPropagation();
+          let ddMenu = btn.parentElement.querySelector('.dropdown-menu');
+          if(ddMenu) {
+            let shown = ddMenu.style.display === 'block';
+            // Hide any other open menus in this nav
+            menu.querySelectorAll('.dropdown-menu').forEach(m => m.style.display='none');
+            ddMenu.style.display = shown ? 'none' : 'block';
+          }
+        };
+      });
+      // Only set this listener ONCE per menu to avoid duplicates
+      if (!menu._dropdownGlobalListener) {
+        menu._dropdownGlobalListener = true;
+        document.addEventListener('click', function() {
+          menu.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+        });
+      }
+    });
+  }, 0);
+}
+
+  function initDraggableBlock(btnId, html) {
+    const btn = document.getElementById(btnId);
+    if(!btn) return;
+    btn.setAttribute('draggable','true');
+    btn.addEventListener('dragstart', function(e){ e.dataTransfer.setData('text', html); });
+    btn.addEventListener('click', function(){ addBlock(html); });
+  }
+
+  // ---- All your initDraggableBlock calls go here ----
+  // Images
+  initDraggableBlock('block-img', `<img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771737549/azzvbyblcytbqtr2vxdn.jpg?text=Add+Image" style="width:100%;max-width:440px;border-radius:11px;margin:18px auto;display:block;">`);
+  initDraggableBlock('block-overlay-img', `
+    <div style="position:relative; width:360px; height:200px;">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771737549/azzvbyblcytbqtr2vxdn.jpg?text=BG+Image" style="width:100%; height:100%; border-radius:7px;">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771737549/azzvbyblcytbqtr2vxdn.jpg?text=Overlay" style="position:absolute; top:50px; left:100px; width:160px; border-radius:4px; box-shadow:0 4px 12px #0002;">
+    </div>
+  `);
+
+initDraggableBlock('block-hero', `
+  <section style="margin:0; border-radius:0; position:relative; min-height:320px; display:flex; align-items:center; justify-content:center; background:url('https://res.cloudinary.com/dmrntlcfd/image/upload/v1772082254/restaurant_2_poi2bc.jpg?auto=format&fit=crop&w=900&q=80') center/cover no-repeat; box-shadow:0 8px 32px #1a2b3d33;">
+    <div style="position:absolute;inset:0;background:rgba(34,48,69,0.56);border-radius:0;"></div>
+    <div style="position:relative;z-index:2;text-align:center;padding:61px 16px 50px 16px;max-width:99vw;">
+      <h1 style="color:#ffe25a;font-size:2.4em;font-weight:900;letter-spacing:.03em;margin-bottom:12px;text-shadow:0 2px 16px #14162e44;">Welcome to Your Modern Site!</h1>
+      <p style="color:#fff;font-size:1.22em;max-width:520px;margin:auto 0 18px 0;text-shadow:0 2px 10px #000c;">Customize your site—no gaps between elements.</p>
+    </div>
+  </section>
+`);
+
+  initDraggableBlock('block-gallery', `
+    <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; max-width:600px; margin:18px auto;">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771737549/azzvbyblcytbqtr2vxdn.jpg?text=1" style="width:180px; border-radius:8px;">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771737549/azzvbyblcytbqtr2vxdn.jpg?text=2" style="width:180px; border-radius:8px;">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771737549/azzvbyblcytbqtr2vxdn.jpg?text=3" style="width:180px; border-radius:8px;">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771737549/azzvbyblcytbqtr2vxdn.jpg?text=4" style="width:180px; border-radius:8px;">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771737549/azzvbyblcytbqtr2vxdn.jpg?text=5" style="width:180px; border-radius:8px;">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771737549/azzvbyblcytbqtr2vxdn.jpg?text=6" style="width:180px; border-radius:8px;">
+    </div>
+  `);
+initDraggableBlock('block-slider', `
+  <div class="swiper mySwiper" style="max-width:600px;margin:42px auto 38px auto;border-radius:16px;box-shadow:0 6px 24px #33445518;">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide"><img src="https://images.unsplash.com/photo-1454023492550-5696f8ff10e1?fit=crop&w=600&q=80" style="width:100%;border-radius:16px;"></div>
+      <div class="swiper-slide"><img src="https://images.unsplash.com/photo-1465101178521-c1a9136a3d37?fit=crop&w=600&q=80" style="width:100%;border-radius:16px;"></div>
+      <div class="swiper-slide"><img src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=600&q=80" style="width:100%;border-radius:16px;"></div>
+    </div>
+    <div class="swiper-pagination"></div>
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-button-next"></div>
+  </div>
+`);
+
+initDraggableBlock('block-carousel', `
+  <div class="swiper myCarousel" style="max-width:600px;margin:42px auto 38px auto;border-radius:16px;box-shadow:0 6px 24px #33445518;">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide"><img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?fit=crop&w=600&q=80" style="width:100%;border-radius:16px;"></div>
+      <div class="swiper-slide"><img src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=600&q=80" style="width:100%;border-radius:16px;"></div>
+      <div class="swiper-slide"><img src="https://images.unsplash.com/photo-1482062364825-616fd23b8fc1?fit=crop&w=600&q=80" style="width:100%;border-radius:16px;"></div>
+    </div>
+    <div class="swiper-pagination"></div>
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-button-next"></div>
+  </div>
+`);
+
+  // Layout
+initDraggableBlock('block-row-lr', `
+  <div style="display:flex;gap:22px;align-items:center;max-width:900px;margin:38px auto;flex-wrap:wrap;">
+    <img src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=400&q=80" style="width:44%;min-width:180px;border-radius:13px;">
+    <div style="flex:1;">
+      <div contenteditable="true" style="font-size:1.32em;font-weight:800;color:#21253b;outline:none;border-bottom:2px solid #5bddff;letter-spacing:.02em;">Modern Headline – Edit Me!</div>
+      <div contenteditable="true" style="margin:8px 0 0 0;font-size:1.12em;color:#314058;outline:none;min-height:36px;">
+        Add <b>bold</b>, <i>italic</i>, <u>underline</u>, change <span style="color:#db8abf;">color</span> and 
+        <a href="https://openai.com" target="_blank" style="color:#5bddff;text-decoration:underline;">editable link</a>.
+      </div>
+      <div style="margin-top:9px;">
+        <button onclick="document.execCommand('bold')" type="button" style="font-weight:bold;">B</button>
+        <button onclick="document.execCommand('italic')" type="button" style="font-style:italic;">I</button>
+        <button onclick="document.execCommand('underline')" type="button" style="text-decoration:underline;">U</button>
+        <button onclick="document.execCommand('createLink', false, prompt('Enter URL:','https://'));"
+                type="button" style="font-weight:bold;color:#098;border-radius:4px;">Link</button>
+        <button onclick="
+          var link = document.getSelection().anchorNode.parentElement;
+          if(link && link.tagName==='A'){
+            var target = prompt('Open in new tab? (yes/no)','yes');
+            link.target=target==='yes'?'_blank':'_self';
+          }
+        " type="button" style="font-weight:bold;border-radius:4px;">Set Target</button>
+        <select onchange="document.execCommand('fontName', false, this.value);">
+          <option value='Arial'>Arial</option>
+          <option value='Georgia'>Georgia</option>
+          <option value='Tahoma'>Tahoma</option>
+          <option value='Helvetica'>Helvetica</option>
+        </select>
+      </div>
+    </div>
+  </div>
+`);
+
+initDraggableBlock('block-row-rl', `
+  <div style="display:flex;gap:24px;align-items:center;max-width:900px;margin:38px auto;flex-wrap:wrap;">
+    <div style="flex:1;">
+      <div contenteditable="true" style="font-size:1.35em;font-family:Arial,Helvetica,sans-serif;font-weight:900;color:#1a3456;outline:0;margin-bottom:8px;border-bottom:2px solid #5bddff;">
+        Edit your bold headline!
+      </div>
+      <div contenteditable="true" style="font-size:1.09em;font-family:Tahoma,Verdana,sans-serif;color:#284674;min-height:35px;outline:0;">
+        Type here. <b>Bold</b>, <i>Italic</i>, <u>Underline</u>, <span style='color:#db8abf;'>Color</span>. 
+        <a href="https://example.com" target="_blank">Editable link</a>
+      </div>
+      <div style="margin-top:9px;">
+        <button onclick="document.execCommand('bold')" type="button">B</button>
+        <button onclick="document.execCommand('italic')" type="button">I</button>
+        <button onclick="document.execCommand('underline')" type="button">U</button>
+        <button onclick="document.execCommand('justifyLeft')" type="button">&#8672;</button>
+        <button onclick="document.execCommand('justifyCenter')" type="button">&#8596;</button>
+        <button onclick="document.execCommand('justifyRight')" type="button">&#8674;</button>
+        <button onclick="var url=prompt('Link:','https://');if(url)document.execCommand('createLink',false,url);" type="button">Link</button>
+        <select onchange="document.execCommand('fontName', false, this.value)">
+          <option value='Arial'>Arial</option>
+          <option value='Georgia'>Georgia</option>
+          <option value='Tahoma'>Tahoma</option>
+        </select>
+        <select onchange="document.execCommand('fontSize',false,this.value)">
+          <option value='3'>Normal</option>
+          <option value='5'>Large</option>
+          <option value='7'>Huge</option>
+        </select>
+      </div>
+    </div>
+    <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?fit=crop&w=400&q=80" style="width:44%;min-width:170px;border-radius:13px;">
+  </div>
+`);
+
+// Multi-Layer
+initDraggableBlock('block-txt-img-p', `
+  <div style="display:flex;gap:24px;align-items:center;max-width:900px;margin:38px auto;flex-wrap:wrap;">
+    <div style="flex:1;">
+      <div contenteditable="true" style="font-size:1.37em;font-family:Tahoma,Verdana,sans-serif;font-weight:900;color:#203448;outline:0;margin-bottom:8px;">Edit headline here!</div>
+      <div contenteditable="true" style="font-size:1.11em;font-family:Arial,sans-serif;color:#176d8d;min-height:35px;outline:0;">
+        Type here and <b>bold</b>, <i>italicize</i>, <u>underline</u>, <span style="color:#f75;">color</span>. 
+        <a href="https://example.com" target="_blank">Editable link</a>
+      </div>
+      <div style="margin-top:9px;">
+        <button onclick="document.execCommand('bold')" type="button">B</button>
+        <button onclick="document.execCommand('italic')" type="button">I</button>
+        <button onclick="document.execCommand('underline')" type="button">U</button>
+        <button onclick="document.execCommand('justifyLeft')" type="button">&#8672;</button>
+        <button onclick="document.execCommand('justifyCenter')" type="button">&#8596;</button>
+        <button onclick="document.execCommand('justifyRight')" type="button">&#8674;</button>
+        <button onclick="var url=prompt('Link:','https://');if(url)document.execCommand('createLink',false,url);" type="button">Link</button>
+        <select onchange="document.execCommand('fontName', false, this.value)">
+          <option value='Arial'>Arial</option>
+          <option value='Georgia'>Georgia</option>
+          <option value='Tahoma'>Tahoma</option>
+        </select>
+        <select onchange="document.execCommand('fontSize',false,this.value)">
+          <option value='3'>Normal</option>
+          <option value='5'>Large</option>
+          <option value='7'>Huge</option>
+        </select>
+      </div>
+    </div>
+    <img src="https://images.unsplash.com/photo-1482062364825-616fd23b8fc1?fit=crop&w=400&q=80" style="width:44%;min-width:180px;border-radius:13px;">
+  </div>
+`);
+
+initDraggableBlock('block-img-txt-p', `
+  <div style="display:flex;gap:24px;align-items:center;max-width:900px;margin:38px auto;flex-wrap:wrap;">
+    <img src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=400&q=80" style="width:44%;min-width:180px;border-radius:13px;">
+    <div style="flex:1;">
+      <div contenteditable="true" style="font-size:1.37em;font-family:Tahoma,Verdana,sans-serif;font-weight:900;color:#203448;outline:0;margin-bottom:8px;">Modern headline, ready to format!</div>
+      <div contenteditable="true" style="font-size:1.12em;font-family:Arial,sans-serif;color:#314058;min-height:36px;outline:0;">
+        Enter text, <b>bold</b>, <i>italic</i>, <u>underline</u>, <span style="color:#f75;">color</span>. 
+        <a href="https://example.com" target="_self">Link example</a>
+      </div>
+      <div style="margin-top:9px;">
+        <button onclick="document.execCommand('bold')" type="button">B</button>
+        <button onclick="document.execCommand('italic')" type="button">I</button>
+        <button onclick="document.execCommand('underline')" type="button">U</button>
+        <button onclick="document.execCommand('justifyLeft')" type="button">&#8672;</button>
+        <button onclick="document.execCommand('justifyCenter')" type="button">&#8596;</button>
+        <button onclick="document.execCommand('justifyRight')" type="button">&#8674;</button>
+        <button onclick="var url=prompt('Link:','https://');if(url)document.execCommand('createLink',false,url);" type="button">Link</button>
+        <select onchange="document.execCommand('fontName', false, this.value)">
+          <option value='Arial'>Arial</option>
+          <option value='Georgia'>Georgia</option>
+          <option value='Tahoma'>Tahoma</option>
+        </select>
+        <select onchange="document.execCommand('fontSize',false,this.value)">
+          <option value='3'>Normal</option>
+          <option value='5'>Large</option>
+          <option value='7'>Huge</option>
+        </select>
+      </div>
+    </div>
+  </div>
+`);
+
+// Products
+initDraggableBlock('block-product-single', `
+  <div style="background:#fff;border-radius:15px;box-shadow:0 4px 24px #b3e5ff24;max-width:330px;margin:24px auto;padding:24px 18px;">
+    <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?fit=crop&w=320&q=80"
+         style="width:100%;border-radius:12px;margin-bottom:19px;box-shadow:0 3px 14px #ffe25a18;">
+    <div contenteditable="true" style="font-weight:900;font-size:1.29em;font-family:Segoe UI,Tahoma,sans-serif;color:#18306a;margin-bottom:5px;outline:0;text-align:center;">
+      Product Name Here
+    </div>
+    <div contenteditable="true" style="font-size:1.06em;font-family:Arial,Helvetica,sans-serif;color:#426;font-weight:600;outline:0;min-height:32px;text-align:center;margin-bottom:8px;">
+      Product description goes here. Add <b>bold</b>, <u>underline</u>, color <span style="color:#5bddff;">text</span>.
+    </div>
+    <div style="text-align:center;font-size:1.17em;font-weight:800;margin-bottom:7px;color:#32c988;">
+      <span contenteditable="true" style="outline:0;cursor:text;">$24.99</span>
+    </div>
+    <div style="text-align:center;font-size:0.98em;margin-bottom:10px;color:#808c97;">
+      In Stock: <span contenteditable="true" style="outline:0;cursor:text;">20</span>
+    </div>
+    <div style="text-align:center;margin-top:15px;">
+      <button style="background:linear-gradient(90deg,#2ce5ee,#5bddff 80%);color:#111;font-weight:800;font-size:1.12em;padding:13px 38px;border:none;border-radius:9px;box-shadow:0 3px 10px #5bddff22;letter-spacing:.01em;cursor:pointer;transition:.2s;">
+        Add to Cart
+      </button>
+    </div>
+    <div style="margin:13px 0 0 0;text-align:center;">
+      <button onclick="document.execCommand('bold')" type="button" style="font-weight:bold;">B</button>
+      <button onclick="document.execCommand('italic')" type="button">I</button>
+      <button onclick="document.execCommand('underline')" type="button">U</button>
+      <button onclick="document.execCommand('justifyCenter')" type="button">&#8596;</button>
+      <button onclick="var url=prompt('Link:','https://');if(url)document.execCommand('createLink',false,url);" type="button">Link</button>
+      <select onchange="document.execCommand('fontName', false, this.value)">
+        <option value='Arial'>Arial</option>
+        <option value='Georgia'>Georgia</option>
+        <option value='Tahoma'>Tahoma</option>
+      </select>
+      <select onchange="document.execCommand('fontSize',false,this.value)">
+        <option value='3'>Normal</option>
+        <option value='5'>Large</option>
+        <option value='7'>Huge</option>
+      </select>
+    </div>
+  </div>
+`);
+
+initDraggableBlock('block-product-multi', `
+  <div style="display:flex;flex-wrap:wrap;gap:28px;justify-content:center;margin:24px 0;">
+    <div style="background:#fff;border-radius:15px;box-shadow:0 4px 24px #b3e5ff24;max-width:300px;padding:22px 15px;">
+      <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?fit=crop&w=300&q=80"
+           style="width:100%;border-radius:12px;margin-bottom:13px;box-shadow:0 3px 14px #ffe25a18;">
+      <div contenteditable="true" style="font-weight:800;font-size:1.22em;font-family:Segoe UI,Tahoma,sans-serif;color:#18306a;margin-bottom:4px;outline:0;text-align:center;">
+        Product 1
+      </div>
+      <div contenteditable="true" style="font-size:1.04em;font-family:Arial,Helvetica,sans-serif;color:#426;font-weight:600;outline:0;min-height:28px;text-align:center;margin-bottom:7px;">
+        Description. <span style="color:#db8abf;">Colorful</span>, <b>bold</b>, <u>underline</u>.
+      </div>
+      <div style="text-align:center;font-size:1.13em;font-weight:800;margin-bottom:7px;color:#32c988;">
+        <span contenteditable="true" style="outline:0;cursor:text;">$19.95</span>
+      </div>
+      <div style="text-align:center;font-size:0.97em;margin-bottom:8px;color:#808c97;">
+        In Stock: <span contenteditable="true" style="outline:0;cursor:text;">12</span>
+      </div>
+      <div style="text-align:center;margin-top:13px;">
+        <button style="background:linear-gradient(90deg,#2ce5ee,#5bddff 80%);color:#111;font-weight:800;font-size:1.07em;padding:10px 26px;border:none;border-radius:8px;box-shadow:0 2px 8px #5bddff22;letter-spacing:.01em;cursor:pointer;transition:.19s;">
+          Add to Cart
+        </button>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:15px;box-shadow:0 4px 24px #db8abf22;max-width:300px;padding:22px 15px;">
+      <img src="https://images.unsplash.com/photo-1482062364825-616fd23b8fc1?fit=crop&w=300&q=80"
+           style="width:100%;border-radius:12px;margin-bottom:13px;box-shadow:0 3px 14px #ffe25a18;">
+      <div contenteditable="true" style="font-weight:800;font-size:1.22em;font-family:Georgia,serif;color:#942ea8;margin-bottom:4px;outline:0;text-align:center;">
+        Product 2
+      </div>
+      <div contenteditable="true" style="font-size:1.04em;font-family:Tahoma,Verdana,sans-serif;color:#316d6f;font-weight:600;outline:0;min-height:28px;text-align:center;margin-bottom:7px;">
+        Edit this. <span style="color:#5bddff;">Bright</span>, <b>bold</b>, <i>italic</i>.
+      </div>
+      <div style="text-align:center;font-size:1.13em;font-weight:800;margin-bottom:7px;color:#db8abf;">
+        <span contenteditable="true" style="outline:0;cursor:text;">$31.00</span>
+      </div>
+      <div style="text-align:center;font-size:0.97em;margin-bottom:8px;color:#808c97;">
+        In Stock: <span contenteditable="true" style="outline:0;cursor:text;">9</span>
+      </div>
+      <div style="text-align:center;margin-top:13px;">
+        <button style="background:linear-gradient(90deg,#db8abf,#ffe25a 95%);color:#234;font-weight:800;font-size:1.07em;padding:10px 26px;border:none;border-radius:8px;box-shadow:0 2px 8px #db8abf22;letter-spacing:.01em;cursor:pointer;transition:.19s;">
+          Add to Cart
+        </button>
+      </div>
+    </div>
+  </div>
+`);
+
+// Text
+initDraggableBlock('block-btn', `
+  <div style="max-width:780px;margin:36px auto;text-align:center;">
+    <div id="editable-headline" contenteditable="true" style="font-size:1.55em;font-family:Georgia,serif;font-weight:900;color:#2a1755;padding:15px 0;outline:none;border-bottom:3px solid #5bddff;cursor:text;">
+      Click and type your bold headline here!
+    </div>
+  </div>
+`);
+
+initDraggableBlock('block-paragraph', `
+  <div style="max-width:800px;margin:36px auto;padding:28px 18px 18px 18px;box-shadow:0 1px 8px #e9f2fb44;border-radius:12px;background:#f8fcff;">
+    <div contenteditable="true" style="min-height:44px;font-size:1.13em;font-family:Tahoma,Verdana,sans-serif;color:#234;font-weight:600;outline:none;line-height:1.54;">
+      Type your text here. Highlight to <b>bold</b>, <u>underline</u>, <span style="color:#2ce5ee;">color</span>, or <a href="https://example.com" target="_blank">link</a>.
+    </div>
+    <div style="margin-top:12px;">
+      <button onclick="document.execCommand('bold')" type="button">B</button>
+      <button onclick="document.execCommand('italic')" type="button">I</button>
+      <button onclick="document.execCommand('underline')" type="button">U</button>
+      <button onclick="document.execCommand('justifyLeft')" type="button">&#8672;</button>
+      <button onclick="document.execCommand('justifyCenter')" type="button">&#8596;</button>
+      <button onclick="document.execCommand('justifyRight')" type="button">&#8674;</button>
+      <button onclick="var url=prompt('Link:','https://');if(url)document.execCommand('createLink',false,url);" type="button">Link</button>
+      <select onchange="document.execCommand('fontName', false, this.value)">
+        <option value='Arial'>Arial</option>
+        <option value='Georgia'>Georgia</option>
+        <option value='Tahoma'>Tahoma</option>
+      </select>
+      <select onchange="document.execCommand('fontSize',false,this.value)">
+        <option value='3'>Normal</option>
+        <option value='5'>Large</option>
+        <option value='7'>Huge</option>
+      </select>
+    </div>
+  </div>
+`);
+
+initDraggableBlock('block-about', `
+  <section style="max-width:710px;margin:42px auto;background:#f7fcfc;border-radius:17px;box-shadow:0 8px 32px #ddd9ffe8;padding:38px 22px;">
+    <h2 contenteditable="true" style="font-size:2em;font-weight:900;font-family:Georgia,serif;margin-bottom:13px;color:#1a3a77;outline:0;">
+      Edit About Us Headline
+    </h2>
+    <div contenteditable="true" style="min-height:46px;font-size:1.13em;font-family:Tahoma,Verdana,sans-serif;color:#2b3952;outline:0;line-height:1.44;">
+      Add your company story. <b>Bold.</b> <u>Underline.</u> <i>Italic.</i> <span style="color:#dc74c6;">Colors</span>.
+      <a href="https://example.com" target="_blank">Editable link</a>
+    </div>
+    <div style="margin-top:12px;">
+      <button onclick="document.execCommand('bold')" type="button">B</button>
+      <button onclick="document.execCommand('italic')" type="button">I</button>
+      <button onclick="document.execCommand('underline')" type="button">U</button>
+      <button onclick="document.execCommand('justifyLeft')" type="button">&#8672;</button>
+      <button onclick="document.execCommand('justifyCenter')" type="button">&#8596;</button>
+      <button onclick="document.execCommand('justifyRight')" type="button">&#8674;</button>
+      <button onclick="var url=prompt('Link:','https://');if(url)document.execCommand('createLink',false,url);" type="button">Link</button>
+      <select onchange="document.execCommand('fontName', false, this.value)">
+        <option value='Arial'>Arial</option>
+        <option value='Georgia'>Georgia</option>
+        <option value='Tahoma'>Tahoma</option>
+      </select>
+      <select onchange="document.execCommand('fontSize',false,this.value)">
+        <option value='3'>Normal</option>
+        <option value='5'>Large</option>
+        <option value='7'>Huge</option>
+      </select>
+    </div>
+  </section>
+`);
+
+// Header/Footer
+initDraggableBlock('block-header-main', `
+  <header style="background:#21253b;display:flex;align-items:center;justify-content:space-between;padding:18px 30px;border-radius:15px;margin:24px 0 8px 0;box-shadow:0 3px 16px #1122cc22;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:0px;">
+      <img src="{{ business.profile_photo or 'https://via.placeholder.com/60?text=Logo' }}" style="width:60px;height:60px;object-fit:cover;border-radius:0px;border:3px solid #ffe25a;box-shadow:0 2px 10px #ffe25a44;">
+      <span style="font-size:1.63em;font-weight:800;color:#ffe25a;text-shadow:0 3px 9px #33448866;">{{ business.name }}</span>
+    </div>
+    <nav style="display:flex;gap:29px;flex-wrap:wrap;">
+      <a href="#" style="color:#5bddff;font-size:1.13em;font-weight:700;text-decoration:none;transition:.2s;">Home</a>
+      <a href="#" style="color:#ffe25a;font-size:1.13em;font-weight:700;text-decoration:none;transition:.2s;">Products</a>
+      <a href="#" style="color:#db8abf;font-size:1.13em;font-weight:700;text-decoration:none;transition:.2s;">Contact</a>
+    </nav>
+  </header>
+`);
+
+initDraggableBlock('block-footer-main', `
+  <footer style="background:#18306a;color:#b7e5ff;padding:32px 19px;margin-top:38px;border-radius:15px;box-shadow:0 2px 12px #21253b22;">
+    <div style="font-size:1.12em;font-weight:800;margin-bottom:10px;">{{ business.name }}</div>
+    <div style="margin-bottom:5px;">
+      <strong>Address:</strong> {{ business.address }}<br>
+      <strong>Phone:</strong> {{ business.phone }}<br>
+      <strong>Email:</strong> <a href="mailto:{{ business.email }}" style="color:#ffe25a;text-decoration:underline;">{{ business.email }}</a><br>
+      <strong>Website:</strong> <a href="{{ business.website_url }}" style="color:#5bddff;text-decoration:underline;">{{ business.website_url }}</a>
+    </div>
+    <div style="font-size:0.97em;margin-top:14px;">
+      &copy; 2026 {{ business.name }}. All rights reserved.
+    </div>
+  </footer>
+`);
+
+// Menu
+initDraggableBlock('block-dropdown-menu', `
+  <nav class="dropdown-nav" style="display:flex;align-items:center;justify-content:center;background:#21253B;border-radius:10px;padding:14px 28px;margin:26px auto;max-width:650px;box-shadow:0 2px 18px #1a2b3d22;">
+    <a href="#" contenteditable="true" style="color:#fff;font-weight:700;font-size:1.08em;margin-right:26px;text-decoration:none;">Home</a>
+    <div class="dropdown" style="position:relative;display:inline-block;">
+      <button class="dd-btn" style="background:#355098;color:#ffe25a;border:none;padding:8px 22px 8px 15px;border-radius:8px;font-weight:700;font-size:1.02em;cursor:pointer;outline:none;box-shadow:0 3px 12px #25336518;">
+        Products <span style="margin-left:7px;font-size:95%;">▼</span>
+      </button>
+      <div class="dropdown-menu" style="display:none;position:absolute;left:0;top:110%;background:#fff;border-radius:8px;box-shadow:0 2px 18px #20335522;min-width:166px;z-index:30;padding:8px 0;">
+        <a href="https://example.com/featured" target="_blank" contenteditable="true" title="Double-click to rename. Right-click to set link/target." style="display:block;padding:12px 19px;color:#235;text-decoration:none;">Featured</a>
+        <a href="#basket" target="_self" contenteditable="true" title="Double-click to rename. Right-click to set link/target." style="display:block;padding:12px 19px;color:#235;text-decoration:none;">Basket</a>
+        <a href="#sale" target="_blank" contenteditable="true" title="Double-click to rename. Right-click to set link/target." style="display:block;padding:12px 19px;color:#235;text-decoration:none;">Sale</a>
+      </div>
+    </div>
+    <a href="#" contenteditable="true" style="color:#ffe25a;font-weight:700;font-size:1.07em;margin-left:26px;text-decoration:none;">Contact</a>
+    <div style="display:block;width:0;height:0;overflow:hidden;">
+      <small>Tip: Double-click links to rename. Right-click a link to edit URL/target.</small>
+    </div>
+  </nav>
+`);
+
+initDraggableBlock('block-menu-text', `
+  <nav style="display:flex;gap:30px;justify-content:center;align-items:center;margin:26px auto 18px auto;max-width:740px;background:#21253b;padding:15px 0;border-radius:12px;box-shadow:0 3px 14px #16234516;">
+    <a href="#" style="color:#ffe25a;font-weight:800;font-size:1.15em;text-decoration:none;letter-spacing:.01em;transition:.17s;">Home</a>
+    <a href="#" style="color:#5bddff;font-weight:800;font-size:1.15em;text-decoration:none;letter-spacing:.01em;transition:.17s;">Products</a>
+    <a href="#" style="color:#db8abf;font-weight:800;font-size:1.15em;text-decoration:none;letter-spacing:.01em;transition:.17s;">Contact</a>
+  </nav>
+`);
+
+initDraggableBlock('block-menu-buttons', `
+  <nav style="display:flex;gap:22px;justify-content:center;align-items:center;margin:26px auto 18px auto;max-width:720px;background:transparent;padding:7px 0;">
+    <a href="#" style="background:#21253b;color:#ffe25a;border:none;padding:11px 28px;border-radius:9px;font-weight:800;font-size:1.09em;box-shadow:0 1px 6px #1a345644;margin:0 2px;text-decoration:none;transition:.17s;">Home</a>
+    <a href="#" style="background:#355098;color:#5bddff;border:none;padding:11px 28px;border-radius:9px;font-weight:800;font-size:1.09em;box-shadow:0 1px 6px #1a345633;margin:0 2px;text-decoration:none;transition:.17s;">Products</a>
+    <a href="#" style="background:#db8abf;color:#fff;border:none;padding:11px 28px;border-radius:9px;font-weight:800;font-size:1.09em;box-shadow:0 1px 6px #733a7a22;margin:0 2px;text-decoration:none;transition:.17s;">Contact</a>
+  </nav>
+`);
+
+// Customization
+
+initDraggableBlock('block-embed-script', `
+  <div contenteditable="true" style="border:2px dashed #ffe25a;min-height:32px;padding:9px;background:#fff7e8;">
+    <!-- Paste YouTube, Google Maps or other trusted EMBED codes (iframe etc.) here. -->
+    &lt;iframe src="https://www.youtube.com/embed/xyz..." width="320" height="180" allowfullscreen&gt;&lt;/iframe&gt;
+  </div>
+`);
+
+initDraggableBlock('block-custom-html', `
+  <div contenteditable="true" style="min-height:40px;padding:12px;border:2px dashed #5dd3ea;background:#fafdff;font-family:monospace;">
+    &lt;iframe src="https://www.youtube.com/embed/xyz..." width="320" height="180" allowfullscreen&gt;&lt;/iframe&gt;
+  </div>
+`);
+
+// Contact
+initDraggableBlock('block-contact-form', `
+  <form style="max-width:420px;margin:40px auto;background:#f7fcff;padding:34px 24px 28px 24px;border-radius:16px;box-shadow:0 4px 24px #1a295f18;">
+    <h2 style="font-weight:900;font-size:2.2em;color:#1a3456;line-height:1;margin-bottom:19px;letter-spacing:.012em;">Get in Touch</h2>
+    <div style="margin-bottom:17px;">
+      <input class="form-control" style="padding:13px 14px;font-size:1.13em;border-radius:9px;border:2px solid #c2e7ff;background:#fff;" placeholder="Your Name">
+    </div>
+    <div style="margin-bottom:17px;">
+      <input class="form-control" type="email" style="padding:13px 14px;font-size:1.13em;border-radius:9px;border:2px solid #c2e7ff;background:#fff;" placeholder="Your Email">
+    </div>
+    <div style="margin-bottom:21px;">
+      <textarea class="form-control" style="padding:15px 14px;font-size:1.11em;border-radius:9px;border:2px solid #e4faff;min-height:100px;resize:vertical;background:#fff;" placeholder="Type your message here"></textarea>
+    </div>
+    <button type="submit" class="btn" style="background:#21253b;color:#ffe25a;font-weight:800;font-size:1.13em;border-radius:9px;width:100%;padding:14px 0;box-shadow:0 3px 16px #1122cc15;">Send Message</button>
+  </form>
+`);
+
+initDraggableBlock('block-about-details', `
+  <section style="background:#fafdff;border-radius:15px;box-shadow:0 4px 16px #92cbfa21;padding:36px 26px;max-width:590px;margin:42px auto;">
+    <div style="text-align:center;">
+      <img src="{{ business.profile_photo or 'https://via.placeholder.com/90?text=Logo' }}" style="width:82px;height:82px;object-fit:cover;border-radius:50%;margin-bottom:13px;border:4px solid #ddeafc;">
+      <h1 style="font-size:2.1em;font-weight:900;color:#2b447d;margin-bottom:7px;">{{ business.name }}</h1>
+      <div style="color:#578ad9;font-size:1.19em;font-weight:600;">About Us</div>
+    </div>
+    <div style="margin:29px 0 17px 0;padding:24px 17px;background:#e4faff;border-radius:11px;">
+      <div style="font-size:1.05em;color:#25334d;margin-bottom:7px;"><b>Email:</b> {{ business.email }}</div>
+      <div style="font-size:1.05em;color:#25334d;margin-bottom:7px;"><b>Address:</b> {{ business.address }}</div>
+      <div style="font-size:1.05em;color:#25334d;margin-bottom:7px;"><b>Phone:</b> {{ business.phone }}</div>
+      <div style="font-size:1.05em;color:#25334d;margin-bottom:7px;"><b>Website:</b> <a href="{{ business.website_url }}" style="color:#4388e4;">{{ business.website_url }}</a></div>
+      <div style="font-size:1.05em;color:#25334d;"><b>Hours:</b> {{ business.hours_of_operation }}</div>
+    </div>
+    <div style="margin-bottom:13px;">
+      <h3 style="font-size:1.2em;font-weight:800;color:#21253b;margin-bottom:7px;">Our Services</h3>
+      <div style="color:#164d58;font-size:1.08em;line-height:1.5;">{{ business.services or 'Custom services content goes here.' }}</div>
+    </div>
+    <div style="background:#dbeeff;border-radius:10px;padding:11px 16px;text-align:center;color:#21506a;font-weight:500;margin-top:19px;">
+      <span style="font-size:1.09em;">More details? <a href="mailto:{{ business.email }}" style="color:#355098;text-decoration:underline;">Email us</a></span>
+    </div>
+  </section>
+`);
+
+// Map
+initDraggableBlock('block-map-small', `
+  <div style="width:100%;max-width:430px;margin:18px auto;">
+    <iframe width="100%" height="180" style="border-radius:11px;border:0"
+      src="https://maps.google.com/maps?q={{ business.latitude }},{{ business.longitude }}&t=&z=14&ie=UTF8&iwloc=&output=embed"
+      allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+`);
+initDraggableBlock('block-map-large', `
+  <div style="width:100%;max-width:780px;margin:22px auto;">
+    <iframe width="100%" height="340" style="border-radius:17px;border:0"
+      src="https://maps.google.com/maps?q={{ business.latitude }},{{ business.longitude }}&t=&z=12&ie=UTF8&iwloc=&output=embed"
+      allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+`);
+
+document.getElementById('save-html-form').addEventListener('submit', function(e){
+  pages[currentPageKey] = {
+    html: editor.getHtml(),
+    css: editor.getCss()
+  };
+  document.getElementById('page_html').value = pages[currentPageKey].html;
+  document.getElementById('page_css').value = pages[currentPageKey].css;
+  document.getElementById('current_page').value = currentPageKey;
+});
+
+  loadPage('home');
+</script>
+<script>
+function openThemePreview(themeId) {
+  const data = previewThemes[themeId];
+  if (!data) {
+    alert('No preview available.');
+    return;
+  }
+  const previewWin = window.open('', '_blank', 'width=900,height=800');
+  const html = `
+    <html>
+      <head>
+        <title>Theme Preview</title>
+        <style id="active-css">${data.home_css || ""}</style>
+      </head>
+      <body style="margin:0; font-family:sans-serif; background:#f9f9fb;">
+        <nav style="margin-bottom:1em;background:#eee;padding:.5em;">
+          <button onclick="setPage('home')">Home</button>
+          <button onclick="setPage('products')">Products</button>
+          <button onclick="setPage('contact')">Contact</button>
+        </nav>
+        <div id="active-page" style="padding:1em;">${data.home || ""}</div>
+        <script>
+          // All preview content passed in from Flask already!
+          const pages = {
+            home: {html: \`${data.home}\`, css: \`${data.home_css}\`, js: \`${data.home_js}\`},
+            products: {html: \`${data.products}\`, css: \`${data.products_css}\`, js: \`${data.products_js}\`},
+            contact: {html: \`${data.contact}\`, css: \`${data.contact_css}\`, js: \`${data.contact_js}\`}
+          };
+          function setPage(page) {
+            document.getElementById('active-page').innerHTML = pages[page].html;
+            document.getElementById('active-css').textContent = pages[page].css;
+            // Remove previous scripts:
+            document.querySelectorAll('.theme-js').forEach(s => s.remove());
+            if (pages[page].js) {
+              const script = document.createElement('script');
+              script.className = 'theme-js';
+              script.type = 'text/javascript';
+              script.text = pages[page].js;
+              document.body.appendChild(script);
+            }
+          }
+          // Run JS for home page on open:
+          if (pages.home.js) {
+            const script = document.createElement('script');
+            script.className = 'theme-js';
+            script.type = 'text/javascript';
+            script.text = pages.home.js;
+            document.body.appendChild(script);
+          }
+        <\/script>
+      </body>
+    </html>
+  `;
+  previewWin.document.open();
+  previewWin.document.write(html);
+  previewWin.document.close();
+}
+</script>

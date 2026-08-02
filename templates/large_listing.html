@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ business.business_name }} - Details</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+    :root {
+        --pm-primary: #2a5859;
+        --pm-accent: #ffd66b;
+        --pm-bg: #f3f8fa;
+        --pm-card: #ffffff;
+    }
+    body { background: var(--pm-bg);}
+    .main-card {
+        background: var(--pm-card);
+        border-radius: 22px;
+        box-shadow: 0 6px 32px #d8eef2;
+        padding: 2.2rem 1.7rem 2rem 1.7rem;
+        margin: 2rem auto 2.5rem auto;
+        max-width: 630px;
+    }
+    .listing-pic-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    .large-profile-pic {
+        width: 300px;
+        height: 300px;
+        border-radius: 16px;
+        box-shadow: 0 3px 18px #e4ebef;
+        object-fit: cover;
+        background: #f4f9fa;
+        border: 2.5px solid var(--pm-accent, #ffd66b);
+        margin-bottom: 1.1rem;
+        margin-top: .35rem;
+        display: block;
+    }
+    .distance-badge {
+        margin-bottom: 8px;
+        display: block;
+    }
+    .btn-set-top { margin-right: 1.1rem; }
+    .listing-btn-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.56rem;
+        margin-bottom: 1.9rem;
+        margin-top: .58rem;
+    }
+    .btn-action {
+        min-width: 164px;
+        font-weight: 500;
+        white-space: normal;
+        border-radius: 17px;
+        box-shadow: 0 1px 7px #e9f6f6;
+        transition: box-shadow .17s;
+    }
+    .listing-title {
+        font-size: 2.1em;
+        font-weight: 800;
+        margin-bottom: 0.45rem;
+        text-align: center;
+        color: var(--pm-primary);
+    }
+    .biz-category-badge {
+        font-size:1em;
+        font-weight:500;
+        border-radius:16px;
+        padding:6px 16px;
+        background: #e6f6f5;
+        color: var(--pm-primary);
+        display:inline-block;
+        margin-bottom: 9px;
+    }
+    .biz-finalization-badge {
+        font-size:1em;
+        font-weight:500;
+        border-radius:16px;
+        padding:6px 16px;
+        background: #b59e5f;
+        color: var(--pm-primary);
+        display:inline-block;
+        margin-bottom: 9px;
+    }
+    .main-info {
+        background: #f8fbfc;
+        border-radius: 13px;
+        padding: 1.17rem 1.3rem .69rem 1.3rem;
+        margin-bottom: 1.25rem;
+        font-size: 1.09em;
+    }
+    .main-info-row {
+        margin-bottom: .56rem;
+        display:flex;
+        align-items:center;
+        gap:8px;
+        color: #314655;
+        font-weight:500;
+    }
+    .main-info-row i { color: var(--pm-accent); font-size:1.15em; }
+    .about-block {
+        background: #f4f5fb;
+        border-radius: 10px;
+        padding: 1.05rem 1.06rem;
+        margin-bottom: 1.18rem;
+        min-height: 58px;
+        font-size: 1.05em;
+        color: #374759;
+    }
+
+    .main-info-row i { color: var(--pm-accent); font-size:1.15em; }
+    .perks-block {
+        background: #feebe7;
+        border-radius: 10px;
+        padding: 1.05rem 1.06rem;
+        margin-bottom: 1.18rem;
+        min-height: 58px;
+        font-size: 1.05em;
+        color: #374759;
+    }
+
+
+    .main-info-row i { color: var(--pm-accent); font-size:1.15em; }
+    .hours-block {
+        background: #f4f5fb;
+        border-radius: 10px;
+        padding: 1.05rem 1.06rem;
+        margin-bottom: 1.18rem;
+        min-height: 58px;
+        font-size: 1.05em;
+        color: #374759;
+    }
+
+    .service-list-label {
+        font-weight:700;
+        color: var(--pm-primary);
+        margin-bottom:6px;
+        font-size:1.07em;
+    }
+    .service-list {
+        background: #f7faf8;
+        border-radius: 9px;
+        padding: .8rem 1.02rem .65rem 1.1rem;
+        margin-bottom: 1.18rem;
+        margin-top: 0;
+        font-size:1em;
+        box-shadow:0 1px 4px #eee;
+    }
+    .service-list li { margin-bottom: 5px; }
+    .map-wrap {
+        width:100%;
+        height:242px;
+        border-radius:14px;
+        overflow:hidden;
+        margin-bottom: 1.12rem;
+        background:#fafcff;
+        box-shadow: 0 2px 8px #e7eceb;
+    }
+    .map-link-btn {
+        border-radius:14px;
+        padding:.42rem 1.1rem;
+    }
+    @media (max-width: 700px) {
+      .main-card { padding: 1.2rem 0.6rem;}
+      .large-profile-pic { width: 170px; height: 170px;}
+      .map-wrap { height: 125px;}
+    }
+    @media (max-width: 425px) {
+      .main-card {max-width: 98vw; padding: 1rem 2px;}
+      .listing-title {font-size:1.25em;}
+    }
+    </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="main-card">
+    <div class="listing-pic-wrap">
+      {% if business.profile_photo %}
+        <img src="{{ business.profile_photo }}" alt="Logo" class="large-profile-pic">
+      {% else %}
+        <div class="large-profile-pic d-flex align-items-center justify-content-center bg-light border">
+          <i class="bi bi-buildings" style="font-size:4em; color:#bbb;"></i>
+        </div>
+      {% endif %}
+      {% if business.distance_mi is defined and business.distance_mi is not none %}
+        <span class="badge bg-light text-dark distance-badge" style="font-size:1.1em;">
+          <i class="bi bi-geo-alt" style="color:#2a5859;"></i>
+          {{ business.distance_mi|round(2) }} mi away
+        </span>
+      {% endif %}
+      <h2 class="listing-title">{{ business.business_name }}</h2>
+      <span class="biz-category-badge mb-2">{{ business.category }}</span>
+      <span class="biz-finalization-badge mb-2">Finalization: {{ business.finalization }}</span>
+    </div>
+    <!-- BUTTONS AT THE TOP -->
+<div class="listing-btn-row mb-0">
+  {% if request.args.get('from_featured') %}
+    <a href="{{ url_for('home') }}#featured" class="btn btn-secondary btn-action btn-set-top">
+      &larr; Back to featured
+    </a>
+  {% else %}
+<a href="{{ url_for('search', 
+    q=request.args.get('q', ''), 
+    distance=request.args.get('distance', ''), 
+    lat=request.args.get('lat', ''), 
+    lng=request.args.get('lng', '')
+  ) }}"
+  class="btn btn-secondary btn-action btn-set-top">
+  &larr; Back to results
+</a>
+
+<form action="{{ url_for('add_favorite', business_id=business.id) }}" method="post" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if not business in current_user.favorites|map(attribute='business')|list %}
+    <button class="btn btn-outline-primary">Add to Favorites</button>
+  {% else %}
+    <button formaction="{{ url_for('remove_favorite', business_id=business.id) }}" class="btn btn-warning">Remove from Favorites</button>
+  {% endif %}
+</form>
+
+  {% endif %}
+  <a href="{{ url_for('start_purchase', biz_id=business.id) }}" class="btn btn-success btn-action btn-set-top">
+    Show My QR
+  </a>
+  <a href="{{ url_for('service_request', biz_id=business.id) }}" class="btn btn-primary btn-action btn-set-top">
+    Request Service
+  </a>
+
+</div>
+    <div class="main-info mt-2">
+      <div class="main-info-row">
+        <i class="bi bi-pin-map"></i>
+        <span><strong>Address:</strong> {{ business.address or '-' }}</span>
+      </div>
+      <div class="main-info-row">
+        <i class="bi bi-telephone"></i>
+        <span><strong>Phone:</strong> {{ business.phone_number or '-' }}</span>
+      </div>
+      <div class="main-info-row">
+        <i class="bi bi-envelope"></i>
+        <span><strong>Email:</strong> {{ business.business_email or '-' }}</span>
+      </div>
+      <div class="main-info-row">
+        <i class="bi bi-globe"></i>
+        <strong>Website:</strong>&nbsp;
+        {% if business.website_url %}
+          <a href="{{ business.website_url }}" target="_blank" rel="noopener">{{ business.website_url }}</a>
+        {% else %} - {% endif %}
+      </div>
+    </div>
+
+      <div class="about-block">
+      <strong>About Us:</strong><br>
+      {{ business.about_us or '—' }}
+      </div>
+
+      <div class="perks-block">
+        <b>Perks Offered:</b><br>
+        {{ business.perks or '—' }}       <!-- large_listing.html -->
+      </div>
+
+    <div class="hours-block">
+      <strong>Hours of Operation:</strong><br>
+      {{ business.hours_of_operation or '—' }}
+    </div>
+
+    <div>
+      <div class="service-list-label">Products or Services Offered:</div>
+      <ul class="service-list">
+        {% set services = [business.service_1, business.service_2, business.service_3, business.service_4, business.service_5, business.service_6, business.service_7, business.service_8, business.service_9, business.service_10] %}
+        {% set shown = false %}
+        {% for s in services %}{% if s %}
+          <li>{{ s }}</li>
+          {% set shown = true %}
+        {% endif %}{% endfor %}
+        {% if not shown %}
+          <li>N/A</li>
+        {% endif %}
+      </ul>
+    </div>
+    <div>
+      <strong>Location Map:</strong>
+      {% if business.latitude and business.longitude %}
+        <div class="map-wrap">
+          <iframe
+                width="100%" height="100%" style="border:0"
+                loading="lazy" allowfullscreen
+                referrerpolicy="no-referrer-when-downgrade"
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDo-AojTUQUwwvvywrSiDRcF-oVpw9m_w4
+                &q={{ business.latitude }},{{ business.longitude }}">
+          </iframe>
+        </div>
+        <div class="mt-2 mb-3">
+          <a id="directions-link"
+             class="btn btn-outline-primary map-link-btn"
+             target="_blank"
+             href="https://www.google.com/maps/dir/?api=1&destination={{ business.latitude }},{{ business.longitude }}">
+            Driving directions
+          </a>
+        </div>
+      {% else %}
+        <div class="text-muted">Map unavailable</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

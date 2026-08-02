@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>News | PerkMiner</title>
+  <style>
+    :root {
+      --accent: #1769aa;
+      --text: #222;
+      --bg: #fff;
+      --radius: 8px;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: var(--accent);
+      color: #fff;
+      padding: 1rem 0.5rem;
+      text-align: center;
+    }
+    main {
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.7em;
+    }
+    .news-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .news-list li {
+      background: #f2f7fa;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-radius: var(--radius);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.035);
+      transition: box-shadow 0.2s;
+    }
+    .news-list li:hover {
+      box-shadow: 0 4px 12px rgba(23,105,170,0.13);
+    }
+    .news-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.12em;
+    }
+    .news-date {
+      font-size: 0.95em;
+      color: #777;
+      display: inline-block;
+      margin-top: 0.3em;
+    }
+    @media (max-width: 700px) {
+      main {
+        margin: 1rem 0.5rem;
+        padding: 0.7rem;
+      }
+    }
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.4rem;
+      }
+      .news-list li {
+        padding: 0.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PerkMiner News</h1>
+    <p>What’s new, featured, and upcoming</p>
+  </header>
+  <main>
+    <a href="/" class="nav">&larr; Back to Home</a>
+    <ul class="news-list">
+      <li>
+        <a href="/press-release" class="news-link">Official Press Release</a>
+        <div class="news-date">July 1, 2026</div>
+      </li>
+      <li>
+        <a href="/new-featured-businesses" class="news-link">PerkMiner Welcomes Newest Featured Businesses</a>
+        <div class="news-date">July 1, 2026</div>
+      </li>
+      <!-- Add more news items as needed -->
+    </ul>
+  </main>
+</body>
+</html>

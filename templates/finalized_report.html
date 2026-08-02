@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Finalized Transactions Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container py-4">
+    <div class="card p-4 shadow">
+      <h4>Finalized Transactions</h4>
+      <table class="table table-striped align-middle mt-3">
+        <thead>
+          <tr>
+            <th>Date/Time</th>
+            <th>Staff</th>
+            <th>Source</th>
+            <th>Amount ($)</th>
+            <th>Transaction ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td>{{ log.timestamp.strftime('%Y-%m-%d %I:%M %p') }}</td>
+            <td>{{ staff_lookup[log.staff_id].email if log.staff_id else "–" }}</td>
+            <td>{{ log.source|capitalize }}</td>
+            <td>{{ "{:,.2f}".format(log.amount or 0.0) }}</td>
+            <td>{{ log.tx_id }}</td>
+          </tr>
+          {% endfor %}
+          {% if not logs %}
+          <tr>
+            <td colspan="5" class="text-center">No finalized transactions found.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+      <!-- Optional: add date range filters or export CSV button here -->
+    </div>
+  </div>
+</body>
+</html>

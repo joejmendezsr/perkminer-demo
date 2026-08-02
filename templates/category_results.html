@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ category }} Businesses - PerkMiner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+      :root {
+        --pm-primary: #2a5859;
+        --pm-accent: #ffd66b;
+        --pm-bg: #fff;
+        --pm-text: #222;
+        --pm-hover: #e6f6f5;
+      }
+      body { background: var(--pm-bg); color: var(--pm-text);}
+      .navbar { box-shadow: 0 2px 8px #f0f2f3;}
+
+      /* Modern listing card - image on top */
+      .small-listing-modern {
+        border: 1px solid #d9ece7;
+        border-radius: 14px;
+        background: #fafefe;
+        box-shadow: 0 1px 5px #e6f9f4;
+        margin-bottom: 1.4rem;
+        overflow: hidden;
+        cursor: pointer;
+        transition: box-shadow 0.18s, transform 0.18s, background 0.18s;
+        text-align: center;
+      }
+      .small-listing-modern:hover {
+        background: var(--pm-hover);
+        box-shadow: 0 4px 18px #b4dad9;
+        transform: translateY(-3px);
+      }
+
+      .listing-image-container {
+        width: 100%;
+        height: 120px;
+        background: #f7f7f7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid #e5f0ee;
+      }
+
+      .small-listing-modern-img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        background: #f7f7f7;
+      }
+
+      .small-listing-info {
+        padding: 12px 14px 16px;
+        font-size: 0.98em;
+      }
+
+      .small-listing-title {
+        font-weight: 700;
+        margin-bottom: 8px;
+        font-size: 1.12em;
+      }
+
+      .small-listing-category-badge {
+        font-size: 0.95em;
+        font-weight: 500;
+        border-radius: 10px;
+        background: #e6f6f5;
+        color: #2a5859;
+        padding: 4px 12px;
+        margin-bottom: 6px;
+        display: inline-block;
+      }
+
+      .small-listing-mile-badge {
+        font-size: 0.95em;
+        background: #eef8fa;
+        color: #357;
+        border-radius: 9px;
+        padding: 2px 12px 2px 8px;
+        margin-bottom: 6px;
+        margin-left: 6px;
+        display: inline-block;
+        white-space: nowrap;
+        border: 1px solid #e5eef3;
+        opacity: 0.93;
+      }
+
+      .small-listing-services {
+        color: #345;
+        opacity: 0.93;
+        font-size: 0.96em;
+        margin-top: 8px;
+        line-height: 1.4;
+      }
+
+      .small-listing-perks {
+        background: #feebe7;
+        color: #345;
+        opacity: 0.93;
+        font-size: 0.96em;
+        margin-top: 8px;
+        line-height: 1.4;
+      }
+
+      @media (max-width: 600px) {
+        .listing-image-container {
+          height: 110px;
+        }
+        .small-listing-modern-img {
+          width: 100px;
+          height: 100px;
+        }
+        .small-listing-info {
+          padding: 10px 12px 14px;
+        }
+        .small-listing-title {
+          font-size: 1.05em;
+        }
+      }
+
+      /* Misc */
+      footer { 
+        background: #f8fafb; 
+        color: #999; 
+        padding: 1.5rem 0; 
+        margin-top: 3rem; 
+        text-align: center; 
+        font-size: 1em; 
+        border-top: 1px solid #e1e7ea;
+      }
+      .breadcrumb { 
+        background: none; 
+        padding-left: 0.5rem; 
+        margin-bottom: 1.5rem;
+      }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">PerkMiner</a>
+    </div>
+</nav>
+<main class="container">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ category }}</li>
+      </ol>
+    </nav>
+
+    <h2 class="mb-4 text-center">{{ category }} Businesses</h2></br><h5>(within 25 miles of your location)</h5>
+
+    <div id="result-count-announcement" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+
+    {% if results and results|length > 0 %}
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="biz-results" aria-busy="false">
+        {% for biz in results %}
+          <div class="col">
+            <a href="{{ url_for('view_listing', biz_id=biz.id, distance_mi=biz.distance_mi) }}" style="text-decoration:none; color: inherit;">
+              <div class="small-listing-modern">
+                <div class="listing-image-container">
+                  {% if biz.profile_photo %}
+                    <img src="{{ biz.profile_photo }}" class="small-listing-modern-img" alt="{{ biz.business_name }} logo">
+                  {% else %}
+                    <div class="small-listing-modern-img d-flex align-items-center justify-content-center bg-light border">
+                      <i class="bi bi-shop" style="font-size:2em; color:#2a5859;"></i>
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="small-listing-info">
+                  <div class="small-listing-title">{{ biz.business_name }}</div>
+                  <div class="mb-2">
+                    <span class="small-listing-category-badge">{{ biz.category }}</span>
+                    {% if biz.distance_mi is defined and biz.distance_mi is not none %}
+                      <span class="small-listing-mile-badge">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        {{ biz.distance_mi|round(2) }} mi away
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  {% if biz.address %}
+                    <div style="font-size:0.95em; margin-bottom: 8px;">
+                      <i class="bi bi-geo-alt" style="color:var(--pm-primary);"></i>
+                      {{ biz.address }}
+                    </div>
+                  {% endif %}
+
+                  <div class="small-listing-services">
+                    <b>Services:</b> 
+                    {% set services = [biz.service_1, biz.service_2, biz.service_3, biz.service_4, biz.service_5, biz.service_6, biz.service_7, biz.service_8, biz.service_9, biz.service_10] %}
+                    {{ services|select|reject('equalto','')|join(', ') if services|select|reject('equalto','')|list else 'N/A' }}
+                  </div>
+                  <div class="small-listing-perks">
+                    <b>Perks:</b> {{ biz.perks or 'N/A' }}   <!-- small_listing.html -->
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+      <script>
+        setTimeout(function() {
+          var cnt = {{ results|length }};
+          document.getElementById('result-count-announcement').textContent =
+            (cnt === 1 ? '1 business found.' : cnt + ' businesses found.');
+        }, 50);
+      </script>
+    {% else %}
+      <div class="alert alert-warning text-center mt-4">
+        <div class="mb-2" aria-label="No results icon">
+          <i class="bi bi-emoji-frown" style="font-size:2.7em;color:var(--pm-accent);"></i>
+        </div>
+        <div>No businesses found in this category.</div>
+        <div class="mt-3">
+          <a href="{{ url_for('home') }}" class="btn btn-outline-primary mx-2 mb-2">Back to Home</a>
+          <a href="{{ url_for('business_home') }}" class="btn btn-success mx-2 mb-2">Get Listed</a>
+        </div>
+        <div class="mt-2 text-muted small">
+          Know a business that should be here and you're a member? <a href="{{ url_for('dashboard') }}">Invite them to join PerkMiner and earn commissions (business email needed)!</a>
+        </div>
+        <div class="mt-2 text-muted small">
+          Know a business that should be here and you're a business? <a href="{{ url_for('business_dashboard') }}">Invite them to join PerkMiner and earn cash back commissions (business email needed)!</a>
+        </div>
+      </div>
+    {% endif %}
+</main>
+<footer>
+  <div>
+    <div class="mb-2">
+      <a href="/" style="color:var(--pm-primary);font-weight:600;text-decoration:none;">PerkMiner</a> &copy; 2026
+    </div>
+    <div>
+      <small>Need help? <a href="mailto:support@perkminer.com" style="color:var(--pm-primary);">Contact Support</a></small>
+    </div>
+    <div class="mt-1">
+      <a href="#" style="color:#3dbbee; margin:0 6px;text-decoration:none;">Privacy</a>
+      <a href="#" style="color:#3dbbee; margin:0 6px;text-decoration:none;">Terms</a>
+    </div>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Parse current URL parameters
+  function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
+  var latParam = getParam("lat");
+  var lngParam = getParam("lng");
+  var distanceParam = getParam("distance");
+
+  // Only run geolocation if lat/lng are not already present
+  if (!latParam || !lngParam) {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+        var category = "{{ category|urlencode }}";
+        // Keep or override distance param as needed; default to 25
+        var distance = distanceParam ? distanceParam : 25;
+        // Rebuild the URL
+        var url = "/category/" + category + "?lat=" + lat + "&lng=" + lng + "&distance=" + distance;
+        window.location.replace(url);
+      }, function(error) {
+        // Optionally show a message if user blocks or denies location
+        // alert('Unable to fetch your location, showing all results.');
+      });
+    }
+  }
+});
+</script>
+</body>
+</html>

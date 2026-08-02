@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scan User QR Code - PerkMiner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    .qr-card { max-width: 430px; margin: 36px auto 0 auto; padding: 1.6em 1em 2em 1em; border-radius: 18px; background: #fcfcff; box-shadow: 0 4px 18px #d5e2f1; text-align: center; }
+    .qr-hero { font-size: 3.4em; color: #2a5859; margin-bottom: 18px;}
+    .qr-img-placeholder { font-size: 3em; background: #e8fbe5; border-radius: 50%; display:inline-block; padding: 26px; margin-bottom:18px;}
+    #reader { width: 320px; margin: 0 auto; display: none; }
+    #scan-message { margin-top: 18px; }
+    @media (max-width: 540px) {
+      .qr-card { padding: 1.2em 6px; }
+      #reader { width: 98vw; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="qr-card">
+      <div class="qr-img-placeholder mb-2">
+        <i class="bi bi-upc-scan"></i>
+      </div>
+      <h4 class="mb-3">Scan User's QR Code</h4>
+      <p class="mb-4">Tap the button below and point your device at the user's QR code.<br>Allow camera access if prompted.</p>
+      <button id="scan-btn" class="btn btn-success btn-lg w-100 mb-3" style="font-size:1.22em;">
+        <i class="bi bi-camera"></i> Scan QR Code
+      </button>
+      <div id="reader"></div>
+      <div id="scan-message" class="alert alert-info text-center" style="display:none"></div>
+      <a href="{{ url_for('staff_dashboard') }}" class="btn btn-outline-primary mt-3 w-100">Return to Dashboard</a>
+    </div>
+  </div>
+  <script>
+    let html5QrcodeCamera;
+    document.getElementById('scan-btn').onclick = function() {
+      document.getElementById('scan-btn').style.display = 'none';
+      document.getElementById('reader').style.display = 'block';
+
+      Html5Qrcode.getCameras().then(cameras => {
+        let backCam = cameras && cameras.find(cam => cam.label && cam.label.toLowerCase().includes('back'));
+        let cameraId = backCam ? backCam.id : (cameras && cameras[0] ? cameras[0].id : null);
+        runHtml5Scan(cameraId);
+      }).catch(() => runHtml5Scan(null));
+    };
+
+    function runHtml5Scan(cameraId) {
+      html5QrcodeCamera = new Html5Qrcode("reader");
+      html5QrcodeCamera.start(
+        cameraId,
+        { fps: 12, qrbox: 250 },
+        function(decodedText, decodedResult) {
+          document.getElementById('scan-message').style.display = 'block';
+          document.getElementById('scan-message').innerHTML = "QR scanned! Redirecting…";
+          setTimeout(function() {
+            window.location.href = decodedText;
+          }, 800);
+          html5QrcodeCamera.stop();
+        },
+        () => {}
+      );
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

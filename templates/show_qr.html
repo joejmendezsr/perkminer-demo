@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Show QR Code - PerkMiner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      .qr-card { max-width: 370px; margin: 40px auto; padding: 1.5em 1em; border-radius: 18px; background: #fcfcff; box-shadow: 0 4px 18px #d5e2f1; text-align: center; }
+      @media (max-width: 540px) { .qr-card { padding: 1em 4px; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="qr-card">
+        <h4 class="mb-4 text-center">
+            {% if is_finalize_payment %}
+                Show this QR code to the business to finalize your transaction.
+            {% elif is_request_for_service %}
+                Show this QR code to the business to request a service.
+            {% else %}
+                Show this QR code.
+            {% endif %}
+        </h4>
+        <img src="{{ url_for('user_qr_code') }}" alt="Your QR Code" style="max-width: 220px; margin: 0 auto; display:block;">
+        <div class="alert alert-info mt-3 text-center">
+            {% if is_finalize_payment %}
+                The business will scan this and process your payment.
+            {% else %}
+                The business will scan this to start your service request.
+            {% endif %}
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-2 w-100">Return to Dashboard</a>
+        {% if is_finalize_payment %}
+        <div id="user-receipt-wait" class="alert alert-info mt-3 mb-0">
+            Waiting for business to finalize payment...<br>
+            <span class="spinner-border spinner-border-sm text-warning"></span>
+        </div>
+        {% endif %}
+    </div>
+
+<a href="{{ url_for('start_support', business_id=interaction.business_id) }}"
+   class="btn btn-outline-danger mt-3 w-100" id="business-unable-btn">
+    Business unable to finalize transaction
+</a>
+
+</div>
+
+<!-- or just href="#" if you want it non-functional for now -->
+
+<script>
+{% if is_finalize_payment %}
+function checkForReceipt() {
+  fetch("{{ url_for('check_user_receipt', interaction_id=interaction.id) }}")
+    .then(resp => resp.json())
+    .then(data => {
+      if (data.has_receipt) {
+        window.location.href = "{{ url_for('show_user_receipt', interaction_id=interaction.id) }}";
+      } else {
+        setTimeout(checkForReceipt, 4000);
+      }
+    });
+}
+checkForReceipt();
+{% endif %}
+</script>
+</body>
+</html>

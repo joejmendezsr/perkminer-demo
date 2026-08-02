@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Customer Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container py-5" style="max-width:420px;">
+  <h2 class="mb-3 text-center">Customer Portal</h2>
+  <form method="POST" class="bg-white p-4 rounded shadow-sm mb-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <p class="mb-3 text-muted text-center">
+      Enter your order email to view your order history, receipts, and digital downloads.
+    </p>
+    <div class="mb-3">
+      <label for="email" class="form-label">Your Email</label>
+      <input type="email" name="email" class="form-control" id="email" required autocomplete="email" placeholder="you@email.com">
+    </div>
+    <!-- Optional: Add magic link or OTP fields -->
+    <button type="submit" class="btn btn-primary w-100">Sign In / Lookup</button>
+  </form>
+  <div class="text-center mt-4">
+    <a href="/" class="btn btn-outline-secondary">← Back to Home</a>
+  </div>
+</div>
+</body>
+</html>

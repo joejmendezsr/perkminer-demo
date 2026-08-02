@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Service Request Details</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      @media (max-width: 600px) {
+        .btn, .btn-secondary { width: 100%; margin-bottom: 8px; }
+        .card { padding: 1.1rem !important; }
+      }
+      .card { max-width: 560px; margin: 0 auto; }
+      .list-group-item { font-size: 1.03em; }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <div class="card p-4 shadow-sm">
+        <h4 class="mb-3 text-center">Service Request Details</h4>
+        <ul class="list-group mb-3">
+            <li class="list-group-item"><strong>User Name:</strong> {{ interaction.user.name or interaction.user.email }}</li>
+            <li class="list-group-item"><strong>Service Type:</strong> {{ interaction.service_type }}</li>
+            <li class="list-group-item"><strong>Details:</strong> {{ interaction.details }}</li>
+            <li class="list-group-item"><strong>Budget:</strong> 
+                ${{ interaction.budget_low }} - ${{ interaction.budget_high }}</li>
+            <li class="list-group-item"><strong>Status:</strong> {{ interaction.status }}</li>
+            <li class="list-group-item"><strong>Requested At:</strong> {{ interaction.created_at.strftime('%Y-%m-%d %I:%M%p') }}</li>
+        </ul>
+        <a href="{{ url_for('biz_user_interactions') }}" class="btn btn-secondary w-100">Back</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Service Requests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+      #interaction-list {
+        overflow-y: auto;
+        max-height: none;
+        min-height: 1px;
+      }
+      @media (max-width: 600px) {
+        #interaction-list { max-height: none; }
+        .list-group-item, .btn, .btn-info, .btn-primary, .btn-danger { font-size: 1.03em; padding: 0.95em 0.7em; }
+      }
+      .btn-info, .btn-primary, .btn-danger, .btn-outline-primary { min-width: 85px; }
+      .list-group-item { flex-wrap: wrap; }
+      .d-flex > div { min-width: 140px; }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">
+      User Service Requests
+      {% if interactions %}
+        ({{ interactions|length }})
+      {% endif %}
+    </h3>
+    <a href="{{ url_for('business_dashboard') }}" class="btn btn-outline-primary">Return to Dashboard</a>
+  </div>
+  <input type="text" id="searchInput" class="form-control mb-3" placeholder="Filter by user name...">
+  <div id="interaction-list">
+  {% if interactions %}
+    <ul class="list-group">
+      {% for i in interactions %}
+        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+          <div class="py-1">
+            <strong>{{ i.user.name or i.user.email }}</strong><br>
+            <small class="text-muted">{{ i.service_type }}</small>
+          </div>
+          <div class="py-1 d-flex flex-column gap-1 align-items-end">
+            <a href="{{ url_for('biz_interaction_details', interaction_id=i.id) }}" class="btn btn-info btn-sm mb-1">Details</a>
+            <a href="{{ url_for('biz_active_session', interaction_id=i.id) }}" class="btn btn-primary btn-sm mb-1">Select</a>
+            <a href="{{ url_for('finalize_transaction', interaction_id=i.id) }}" class="btn btn-outline-primary btn-sm mb-1">
+              Finalize Manually
+            </a>
+            <form method="post" action="{{ url_for('end_session', interaction_id=i.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-danger btn-sm mb-1">End Session</button>
+            </form>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="alert alert-info text-center mt-4">No active user requests yet.</div>
+  {% endif %}
+  </div>
+</div>
+<script>
+document.getElementById('searchInput').addEventListener('keyup', function () {
+    var filter = this.value.toLowerCase();
+    document.querySelectorAll('#interaction-list li').forEach(function(item) {
+        var name = item.textContent || item.innerText;
+        item.style.display = name.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+    });
+});
+</script>
+</body>
+</html>

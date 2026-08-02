@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Business Combined Summary Report - Finance Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head>
+<body>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Business Combined Summary Report</h3>
+    <a href="{{ url_for('finance_dashboard') }}" class="btn btn-outline-primary">Return to Finance Dashboard</a>
+    <a href="{{ url_for('export_business_combined_detail_report_csv',
+        business_referral_id=business_referral_id,
+        business_name=business_name or '',
+        start_date=start_date or '',
+        end_date=end_date or '',
+        month=month or '',
+        year=year or ''
+        ) }}" class="btn btn-outline-success mb-2">
+      <i class="bi bi-cloud-arrow-down"></i> Export CSV/Excel
+    </a>
+  </div>
+  <form class="row gy-2 gx-2 mb-4" method="get">
+    <div class="col-12 col-sm-2"><input type="text" name="business_referral_id" class="form-control" placeholder="Business Referral ID" value="{{ business_referral_id or '' }}"></div>
+    <div class="col-12 col-sm-2"><input type="text" name="business_name" class="form-control" placeholder="Business Name" value="{{ business_name or '' }}"></div>
+    <div class="col-6 col-sm-2">
+      <select class="form-select" name="month">
+        <option value="">Any Month</option>
+        {% for m in range(1, 13) %}
+          <option value="{{ m }}" {% if month|int == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-sm-2">
+      <select class="form-select" name="year">
+        <option value="">Any Year</option>
+        {% for y in range(2020, 2051) %}
+          <option value="{{ y }}" {% if year|int == y %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-sm-2">
+      <input type="date" name="start_date" class="form-control" placeholder="Start Date" value="{{ start_date or '' }}">
+    </div>
+    <div class="col-12 col-sm-2">
+      <input type="date" name="end_date" class="form-control" placeholder="End Date" value="{{ end_date or '' }}">
+    </div>
+    <div class="col-12 mt-1">
+      <button type="submit" class="btn btn-primary w-100 mt-2 mt-sm-0"><i class="bi bi-search"></i> Search</button>
+    </div>
+  </form>
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle" id="biz-summary-table">
+      <thead>
+        <tr>
+          <th>Business Referral ID</th>
+          <th>Business Name</th>
+          <th>Business Email</th>
+          <th>Tier 1 Cashback</th>
+          <th>Tier 2 Cashback</th>
+          <th>Tier 3 Cashback</th>
+          <th>Tier 4 Cashback</th>
+          <th>Tier 5 Cashback</th>
+          <th>Mutual Sponsoree Commission (0.25% split/capped)</th>
+          <th>Total Earned</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in summary_rows %}
+        <tr>
+          <td>{{ row.referral_id }}</td>
+          <td>{{ row.business_name }}</td>
+          <td>{{ row.business_email }}</td>
+          <td>${{ "{:,.2f}".format(row.cash_back) }}</td>
+          <td>${{ "{:,.2f}".format(row.tier2_commission) }}</td>
+          <td>${{ "{:,.2f}".format(row.tier3_commission) }}</td>
+          <td>${{ "{:,.2f}".format(row.tier4_commission) }}</td>
+          <td>${{ "{:,.2f}".format(row.tier5_commission) }}</td>
+          <td>${{ "{:,.2f}".format(row.sponsoree_mutual_commission) }}</td>
+          <td class="fw-bold">${{ "{:,.2f}".format(row.total_earned) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
