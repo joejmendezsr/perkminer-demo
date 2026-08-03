@@ -3044,37 +3044,14 @@ def activate(code):
         flash("Invalid or expired code.")
         return redirect(url_for("register"))
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route('/login', methods=['POST'])
 def login():
-    form = LoginForm()
-    message = ""
-    if form.validate_on_submit():
-        email = form.email.data.strip().lower()
-        password = form.password.data
-        user = User.query.filter_by(email=email).first()
-        if user and bcrypt.check_password_hash(user.password, password):
-            if user.is_suspended:
-                flash('Account suspended, contact <a href="mailto:fromperkpay@gmail.com">Contact Support</a>.', 'danger')
-                return redirect(url_for("login"))
-            if not user.email_confirmed:
-                message = "Please confirm your email first (check your inbox)."
-                session['pending_email'] = email
-                return redirect(url_for("verify_email"))
-            else:
-                # --- 2FA LOGIC ---
-                code = str(random.randint(100000, 999999))
-                session['pending_2fa_code'] = code
-                session['pending_2fa_user_id'] = user.id
-                send_email(
-                    user.email,
-                    "Your PerkMiner Login Code",
-                    f"<p>Your PerkMiner login code is: <b>{code}</b></p>"
-                )
-                flash("A login code has been sent to your email.")
-                return redirect(url_for("two_factor"))
-        else:
-            message = "Login failed. Check email and password."
-    return render_template("login.html", message=message, form=form)
+    # (get username/password from form)
+    user = User.query.filter_by(email=form.email.data).first()
+    if user:  # or other logic you use
+        login_user(user)
+        return redirect(url_for('dashboard'))
+    # Optionally, handle failed logins as needed
 
 @app.route("/two_factor", methods=["GET", "POST"])
 def two_factor():
