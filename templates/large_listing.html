@@ -196,11 +196,11 @@
       {% endif %}
       <h2 class="listing-title">{{ business.business_name }}</h2>
       <span class="biz-category-badge mb-2">{{ business.category }}</span>
-      <span class="biz-finalization-badge mb-2">Finalization: {{ business.finalization }}</br>
+      <span class="biz-finalization-badge mb-2"><b>Finalization: {{ business.finalization }}</b></br>
   {% if business.account_balance >= 250 %}
-    Has enough to finalize any transaction
+    (Has enough to finalize any transaction)
   {% else %}
-    Has enough to finalize ${{ '%.2f' % (business.account_balance * 10) }} in sales
+    (Has enough to finalize ${{ '%.2f' % (business.account_balance * 10) }} in sales)
   {% endif %}
 </span>
     </div>
