@@ -82,7 +82,7 @@
         font-weight:500;
         border-radius:16px;
         padding:6px 16px;
-        background: #b59e5f;
+        background: #F5DEB3;
         color: var(--pm-primary);
         display:inline-block;
         margin-bottom: 9px;
@@ -196,11 +196,11 @@
       {% endif %}
       <h2 class="listing-title">{{ business.business_name }}</h2>
       <span class="biz-category-badge mb-2">{{ business.category }}</span>
-      <span class="biz-finalization-badge mb-2">Finalization: {{ business.finalization }} / 
+      <span class="biz-finalization-badge mb-2">Finalization: {{ business.finalization }}</br>
   {% if business.account_balance >= 250 %}
-    Enough for any transaction
+    Has enough to finalize any transaction
   {% else %}
-    Enough for ${{ '%.2f' % (business.account_balance * 10) }} in sales
+    Has enough to finalize ${{ '%.2f' % (business.account_balance * 10) }} in sales
   {% endif %}
 </span>
     </div>
