@@ -27,6 +27,7 @@
                             <p class="card-text mb-1"><i class="bi bi-telephone"></i> {{ fav.business.phone_number }}</p>
                         {% endif %}
                         <form action="{{ url_for('remove_favorite', business_id=fav.business.id) }}" method="post" class="mt-auto">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button class="btn btn-warning btn-sm w-100 mt-2" type="submit">Remove from Favorites</button>
                         </form>
                     </div>
