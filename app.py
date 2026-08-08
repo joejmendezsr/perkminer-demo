@@ -807,7 +807,7 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     user_cash_back = round(min(user_cash_back_raw, 50), 2)
 
     u2 = User.query.filter_by(id=interaction.user.sponsor_id).first()
-    tier2_user_referral_id = u2.referral_code if u2 else "REFjoejmendez"
+    tier2_user_referral_id = u2.referral_code if u2 else "REFmarjoriepint"
     u3 = User.query.filter_by(id=u2.sponsor_id).first() if u2 and u2.sponsor_id else None
     tier3_user_referral_id = u3.referral_code if u3 else "REFmarjoriepint"
     u4 = User.query.filter_by(id=u3.sponsor_id).first() if u3 and u3.sponsor_id else None
