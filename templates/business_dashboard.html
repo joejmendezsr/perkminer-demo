@@ -303,6 +303,9 @@
           data-bs-target="#profileCollapse" aria-expanded="false" aria-controls="profileCollapse">
           View/Edit Profile
         </button>
+        <a href="{{ url_for('business_change_password') }}" class="btn btn-outline-dark">
+          Change Password
+        </a>
       </div>
 
       <!-- Account Balance and Fund/Add Funds Button -->
@@ -583,8 +586,46 @@
 </div>
 
     <div class="card p-4 mb-4">
+
 <h4>Your Business Activity</h4>
+
+<!-- Business earnings summary with 7-day delay -->
 <div class="mb-3">
+  <div class="card mb-3">
+    <div class="card-header">
+      Business earnings summary (7-day delay)
+    </div>
+    <div class="card-body">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Total earnings</td>
+            <td>${{ "{:,.2f}".format(total_biz_earnings or 0) }}</td>
+          </tr>
+          <tr>
+            <td>Pending earnings</td>
+            <td>${{ "{:,.2f}".format(pending_biz_earnings or 0) }}</td>
+          </tr>
+          <tr>
+            <td>Available for withdrawal</td>
+            <td>${{ "{:,.2f}".format(available_biz_earnings or 0) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <small class="text-muted">
+        <a href="#" data-bs-toggle="modal" data-bs-target="#businessEarningsInfo">
+          <i class="bi bi-info-circle"></i> Payout Info
+        </a>
+      </small>
+    </div>
+  </div>
+
   <div class="row align-items-center">
     <div class="col-12 col-md-auto d-flex flex-wrap gap-2 mb-2 mb-md-0">
       <a href="{{ url_for('business_receipts') }}" class="btn btn-outline-secondary">View Invoices</a>
@@ -600,9 +641,11 @@
       </div>
     {% endif %}
   </div>
-  <div class="fs-5 fw-semibold text-primary mb-2">
+
+  <div class="fs-5 fw-semibold text-primary mb-2 mt-2">
     Earnings Balance: ${{ "{:,.2f}".format(business.earnings_balance or 0) }}
   </div>
+
   <div>
     {% if not business.stripe_account_id %}
       <a href="{{ url_for('onboard_business_stripe') }}" class="btn btn-primary w-100">
@@ -611,18 +654,43 @@
     {% else %}
       {% set earnings = business.earnings_balance|float %}
       {% if earnings >= 10 %}
-        {% set fee = earnings * 0.0025 + 0.35 %}
-        {% set net = earnings - fee %}
-        <div class="text-muted mb-1" style="font-size:0.98em;">
-          Stripe transfer fee: ${{ '{:,.2f}'.format(fee) }} (0.25% + $0.35 per payout)<br>
-          You will receive: <b>${{ '{:,.2f}'.format(net) }}</b>
+        <!-- Standard Payout -->
+        {% set std_fee = earnings * 0.0025 + 0.35 %}
+        {% set std_net = earnings - std_fee %}
+        <div class="mb-3 border rounded p-3">
+          <div class="fw-bold mb-1">
+            <i class="bi bi-bank"></i> Standard Payout (1-3 business days)
+          </div>
+          <div class="text-muted mb-1" style="font-size:0.97em;">
+            Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee) }} (0.25% + $0.35)<br>
+            You will receive: <b>${{ '{:,.2f}'.format(std_net) }}</b>
+          </div>
+          <form action="{{ url_for('business_withdraw') }}" method="POST" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-success w-100">
+              Withdraw to Bank (Standard)
+            </button>
+          </form>
         </div>
-        <form action="{{ url_for('business_withdraw') }}" method="POST" class="d-inline">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn btn-success w-100">
-            Withdraw to Bank
-          </button>
-        </form>
+
+        <!-- Instant Payout -->
+        {% set inst_fee = earnings * 0.011 + 0.50 %}
+        {% set inst_net = earnings - inst_fee %}
+        <div class="border rounded p-3 bg-warning-subtle">
+          <div class="fw-bold mb-1">
+            <i class="bi bi-lightning-fill text-warning"></i> Instant Payout (Instant, 24/7)
+          </div>
+          <div class="text-muted mb-1" style="font-size:0.97em;">
+            Stripe instant payout fee: ${{ '{:,.2f}'.format(inst_fee) }} (1.1% + $0.50)<br>
+            You will receive: <b>${{ '{:,.2f}'.format(inst_net) }}</b>
+          </div>
+          <form action="{{ url_for('business_withdraw_instant') }}" method="POST" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-warning w-100">
+              Withdraw Instantly <i class="bi bi-lightning-charge-fill"></i>
+            </button>
+          </form>
+        </div>
       {% endif %}
     {% endif %}
   </div>
@@ -765,6 +833,10 @@
   <div class="card p-4 text-center">
     <h4>This is your dashboard.</h4>
     <p class="mb-0">Congrats on registering your business with PerkMiner!</p>
+    <a href="https://perkminer.com/discontinue" class="btn btn-danger btn-lg w-100 mb-3" style="max-width:400px; margin:auto; display:block;">
+    <i class="bi bi-x-circle-fill me-2"></i>
+    Discontinue Business Account
+</a>
   </div>
   {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -776,6 +848,24 @@
     {% endif %}
   {% endwith %}
 </div>
+
+<div class="modal fade" id="businessEarningsInfo" tabindex="-1" aria-labelledby="businessEarningsInfoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="businessEarningsInfoLabel">How your business earnings work</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="font-size:0.95em;">
+        <p><b>Total earnings</b> are all cashback and B2B commissions your business has earned, lifetime.</p>
+        <p><b>Pending earnings</b> are from invoices finalized in the last 7 days. These are still in the 7-day holding period.</p>
+        <p><b>Available for withdrawal</b> are earnings that are at least 7 days old and can be withdrawn to your business bank account.</p>
+        <p>Each invoice moves from pending to available exactly 7 days after it is finalized as a paid transaction.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div>
     <div class="mb-2">

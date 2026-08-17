@@ -1,51 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Fund Your Account - PerkMiner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://js.stripe.com/v3/"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        body { background: #f8f9fa; }
+        .pm-card {
+            max-width: 460px;
+            margin: 30px auto;
+        }
+        @media (max-width:600px) {
+            .pm-card { padding: 0 2vw; }
+        }
+    </style>
 </head>
 <body>
 <div class="container py-4">
-    <div class="card shadow-sm p-4" style="max-width:460px; margin:30px auto;">
+
+    <!-- Fund Account Card -->
+    <div class="card shadow-sm p-4 pm-card">
         <h4 class="mb-3 text-center">Fund Your Account</h4>
-        <div class="alert alert-info text-center">
+        <div class="alert alert-info text-center mb-4">
             Current account balance: <b>${{ "{:,.2f}".format(account_balance or 0.0) }}</b>
         </div>
-    <div class="mb-3">
-        <label class="form-label">Amount to Add ($)</label>
-        <input type="number" name="amount" min="25" step="0.01" required class="form-control" placeholder="Enter amount">
+        <form class="mb-3">
+            <label class="form-label">Amount to Add ($)</label>
+            <input type="number" name="amount" min="25" step="0.01" required class="form-control mb-2" placeholder="Enter amount">
+            <button id="stripe-pay-btn" class="btn btn-warning w-100 mt-2" type="button">Pay With Card</button>
+            <div id="stripe-error" class="alert alert-danger mt-2 d-none"></div>
+        </form>
+        <a href="{{ url_for('business_dashboard') }}" class="btn btn-primary w-100">Return to Dashboard</a>
     </div>
-    <button id="stripe-pay-btn" class="btn btn-warning w-100 mt-3">Pay With Card</button>
-    <div id="stripe-error" class="alert alert-danger mt-2 d-none"></div>
-        <a href="{{ url_for('business_dashboard') }}" class="btn btn-primary w-100 mt-2">Return to Dashboard</a>
-    </div>
-</div>
-<script>
-const stripe = Stripe("{{ STRIPE_PUBLISHABLE|safe }}"); // Flask template will fill this in
 
-document.getElementById("stripe-pay-btn").onclick = function() {
-    const amount = document.querySelector('input[name="amount"]').value;
-    fetch("/business/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.sessionId) {
-            stripe.redirectToCheckout({ sessionId: data.sessionId });
-        } else {
-            document.getElementById("stripe-error").textContent = data.error || "Could not start checkout.";
+    <!-- Calculator Card Below -->
+    <div class="card shadow-sm p-4 pm-card mt-4">
+        <h5 class="mb-3 text-center">💡 How Much Should I Add to My Account?</h5>
+        <form id="reco-calc" class="row g-3 needs-validation" novalidate>
+            <div class="col-12 col-md-6">
+                <label class="form-label">Lowest Sale Amount ($)</label>
+                <input type="number" id="lowest" min="0.01" step="0.01" class="form-control" required>
+            </div>
+            <div class="col-12 col-md-6">
+                <label class="form-label">Highest Sale Amount ($)</label>
+                <input type="number" id="highest" min="0.01" step="0.01" class="form-control" required>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-outline-secondary w-100">Calculate Recommendation</button>
+            </div>
+        </form>
+        <div id="calc-result" class="alert alert-success mt-3 d-none"></div>
+        <div class="small mt-2 text-muted">
+            <b>Note:</b> Only $25 is needed to get started (covers up to $250 in sales per transaction).<br>
+            If your lowest sale is over $250, you must deposit enough to cover 10% of the sale amount.<br>
+            <b>For high-value transactions, the ad fee per sale is capped at $250—so you can deposit <u>$1,250 for 5 sales</u> or <u>$2,500 for 10 sales</u>, if you like.</b>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Stripe payment handling
+    const stripe = Stripe("{{ STRIPE_PUBLISHABLE|safe }}");
+
+    document.getElementById("stripe-pay-btn").onclick = function () {
+        const amount = document.querySelector('input[name="amount"]').value;
+        fetch("/business/create-checkout-session", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({amount})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.sessionId) {
+                stripe.redirectToCheckout({sessionId: data.sessionId});
+            } else {
+                document.getElementById("stripe-error").textContent = data.error || "Could not start checkout.";
+                document.getElementById("stripe-error").classList.remove("d-none");
+            }
+        })
+        .catch(() => {
+            document.getElementById("stripe-error").textContent = "Error connecting to payment system.";
             document.getElementById("stripe-error").classList.remove("d-none");
+        });
+    };
+
+    // Recommendation calculator
+    document.getElementById("reco-calc").onsubmit = function(e){
+        e.preventDefault();
+        const lowest = parseFloat(document.getElementById("lowest").value);
+        const highest = parseFloat(document.getElementById("highest").value);
+        const $result = document.getElementById("calc-result");
+        $result.classList.add("d-none");
+
+        if (lowest > 0 && highest > 0) {
+            const avg = (lowest + highest) / 2;
+            const perSaleFee = Math.min(avg * 0.10, 250);
+            const numSales = 25;
+            const recommendation = Math.ceil(perSaleFee * numSales * 100) / 100; // round up to cents
+            // For first transaction logic:
+            let lowestAdFee = Math.min(lowest * 0.10, 250);
+
+            let msg = `Recommended deposit for <b>25 average sales</b>: <b>$${recommendation.toFixed(2)}</b><br>`;
+            if (perSaleFee === 250) {
+                msg += `<span class="text-danger">Because your average sale is high, the ad fee per transaction is capped at $250.<br>
+                Maximum deposit needed for 25 sales is <b>$6,250</b>.</span><br>`;
+            }
+            if (lowest > 250) {
+                msg += `<span class="text-danger">Since your lowest sale is above $250, for your first transaction you must deposit at least <b>$${lowestAdFee.toFixed(2)}</b> (10% of $${lowest.toFixed(2)}, capped at $250).</span><br>`;
+            } else {
+                msg += 'You only need <b>$25</b> to get started (enough for up to $250 in sales per transaction).';
+            }
+            $result.innerHTML = msg;
+            $result.classList.remove("d-none");
         }
-    })
-    .catch(() => {
-        document.getElementById("stripe-error").textContent = "Error connecting to payment system.";
-        document.getElementById("stripe-error").classList.remove("d-none");
-    });
-};
-</script>
+    };
+    </script>
 </body>
 </html>

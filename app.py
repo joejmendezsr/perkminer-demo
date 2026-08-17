@@ -578,7 +578,7 @@ def build_invite_email(inviter_name, join_url, video_url):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Joe has invited you to join PerkMiner!</title>
+    <title>You have been invited to join PerkMiner.com!</title>
         <style type="text/css">
             body {{ margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }}
             table, td {{ border-collapse: collapse; }}
@@ -611,7 +611,7 @@ def build_invite_email(inviter_name, join_url, video_url):
         <!-- Top Message -->
                 <tr>
                     <td align="center" style="padding: 40px 30px 20px; font-family: Arial, Helvetica, sans-serif; font-size: 28px; font-weight: bold; color: #1f2937; line-height: 1.2;">
-                        {inviter_name} has invited you to join PerkMiner!
+                        {inviter_name} has invited you to join Perk Miner (https://perkminer.com)!
                     </td>
                 </tr>
 
@@ -636,18 +636,17 @@ def build_invite_email(inviter_name, join_url, video_url):
         <!-- Introduction Text + Watch Video Button -->
     <tr>
         <td style="padding: 40px 40px 20px; font-family: Arial, Helvetica, sans-serif; font-size: 28px; color: #374151; line-height: 1.6; text-align:center;">
-            <p style="margin:0 0 24px;">Discover how you earn Cash Back and Commissions with PerkMiner.  <b>Cash Back like a pro on everyday purchases!</b></p>
+            <p style="margin:0 0 24px;">Discover how you earn Cash Back and Referral Commissions with Perk Miner.  <b>Cash Back like a pro on everyday purchases!  Members earn 2% Cashback for up to $2,500 of any purchase from our advertisers and Businesses earn 1% Cashback on up to $2,500 or their sale for offering at least one perk to our members.</b></p>
 
                 <a href="{video_url}" class="button" target="_blank" style="margin: 12px 0 32px;">
                 Watch our intro video
                 </a>
 
             <p style="margin:0 0 28px;">Free to join (no contracts, monthly subscriptions or commitment).</p>
-            <p style="margin:0 0 28px;"><b>Members:</b>  We protect your privacy with secure messaging and never sell your contact information.  Contact our advertisers with peace of mind.</p>
-            <p style="margin:0 0 28px;"><b>Business Owners:</b>  YOU GET ZERO WASTED ADVERTISING DOLLARS!  <font color="#FF0000"></br>No Sale or Closed Deal = Zero Fees</font></br>(900% or higher Marketing ROI).</p>
-            <p style="margin:0 0 28px;">We connect <b>One Member</b> to <b>One Business</b> at a time.  <b><u>Members</u></b> won't get spammed (emails, calls or door-to-door sales).  <b><u>Businesses</u><b> don't have to compete with other businesses for a sale or closed deal.</p>
-            <p style="margin:0 0 28px;">MEMBER SELECTS A BUSINESS -> BUSINESS AND MEMBER CONNECT</br></br>MEMBER OR BUSINESS CAN END SESSION OR FINALIZE THE TRANSACTION.</p>
-            <p style="margin:0 0 28px;"><b>Both Members and Business Owners earn Cash Back and Commissions</b> (Paid by Perk Miner - from up to 87.5% of the ad revenue paid by our advertisers).</p>
+            <p style="margin:0 0 28px;"><b>Members:  Get exclusive member perks offered by our advertisers, plus earn cash back on all your purchases.</b>  We protect your privacy with secure messaging and never sell your contact information as a lead.  Search for businesses, products or services (our advertisers) with peace of mind (we don't track browsing history or listen to your conversations to send you unsolicited advertisements).  We connect <b>One Member</b> to <b>One Business</b> at a time.  <b><u>Our members</u></b> will never receive spammed emails, unsolicited phone calls or uninvited door-to-door sales people (advertisers don't have access to member contact information).</p>
+            <p style="margin:0 0 28px;"><b>Business Owners:</b>  YOU GET ZERO WASTED ADVERTISING DOLLARS!  <font color="#FF0000"></br>No Sale or Closed Deal = Zero Fees</font></br>(900% or higher Marketing ROI Guaranteed).  No cost for exclusive leads, phone calls, website or foot traffic, appointments or meetups.  You only pay after you get paid (10% of the sale, capped at $250).  We don't collect your payment (members pay our advertisers directly for all sales).  No hidden fees, no contracts and no commitment.  Only $25 required to get started (pre-funded dollars to cover the advertising fees per transaction), which covers $250 in sales (funds remain in your account balance until you make a sale).</p>
+            <p style="margin:0 0 28px;">MEMBER SELECTS A BUSINESS -> BUSINESS AND MEMBER CONNECT</br></br>MEMBER OR BUSINESS CAN END SESSION WITHOUT PENALTY OR CHOOSE TO PROCEED (BUSINESS MUST FINALIZE THE TRANSACTION).</p>
+            <p style="margin:0 0 28px;"><b>Both Members and Business Owners earn Cash Back and Referral Commissions</b> (Paid by Perk Miner - from up to 84% of the ad revenue paid by our advertisers).</p>
         </td>
     </tr>
 
@@ -1525,6 +1524,24 @@ class StaffChangePasswordForm(FlaskForm):
     confirm_new_password = PasswordField('Confirm New Password', validators=[DataRequired(), EqualTo('new_password', message='Passwords must match.')])
     submit = SubmitField('Update Password')
 
+class UserChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Current Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=8)])
+    confirm_new_password = PasswordField(
+        'Confirm New Password',
+        validators=[DataRequired(), EqualTo('new_password', message='Passwords must match.')]
+    )
+    submit = SubmitField('Update Password')
+
+class BusinessChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Current Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=8)])
+    confirm_new_password = PasswordField(
+        'Confirm New Password',
+        validators=[DataRequired(), EqualTo('new_password', message='Passwords must match.')]
+    )
+    submit = SubmitField('Update Password')
+
 class FinalizedTransaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tx_id = db.Column(db.String(48), nullable=False, index=True)
@@ -1576,6 +1593,61 @@ def calculate_user_grand_total(user):
             total += Decimal(t.tier5_business_user_commission or 0)
     return total
 
+from datetime import datetime, timedelta
+
+def calculate_user_earnings_split(user, delay_days=7):
+    """
+    Returns (total_earnings, available_earnings, pending_earnings)
+    based on a simple date rule: earnings are available if
+    transaction.date_time <= now - delay_days.
+    """
+    ref_code = user.referral_code
+    all_txns = UserTransaction.query.all()
+
+    total = Decimal(0)
+    available = Decimal(0)
+
+    cutoff = datetime.utcnow() - timedelta(days=delay_days)
+
+    for t in all_txns:
+        earned_here = Decimal(0)
+
+        # Same logic as calculate_user_grand_total:
+        if t.user_referral_id == ref_code and (t.cash_back or 0) > 0:
+            earned_here += Decimal(t.cash_back or 0)
+        if t.tier2_user_referral_id == ref_code and (t.tier2_commission or 0) > 0:
+            earned_here += Decimal(t.tier2_commission or 0)
+        if t.tier3_user_referral_id == ref_code and (t.tier3_commission or 0) > 0:
+            earned_here += Decimal(t.tier3_commission or 0)
+        if t.tier4_user_referral_id == ref_code and (t.tier4_commission or 0) > 0:
+            earned_here += Decimal(t.tier4_commission or 0)
+        if t.tier5_user_referral_id == ref_code and (t.tier5_commission or 0) > 0:
+            earned_here += Decimal(t.tier5_commission or 0)
+
+        # User-business commissions
+        if t.tier1_business_user_referral_id == ref_code and (t.tier1_business_user_commission or 0) > 0:
+            earned_here += Decimal(t.tier1_business_user_commission or 0)
+        if t.tier2_business_user_referral_id == ref_code and (t.tier2_business_user_commission or 0) > 0:
+            earned_here += Decimal(t.tier2_business_user_commission or 0)
+        if t.tier3_business_user_referral_id == ref_code and (t.tier3_business_user_commission or 0) > 0:
+            earned_here += Decimal(t.tier3_business_user_commission or 0)
+        if t.tier4_business_user_referral_id == ref_code and (t.tier4_business_user_commission or 0) > 0:
+            earned_here += Decimal(t.tier4_business_user_commission or 0)
+        if t.tier5_business_user_referral_id == ref_code and (t.tier5_business_user_commission or 0) > 0:
+            earned_here += Decimal(t.tier5_business_user_commission or 0)
+
+        if earned_here == 0:
+            continue
+
+        total += earned_here
+
+        # Available only if older than cutoff
+        if t.date_time <= cutoff:
+            available += earned_here
+
+    pending = total - available
+    return total, available, pending
+
 def calculate_business_grand_total(business):
     ref_code = business.referral_code
     all_txns = BusinessTransaction.query.all()
@@ -1594,6 +1666,54 @@ def calculate_business_grand_total(business):
         if hasattr(t, "sponsoree_mutual_referral_id") and t.sponsoree_mutual_referral_id == ref_code and (t.sponsoree_mutual_commission or 0) > 0:
             total += Decimal(t.sponsoree_mutual_commission or 0)
     return total
+
+from datetime import datetime, timedelta
+
+def calculate_business_earnings_split(business, delay_days=7):
+    """
+    Returns (total_earnings, available_earnings, pending_earnings) for a business,
+    based on its referral_code and BusinessTransaction rows.
+    Earnings are available if transaction.date_time <= now - delay_days.
+    """
+    ref_code = business.referral_code
+    all_txns = BusinessTransaction.query.all()
+
+    total = Decimal(0)
+    available = Decimal(0)
+
+    cutoff = datetime.utcnow() - timedelta(days=delay_days)
+
+    for t in all_txns:
+        earned_here = Decimal(0)
+
+        # Tier 1: business's own cashback
+        if t.business_referral_id == ref_code and (t.cash_back or 0) > 0:
+            earned_here += Decimal(t.cash_back or 0)
+
+        # Tiers 2-5 commissions
+        if t.tier2_business_referral_id == ref_code and (t.tier2_commission or 0) > 0:
+            earned_here += Decimal(t.tier2_commission or 0)
+        if t.tier3_business_referral_id == ref_code and (t.tier3_commission or 0) > 0:
+            earned_here += Decimal(t.tier3_commission or 0)
+        if t.tier4_business_referral_id == ref_code and (t.tier4_commission or 0) > 0:
+            earned_here += Decimal(t.tier4_commission or 0)
+        if t.tier5_business_referral_id == ref_code and (t.tier5_commission or 0) > 0:
+            earned_here += Decimal(t.tier5_commission or 0)
+
+        # Mutual sponsoree commission (0.25%) if used
+        if getattr(t, "sponsoree_mutual_referral_id", None) == ref_code and (t.sponsoree_mutual_commission or 0) > 0:
+            earned_here += Decimal(t.sponsoree_mutual_commission or 0)
+
+        if earned_here == 0:
+            continue
+
+        total += earned_here
+
+        if t.date_time <= cutoff:
+            available += earned_here
+
+    pending = total - available
+    return total, available, pending
 
 def get_featured_businesses(lat, lng):
     # 1. Find nearby businesses within 10 miles using the haversine formula
@@ -1703,6 +1823,28 @@ def distribute_investor_earnings_per_transaction(transaction):
                 payout,
                 rate=1.0
             )
+
+def calculate_investor_earnings_split(user, delay_days=7):
+    """
+    Returns (total_earnings, available_earnings, pending_earnings) for a silent investor.
+    Uses InvestorEarnings.created_at and a delay window.
+    """
+    total = Decimal("0")
+    available = Decimal("0")
+
+    cutoff = datetime.utcnow() - timedelta(days=delay_days)
+
+    earnings = InvestorEarnings.query.filter_by(user_id=user.id).all()
+    for e in earnings:
+        amount = Decimal(str(e.amount or 0))
+        if amount <= 0:
+            continue
+        total += amount
+        if (e.created_at or datetime.utcnow()) <= cutoff:
+            available += amount
+
+    pending = total - available
+    return total, available, pending
 
 def biz_tier_commission(t, tier_field, ref_field):
     ref_id = getattr(t, ref_field)
@@ -3174,6 +3316,24 @@ def reset_password(token):
         flash("Account not found.")
     return render_template('reset_password.html', form=form)
 
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = UserChangePasswordForm()
+    if form.validate_on_submit():
+        # Verify current password
+        if not bcrypt.check_password_hash(current_user.password, form.current_password.data):
+            flash("Current password is incorrect.", "danger")
+            return redirect(url_for('change_password'))
+
+        # Set new password
+        current_user.password = bcrypt.generate_password_hash(form.new_password.data).decode('utf-8')
+        db.session.commit()
+        flash("Your password has been updated.", "success")
+        return redirect(url_for('dashboard'))
+
+    return render_template('change_password.html', form=form)
+
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -3232,9 +3392,12 @@ def dashboard():
     invite_form = InviteForm()
     user = current_user
 
-    # --- Earnings Calculation ---
-    user.grand_total_earnings = calculate_user_grand_total(user)
-    user.earnings_balance = user.grand_total_earnings - (user.withdrawn_total or Decimal(0))
+    # --- Earnings Calculation with 7-day delay ---
+    total_earnings, available_earnings, pending_earnings = calculate_user_earnings_split(user, delay_days=7)
+
+    user.grand_total_earnings = total_earnings
+    # earnings_balance should reflect what is actually available (older than 7 days) minus what was withdrawn
+    user.earnings_balance = available_earnings - (user.withdrawn_total or Decimal(0))
     db.session.commit()
 
     if request.method == "POST" and profile_form.submit.data and profile_form.validate():
@@ -3346,6 +3509,11 @@ def dashboard():
         .all()
     )
 
+    # --- Silent investor earnings (7-day delay) ---
+    investor_total = investor_available = investor_pending = Decimal("0")
+    if current_user.has_role('silent_investor'):
+        investor_total, investor_available, investor_pending = calculate_investor_earnings_split(current_user, delay_days=7)
+
     return render_template(
         "dashboard.html",
         form=form,
@@ -3363,6 +3531,12 @@ def dashboard():
         has_active_sessions=has_active_sessions,
         active_sessions_count=active_sessions_count,
         businesses=businesses,
+        total_earnings=total_earnings,
+        available_earnings=available_earnings,
+        pending_earnings=pending_earnings,
+        investor_total=investor_total,
+        investor_available=investor_available,
+        investor_pending=investor_pending,
     )
 
 @app.route("/logout")
@@ -4766,6 +4940,27 @@ def business_reset_password(token):
         flash("Account not found.")
     return render_template('reset_password.html', form=form)
 
+@app.route('/business/change_password', methods=['GET', 'POST'])
+@business_login_required
+def business_change_password():
+    form = BusinessChangePasswordForm()
+    biz_id = session.get('business_id')
+    biz = Business.query.get_or_404(biz_id)
+
+    if form.validate_on_submit():
+        # Verify current password
+        if not bcrypt.check_password_hash(biz.password, form.current_password.data):
+            flash("Current password is incorrect.", "danger")
+            return redirect(url_for('business_change_password'))
+
+        # Set new password
+        biz.password = bcrypt.generate_password_hash(form.new_password.data).decode('utf-8')
+        db.session.commit()
+        flash("Your business account password has been updated.", "success")
+        return redirect(url_for('business_dashboard'))
+
+    return render_template('business_change_password.html', form=form, business=biz)
+
 @app.route('/business/invite', methods=['POST'])
 def business_invite():
     invite_form = BusinessInviteForm()
@@ -4871,9 +5066,11 @@ def business_dashboard():
         flash("Please log in and confirm your business email to access the dashboard.")
         return redirect(url_for("business_login"))
 
-    # ---- Update earnings at every dashboard load ----
-    biz.grand_total_earnings = calculate_business_grand_total(biz)
-    biz.earnings_balance = biz.grand_total_earnings - (biz.withdrawn_total or Decimal(0))
+    # ---- Update earnings with 7-day delay ----
+    total_biz_earnings, available_biz_earnings, pending_biz_earnings = calculate_business_earnings_split(biz, delay_days=7)
+
+    biz.grand_total_earnings = total_biz_earnings
+    biz.earnings_balance = available_biz_earnings - (biz.withdrawn_total or Decimal(0))
     db.session.commit()
 
     if request.args.get("fund_success") == "1":
@@ -5048,7 +5245,10 @@ def business_dashboard():
         latitude=latitude,
         longitude=longitude,
         active_biz_sessions_count=active_biz_sessions_count,
-        has_active_biz_sessions=has_active_biz_sessions  # pass to template
+        has_active_biz_sessions=has_active_biz_sessions,
+        total_biz_earnings=total_biz_earnings,
+        available_biz_earnings=available_biz_earnings,
+        pending_biz_earnings=pending_biz_earnings,
     )
 
 @app.route("/business/logout")
@@ -7083,14 +7283,14 @@ def seed_admins_once():
     admins = [
         {
             "email": "admin1@perkminer.com",
-            "password": "admin1secure",
+            "password": "49pi25yt!@3#",
             "role_names": [
-                "approve_reject_listings", "feedback_moderation", "customer_support"
+                "approve_reject_listings", "finance", "feedback_moderation", "customer_support"
             ]
         },
         {
             "email": "finance1@perkminer.com",
-            "password": "finance1secure",
+            "password": "84kf68oe^2&%",
             "role_names": ["finance"]
         }
     ]
@@ -7151,13 +7351,28 @@ def news():
 def faq():
     return render_template("faq.html")
 
+@app.route("/discontinue")
+@business_login_required  # <-- use this if you have it
+def discontinue():
+    # Get the business_id from session
+    biz_id = session.get('business_id')
+    if not biz_id:
+        flash("You must be logged in as a business.")
+        return redirect(url_for("business_login"))
+
+    # Fetch business from the database
+    business = Business.query.get_or_404(biz_id)
+
+    # Render the template with the business context
+    return render_template("discontinue.html", business=business)
+
 @app.route("/press-release")
 def press_release():
     return render_template("press_release.html")
 
 @app.route("/new-featured-businesses")
 def new_featured_businesses():
-    return render_template("new_featured_businesses.html")
+    return render_template('your_template.html', business=business)
 
 @app.route('/onboard/stripe')
 @login_required
@@ -7220,30 +7435,37 @@ def withdraw():
     if not user.stripe_account_id:
         flash("Please set up your Stripe payouts first.")
         return redirect(url_for('onboard_stripe'))
-    if user.earnings_balance is None or user.earnings_balance < MIN_PAYOUT:
-        flash(f"You need at least ${MIN_PAYOUT} to withdraw.", "warning")
+
+    # Recalculate based on 7-day availability
+    total_earnings, available_earnings, pending_earnings = calculate_user_earnings_split(user, delay_days=7)
+    net_available = available_earnings - (user.withdrawn_total or Decimal(0))
+
+    if net_available < MIN_PAYOUT:
+        flash(f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.", "warning")
         return redirect(url_for('dashboard'))
 
-    balance_to_withdraw = user.earnings_balance
-    fee = balance_to_withdraw * Decimal("0.0025") + Decimal("0.35")
+    balance_to_withdraw = net_available
+    fee = balance_to_withdraw * Decimal("0.011")  # 1.1% instant payout fee
     payout_amount = balance_to_withdraw - fee
 
     if payout_amount <= 0:
-        flash("Insufficient balance after the transfer fee is deducted.", "warning")
+        flash("Insufficient balance after the instant payout fee is deducted.", "warning")
         return redirect(url_for('dashboard'))
 
     try:
-        transfer = stripe.Transfer.create(
-            amount=int(payout_amount * 100),  # in cents
+        payout = stripe.Payout.create(
+            amount=int(payout_amount * 100),
             currency='usd',
-            destination=user.stripe_account_id,
-            description="PerkMiner earnings withdrawal"
+            method='instant',
+            statement_descriptor="PerkMiner Payout",
+            stripe_account=user.stripe_account_id
         )
-        # Mark FULL balance as withdrawn (including fee)
+        # mark the withdrawn funds
         user.withdrawn_total = (user.withdrawn_total or Decimal(0)) + balance_to_withdraw
-        user.earnings_balance = user.grand_total_earnings - user.withdrawn_total
+        # recompute earnings_balance for display convenience
+        user.earnings_balance = available_earnings - user.withdrawn_total
         db.session.commit()
-        flash(f"Withdrawal of ${payout_amount:.2f} initiated! Stripe fee: ${fee:.2f} deducted.", "success")
+        flash(f"Withdrawal of ${payout_amount:.2f} initiated! Stripe instant payout fee: ${fee:.2f} deducted.", "success")
     except Exception as e:
         flash(f"Failed to withdraw: {e}", "danger")
 
@@ -7267,30 +7489,33 @@ def business_withdraw():
         flash("Please set up your Stripe payouts first.", "warning")
         return redirect(url_for('onboard_business_stripe'))
 
-    if biz.earnings_balance is None or biz.earnings_balance < MIN_PAYOUT:
-        flash(f"You need at least ${MIN_PAYOUT} to withdraw.", "warning")
+    # Recalculate based on 7-day availability
+    total_biz_earnings, available_biz_earnings, pending_biz_earnings = calculate_business_earnings_split(biz, delay_days=7)
+    net_available = available_biz_earnings - (biz.withdrawn_total or Decimal(0))
+
+    if net_available < MIN_PAYOUT:
+        flash(f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.", "warning")
         return redirect(url_for('business_dashboard'))
 
-    balance_to_withdraw = biz.earnings_balance
-    fee = balance_to_withdraw * Decimal("0.0025") + Decimal("0.35")
+    balance_to_withdraw = net_available
+    fee = balance_to_withdraw * Decimal("0.0025") + Decimal("0.35")  # standard bank transfer fee
     payout_amount = balance_to_withdraw - fee
 
     if payout_amount <= 0:
-        flash("Insufficient balance after the transfer fee is deducted.", "warning")
+        flash("Insufficient balance after the standard payout fee is deducted.", "warning")
         return redirect(url_for('business_dashboard'))
 
     try:
         transfer = stripe.Transfer.create(
-            amount=int(payout_amount * 100),  # in cents
+            amount=int(payout_amount * 100),
             currency='usd',
             destination=biz.stripe_account_id,
-            description="PerkMiner business earnings withdrawal"
+            description="PerkMiner Business Payout (Standard)"
         )
-        # Mark FULL balance as withdrawn (including fee)
         biz.withdrawn_total = (biz.withdrawn_total or Decimal(0)) + balance_to_withdraw
-        biz.earnings_balance = biz.grand_total_earnings - biz.withdrawn_total
+        biz.earnings_balance = available_biz_earnings - biz.withdrawn_total
         db.session.commit()
-        flash(f"Withdrawal of ${payout_amount:.2f} initiated! Stripe fee: ${fee:.2f} deducted.", "success")
+        flash(f"Business withdrawal of ${payout_amount:.2f} initiated! Stripe fee: ${fee:.2f} deducted.", "success")
     except Exception as e:
         flash(f"Failed to withdraw: {e}", "danger")
 
@@ -7367,25 +7592,179 @@ MIN_PAYOUT = Decimal("10.00")
 @app.route('/withdraw_investor', methods=['POST'])
 @login_required
 def withdraw_investor():
+    MIN_PAYOUT = Decimal("10")
     user = current_user
 
-    available = user.investor_earnings_balance or Decimal("0")
-    if available < MIN_PAYOUT:
-        flash(f"You need at least ${MIN_PAYOUT} in silent investor earnings to withdraw.", "warning")
+    if not user.stripe_account_id:
+        flash("Please set up your Stripe payouts first.")
+        return redirect(url_for('onboard_stripe'))
+
+    # Recalculate based on 7-day investor delay
+    investor_total, investor_available, investor_pending = calculate_investor_earnings_split(user, delay_days=7)
+    net_available = investor_available - (user.investor_withdrawn_total or Decimal("0"))
+
+    if net_available < MIN_PAYOUT:
+        flash(f"You need at least ${MIN_PAYOUT} in silent investor earnings (after the 7-day delay) to withdraw.", "warning")
         return redirect(url_for('dashboard'))
 
-    fee = available * Decimal("0.0025") + Decimal("0.35")
-    payout_amount = available - fee
+    balance_to_withdraw = net_available
+    fee = balance_to_withdraw * Decimal("0.0025") + Decimal("0.35")  # standard transfer fee
+    payout_amount = balance_to_withdraw - fee
+
     if payout_amount <= 0:
         flash("Insufficient balance after the transfer fee is deducted.", "warning")
         return redirect(url_for('dashboard'))
 
-    # ... Stripe transfer code here ...
+    try:
+        transfer = stripe.Transfer.create(
+            amount=int(payout_amount * 100),  # cents
+            currency='usd',
+            destination=user.stripe_account_id,
+            description="PerkMiner Silent Investor Withdrawal"
+        )
+        user.investor_withdrawn_total = (user.investor_withdrawn_total or Decimal("0")) + balance_to_withdraw
+        user.investor_earnings_balance = investor_available - user.investor_withdrawn_total
+        db.session.commit()
+        flash(f"Silent investor withdrawal of ${payout_amount:.2f} initiated! Stripe fee: ${fee:.2f} deducted.", "success")
+    except Exception as e:
+        flash(f"Silent investor withdrawal failed: {e}", "danger")
 
-    user.investor_withdrawn_total = (user.investor_withdrawn_total or Decimal("0")) + available
-    user.investor_earnings_balance = Decimal("0")
-    db.session.commit()
-    flash(f"Silent investor withdrawal of ${payout_amount:.2f} initiated! Stripe fee: ${fee:.2f} deducted.", "success")
+    return redirect(url_for('dashboard'))
+
+@app.route('/withdraw_instant', methods=['POST'])
+@login_required
+def withdraw_instant():
+    MIN_PAYOUT = Decimal("10")
+    user = current_user
+
+    if not user.stripe_account_id:
+        flash("Please set up your Stripe payouts first.")
+        return redirect(url_for('onboard_stripe'))
+
+    # Recalculate based on 7-day availability
+    total_earnings, available_earnings, pending_earnings = calculate_user_earnings_split(user, delay_days=7)
+    net_available = available_earnings - (user.withdrawn_total or Decimal(0))
+
+    if net_available < MIN_PAYOUT:
+        flash(f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.", "warning")
+        return redirect(url_for('dashboard'))
+
+    balance_to_withdraw = net_available
+    fee = balance_to_withdraw * Decimal("0.011") + Decimal("0.50")  # 1.1% + $0.50 fee
+    payout_amount = balance_to_withdraw - fee
+
+    if payout_amount <= 0:
+        flash("Insufficient balance after instant payout fee.", "warning")
+        return redirect(url_for('dashboard'))
+
+    try:
+        payout = stripe.Payout.create(
+            amount=int(payout_amount * 100),  # cents
+            currency='usd',
+            method='instant',
+            statement_descriptor="PerkMiner Payout",
+            stripe_account=user.stripe_account_id
+        )
+        user.withdrawn_total = (user.withdrawn_total or Decimal(0)) + balance_to_withdraw
+        # earnings_balance is based on available_earnings minus what was withdrawn
+        user.earnings_balance = available_earnings - user.withdrawn_total
+        db.session.commit()
+        flash(f"Instant withdrawal of ${payout_amount:.2f} initiated! Instant payout fee: ${fee:.2f} deducted.", "success")
+    except Exception as e:
+        flash(f"Instant withdrawal failed: {e}", "danger")
+
+    return redirect(url_for('dashboard'))
+
+@app.route('/business/withdraw_instant', methods=['POST'])
+def business_withdraw_instant():
+    business_id = session.get('business_id')
+    MIN_PAYOUT = Decimal("10")
+
+    if not business_id:
+        flash("Please log in as a business.")
+        return redirect(url_for('business_login'))
+
+    biz = Business.query.get(business_id)
+    if not biz:
+        flash("Business not found.", "danger")
+        return redirect(url_for('business_login'))
+
+    if not biz.stripe_account_id:
+        flash("Please set up your Stripe payouts first.", "warning")
+        return redirect(url_for('onboard_business_stripe'))
+
+    total_biz_earnings, available_biz_earnings, pending_biz_earnings = calculate_business_earnings_split(biz, delay_days=7)
+    net_available = available_biz_earnings - (biz.withdrawn_total or Decimal(0))
+
+    if net_available < MIN_PAYOUT:
+        flash(f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.", "warning")
+        return redirect(url_for('business_dashboard'))
+
+    balance_to_withdraw = net_available
+    fee = balance_to_withdraw * Decimal("0.011") + Decimal("0.50")
+    payout_amount = balance_to_withdraw - fee
+
+    if payout_amount <= 0:
+        flash("Insufficient balance after instant payout fee.", "warning")
+        return redirect(url_for('business_dashboard'))
+
+    try:
+        payout = stripe.Payout.create(
+            amount=int(payout_amount * 100),
+            currency='usd',
+            method='instant',
+            statement_descriptor="PerkMiner Biz Payout",
+            stripe_account=biz.stripe_account_id
+        )
+        biz.withdrawn_total = (biz.withdrawn_total or Decimal(0)) + balance_to_withdraw
+        biz.earnings_balance = available_biz_earnings - biz.withdrawn_total
+        db.session.commit()
+        flash(f"Instant business withdrawal of ${payout_amount:.2f} initiated! Instant payout fee: ${fee:.2f} deducted.", "success")
+    except Exception as e:
+        flash(f"Instant withdrawal failed: {e}", "danger")
+
+    return redirect(url_for('business_dashboard'))
+
+@app.route('/withdraw_investor_instant', methods=['POST'])
+@login_required
+def withdraw_investor_instant():
+    MIN_PAYOUT = Decimal("10")
+    user = current_user
+
+    if not user.stripe_account_id:
+        flash("Please set up your Stripe payouts first.")
+        return redirect(url_for('onboard_stripe'))
+
+    investor_total, investor_available, investor_pending = calculate_investor_earnings_split(user, delay_days=7)
+    net_available = investor_available - (user.investor_withdrawn_total or Decimal("0"))
+
+    if net_available < MIN_PAYOUT:
+        flash(f"You need at least ${MIN_PAYOUT} in silent investor earnings (after the 7-day delay) to withdraw.", "warning")
+        return redirect(url_for('dashboard'))
+
+    balance_to_withdraw = net_available
+    fee = balance_to_withdraw * Decimal("0.011") + Decimal("0.50")
+    payout_amount = balance_to_withdraw - fee
+
+    if payout_amount <= 0:
+        flash("Insufficient balance after instant payout fee.", "warning")
+        return redirect(url_for('dashboard'))
+
+    try:
+        payout = stripe.Payout.create(
+            amount=int(payout_amount * 100),
+            currency='usd',
+            method='instant',
+            statement_descriptor="PerkMiner Investor Payout",
+            stripe_account=user.stripe_account_id
+        )
+        user.investor_withdrawn_total = (user.investor_withdrawn_total or Decimal("0")) + balance_to_withdraw
+        user.investor_earnings_balance = investor_available - user.investor_withdrawn_total
+        db.session.commit()
+        flash(f"Instant silent investor withdrawal of ${payout_amount:.2f} initiated! Instant payout fee: ${fee:.2f} deducted.", "success")
+    except Exception as e:
+        flash(f"Instant withdrawal failed: {e}", "danger")
+
     return redirect(url_for('dashboard'))
 
 @app.route("/favorites")
@@ -7416,7 +7795,19 @@ def remove_favorite(business_id):
         db.session.commit()
     return redirect(request.referrer or url_for("favorites"))
 
+@app.route("/stats")
+def stats():
+    # count confirmed users as members
+    member_count = User.query.filter_by(email_confirmed=True).count()
 
+    # count approved businesses as advertisers
+    advertiser_count = Business.query.filter_by(status="approved").count()
+
+    data = {
+        "members": member_count,
+        "advertisers": advertiser_count
+    }
+    return jsonify(data), 200
 
 @app.errorhandler(500)
 def internal_server_error(error):

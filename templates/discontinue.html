@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Discontinue Business Account | PerkMiner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .disclaimer-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffe066;
+            padding: 17px;
+            margin-bottom: 22px;
+            border-radius: 6px;
+            font-size: 1.05rem;
+        }
+        .pm-card {
+            margin: 30px auto;
+            max-width: 650px;
+            padding: 26px 24px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 6px 28px rgba(31,42,85,.06);
+        }
+        @media (max-width:600px) {
+            .pm-card { padding: 16px 4vw; }
+        }
+        button[disabled] {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="pm-card mt-5 mb-4">
+        <h2 class="mb-3 text-center">Discontinue Your Business Advertising</h2>
+        <div class="disclaimer-box mb-3">
+            <strong>Please read &amp; agree before continuing:</strong><br>
+            By discontinuing your advertising services, you acknowledge:<br>
+            <ul class="mb-1">
+                <li>You must have <b>at least $25</b> in your PerkMiner account to pay the $25 discontinuation fee.</li>
+                <li>Any balance <b>over $25</b> will be refunded to the business (ACH or mailed check as you prefer).</li>
+                <li>If you choose to receive a check, please include your mailing address in your message to us.</li>
+                <li>Your account and referral links will be suspended, but records will remain for compliance.</li>
+            </ul>
+            <label class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="agreeBox">
+                <span class="form-check-label">
+                    I understand the discontinuation fee and refund process, and wish to proceed.
+                </span>
+            </label>
+        </div>
+        <div class="mb-3">
+            <button id="emailBtn"
+                    class="btn btn-danger w-100"
+                    disabled>
+                Email Support to Discontinue Account
+            </button>
+        </div>
+        <p class="text-muted text-center" style="font-size:0.97em;">
+            You may also choose to <a href="{{ url_for('business_dashboard') }}">pause your account instead</a>—no fee will be charged and funds will stay on balance.
+        </p>
+    </div>
+</div>
+
+<script>
+    // Pre-fill the subject/body of the email
+    document.addEventListener("DOMContentLoaded", function() {
+        let agreeBox = document.getElementById('agreeBox');
+        let emailBtn = document.getElementById('emailBtn');
+        let businessName = "{{ business.business_name }}";
+        let businessEmail = "{{ business.business_email }}";
+        emailBtn.addEventListener('click', function() {
+            let subject = encodeURIComponent("[" + businessName + "] wishes to discontinue advertising services");
+            let body = encodeURIComponent(
+                `Hello Perk Miner Support, ` +
+                `- We would like to discontinue advertising services for our business (${businessName}). ` +
+                `- I acknowledge that: ` +
+                `- $25 will be deducted from our PerkMiner account to cover the discontinuation fee. ` +
+                `- Any remaining balance over $25 will be refunded, if applicable. ` +
+                
+                `- __ Please refund any remaining funds to the original method of payment used. ` + 
+                `- __ Please send a refund check to this address:  [enter mailing address here] ` +
+                `Contact Email: ${businessEmail} ` +
+                `Thank you!`
+            );
+            window.location = `mailto:support@perkminer.com?subject=${subject}&body=${body}`;
+        });
+        agreeBox.addEventListener('change', function() {
+            emailBtn.disabled = !agreeBox.checked;
+        });
+    });
+</script>
+</body>
+</html>

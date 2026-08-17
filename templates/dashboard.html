@@ -232,18 +232,34 @@
   </a>
 <a href="{{ url_for('favorites') }}" class="btn btn-outline-primary">My Favorites</a>
 </div>
-    <!-- User Profile Section -->
-    <div class="card p-4 mb-4">
-    <h4>Your Profile</h4>
+
+<!-- User Profile Section -->
+<div class="card p-4 mb-4">
+  <h4>Your Profile</h4>
   <div class="mb-3">
-    <button class="btn btn-primary w-100" type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#profileCollapse"
-      aria-expanded="false"
-      aria-controls="profileCollapse">
-      View/Edit Profile
-    </button>
+    <div class="row g-2">
+      <div class="col-12 col-md-8">
+        <button class="btn btn-primary w-100" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#profileCollapse"
+                aria-expanded="false"
+                aria-controls="profileCollapse">
+          View/Edit Profile
+        </button>
+      </div>
+      <div class="col-12 col-md-4">
+        <a href="{{ url_for('change_password') }}" class="btn btn-outline-dark w-100">
+          Change Password
+        </a>
+      </div>
+    </div>
   </div>
+
+  <div class="collapse" id="profileCollapse">
+    <!-- existing profile form content here -->
+  </div>
+</div>
+
   {% if has_active_sessions %}
     <div>
       <a href="{{ url_for('user_biz_interactions') }}" class="btn btn-outline-primary w-100">
@@ -350,8 +366,46 @@
     <div class="card p-4 mb-4">
 
 <h4>Your Activity</h4>
+
+<!-- Earnings summary with 7-day delay explanation -->
 <div class="mb-3">
-  <div class="row align-items-center">
+  <div class="card mb-3">
+    <div class="card-header">
+      Earnings summary (7-day delay)
+    </div>
+    <div class="card-body">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Total earnings</td>
+            <td>${{ "{:,.2f}".format(total_earnings or 0) }}</td>
+          </tr>
+          <tr>
+            <td>Pending earnings</td>
+            <td>${{ "{:,.2f}".format(pending_earnings or 0) }}</td>
+          </tr>
+          <tr>
+            <td>Available for withdrawal</td>
+            <td>${{ "{:,.2f}".format(available_earnings or 0) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <small class="text-muted">
+        <a href="#" data-bs-toggle="modal" data-bs-target="#memberEarningsInfo">
+          <i class="bi bi-info-circle"></i> Payout Info
+        </a>
+      </small>
+    </div>
+  </div>
+
+  <!-- top row: receipts, earnings views, investor report, payout info -->
+  <div class="row align-items-center mb-3">
     <div class="col-12 col-md-auto d-flex flex-wrap gap-2 mb-2 mb-md-0">
       <a href="{{ url_for('user_receipts') }}" class="btn btn-outline-secondary">View Receipts</a>
       <a href="{{ url_for('user_earnings') }}" class="btn btn-outline-success">
@@ -363,73 +417,105 @@
         </a>
       {% endif %}
     </div>
-
     {% if current_user.stripe_account_id %}
       <div class="col-12 col-md text-md-end">
         <a href="{{ url_for('stripe_update_info') }}" class="btn btn-outline-primary mb-2">
-          Update Payout/Banking Info</br>
-          (IMPORTANT:  Must Select Professional Services Industry, Other Marketing Services and Perkminer.com for website during onboarding)
+          Update Payout/Banking Info
         </a>
       </div>
     {% endif %}
   </div>
 
-  <!-- Regular earnings (commissions + cash back only) -->
+  <!-- REGULAR earnings (commissions + cashback) -->
   <div class="fs-5 fw-semibold text-primary mb-2">
-    Earnings Balance: ${{ "{:,.2f}".format(current_user.earnings_balance or 0) }}
+    Withdrawable Earnings: ${{ "{:,.2f}".format(current_user.earnings_balance or 0) }}
   </div>
 
   <div>
     {% if not current_user.stripe_account_id %}
       <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary w-100">
-        Set Up Payouts (Bank Transfer)
+        Set Up Payouts (Bank Transfer)</br>
+        <b>(IMPORTANT: Must Select Professional Services Industry, Other Marketing Services, and perkminer.com for website during onboarding)</b>
       </a>
     {% else %}
       {% set earnings = current_user.earnings_balance|float %}
       {% if earnings >= 10 %}
-        {% set fee = earnings * 0.0025 + 0.35 %}
-        {% set net = earnings - fee %}
-        <div class="text-muted mb-1" style="font-size:0.98em;">
-          Stripe transfer fee: ${{ '{:,.2f}'.format(fee) }} (0.25% + $0.35 per payout)<br>
-          You will receive: <b>${{ '{:,.2f}'.format(net) }}</b>
+        <!-- Standard Payout (Regular Earnings) -->
+        {% set std_fee = earnings * 0.0025 + 0.35 %}
+        {% set std_net = earnings - std_fee %}
+        <div class="mb-3 border rounded p-3">
+          <div class="fw-bold mb-1">
+            <i class="bi bi-bank"></i> Standard Payout (1-3 business days)
+          </div>
+          <div class="text-muted mb-1" style="font-size:0.97em;">
+            Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee) }} (0.25% + $0.35)<br>
+            You will receive: <b>${{ '{:,.2f}'.format(std_net) }}</b>
+          </div>
+          <form action="{{ url_for('withdraw') }}" method="POST" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-success w-100">
+              Withdraw (Standard)
+            </button>
+          </form>
         </div>
-        <form action="{{ url_for('withdraw') }}" method="POST" class="d-inline">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn btn-success w-100">
-            Withdraw Regular Earnings
-          </button>
-        </form>
+
+        <!-- Instant Payout (Regular Earnings) -->
+        {% set inst_fee = earnings * 0.011 + 0.50 %}
+        {% set inst_net = earnings - inst_fee %}
+        <div class="border rounded p-3 bg-warning-subtle mt-3">
+          <div class="fw-bold mb-1">
+            <i class="bi bi-lightning-fill text-warning"></i> Instant Payout (Instant, 24/7)
+          </div>
+          <div class="text-muted mb-1" style="font-size:0.97em;">
+            Stripe instant payout fee: ${{ '{:,.2f}'.format(inst_fee) }} (1.1% + $0.50)<br>
+            You will receive: <b>${{ '{:,.2f}'.format(inst_net) }}</b>
+          </div>
+          <form action="{{ url_for('withdraw_instant') }}" method="POST" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-warning w-100">
+              Withdraw Instantly <i class="bi bi-lightning-charge-fill"></i>
+            </button>
+          </form>
+        </div>
       {% endif %}
     {% endif %}
   </div>
-  
+
   <!-- Silent investor block: visible only for silent investors -->
-  {% if current_user.has_role('silent_investor') %}
-    <div class="alert alert-info mt-4">
-      <b>Silent Investor Earnings Balance:</b>
-      ${{ "{:,.2f}".format(current_user.investor_earnings_balance or 0) }}
-      <br>
-      <span style="font-size:0.96em;">
-        (Withdrawable when balance is ${{ min_payout or 10 }}, after Stripe fee)
-      </span>
-      {% set invest_earnings = current_user.investor_earnings_balance|float %}
-      {% if invest_earnings >= 10 %}
-        {% set invest_fee = invest_earnings * 0.0025 + 0.35 %}
-        {% set invest_net = invest_earnings - invest_fee %}
-        <div class="text-muted mb-1 mt-2" style="font-size:0.98em;">
-          Stripe transfer fee: ${{ '{:,.2f}'.format(invest_fee) }} (0.25% + $0.35 per payout)<br>
-          You will receive: <b>${{ '{:,.2f}'.format(invest_net) }}</b>
-        </div>
-        <form action="{{ url_for('withdraw_investor') }}" method="POST" class="d-inline">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn btn-warning w-100 mt-2">
-            Withdraw Silent Investor Earnings
-          </button>
-        </form>
-      {% endif %}
+{% if current_user.has_role('silent_investor') %}
+  <div class="card mt-4">
+    <div class="card-header">
+      Silent investor earnings (7-day delay)
     </div>
-  {% endif %}
-</div>
+    <div class="card-body">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Total investor earnings</td>
+            <td>${{ "{:,.2f}".format(investor_total or 0) }}</td>
+          </tr>
+          <tr>
+            <td>Pending investor earnings</td>
+            <td>${{ "{:,.2f}".format(investor_pending or 0) }}</td>
+          </tr>
+          <tr>
+            <td>Available for withdrawal</td>
+            <td>${{ "{:,.2f}".format(investor_available or 0) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <small class="text-muted">
+        Investor earnings become available 7 days after they are recorded.
+      </small>
+    </div>
+  </div>
+{% endif %}
 
 <div class="card p-4 mb-4">
   <h4>Businesses You Interacted With (last 60 days)</h4>
@@ -645,6 +731,23 @@
   </div>
 </div>
 {% endif %}
+
+<div class="modal fade" id="memberEarningsInfo" tabindex="-1" aria-labelledby="memberEarningsInfoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="memberEarningsInfoLabel">How your earnings work</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="font-size:0.95em;">
+        <p><b>Total earnings</b> are all cashback and referral commissions you have earned, lifetime.</p>
+        <p><b>Pending earnings</b> are from transactions finalized in the last 7 days. These are in a holding period.</p>
+        <p><b>Available for withdrawal</b> are earnings that are at least 7 days old and can be withdrawn to your bank account.</p>
+        <p>Each transaction moves from pending to available exactly 7 days after the business finalizes it.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="card p-4 text-center">
   <h4>This is your dashboard.</h4>

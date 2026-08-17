@@ -370,9 +370,8 @@
     {% endif %}
     <div class="container hero-content">
       <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="hero-logo">
-      <h1>DEMO SITE ONLY</h1>
       <h1>Exclusive Member Perks</br>plus 2% Cashback</h1>
-      <h4>Business No Risk Advertising!</br>No Sale/Close = No Fee For Advertisers!</h4>
+      <h4>No Risk Advertising! (900% ROI min)</br>No Sale/Close = No Fee For Advertisers!</h4>
       <p style="font-size:1rem; color:#222; background:#f7f7f7; padding:6px 14px; border-radius:7px; display:inline-block;">
         Secure ⛨ | Not crypto | Privacy guaranteed
       </p>
@@ -420,8 +419,8 @@
 
   <div class="marquee-container">
     <div class="marquee">
-      <div class="marquee-content">
-        *** THIS IS A DEMO SITE ONLY!! ***<span class="highlight">Member and Business Views</span>
+      <div class="marquee-content" id="live-marquee">
+        *** LAUNCHING SOON!! ***<span class="highlight">Free to Join - join early and start earning cashback on real purchases (Paid By Perk Miner)</span>
       </div>
     </div>
   </div>
@@ -437,6 +436,9 @@
           <a class="nav-link" href="/login">Login</a>
           <a class="nav-link" href="/register">Register</a>
           <a class="nav-link" href="/business">Advertise with Us</a>
+          <a class="nav-link" href="/about">About Us</a>
+          <a class="nav-link" href="/news">News</a>
+          <a class="nav-link" href="/faq">FAQ</a>
         </div>
       </div>
     </div>
@@ -953,6 +955,42 @@ document.addEventListener("DOMContentLoaded", function() {
 
   setMarqueeSpeed();
   window.addEventListener('resize', setMarqueeSpeed);
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const marqueeEl = document.getElementById('live-marquee');
+  if (!marqueeEl) return;
+
+  async function updateMarqueeOnce() {
+    try {
+      const resp = await fetch('/stats', { cache: 'no-store' });
+      if (!resp.ok) return;
+
+      const data = await resp.json();
+      const members = data.members ?? 0;
+      const advertisers = data.advertisers ?? 0;
+
+      const text = 
+        `LAUNCHING SOON! *** LIVE UPDATE *** ` +
+        `Members:<span class="highlight">${members.toLocaleString()}</span> ` +
+        `Businesses:<span class="highlight">${advertisers.toLocaleString()}</span> ` +
+        `|    Free to join - always free.  Start earning cashback and referral commissions on real purchases (Paid by Perk Miner)`;
+
+      marqueeEl.innerHTML = text;   // clear any old children
+    } catch (err) {
+      console.error('Failed to update marquee stats:', err);
+      // optional: keep old text on error
+    }
+  }
+
+  // initial load
+  updateMarqueeOnce();
+
+  // poll every 45 seconds (adjust as needed)
+  const POLL_MS = 45000;
+  setInterval(updateMarqueeOnce, POLL_MS);
 });
 </script>
 
