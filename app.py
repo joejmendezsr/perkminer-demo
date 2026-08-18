@@ -7795,6 +7795,16 @@ def remove_favorite(business_id):
         db.session.commit()
     return redirect(request.referrer or url_for("favorites"))
 
+@app.route("/member_tutorials")
+@login_required  # if you want this locked to members only
+def member_tutorials():
+    return render_template("member_tutorials.html")
+
+@app.route("/business_tutorials")
+@business_login_required  # reuses your existing decorator
+def business_tutorials():
+    return render_template("business_tutorials.html")
+
 @app.route("/stats")
 def stats():
     # count confirmed users as members

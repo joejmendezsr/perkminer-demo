@@ -5,35 +5,38 @@
   <title>Welcome to PerkMiner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      background: #f7f7fb; 
-      text-align: center; 
-      margin:0; 
-      padding:0;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7fb;
+      margin: 0;
+      padding: 0;
+      color: #222;
     }
-    .header { 
-      width: 100%; 
-      background: #fff; 
-      padding: 20px 0; 
-      box-shadow: 0 2px 8px #0001; 
-      position: relative;
+    .header {
+      width: 100%;
+      background: #fff;
+      padding: 16px 0 10px;
+      box-shadow: 0 2px 8px #0001;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      text-align: center;
     }
-    .header img { 
-      max-width: 260px; 
-      height: auto; 
+    .header img {
+      max-width: 240px;
+      height: auto;
     }
     .close-btn {
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 16px;
+      right: 16px;
       background: #6366f1;
       color: white;
       border: none;
       border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      font-size: 1.4em;
+      width: 42px;
+      height: 42px;
+      font-size: 1.3em;
       font-weight: bold;
       cursor: pointer;
       display: flex;
@@ -44,116 +47,153 @@
     }
     .close-btn:hover {
       background: #4f46e5;
-      transform: scale(1.1);
+      transform: scale(1.08);
     }
+
+    .page-intro {
+      padding: 16px 12px 4px;
+      text-align: center;
+    }
+    .page-intro h1 {
+      font-size: 1.4rem;
+      margin: 0 0 6px;
+      color: #23223f;
+    }
+    .page-intro p {
+      margin: 0;
+      font-size: 0.98rem;
+      color: #555;
+    }
+    .mobile-note {
+      margin-top: 6px;
+      font-size: 0.9rem;
+      color: #cc0000;
+      font-weight: 600;
+    }
+
     .videos-row {
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 28px; 
-      justify-content: center; 
-      padding: 40px 20px 60px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      justify-content: center;
+      padding: 24px 20px 40px;
+      max-width: 1100px;
+      margin: 0 auto;
     }
     .video-card {
-      background: #fff; 
-      border-radius: 14px; 
+      background: #fff;
+      border-radius: 14px;
       box-shadow: 0 2px 12px #0002;
-      padding: 24px 18px 36px 18px; 
-      max-width: 430px; 
-      flex: 1 1 380px; 
-      min-width: 320px;
-      display: flex; 
-      flex-direction: column; 
+      padding: 22px 18px 28px;
+      max-width: 460px;
+      flex: 1 1 380px;
+      min-width: 300px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
     }
     .video-title {
-      font-size: 1.4em; 
-      font-weight: bold; 
-      margin-bottom: 16px; 
+      font-size: 1.25em;
+      font-weight: 700;
+      margin-bottom: 4px;
       color: #23223f;
+      text-align: center;
     }
-    video { 
-      width: 100%; 
-      max-width: 390px; 
-      border-radius: 8px; 
-      margin-bottom: 20px;
+    .video-subtitle {
+      font-size: 0.92em;
+      color: #555;
+      margin-bottom: 14px;
+      text-align: center;
     }
-    
+    video {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #000;
+    }
+
     @media (max-width: 900px) {
-      .videos-row { 
-        flex-direction: column; 
-        align-items: center; 
-        padding-top: 30px;
+      .videos-row {
+        flex-direction: column;
+        align-items: center;
+        padding-top: 18px;
       }
-      .video-card { 
-        margin-bottom: 40px; 
-        min-width: 80vw; 
+      .video-card {
+        width: 92vw;
+        max-width: 480px;
       }
     }
     @media (max-width: 600px) {
       .header img { max-width: 170px; }
-      .video-title { font-size: 1.08em; }
-      .video-card { padding: 17px 7px 24px 7px; }
+      .page-intro h1 { font-size: 1.15rem; }
+      .video-title { font-size: 1.05em; }
+      .video-card { padding: 16px 10px 22px; }
       .close-btn {
-        top: 12px;
-        right: 12px;
-        width: 38px;
-        height: 38px;
-        font-size: 1.2em;
+        top: 10px;
+        right: 10px;
+        width: 36px;
+        height: 36px;
+        font-size: 1.1em;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- HEADER WITH LOGO + CLOSE BUTTON -->
   <div class="header">
     <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1769980535/PerkMiner_Logo_o2qgfy.jpg" alt="PerkMiner Logo">
-    <button class="close-btn" onclick="window.close();">×</button>
+    <button class="close-btn">×</button>
   </div>
-  <div>
-    <p align="center"><font color="#FF0000">(scroll down on mobile to watch the 
-    video for business owners)</font></p>
-  </div>
-  <!-- SIDE-BY-SIDE VIDEO WINDOWS -->
+
+  <section class="page-intro">
+    <h1>welcome to perkminer</h1>
+    <p>Watch the short video that applies to you, then return to complete your registration or login.</p>
+    <div class="mobile-note">(on mobile, scroll down to see the business owners video)</div>
+  </section>
+
   <div class="videos-row">
-    <!-- USER / MEMBER VIDEO CARD -->
+    <!-- MEMBER VIDEO CARD -->
     <div class="video-card">
-      <div class="video-title">Video For Members (3 mins)</div>
+      <div class="video-title">Video for Members</div>
+      <div class="video-subtitle">~3 minutes</div>
       <video
         id="user-video"
-        controls 
+        controls
         controlsList="nodownload"
         oncontextmenu="return false;"
         preload="auto"
         poster="https://via.placeholder.com/800x450/6366f1/ffffff?text=Member+Intro">
-        <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1778712690/Final_Member_Promo_w_subs_dypxyf.mp4" type="video/mp4">
+        <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1787029926/Final_PM_Member_Promo_lkgvbi.mp4" type="video/mp4">
         Sorry, your browser doesn't support embedded videos.
       </video>
     </div>
 
     <!-- BUSINESS VIDEO CARD -->
     <div class="video-card">
-      <div class="video-title">Video For Business Owners (3.5 mins)</div>
+      <div class="video-title">Video for Business Owners</div>
+      <div class="video-subtitle">~3.5 minutes</div>
       <video
         id="biz-video"
-        controls 
+        controls
         controlsList="nodownload"
         oncontextmenu="return false;"
         preload="auto"
         poster="https://via.placeholder.com/800x450/232323/ffffff?text=Business+Intro">
-        <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1778713899/Final_BIZ_Promo_w_subs_h5qyyp.mp4" type="video/mp4">
+        <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1787029952/Final_PM_Biz_Promo_iyncur.mp4" type="video/mp4">
         Sorry, your browser doesn't support embedded videos.
       </video>
     </div>
   </div>
 
   <script>
-    // Video protection (right-click, save prevention)
     function protectVideo(id) {
       const video = document.getElementById(id);
+      if (!video) return;
+
       video.addEventListener('contextmenu', (e) => e.preventDefault());
       video.addEventListener('keydown', function(e){
-        if ((e.ctrlKey && e.key === "s") || (e.key === "S" && e.metaKey)) {
+        if ((e.ctrlKey && e.key === "s") || (e.metaKey && (e.key === "s" || e.key === "S"))) {
           e.preventDefault();
         }
       });
@@ -165,14 +205,16 @@
     protectVideo('user-video');
     protectVideo('biz-video');
 
-    // Optional: If window.close() doesn't work (e.g. not opened by script),
-    // you can add a fallback message or redirect
+    // close button behavior
     document.querySelector('.close-btn').addEventListener('click', function() {
+      if (window.opener) {
+        window.close();
+        return;
+      }
       if (window.history.length > 1) {
         window.history.back();
       } else {
-        // Fallback if no history (e.g. opened in new tab)
-        alert("You can now close this tab or return to your email to complete registration.");
+        alert("You can now close this tab or return to your previous page.");
       }
     });
   </script>

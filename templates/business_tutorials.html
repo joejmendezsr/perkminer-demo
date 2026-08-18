@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PerkMiner – Business Tutorials</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7fb;
+      margin: 0;
+      padding: 0;
+      color: #222;
+    }
+    .header {
+      background: #fff;
+      padding: 14px 16px;
+      box-shadow: 0 2px 8px #0001;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .header img {
+      max-height: 42px;
+      height: auto;
+    }
+    .header-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-left: 10px;
+      color: #23223f;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-btn {
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .header-btn:hover {
+      background: #4f46e5;
+    }
+
+    .page-wrap {
+      max-width: 1100px;
+      margin: 16px auto 40px;
+      padding: 0 16px;
+    }
+
+    .main-player-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 3px 16px #0002;
+      padding: 18px 18px 24px;
+      margin-bottom: 28px;
+    }
+    .main-player-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #23223f;
+    }
+    .main-player-subtitle {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 14px;
+    }
+    #main-video {
+      width: 100%;
+      max-height: 480px;
+      border-radius: 10px;
+      background: #000;
+    }
+
+    .video-grid-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #23223f;
+    }
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .thumb-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px #0001;
+      padding: 10px 10px 14px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .thumb-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 16px #0002;
+    }
+    .thumb-image-wrap {
+      width: 100%;
+      height: 0;
+      padding-bottom: 56.25%; /* 16:9 */
+      border-radius: 10px;
+      overflow: hidden;
+      background: #000;
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .thumb-image-wrap img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .thumb-title {
+      font-size: 0.98rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #23223f;
+    }
+    .thumb-meta {
+      font-size: 0.82rem;
+      color: #777;
+    }
+
+    @media (max-width: 600px) {
+      .header-title { display: none; }
+      .page-wrap { padding: 0 10px; }
+      .main-player-card { padding: 14px 10px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-left">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1769980535/PerkMiner_Logo_o2qgfy.jpg" alt="PerkMiner">
+      <span class="header-title">business tutorials</span>
+    </div>
+    <button class="header-btn" type="button" onclick="window.history.back()">← back</button>
+  </header>
+
+  <div class="page-wrap">
+    <!-- MAIN PLAYER -->
+    <section class="main-player-card">
+      <h1 class="main-player-title" id="main-title">Business Tutorials</h1>
+      <p class="main-player-subtitle" id="main-subtitle">Quick intro, how businesses finalize transactions and more.</p>
+
+      <video
+        id="main-video"
+        controls
+        controlsList="nodownload"
+        oncontextmenu="return false;"
+        preload="auto"
+        poster="https://via.placeholder.com/800x450/6366f1/ffffff?text=Member+Overview">
+        <source id="main-source" src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1787029952/Final_PM_Biz_Promo_iyncur.mp4" type="video/mp4">
+        Sorry, your browser doesn't support embedded videos.
+      </video>
+    </section>
+
+    <!-- THUMBNAILS GRID -->
+    <section>
+      <div class="video-grid-title">Member tutorials (COMING SOON!)</div>
+      <div class="video-grid" id="video-grid">
+        <!-- Example cards: replace src/poster/title with your real Cloudinary URLs and labels -->
+        <div class="thumb-card"
+             data-src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1778713899/Final_BIZ_Promo_w_subs_h5qyy.mp4"
+             data-poster="https://res.cloudinary.com/XXX/image/upload/member_thumb_1.jpg"
+             data-title="Business Intro"
+             data-subtitle="3 min – Intro Video.">
+          <div class="thumb-image-wrap">
+            <img src="https://res.cloudinary.com/XXX/image/upload/member_thumb_1.jpg" alt="Member Overview">
+          </div>
+          <div class="thumb-title">Member Overview</div>
+          <div class="thumb-meta">3 min • getting started</div>
+        </div>
+
+        <div class="thumb-card"
+             data-src="https://res.cloudinary.com/XXX/video/upload/member_video_2.mp4"
+             data-poster="https://res.cloudinary.com/XXX/image/upload/member_thumb_2.jpg"
+             data-title="How to Search and Connect"
+             data-subtitle="Walkthrough: finding businesses and starting a session.">
+          <div class="thumb-image-wrap">
+            <img src="https://res.cloudinary.com/XXX/image/upload/member_thumb_2.jpg" alt="Search and Connect">
+          </div>
+          <div class="thumb-title">How to Search and Connect</div>
+          <div class="thumb-meta">4 min • step-by-step</div>
+        </div>
+
+        <!-- Add more thumb-card blocks as needed -->
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function protectVideoEl(video) {
+      if (!video) return;
+      video.addEventListener('contextmenu', (e) => e.preventDefault());
+      video.addEventListener('mouseover', function() {
+        video.setAttribute('controlsList', 'nodownload');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const mainVideo = document.getElementById('main-video');
+      const mainSource = document.getElementById('main-source');
+      const mainTitle = document.getElementById('main-title');
+      const mainSubtitle = document.getElementById('main-subtitle');
+      const grid = document.getElementById('video-grid');
+
+      protectVideoEl(mainVideo);
+
+      grid.addEventListener('click', function(e) {
+        const card = e.target.closest('.thumb-card');
+        if (!card) return;
+
+        const src = card.getAttribute('data-src');
+        const poster = card.getAttribute('data-poster');
+        const title = card.getAttribute('data-title') || '';
+        const subtitle = card.getAttribute('data-subtitle') || '';
+
+        if (!src) return;
+
+        // swap source
+        mainVideo.pause();
+        mainSource.src = src;
+        mainVideo.poster = poster || '';
+        mainVideo.load();
+        mainVideo.play().catch(() => {});
+
+        if (title) mainTitle.textContent = title;
+        if (subtitle) mainSubtitle.textContent = subtitle;
+
+        // smooth scroll to main video (helpful on mobile)
+        mainVideo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  </script>
+</body>
+</html>
