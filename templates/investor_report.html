@@ -35,7 +35,7 @@
       <tr>
         <td>{{ row.year }}</td>
         <td>{{ "%02d"|format(row.month) }}</td>
-        <td>${{ '{:,.2f}'.format(row.amount) }}</td>
+        <td>${{ '{:,.6f}'.format(row.amount) }}</td>
         <td>{{ row.created_at.strftime('%Y-%m-%d') if row.created_at else "" }}</td>
       </tr>
       {% endfor %}

@@ -27,6 +27,7 @@ from flask import render_template_string
 from sqlalchemy.orm import joinedload
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import URLSafeSerializer
 
 import os
 import stripe
@@ -185,6 +186,9 @@ app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
 app.config['RECAPTCHA_PUBLIC_KEY'] = '6LdhAV8sAAAAABwITf0HytcbADISlcMd87NP-i2H'
 app.config['RECAPTCHA_PRIVATE_KEY'] = '6LdhAV8sAAAAAFi9YjxnZqFLUl3SlQjHc1g7IEOq'
+
+SHOP_SECRET = os.environ.get("SHOP_SECRET", app.config['SECRET_KEY'])
+shop_serializer = URLSafeSerializer(SHOP_SECRET, salt="shop-redirect")
 
 UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -1064,27 +1068,31 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     print(f"Net gross: {net_gross}")
 
     # 7. Apply 45%
-    silent_investor_pool = (net_gross * Decimal("0.45")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    silent_investor_pool = (net_gross * Decimal("0.45"))
     print(f"Silent investor pool: {silent_investor_pool}")
 
     # 8. Distribute, show share per
     silent_investors = User.query.join(User.roles).filter(Role.name == 'silent_investor').all()
     for investor in silent_investors:
         share = Decimal(str(investor.investor_share or 0))
-        print(f"Investor {investor.email} share: {share}")
         if share > 0 and silent_investor_pool > 0:
-            payout = (silent_investor_pool * share).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            print(f"Payout for {investor.email}: {payout}")
-            earning = InvestorEarnings(
-                user_id=investor.id,
-                year=datetime.utcnow().year,
-                month=datetime.utcnow().month,
-                amount=payout,
-                created_at=datetime.utcnow()
-            )
-            db.session.add(earning)
-            investor.investor_total_earnings = (investor.investor_total_earnings or Decimal("0")) + payout
-            investor.investor_earnings_balance = (investor.investor_earnings_balance or Decimal("0")) + payout
+            raw_payout = silent_investor_pool * share  # high precision
+
+            # store with 6 decimals in DB so it never hits 0.00 just because it's small
+            payout = raw_payout.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
+
+            if payout > 0:
+                earning = InvestorEarnings(
+                    user_id=investor.id,
+                    year=datetime.utcnow().year,
+                    month=datetime.utcnow().month,
+                    amount=payout,
+                    created_at=datetime.utcnow()
+                )
+                db.session.add(earning)
+
+                investor.investor_total_earnings = (investor.investor_total_earnings or Decimal("0")) + payout
+                investor.investor_earnings_balance = (investor.investor_earnings_balance or Decimal("0")) + payout
 
     db.session.commit()
 
@@ -1211,9 +1219,9 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary='user_roles', backref='users')
     is_suspended = db.Column(db.Boolean, default=False)
     investor_share = db.Column(db.Numeric(5, 4), default=0)
-    investor_total_earnings = db.Column(db.Numeric(12, 2), default=0)
+    investor_total_earnings = db.Column(db.Numeric(12, 6), default=0)
     investor_withdrawn_total = db.Column(db.Numeric(12, 2), default=0)
-    investor_earnings_balance = db.Column(db.Numeric(12, 2), default=0)
+    investor_earnings_balance = db.Column(db.Numeric(12, 6), default=0)
     def has_role(self, role_name):
         return any(role.name == role_name for role in self.roles)
 
@@ -1224,7 +1232,7 @@ class InvestorEarnings(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     year = db.Column(db.Integer, nullable=False)
     month = db.Column(db.Integer, nullable=False)
-    amount = db.Column(db.Numeric(12, 2), nullable=False)
+    amount = db.Column(db.Numeric(12, 6), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', backref=db.backref('investor_earnings', lazy=True))
@@ -1322,6 +1330,9 @@ class Business(db.Model):
     grapesjs_js = db.Column(db.Text, nullable=True)
     products_js = db.Column(db.Text, nullable=True)
     contact_js = db.Column(db.Text, nullable=True)
+    is_ecommerce_site = db.Column(db.Boolean, default=False)
+    allow_website_purchases = db.Column(db.Boolean, default=False)
+    online_terms_agreed = db.Column(db.Boolean, default=False)
     theme_type = db.Column(db.String(50))
 
 class Favorite(db.Model):
@@ -2959,12 +2970,16 @@ def search():
     lng = request.args.get("lng", type=float)
     distance = request.args.get("distance", "").strip()  # “5”, “10”, “25”, or “all”
 
-    query = Business.query.filter_by(status="approved")
+    page = request.args.get("page", 1, type=int)
+    per_page = 20
+
+    # base query: approved businesses
+    base_query = Business.query.filter_by(status="approved")
 
     if category:
-        query = query.filter(Business.category == category)
+        base_query = base_query.filter(Business.category == category)
     if q:
-        query = query.filter(Business.search_keywords.ilike(f"%{q}%"))
+        base_query = base_query.filter(Business.search_keywords.ilike(f"%{q}%"))
 
     use_location = lat is not None and lng is not None
 
@@ -2982,8 +2997,11 @@ def search():
             )
         ).label('distance_mi')
 
-        query = query.add_columns(haversine)
-        query = query.filter(Business.latitude.isnot(None), Business.longitude.isnot(None))
+        query = (
+            base_query
+            .filter(Business.latitude.isnot(None), Business.longitude.isnot(None))
+            .add_columns(haversine)
+        )
 
         # Filter by distance if set and not "all"
         if distance and distance != "all":
@@ -2993,17 +3011,26 @@ def search():
             except ValueError:
                 pass
 
-        # Always order by distance if calculating
+        # Order by distance
         query = query.order_by(haversine)
-        results = query.all()
-        # results = [(Business, distance), ...]
+
+        # paginate on the combined (Business, distance) rows
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        results_raw = pagination.items  # list of (Business, distance)
+
         listings = []
-        for biz, d in results:
+        for biz, d in results_raw:
             biz.distance_mi = round(d, 2) if d is not None else None
             listings.append(biz)
+
     else:
-        # No lat/lng: show normally (might show all, not filtered)
-        listings = query.all()
+        # No lat/lng: paginate plain business query (by rank/name or however you like)
+        pagination = (
+            base_query
+            .order_by(Business.rank.desc(), Business.business_name.asc())
+            .paginate(page=page, per_page=per_page, error_out=False)
+        )
+        listings = pagination.items
 
     return render_template(
         "search_results.html",
@@ -3012,7 +3039,8 @@ def search():
         category=category,
         lat=lat,
         lng=lng,
-        selected_distance=distance
+        selected_distance=distance,
+        pagination=pagination
     )
 
 @app.route("/category/<name>")
@@ -3022,14 +3050,15 @@ def category_browse(name):
     lng = request.args.get("lng", type=float)
     distance = request.args.get("distance", "").strip()
 
+    page = request.args.get("page", 1, type=int)
+    per_page = 20
+
     # Base query: only approved businesses in this category
-    query = Business.query.filter_by(category=name, status="approved")
+    base_query = Business.query.filter_by(category=name, status="approved")
 
     use_location = lat is not None and lng is not None
 
     if use_location:
-        from sqlalchemy import func  # at top of file if not already imported
-
         haversine = (
             3959 * func.acos(
                 func.least(
@@ -3043,8 +3072,11 @@ def category_browse(name):
             )
         ).label("distance_mi")
 
-        query = query.add_columns(haversine)
-        query = query.filter(Business.latitude.isnot(None), Business.longitude.isnot(None))
+        query = (
+            base_query
+            .filter(Business.latitude.isnot(None), Business.longitude.isnot(None))
+            .add_columns(haversine)
+        )
 
         # If a max distance is set, limit results
         if distance and distance != "all":
@@ -3056,14 +3088,23 @@ def category_browse(name):
 
         # Sort by nearest
         query = query.order_by(haversine)
-        results = query.all()
+
+        # paginate combined (Business, distance) rows
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        results_raw = pagination.items  # list of (Business, distance)
+
         listings = []
-        for biz, d in results:
+        for biz, d in results_raw:
             biz.distance_mi = round(d, 2) if d is not None else None
             listings.append(biz)
     else:
-        # No lat/lng: just show all in this category
-        listings = query.all()
+        # No lat/lng: just paginate all in this category
+        pagination = (
+            base_query
+            .order_by(Business.rank.desc(), Business.business_name.asc())
+            .paginate(page=page, per_page=per_page, error_out=False)
+        )
+        listings = pagination.items
 
     return render_template(
         "category_results.html",
@@ -3071,7 +3112,8 @@ def category_browse(name):
         category=name,
         lat=lat,
         lng=lng,
-        selected_distance=distance
+        selected_distance=distance,
+        pagination=pagination
     )
 
 @app.route("/intro")
@@ -3639,6 +3681,43 @@ def export_user_receipts_csv():
     return Response(output, mimetype="text/csv", headers={
         "Content-Disposition": f"attachment;filename=user_receipts_{user.referral_code}.csv"
     })
+
+@app.route("/user/receipt/<transaction_id>")
+@login_required
+def user_receipt_single(transaction_id):
+    # find the user transaction for this member + transaction_id
+    txn = (
+        UserTransaction.query
+        .filter_by(transaction_id=transaction_id, user_referral_id=current_user.referral_code)
+        .order_by(UserTransaction.date_time.desc())
+        .first_or_404()
+    )
+
+    # try to resolve the business (via interaction.business relationship)
+    business_name = None
+    if txn.interaction and txn.interaction.business:
+        business_name = txn.interaction.business.business_name
+
+    # decide what to show as date/time: local_date_time if present, else UTC time
+    if txn.local_date_time:
+        display_datetime = txn.local_date_time
+    else:
+        # fallback format from UTC datetime
+        display_datetime = txn.date_time.strftime('%Y-%m-%d %I:%M %p UTC')
+
+    # for safety, we can re-compute 2% cashback with $50 cap from amount
+    # but we’ll mostly trust txn.cash_back and just display it
+    amount_paid = txn.amount or 0
+    cashback_earned = txn.cash_back or 0
+
+    return render_template(
+        "user_receipt_single.html",
+        transaction=txn,
+        business_name=business_name,
+        display_datetime=display_datetime,
+        amount_paid=amount_paid,
+        cashback_earned=cashback_earned
+    )
 
 @app.route("/user/earnings", methods=["GET"])
 @login_required
@@ -4341,6 +4420,13 @@ def active_session(interaction_id):
         else:
             return redirect(url_for('user_biz_interactions'))
 
+    # business + shop-online flag
+    business = interaction.business
+    can_shop_online = (
+        bool(business.website_url)
+        and (business.account_balance or 0) >= 250.0
+    )
+
     if request.method == "POST":
         if is_user and request.form.get("accept_and_pay") == "1":
             interaction.awaiting_finalization = True
@@ -4418,7 +4504,63 @@ def active_session(interaction_id):
         interaction=interaction,
         is_user=is_user,
         is_biz=is_biz,
-        messages=messages_with_labels
+        messages=messages_with_labels,
+        can_shop_online=can_shop_online,
+        business=business
+    )
+
+@app.route("/shop/confirm/<int:business_id>", methods=["GET", "POST"])
+@login_required
+def shop_confirm(business_id):
+    # 1) find business
+    business = Business.query.get_or_404(business_id)
+
+    # 2) basic checks: must have website, be marked as ecommerce, allow purchases, and have enough balance
+    if not business.website_url:
+        flash("This business doesn't have an e-commerce website configured.", "warning")
+        return redirect(url_for("view_listing", biz_id=business.id))
+
+    if not getattr(business, "is_ecommerce_site", False) or not getattr(business, "allow_website_purchases", False):
+        flash("This business is not configured for online purchases through PerkMiner.", "warning")
+        return redirect(url_for("view_listing", biz_id=business.id))
+
+    if (business.account_balance or 0) < 250.0:
+        flash("This business must maintain at least $250 in their advertising balance "
+              "before members can shop on their website through PerkMiner.", "warning")
+        return redirect(url_for("view_listing", biz_id=business.id))
+
+    # 3) if member submits the confirmation form
+    if request.method == "POST":
+        # find existing active interaction between this user and business, if any
+        interaction = Interaction.query.filter_by(
+            user_id=current_user.id,
+            business_id=business.id,
+            status="active"
+        ).first()
+
+        # if none, create a new one
+        if not interaction:
+            interaction = Interaction(
+                user_id=current_user.id,
+                business_id=business.id,
+                # minimal required fields to satisfy your model
+                service_type="Online Purchase",
+                details="Member is shopping on business e-commerce site via PerkMiner.",
+                budget_low=0,
+                budget_high=0,
+                status="active",
+                referral_code=getattr(current_user, "referral_code", None)
+            )
+            db.session.add(interaction)
+            db.session.commit()
+
+        # 4) redirect into the existing shop_link flow
+        return redirect(url_for("shop_link", interaction_id=interaction.id))
+
+    # 5) GET request: show confirmation page
+    return render_template(
+        "shop_confirm.html",
+        business=business
     )
 
 @app.route("/session/<int:interaction_id>/messages")
@@ -5099,6 +5241,7 @@ def business_dashboard():
             flash("Listing Type is required.")
             return redirect(url_for('business_dashboard'))
 
+        # --- existing profile field updates ---
         if biz.status == "approved":
             for field in editable_fields:
                 val = request.form.get(field)
@@ -5136,9 +5279,48 @@ def business_dashboard():
                 biz.profile_photo = upload_result.get('secure_url')
                 updated = True
 
+        # --- NEW: online purchase flags (e‑commerce + allow website purchases) ---
+
+        website_url = request.form.get("website_url", "").strip()
+        has_website = bool(website_url)
+
+        # checkbox values from the form
+        wants_ecommerce = request.form.get("is_ecommerce_site") == "1"
+        wants_allow_purchases = request.form.get("allow_website_purchases") == "1"
+        agreed_online_terms = request.form.get("online_terms_agree") == "1"
+
+        # only allow e‑commerce flag if there is a website URL
+        new_is_ecommerce = has_website and wants_ecommerce
+
+        # allow_website_purchases can only be true if:
+        # - website exists
+        # - e‑commerce is checked
+        # - merchant has checked "agree to terms"
+        if has_website and new_is_ecommerce and wants_allow_purchases and agreed_online_terms:
+            new_allow_website_purchases = True
+        else:
+            new_allow_website_purchases = False
+
+        # store whether terms were agreed (for audit / display)
+        new_online_terms_agreed = has_website and new_is_ecommerce and agreed_online_terms
+
+        # apply changes if values changed
+        if getattr(biz, "is_ecommerce_site", False) != new_is_ecommerce:
+            biz.is_ecommerce_site = new_is_ecommerce
+            updated = True
+
+        if getattr(biz, "allow_website_purchases", False) != new_allow_website_purchases:
+            biz.allow_website_purchases = new_allow_website_purchases
+            updated = True
+
+        if getattr(biz, "online_terms_agreed", False) != new_online_terms_agreed:
+            biz.online_terms_agreed = new_online_terms_agreed
+            updated = True
+
         if updated:
             db.session.commit()
             flash("Business profile updated!")
+
         return redirect(url_for('business_dashboard'))
 
     # GET: Load profile form data (prefer draft if status=approved and draft exists)
@@ -5160,7 +5342,7 @@ def business_dashboard():
     latitude = form_data.get("latitude", "")
     longitude = form_data.get("longitude", "")
 
-    # --- Rewards and referral tree logic (leave unchanged) ---
+    # --- Rewards and referral tree logic (unchanged) ---
     if request.method == "GET":
         form.downline_level.data = '1'
         form.invoice_amount.data = 0
@@ -6020,16 +6202,39 @@ from flask_login import login_required
 
 @app.route("/listing/<int:biz_id>")
 def view_listing(biz_id):
-    # BLOCK if NOT user AND NOT business
     if not (current_user.is_authenticated or session.get("business_id")):
-        return redirect(url_for("login"))  # or use your custom login page
-    
-    # Render large listing as normal
+        return redirect(url_for("login"))
+
     distance_mi = request.args.get("distance_mi")
     biz = Business.query.get_or_404(biz_id)
     biz.distance_mi = float(distance_mi) if distance_mi else None
-    return render_template("large_listing.html", business=biz)
-    
+
+    has_website = bool(biz.website_url)
+    is_ecom = getattr(biz, "is_ecommerce_site", False)
+    allows_web = getattr(biz, "allow_website_purchases", False)
+    balance = biz.account_balance or 0.0
+
+    can_shop_online_listing = (
+        has_website and
+        is_ecom and
+        allows_web and
+        balance >= 250.0
+    )
+
+    show_online_warning = (
+        has_website and
+        is_ecom and
+        allows_web and
+        balance < 250.0
+    )
+
+    return render_template(
+        "large_listing.html",
+        business=biz,
+        can_shop_online_listing=can_shop_online_listing,
+        show_online_warning=show_online_warning,
+    )
+
 @app.route("/finance/combined-detailed-report", methods=["GET"])
 @role_required("finance")
 def combined_detailed_report():
@@ -7609,7 +7814,7 @@ def withdraw_investor():
 
     balance_to_withdraw = net_available
     fee = balance_to_withdraw * Decimal("0.0025") + Decimal("0.35")  # standard transfer fee
-    payout_amount = balance_to_withdraw - fee
+    payout_amount = balance_to_withdraw.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     if payout_amount <= 0:
         flash("Insufficient balance after the transfer fee is deducted.", "warning")
@@ -7818,6 +8023,182 @@ def stats():
         "advertisers": advertiser_count
     }
     return jsonify(data), 200
+
+@app.route("/shop/link/<int:interaction_id>")
+@login_required
+def shop_link(interaction_id):
+    interaction = Interaction.query.get_or_404(interaction_id)
+
+    # only the member in this interaction can use this
+    if interaction.user_id != current_user.id:
+        abort(403)
+
+    business = interaction.business
+
+    # must have an e-commerce URL
+    if not business.website_url:
+        flash("This business doesn't have an e-commerce site configured.", "warning")
+        return redirect(url_for("active_session", interaction_id=interaction.id))
+
+    # HARD requirement: at least $250 ad balance
+    if (business.account_balance or 0) < 250.0:
+        flash("This business must maintain at least $250 in their advertising balance "
+              "before online purchases are allowed.", "warning")
+        return redirect(url_for("active_session", interaction_id=interaction.id))
+
+    # build signed token
+    payload = {
+        "interaction_id": interaction.id,
+        "user_id": current_user.id,
+        "business_id": business.id,
+    }
+    token = shop_serializer.dumps(payload)
+
+    # redirect to business site with perk_token on the URL
+    redirect_url = f"{business.website_url.rstrip('/')}" \
+                   f"?perk_token={token}"
+
+    return redirect(redirect_url)
+
+@app.route("/online-purchase-instructions")
+def online_purchase_instructions():
+    return render_template("online_purchase_instructions.html")
+
+@app.route("/online_marketplace")
+def online_marketplace():
+    base_query = Business.query.filter(
+        Business.status == "approved",
+        Business.website_url.isnot(None),
+        Business.website_url != "",
+        Business.is_ecommerce_site.is_(True),
+        Business.allow_website_purchases.is_(True),
+        Business.account_balance >= 250.0
+    )
+
+    # featured e-commerce businesses
+    manual_featured = (
+        base_query
+        .filter(Business.manual_feature.is_(True))
+        .order_by(Business.rank.desc())
+        .limit(10)
+        .all()
+    )
+    needed = 10 - len(manual_featured)
+    if needed > 0:
+        ranked = (
+            base_query
+            .filter(Business.manual_feature.is_(False))
+            .order_by(Business.rank.desc())
+            .limit(needed)
+            .all()
+        )
+        featured_ecom = manual_featured + ranked
+    else:
+        featured_ecom = manual_featured[:10]
+
+    return render_template(
+        "online_marketplace.html",
+        featured_ecom=featured_ecom
+    )
+
+@app.route("/online_marketplace_results")
+def online_marketplace_results():
+    base_query = Business.query.filter(
+        Business.status == "approved",
+        Business.website_url.isnot(None),
+        Business.website_url != "",
+        Business.is_ecommerce_site.is_(True),
+        Business.allow_website_purchases.is_(True),
+        Business.account_balance >= 250.0
+    )
+
+    q = request.args.get("q", "").strip()
+    page = request.args.get("page", 1, type=int)
+    per_page = 20
+
+    if q:
+        filtered = base_query.filter(
+            Business.search_keywords.ilike(f"%{q}%")
+        )
+    else:
+        filtered = base_query
+
+    pagination = (
+        filtered
+        .order_by(Business.rank.desc(), Business.business_name.asc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+
+    ecommerce_results = pagination.items
+
+    return render_template(
+        "online_marketplace_results.html",
+        ecommerce_results=ecommerce_results,
+        q=q,
+        pagination=pagination
+    )
+
+@csrf.exempt
+@app.route("/api/record_external_sale", methods=["POST"])
+def record_external_sale():
+    data = request.get_json(silent=True) or {}
+    token = data.get("perk_token")
+    amount = data.get("amount")
+
+    if not token or amount is None:
+        return jsonify({"error": "missing token or amount"}), 400
+
+    # 1) verify token
+    try:
+        payload = shop_serializer.loads(token)
+    except Exception:
+        return jsonify({"error": "invalid token"}), 400
+
+    interaction_id = payload.get("interaction_id")
+    user_id = payload.get("user_id")
+    business_id = payload.get("business_id")
+
+    interaction = Interaction.query.get(interaction_id)
+    if (
+        not interaction or
+        interaction.user_id != user_id or
+        interaction.business_id != business_id or
+        interaction.status != "active"
+    ):
+        return jsonify({"error": "invalid or inactive interaction"}), 400
+
+    business = Business.query.get(business_id)
+    if not business:
+        return jsonify({"error": "business not found"}), 400
+
+    # 2) validate amount
+    try:
+        amount_float = float(amount)
+        if amount_float <= 0:
+            raise ValueError()
+    except ValueError:
+        return jsonify({"error": "invalid amount"}), 400
+
+    # 3) call your existing finalize_interaction logic
+    try:
+        summary = finalize_interaction(
+            interaction=interaction,
+            business=business,
+            amount=amount_float,
+            staff_id=None,
+            source="external_cart",
+            local_date_time=None
+        )
+    except Exception as e:
+        # e.g. insufficient funds in account_balance, etc.
+        return jsonify({"error": str(e)}), 400
+
+    # 4) end the session
+    interaction.status = "ended"
+    interaction.awaiting_payment = False
+    db.session.commit()
+
+    return jsonify({"status": "ok", "summary": summary}), 200
 
 @app.errorhandler(500)
 def internal_server_error(error):

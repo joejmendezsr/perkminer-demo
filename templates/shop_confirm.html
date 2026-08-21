@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Shop on {{ business.business_name }}'s Website</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet">
+  <style>
+    body {
+      background: #f7f7fb;
+      font-family: Arial, sans-serif;
+    }
+    .page-wrap {
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    .card-confirm {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 3px 18px rgba(0,0,0,0.08);
+      padding: 22px 20px 26px;
+    }
+    .biz-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1f2933;
+      margin-bottom: 4px;
+    }
+    .biz-url {
+      font-size: 0.9rem;
+      color: #2563eb;
+      word-break: break-all;
+    }
+    .warning-box {
+      background: #fff7e6;
+      border: 1px solid #f6d58a;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      margin-top: 14px;
+    }
+    .warning-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #92400e;
+    }
+    .btn-area {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .pm-logo {
+      max-height: 42px;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 576px) {
+      .page-wrap {
+        margin-top: 24px;
+      }
+      .btn-area {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <div class="text-center mb-3">
+      <img
+        src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1769980535/PerkMiner_Logo_o2qgfy.jpg"
+        alt="PerkMiner"
+        class="pm-logo">
+    </div>
+
+    <div class="card-confirm">
+      <div class="mb-2">
+        <div class="biz-name">
+          Shop on {{ business.business_name }}
+        </div>
+        {% if business.website_url %}
+          <div class="biz-url">
+            {{ business.website_url }}
+          </div>
+        {% endif %}
+      </div>
+
+      <p class="mb-2">
+        You’re about to leave <strong>PerkMiner.com</strong> and be redirected
+        to this business’s e‑commerce website to complete your purchase.
+      </p>
+
+      <p class="mb-2">
+        When you continue:
+      </p>
+      <ul class="mb-3">
+        <li>A secure PerkMiner session will be created between you and this business.</li>
+        <li>Your purchase will be recorded so you can receive cashback and referral rewards (if applicable).</li>
+        <li>The business will pay PerkMiner’s advertising fee only if the sale is completed.</li>
+      </ul>
+
+      <div class="warning-box">
+        <div class="warning-title">important</div>
+        <ul class="mb-0">
+          <li>You will be taken to a website that is not operated by PerkMiner.</li>
+          <li>Payments are made directly to the business, not to PerkMiner.</li>
+          <li>Standard Perk Miner LLC terms apply, including the business’s obligation to maintain enough funds to cover the advertising fee while online purchases are allowed.</li>
+        </ul>
+      </div>
+
+      <form method="post" class="btn-area">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <a href="{{ url_for('view_listing', biz_id=business.id) }}"
+           class="btn btn-outline-secondary">
+          cancel
+        </a>
+        <button type="submit" class="btn btn-primary">
+          I understand – continue to business website
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

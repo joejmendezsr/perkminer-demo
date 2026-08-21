@@ -3,8 +3,10 @@
 <head>
     <title>{{ business.business_name }} - Details</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <style>
     :root {
         --pm-primary: #2a5859;
@@ -12,7 +14,7 @@
         --pm-bg: #f3f8fa;
         --pm-card: #ffffff;
     }
-    body { background: var(--pm-bg);}
+    body { background: var(--pm-bg); }
     .main-card {
         background: var(--pm-card);
         border-radius: 22px;
@@ -43,23 +45,7 @@
         margin-bottom: 8px;
         display: block;
     }
-    .btn-set-top { margin-right: 1.1rem; }
-    .listing-btn-row {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.56rem;
-        margin-bottom: 1.9rem;
-        margin-top: .58rem;
-    }
-    .btn-action {
-        min-width: 164px;
-        font-weight: 500;
-        white-space: normal;
-        border-radius: 17px;
-        box-shadow: 0 1px 7px #e9f6f6;
-        transition: box-shadow .17s;
-    }
+
     .listing-title {
         font-size: 2.1em;
         font-weight: 800;
@@ -87,6 +73,33 @@
         display:inline-block;
         margin-bottom: 9px;
     }
+
+    .btn-set-top { margin-right: 0; }
+    .btn-action {
+        min-width: 164px;
+        font-weight: 500;
+        white-space: normal;
+        border-radius: 17px;
+        box-shadow: 0 1px 7px #e9f6f6;
+        transition: box-shadow .17s;
+    }
+
+    /* button rows */
+    .listing-btn-row {
+        margin-top: .8rem;
+        margin-bottom: 1.9rem;
+    }
+    .listing-btn-row__row {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+    }
+    .listing-btn-row__row .btn,
+    .listing-btn-row__row form {
+        margin: 0.15rem;
+    }
+
     .main-info {
         background: #f8fbfc;
         border-radius: 13px;
@@ -103,6 +116,7 @@
         font-weight:500;
     }
     .main-info-row i { color: var(--pm-accent); font-size:1.15em; }
+
     .about-block {
         background: #f4f5fb;
         border-radius: 10px;
@@ -112,8 +126,6 @@
         font-size: 1.05em;
         color: #374759;
     }
-
-    .main-info-row i { color: var(--pm-accent); font-size:1.15em; }
     .perks-block {
         background: #feebe7;
         border-radius: 10px;
@@ -123,9 +135,6 @@
         font-size: 1.05em;
         color: #374759;
     }
-
-
-    .main-info-row i { color: var(--pm-accent); font-size:1.15em; }
     .hours-block {
         background: #f4f5fb;
         border-radius: 10px;
@@ -135,7 +144,6 @@
         font-size: 1.05em;
         color: #374759;
     }
-
     .service-list-label {
         font-weight:700;
         color: var(--pm-primary);
@@ -152,6 +160,7 @@
         box-shadow:0 1px 4px #eee;
     }
     .service-list li { margin-bottom: 5px; }
+
     .map-wrap {
         width:100%;
         height:242px;
@@ -165,14 +174,22 @@
         border-radius:14px;
         padding:.42rem 1.1rem;
     }
+
+    @media (max-width: 576px) {
+      .listing-btn-row__row .btn,
+      .listing-btn-row__row form {
+        width: 100%;
+        max-width: 280px;
+      }
+    }
     @media (max-width: 700px) {
-      .main-card { padding: 1.2rem 0.6rem;}
-      .large-profile-pic { width: 170px; height: 170px;}
-      .map-wrap { height: 125px;}
+      .main-card { padding: 1.2rem 0.6rem; }
+      .large-profile-pic { width: 170px; height: 170px; }
+      .map-wrap { height: 125px; }
     }
     @media (max-width: 425px) {
-      .main-card {max-width: 98vw; padding: 1rem 2px;}
-      .listing-title {font-size:1.25em;}
+      .main-card {max-width: 98vw; padding: 1rem 2px; }
+      .listing-title {font-size:1.25em; }
     }
     </style>
 </head>
@@ -196,49 +213,117 @@
       {% endif %}
       <h2 class="listing-title">{{ business.business_name }}</h2>
       <span class="biz-category-badge mb-2">{{ business.category }}</span>
-      <span class="biz-finalization-badge mb-2"><b>Finalization: {{ business.finalization }}</b></br>
-  {% if business.account_balance >= 250 %}
-    (Has enough to finalize any transaction)
-  {% else %}
-    (Has enough to finalize ${{ '%.2f' % (business.account_balance * 10) }} in sales)
-  {% endif %}
-</span>
+      <span class="biz-finalization-badge mb-2">
+        <b>Finalization: {{ business.finalization }}</b><br>
+        {% if business.account_balance >= 250 %}
+          (Has enough to finalize any transaction)
+        {% else %}
+          (Has enough to finalize ${{ '%.2f' % (business.account_balance * 10) }} in sales)
+        {% endif %}
+      </span>
     </div>
-    <!-- BUTTONS AT THE TOP -->
-<div class="listing-btn-row mb-0">
-  {% if request.args.get('from_featured') %}
-    <a href="{{ url_for('home') }}#featured" class="btn btn-secondary btn-action btn-set-top">
-      &larr; Back to featured
-    </a>
-  {% else %}
-<a href="{{ url_for('search', 
-    q=request.args.get('q', ''), 
-    distance=request.args.get('distance', ''), 
-    lat=request.args.get('lat', ''), 
-    lng=request.args.get('lng', '')
-  ) }}"
-  class="btn btn-secondary btn-action btn-set-top">
-  &larr; Back to results
-</a>
 
-<form action="{{ url_for('add_favorite', business_id=business.id) }}" method="post" style="display:inline;">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  {% if not business in current_user.favorites|map(attribute='business')|list %}
-    <button class="btn btn-outline-primary">Add to Favorites</button>
-  {% else %}
-    <button formaction="{{ url_for('remove_favorite', business_id=business.id) }}" class="btn btn-warning">Remove from Favorites</button>
-  {% endif %}
-</form>
+    <!-- BUTTONS BLOCK -->
+    <div class="listing-btn-row">
+      <!-- row 1: back button -->
+      <div class="listing-btn-row__row">
+        {% if request.args.get('from_featured') %}
+          <a href="{{ url_for('home') }}#featured"
+             class="btn btn-secondary btn-action btn-set-top">
+            &larr; Back to featured
+          </a>
 
-  {% endif %}
-  <a href="{{ url_for('start_purchase', biz_id=business.id) }}" class="btn btn-success btn-action btn-set-top">
-    Show My QR
-  </a>
-  <a href="{{ url_for('service_request', biz_id=business.id) }}" class="btn btn-primary btn-action btn-set-top">
-    Request Service
-  </a>
+        {% elif request.args.get('from_online_featured') %}
+          <a href="{{ url_for('online_marketplace') }}"
+             class="btn btn-secondary btn-action btn-set-top">
+            &larr; Back to featured
+          </a>
 
-</div>
+        {% elif request.args.get('from_online_marketplace') %}
+          <a href="{{ url_for('online_marketplace_results', q=request.args.get('q', '')) }}"
+             class="btn btn-secondary btn-action btn-set-top">
+            &larr; Back to online marketplace results
+          </a>
+
+        {% elif request.args.get('from_category') %}
+          <a href="{{ url_for('category_browse',
+                  name=request.args.get('category', ''),
+                  lat=request.args.get('lat', ''),
+                  lng=request.args.get('lng', ''),
+                  distance=request.args.get('distance', ''),
+                  page=request.args.get('page', 1)
+                ) }}"
+             class="btn btn-secondary btn-action btn-set-top">
+            &larr; Back to results
+          </a>
+
+        {% else %}
+          <a href="{{ url_for('search',
+                  q=request.args.get('q', ''),
+                  category=request.args.get('category', ''),
+                  distance=request.args.get('distance', ''),
+                  lat=request.args.get('lat', ''),
+                  lng=request.args.get('lng', ''),
+                  page=request.args.get('page', 1)
+                ) }}"
+             class="btn btn-secondary btn-action btn-set-top">
+            &larr; Back to results
+          </a>
+        {% endif %}
+      </div>
+
+      <!-- row 1.5: favorites (only for normal search / home flows) -->
+      {% if current_user.is_authenticated and not request.args.get('from_online_marketplace') and not request.args.get('from_online_featured') %}
+        <div class="listing-btn-row__row">
+          <form action="{{ url_for('add_favorite', business_id=business.id) }}"
+                method="post"
+                style="display:inline-block; margin-bottom:0;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if not business in current_user.favorites|map(attribute='business')|list %}
+              <button class="btn btn-outline-primary">
+                Add to Favorites
+              </button>
+            {% else %}
+              <button formaction="{{ url_for('remove_favorite', business_id=business.id) }}"
+                      class="btn btn-warning">
+                Remove from Favorites
+              </button>
+            {% endif %}
+          </form>
+        </div>
+      {% endif %}
+
+      <!-- row 2: Show QR + Request Service -->
+      <div class="listing-btn-row__row">
+        <a href="{{ url_for('start_purchase', biz_id=business.id) }}"
+           class="btn btn-success btn-action btn-set-top me-2 mb-2">
+          Show My QR
+        </a>
+
+        <a href="{{ url_for('service_request', biz_id=business.id) }}"
+           class="btn btn-primary btn-action btn-set-top mb-2">
+          Request Service
+        </a>
+      </div>
+
+      <!-- row 3: shop online / warning -->
+      {% if current_user.is_authenticated %}
+        <div class="listing-btn-row__row">
+          {% if can_shop_online_listing %}
+            <a href="{{ url_for('shop_confirm', business_id=business.id) }}"
+               class="btn btn-outline-primary">
+              Shop on this business's website
+            </a>
+          {% elif show_online_warning %}
+            <div class="alert alert-warning mb-0 w-100 text-center">
+              Online shopping is not available at this time. Please check back later.
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+    <!-- END BUTTONS BLOCK -->
+
     <div class="main-info mt-2">
       <div class="main-info-row">
         <i class="bi bi-pin-map"></i>
@@ -257,19 +342,21 @@
         <strong>Website:</strong>&nbsp;
         {% if business.website_url %}
           <a href="{{ business.website_url }}" target="_blank" rel="noopener">{{ business.website_url }}</a>
-        {% else %} - {% endif %}
+        {% else %}
+          -
+        {% endif %}
       </div>
     </div>
 
-      <div class="about-block">
+    <div class="about-block">
       <strong>About Us:</strong><br>
       {{ business.about_us or '—' }}
-      </div>
+    </div>
 
-      <div class="perks-block">
-        <b>Perks Offered:</b><br>
-        {{ business.perks or '—' }}       <!-- large_listing.html -->
-      </div>
+    <div class="perks-block">
+      <b>Perks Offered:</b><br>
+      {{ business.perks or '—' }}
+    </div>
 
     <div class="hours-block">
       <strong>Hours of Operation:</strong><br>
@@ -279,17 +366,22 @@
     <div>
       <div class="service-list-label">Products or Services Offered:</div>
       <ul class="service-list">
-        {% set services = [business.service_1, business.service_2, business.service_3, business.service_4, business.service_5, business.service_6, business.service_7, business.service_8, business.service_9, business.service_10] %}
+        {% set services = [business.service_1, business.service_2, business.service_3,
+                           business.service_4, business.service_5, business.service_6,
+                           business.service_7, business.service_8, business.service_9, business.service_10] %}
         {% set shown = false %}
-        {% for s in services %}{% if s %}
-          <li>{{ s }}</li>
-          {% set shown = true %}
-        {% endif %}{% endfor %}
+        {% for s in services %}
+          {% if s %}
+            <li>{{ s }}</li>
+            {% set shown = true %}
+          {% endif %}
+        {% endfor %}
         {% if not shown %}
           <li>N/A</li>
         {% endif %}
       </ul>
     </div>
+
     <div>
       <strong>Location Map:</strong>
       {% if business.latitude and business.longitude %}
@@ -316,6 +408,7 @@
     </div>
   </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

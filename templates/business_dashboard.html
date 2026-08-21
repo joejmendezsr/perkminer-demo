@@ -420,6 +420,69 @@
                value="{{ form_data.website_url or '' }}" placeholder="https://your-website.com">
       </div>
 
+{# online purchase settings – only show if website_url is present #}
+{% if form_data.website_url %}
+  <div class="col-12 mb-2">
+    <div class="form-check">
+      <input
+        class="form-check-input"
+        type="checkbox"
+        id="is_ecommerce_site"
+        name="is_ecommerce_site"
+        value="1"
+        {% if business.is_ecommerce_site %}checked{% endif %}>
+      <label class="form-check-label" for="is_ecommerce_site">
+        this is an e‑commerce website (customers can complete purchases online)
+      </label>
+    </div>
+  </div>
+
+  <div class="col-12 mb-2" id="allow-online-wrapper" {% if not business.is_ecommerce_site %}style="display:none;"{% endif %}>
+    <div class="form-check">
+      <input
+        class="form-check-input"
+        type="checkbox"
+        id="allow_website_purchases"
+        name="allow_website_purchases"
+        value="1"
+        {% if business.allow_website_purchases %}checked{% endif %}>
+      <label class="form-check-label" for="allow_website_purchases">
+        allow perkminer members to make purchases on my website
+      </label>
+    </div>
+  </div>
+
+  <div class="col-12 mb-3" id="online-terms-wrapper"
+       {% if not (business.is_ecommerce_site and business.allow_website_purchases) %}style="display:none;"{% endif %}>
+    <div class="border rounded p-3 bg-light">
+      <p class="fw-bold mb-2">online purchase terms</p>
+      <ul class="small mb-2">
+        <li>you agree to maintain an advertising account balance of at least <strong>$250</strong> at all times while online purchases are enabled.</li>
+        <li>if your balance falls below $250, perkminer will automatically block new online purchases until you add more funds.</li>
+        <li>you are required to install and keep perkminer’s tracking script on your order confirmation / “thank you” page so qualifying purchases are reported.</li>
+        <li>removing, disabling, or altering the script so purchases are not reported may result in suspension; repeated or intentional violations may result in permanent account closure and forfeiture of any remaining advertising balance.</li>
+        <li>if a member reports that they completed a purchase on your website but did not receive cashback, perkminer may suspend your account while we investigate. if we confirm that purchases were not reported as required, your account may remain suspended or be closed.</li>
+        <li>view installation instructions <a href="{{ url_for('online_purchase_instructions') }}" target="_blank">HERE</a>.  You may also contact Perk Miner LLC at <a href="mailto:support@perkminer.com">support@perkminer.com</a>.</li>
+      </ul>
+      <div class="form-check">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="online_terms_agree"
+          name="online_terms_agree"
+          value="1"
+          {% if business.online_terms_agreed %}checked{% endif %}>
+        <label class="form-check-label" for="online_terms_agree">
+          i have read and agree to these terms.
+        </label>
+        <p class="small text-muted mt-1 mb-0">
+          uncheck this box and save if you want to revoke online purchases on your website.
+        </p>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
       <!-- Services Offered Collapse -->
       <div class="col-12 mt-3">
         <button class="btn btn-outline-primary mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#servicesCollapse" aria-expanded="false" aria-controls="servicesCollapse">
@@ -1050,6 +1113,40 @@ let largeListing = `
     modalContent.innerHTML = (modalForm ? modalForm.outerHTML : '') + html;
     previewModal && previewModal.show && previewModal.show();
   });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const websiteInput = document.getElementById('website_url');
+  const ecommerceCb = document.getElementById('is_ecommerce_site');
+  const allowCb = document.getElementById('allow_website_purchases');
+  const allowWrapper = document.getElementById('allow-online-wrapper');
+  const termsWrapper = document.getElementById('online-terms-wrapper');
+
+  if (!websiteInput || !ecommerceCb) return;
+
+  function updateVisibility() {
+    const hasWebsite = websiteInput.value.trim() !== '';
+    const isEcom = ecommerceCb.checked;
+    const allowOnline = allowCb && allowCb.checked;
+
+    // show ecommerce checkbox only if website is present (server already does main hide)
+    // show "allow purchases" only if e‑commerce box is checked
+    if (allowWrapper) {
+      allowWrapper.style.display = (hasWebsite && isEcom) ? '' : 'none';
+    }
+    // show terms only if both are checked
+    if (termsWrapper) {
+      termsWrapper.style.display = (hasWebsite && isEcom && allowOnline) ? '' : 'none';
+    }
+  }
+
+  ecommerceCb.addEventListener('change', updateVisibility);
+  if (allowCb) allowCb.addEventListener('change', updateVisibility);
+  websiteInput.addEventListener('input', updateVisibility);
+
+  updateVisibility();
 });
 </script>
 

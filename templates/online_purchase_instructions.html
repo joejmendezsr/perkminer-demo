@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PerkMiner – Online Purchase Integration Guide</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet">
+  <style>
+    body {
+      background: #f7f7fb;
+      font-family: Arial, sans-serif;
+    }
+    .page-wrap {
+      max-width: 900px;
+      margin: 30px auto 40px;
+      padding: 0 16px;
+    }
+    pre {
+      background: #111827;
+      color: #e5e7eb;
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      overflow-x: auto;
+    }
+    code {
+      font-family: Consolas, Menlo, monospace;
+    }
+    h1, h2, h3 {
+      color: #111827;
+    }
+    .badge-tip {
+      font-size: 0.78rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <div class="text-center mb-4">
+      <img
+        src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1769980535/PerkMiner_Logo_o2qgfy.jpg"
+        alt="PerkMiner"
+        style="max-height:50px;">
+    </div>
+
+    <h1 class="h3 mb-3">online purchase integration guide</h1>
+    <p class="mb-3">
+      this page explains how to connect your e‑commerce “thank you” page to perkminer so that member
+      purchases are recorded and cashback can be paid correctly.
+    </p>
+
+    <div class="alert alert-warning small">
+      <strong>important:</strong> this script must be installed on your order confirmation /
+      “thank you” page and kept in place at all times while online purchases are enabled in your
+      perkminer business dashboard.
+    </div>
+
+    <hr class="my-4">
+
+    <h2 class="h5">1. how the flow works</h2>
+    <ol class="small">
+      <li>a perkminer member clicks “shop on this business's website” and is redirected to your site with a <code>perk_token</code> in the url.</li>
+      <li>after the customer completes payment, your order confirmation (“thank you”) page loads.</li>
+      <li>on that page, a small script:
+        <ul>
+          <li>reads <code>perk_token</code> from the page url</li>
+          <li>reads the final order total from your platform</li>
+          <li>calls <code>https://www.perkminer.com/api/record_external_sale</code></li>
+        </ul>
+      </li>
+      <li>if the call succeeds, the customer is redirected back to perkminer to view their cashback receipt.</li>
+    </ol>
+
+    <hr class="my-4">
+
+    <h2 class="h5">2. script to add to your order confirmation page</h2>
+    <p class="small mb-1">
+      add the following script to your order confirmation / “thank you” page.
+      your developer will need to replace the line that sets <code>orderTotal</code> with your
+      platform’s real order total value.
+    </p>
+
+    <pre><code>&lt;script&gt;
+(function() {
+  // 1) get perk_token from the URL
+  function getPerkToken() {
+    var params = new URLSearchParams(window.location.search || "");
+    return params.get("perk_token");
+  }
+
+  var perkToken = getPerkToken();
+  if (!perkToken) {
+    // Not a PerkMiner session, nothing to do
+    return;
+  }
+
+  // 2) get the final order total from the platform
+  // TODO: REPLACE this with your platform's actual order total variable.
+  // Examples:
+  //   - Shopify: use Shopify.checkout.total_price / 100
+  //   - Custom: expose the total into window.PERK_ORDER_TOTAL before this script
+  var orderTotal = window.PERK_ORDER_TOTAL;  // &lt;-- must be set to a number in USD
+
+  if (typeof orderTotal !== "number" || orderTotal &lt;= 0) {
+    console.warn("PerkMiner: order total is missing or invalid.");
+    return;
+  }
+
+  // 3) send the data to PerkMiner
+  fetch("https://www.perkminer.com/api/record_external_sale", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      perk_token: perkToken,
+      amount: orderTotal
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data &amp;&amp; data.status === "ok" &amp;&amp; data.summary &amp;&amp; data.summary.transaction_id) {
+      // 4) redirect the member to their PerkMiner receipt
+      var tid = data.summary.transaction_id;
+      var receiptUrl = "https://www.perkminer.com/user/receipt/" + encodeURIComponent(tid);
+      window.location.href = receiptUrl;
+    } else {
+      console.error("PerkMiner: API error", data);
+      // Optional: show a generic message if needed
+    }
+  })
+  .catch(function(err) {
+    console.error("PerkMiner: failed to report external sale", err);
+    // Optional: show a generic message if needed
+  });
+})();
+&lt;/script&gt;</code></pre>
+
+    <p class="small">
+      <span class="badge bg-info text-dark badge-tip">tip</span>
+      the <code>orderTotal</code> value must be the final amount paid by the customer
+      (in us dollars), including item prices and any discounts, but before perkminer’s
+      advertising fee.
+    </p>
+
+    <hr class="my-4">
+
+    <h2 class="h5">3. how to provide the order total</h2>
+
+    <h3 class="h6 mt-3">shopify (example)</h3>
+    <p class="small mb-1">
+      on the order status page, shopify often exposes a <code>Shopify.checkout</code> object.
+      your developer can set:
+    </p>
+    <pre><code>&lt;script&gt;
+  // total_price is in cents
+  window.PERK_ORDER_TOTAL = Shopify.checkout.total_price / 100.0;
+&lt;/script&gt;
+</code></pre>
+    <p class="small">
+      this snippet should appear <strong>before</strong> the main perkminer script.
+    </p>
+
+    <h3 class="h6 mt-3">custom / other platforms</h3>
+    <p class="small mb-1">
+      for a custom website or other platforms, your developer just needs to expose the
+      final order total into <code>window.PERK_ORDER_TOTAL</code> before the perkminer script runs. for example:
+    </p>
+    <pre><code>&lt;script&gt;
+  // Replace 123.45 with your real order total variable
+  window.PERK_ORDER_TOTAL = 123.45;
+&lt;/script&gt;
+</code></pre>
+
+    <hr class="my-4">
+
+    <h2 class="h5">4. important terms and compliance</h2>
+    <ul class="small">
+      <li>you must maintain an advertising account balance of at least <strong>$250</strong> while online purchases are enabled in your perkminer business dashboard.</li>
+      <li>if your balance falls below $250, perkminer will automatically block new online purchases until you add more funds.</li>
+      <li>you are required to keep the perkminer tracking script installed and active on your order confirmation / “thank you” page while online purchases are enabled.</li>
+      <li>removing, disabling, or altering the script so that purchases are not reported may result in suspension of your account. repeated or intentional violations may result in permanent account closure and forfeiture of any remaining advertising balance, as stated in your perkminer terms.</li>
+      <li>if a member reports that they completed a purchase on your website but did not receive cash back, perkminer may suspend your account while we investigate and will review whether the script was installed and working correctly.</li>
+    </ul>
+
+    <div class="alert alert-secondary small mt-3">
+      for questions or help with installation, please contact
+      <a href="mailto:support@perkminer.com">support@perkminer.com</a>.
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

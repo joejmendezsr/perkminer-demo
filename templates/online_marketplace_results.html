@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Perk Miner – Online Marketplace Results</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Search results for PerkMiner online marketplace advertisers.">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <style>
+    :root {
+      --pm-primary: #2a5859;
+      --pm-accent: #ffd66b;
+      --pm-bg: #fff;
+      --pm-text: #222;
+      --pm-hover: #e6f6f5;
+    }
+    body { background: var(--pm-bg); color: var(--pm-text); }
+
+    .hero-section {
+      min-height: 22vh;
+      background: #1f2937;
+      color: #fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+    }
+    .hero-content {
+      width:100%; max-width:680px;
+      text-align:center;
+      padding:6rem 1rem 1.5rem;
+    }
+    .search-form .input-group {
+      border-radius:18px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.2);
+      background:#fff;
+      overflow:hidden;
+    }
+    .search-form .form-control, .search-form .btn {
+      border-radius:18px !important;
+      font-size:1.05em;
+    }
+    .back-links {
+      position:absolute;
+      top:10px;
+      right:12px;
+      text-align:right;
+    }
+    @media (max-width:576px) {
+      .back-links {
+        top:8px;
+        right:8px;
+      }
+      .back-links .btn {
+        width:100%;
+        margin-bottom:6px;
+      }
+
+      /* push title + search further down on small screens */
+      .hero-content {
+        padding-top: 8rem;   /* was 2.5rem; bump up for more space */
+        padding-bottom: 1.5rem;
+      }
+    }
+
+    /* match search_results.html card styles */
+    .small-listing-modern {
+      border: 1px solid #d9ece7;
+      border-radius: 14px;
+      background: #fafefe;
+      box-shadow: 0 1px 5px #e6f9f4;
+      margin-bottom: 1.4rem;
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 0.18s, transform 0.18s, background 0.18s;
+      text-align: center;
+    }
+    .small-listing-modern:hover {
+      background: var(--pm-hover);
+      box-shadow: 0 4px 18px #b4dad9;
+      transform: translateY(-3px);
+    }
+
+    .listing-image-container {
+      width: 100%;
+      height: 120px;
+      background: #f7f7f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid #e5f0ee;
+    }
+
+    .small-listing-modern-img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: #f7f7f7;
+    }
+
+    .small-listing-info { padding: 12px 14px 16px; font-size: 0.98em; }
+    .small-listing-title { font-weight: 700; margin-bottom: 8px; font-size: 1.12em; }
+
+    .small-listing-category-badge {
+      font-size: 0.95em;
+      font-weight: 500;
+      border-radius: 10px;
+      background: #e6f6f5;
+      color: #2a5859;
+      padding: 4px 12px;
+      margin-bottom: 6px;
+      display: inline-block;
+    }
+
+    .small-listing-services {
+      color: #345;
+      opacity: 0.93;
+      font-size: 0.96em;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    .small-listing-perks {
+      background: #feebe7;
+      color: #345;
+      opacity: 0.93;
+      font-size: 0.96em;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 600px) {
+      .listing-image-container { height: 110px; }
+      .small-listing-modern-img { width: 100px; height: 100px; }
+      .small-listing-info { padding: 10px 12px 14px; }
+      .small-listing-title { font-size: 1.05em; }
+    }
+  </style>
+</head>
+<body>
+
+  <section class="hero-section">
+    <div class="back-links">
+      <a href="{{ url_for('online_marketplace') }}" class="btn btn-light btn-sm mb-1">
+        &larr; Online Marketplace
+      </a>
+      <a href="{{ url_for('home') }}" class="btn btn-outline-light btn-sm">
+        Home
+      </a>
+    </div>
+    <div class="hero-content">
+      <h1 class="h4 mb-2">online marketplace search</h1>
+      <form class="search-form mb-2" method="get" action="{{ url_for('online_marketplace_results') }}">
+        <div class="input-group mb-1">
+          <input type="text"
+                 class="form-control"
+                 name="q"
+                 value="{{ q or '' }}"
+                 placeholder="Search online businesses, products, or services..."
+                 aria-label="Search">
+          <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+      </form>
+      <p class="small mb-0">
+        {% if q %}
+          showing results for "<strong>{{ q }}</strong>"
+        {% else %}
+          showing all online marketplace advertisers (paged)
+        {% endif %}
+      </p>
+    </div>
+  </section>
+
+  <main class="container my-4">
+    <section>
+      <h3 class="mb-3">online marketplace results</h3>
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for biz in ecommerce_results %}
+          <div class="col">
+            <a href="{{ url_for('view_listing', biz_id=biz.id, from_online_marketplace=1, q=q) }}"
+               style="text-decoration:none; color: inherit;">
+              <div class="small-listing-modern">
+                <div class="listing-image-container">
+                  {% if biz.profile_photo %}
+                    <img src="{{ biz.profile_photo }}" class="small-listing-modern-img" alt="{{ biz.business_name }} logo">
+                  {% else %}
+                    <div class="small-listing-modern-img d-flex align-items-center justify-content-center bg-light border">
+                      <i class="bi bi-shop" style="font-size:2em; color:#2a5859;"></i>
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="small-listing-info">
+                  <div class="small-listing-title">{{ biz.business_name }}</div>
+                  <div class="mb-2">
+                    <span class="small-listing-category-badge">{{ biz.category or "Online Marketplace" }}</span>
+                  </div>
+
+                  {% if biz.address %}
+                    <div style="font-size:0.95em; margin-bottom: 8px;">
+                      <i class="bi bi-geo-alt" style="color:var(--pm-primary);"></i>
+                      {{ biz.address }}
+                    </div>
+                  {% endif %}
+
+                  <div class="small-listing-services">
+                    <b>Services:</b>
+                    {% set services = [biz.service_1, biz.service_2, biz.service_3, biz.service_4, biz.service_5,
+                                       biz.service_6, biz.service_7, biz.service_8, biz.service_9, biz.service_10] %}
+                    {{ services|select|reject('equalto','')|join(', ') if services|select|reject('equalto','')|list else 'N/A' }}
+                  </div>
+                  <div class="small-listing-perks">
+                    <b>Perks:</b> {{ biz.perks or "N/A" }}
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        {% endfor %}
+
+        {% if ecommerce_results|length == 0 and q %}
+          <div class="col-12">
+            <div class="alert alert-info text-center mt-2">
+              No online marketplace advertisers matched your search.
+            </div>
+          </div>
+        {% elif ecommerce_results|length == 0 and not q %}
+          <div class="col-12">
+            <div class="alert alert-secondary text-center mt-2">
+              No online marketplace advertisers are available yet.
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if pagination and pagination.pages > 1 %}
+        <nav aria-label="Online marketplace page navigation" class="mt-3">
+          <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+              <li class="page-item">
+                <a class="page-link"
+                   href="{{ url_for('online_marketplace_results',
+                                    q=q,
+                                    page=pagination.prev_num) }}">
+                  &laquo; Previous
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled">
+                <span class="page-link">&laquo; Previous</span>
+              </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+              <span class="page-link">
+                Page {{ pagination.page }} of {{ pagination.pages }}
+              </span>
+            </li>
+
+            {% if pagination.has_next %}
+              <li class="page-item">
+                <a class="page-link"
+                   href="{{ url_for('online_marketplace_results',
+                                    q=q,
+                                    page=pagination.next_num) }}">
+                  Next &raquo;
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled">
+                <span class="page-link">Next &raquo;</span>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
