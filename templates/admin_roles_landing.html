@@ -38,6 +38,14 @@
             </a>
         {% endif %}
 
+
+        {% if current_user.has_role('approve_reject_testimonials') %}
+            <a href="{{ url_for('video_testimonials_dashboard') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-check2-square"></i> Approve/Reject Testimonials
+            </a>
+        {% endif %}
+
+
         {% if current_user.has_role('feedback_moderation') %}
             <a href="{{ url_for('feedback_dashboard') }}" class="list-group-item list-group-item-action">
                 <i class="bi bi-chat-left-text"></i> Feedback Moderation
@@ -48,6 +56,13 @@
             <a href="{{ url_for('support_dashboard') }}" class="list-group-item list-group-item-action">
                 <i class="bi bi-headset"></i> Customer Support
             </a>
+        {% endif %}
+
+        {% if current_user.has_role('ecommerce') %}
+          <a href="{{ url_for('admin_ecommerce_verifications') }}"
+             class="list-group-item list-group-item-action">
+            <i class="bi bi-chat-left-text"></i> E‑commerce verifications
+          </a>
         {% endif %}
 
         {% if current_user.has_role('super_admin') %}

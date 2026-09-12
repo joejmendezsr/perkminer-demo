@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+
+  <!-- back link -->
+  <div class="mb-3">
+    <a href="{{ url_for('testimonials_members') }}" class="btn btn-link p-0">
+      ← Back to testimonials
+    </a>
+  </div>
+
+  <div id="testimonial-detail">
+    <p class="text-muted mb-0">Loading testimonial...</p>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  const id = {{ testimonial_id }};
+  const container = document.getElementById('testimonial-detail');
+
+  // your Cloudinary cloud name
+  const cloudName = "dmrntlcfd";
+
+  try {
+    // main testimonial
+    const resp = await fetch(`/api/testimonials/${id}`);
+    if (!resp.ok) {
+      container.innerHTML = "<p class='text-danger mb-0'>Testimonial not found.</p>";
+      return;
+    }
+    const tv = await resp.json();
+
+    // other videos by same owner
+    const othersResp = await fetch(`/api/testimonials/${id}/others`);
+    const othersData = await othersResp.json();
+
+    const name = tv.owner_type === 'member'
+      ? (tv.owner_name || 'Member')
+      : (tv.business_name || 'Business');
+
+    // build transformed Cloudinary URL from public_id
+    const publicId = tv.cloudinary_public_id;
+    // transformation: 720p-ish, compressed MP4 (H.264), auto quality
+    const transformedUrl =
+      `https://res.cloudinary.com/${cloudName}/video/upload/` +
+      `q_auto:good,vc_h264,br_1000k,ac_aac,ar_44100,f_mp4/${publicId}.mp4`;
+
+    let html = `
+      <div class="row">
+        <div class="col-12 col-lg-8 mb-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h3 class="card-title mb-2">${name}</h3>
+              <p class="mb-1"><strong>Level:</strong> ${tv.level_code}</p>
+              <p class="mb-3">
+                <strong>Amount at submission:</strong>
+                $${tv.lifetime_amount_at_submission}
+              </p>
+              <div class="ratio ratio-16x9 mb-2">
+                <video controls src="${transformedUrl}" style="width: 100%; height: 100%;"></video>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // other videos section
+    if (othersData.items && othersData.items.length > 0) {
+      html += `
+        <div class="row mt-3">
+          <div class="col-12 col-lg-8">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title mb-3">
+                  Other videos by this ${tv.owner_type === 'member' ? 'member' : 'business'}
+                </h5>
+                <ul class="list-unstyled mb-0">
+      `;
+      othersData.items.forEach(o => {
+        html += `
+          <li class="mb-2">
+            <a href="/testimonials/${o.id}">
+              ${o.level_code} – $${o.lifetime_amount_at_submission}
+            </a>
+          </li>
+        `;
+      });
+      html += `
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
+  } catch (e) {
+    console.error("Error loading testimonial detail:", e);
+    container.innerHTML = "<p class='text-danger mb-0'>Failed to load testimonial.</p>";
+  }
+});
+</script>
+{% endblock %}

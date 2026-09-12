@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+  <a href="{{ url_for('video_testimonials_dashboard') }}" class="btn btn-link mb-3">
+    ← Back to testimonials moderation
+  </a>
+
+  <div id="admin-testimonial-detail">
+    <p class="text-muted mb-0">Loading testimonial...</p>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  const id = {{ testimonial_id }};
+  const container = document.getElementById('admin-testimonial-detail');
+  const cloudName = "dmrntlcfd";  // same as your Cloudinary config
+
+  try {
+    const resp = await fetch(`/api/admin/testimonials/${id}`);
+    if (!resp.ok) {
+      container.innerHTML = "<p class='text-danger mb-0'>Testimonial not found (or you are not authorized).</p>";
+      return;
+    }
+    const tv = await resp.json();
+
+    const name = tv.owner_type === 'member'
+      ? (tv.owner_name || 'Member')
+      : (tv.business_name || 'Business');
+
+    const publicId = tv.cloudinary_public_id;
+
+    // use a transformed Cloudinary URL for playback
+    const transformedUrl =
+      `https://res.cloudinary.com/${cloudName}/video/upload/` +
+      `q_auto:good,vc_h264,br_1000k,ac_aac,ar_44100,f_mp4/${publicId}.mp4`;
+
+    const title = tv.title || '(no title)';
+
+    let html = `
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h3 class="card-title mb-1">${title}</h3>
+          <p class="mb-1"><strong>${tv.owner_type === 'member' ? 'Member' : 'Business'}:</strong> ${name}</p>
+          <p class="mb-1"><strong>Level:</strong> ${tv.level_code}</p>
+          <p class="mb-3">
+            <strong>Amount at submission:</strong>
+            $${tv.lifetime_amount_at_submission}
+            &nbsp;&nbsp;
+            <strong>Status:</strong> ${tv.status}
+          </p>
+          <div class="ratio ratio-16x9 mb-3">
+            <video controls src="${transformedUrl}" style="width: 100%; height: 100%;"></video>
+          </div>
+    `;
+
+    if (tv.rejection_reason) {
+      html += `
+        <p class="text-danger"><strong>Last rejection reason:</strong> ${tv.rejection_reason}</p>
+      `;
+    }
+
+    html += `
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  } catch (e) {
+    console.error("Error loading admin testimonial detail:", e);
+    container.innerHTML = "<p class='text-danger mb-0'>Failed to load testimonial for preview.</p>";
+  }
+});
+</script>
+{% endblock %}

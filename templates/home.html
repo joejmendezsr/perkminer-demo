@@ -401,9 +401,8 @@
     {% endif %}
     <div class="container hero-content">
       <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="hero-logo">
-      <h1>THIS IS A DEMO SITE!</h1>
       <h1>Exclusive Member Perks</br>plus 2% Cashback</h1>
-      <h4>No Risk Advertising! (900% ROI min)</br>No Sale/Close = No Fee For Advertisers!</h4>
+      <h4>No Risk Advertising! (900% ROAS min)</br>No Sale/Close = No Fee For Advertisers!</h4>
       <p style="font-size:1rem; color:#222; background:#f7f7f7; padding:6px 14px; border-radius:7px; display:inline-block;">
         Secure ⛨ | Not crypto | Privacy guaranteed
       </p>
@@ -459,7 +458,7 @@
   <div class="marquee-container">
     <div class="marquee">
       <div class="marquee-content" id="live-marquee">
-        *** DEMO SITE!! ***<span class="highlight">DEMO SITE! DEMO SITE! DEMO SITE!</span>
+        *** WE ARE LIVE!! Beta Testing Now ***<span class="highlight">Free to Join - join early and start earning cashback on real purchases (Paid By Perk Miner)</span>
       </div>
     </div>
   </div>
@@ -478,6 +477,7 @@
           <a class="nav-link" href="/about">About Us</a>
           <a class="nav-link" href="/news">News</a>
           <a class="nav-link" href="/faq">FAQ</a>
+          <a class="nav-link" href="/testimonials">Testimonials</a>
         </div>
       </div>
     </div>
@@ -844,7 +844,7 @@
     <div class="col-12 col-md-6 mb-4">
       <h3 class="text-center mb-3">Business Perks:</h3>
       <ul style="list-style:square; padding-left:1.2em; font-size: 1.14em;">
-        <li>Zero wasted advertising dollars!<br/>(No Sale or Closed Deal = Zero Fees; Min 900% ROI - pay $1 per $10 sold, $250 max)</li>
+        <li>Zero wasted advertising dollars!<br/>(No Sale or Closed Deal = Zero Fees; Min 900% ROI (ROAS - Return on Ad Spend) - pay $1 per $10 sold, $250 max)</li>
         <li>Earn unlimited 1% Cashback on up to $2,500 of every sale (paid by Perk Miner LLC), <u>which is equal to a 10% return of your advertising fee</u> in exchange for offering at least one perk to our members.</br><b>(All transactions must be finalized)</b></li>
         <li>Earn referral Business Commissions by inviting other businesses to join</br>(Mutual Commissions Payout - Each business earns from each other's sales)</li>
         <li>Never pay for leads, traffic, appointments, or meet-ups (Only pay for results).</li>
@@ -891,6 +891,9 @@
     </div>
   </div>
 </div>
+<div style="font-size:0.2em;color:#FFFFFF;">
+                "The best advertising platform to grow your business.  We've answered the bigges questions: How can I grow my business?  What advertising gives me this highest ROAS - Return on Ad Spend?"
+            </div>
   <footer>
     <div>
       <div class="mb-2">
@@ -1015,10 +1018,10 @@ document.addEventListener('DOMContentLoaded', function () {
       const advertisers = data.advertisers ?? 0;
 
       const text = 
-        `DEMO SITE! *** LIVE UPDATE *** ` +
+        `*** WE ARE LIVE!! Beta Testing Now *** LIVE STATS *** ` +
         `Members:<span class="highlight">${members.toLocaleString()}</span> ` +
         `Businesses:<span class="highlight">${advertisers.toLocaleString()}</span> ` +
-        `|    DEMO SITE! *** DEMO SITE! *** DEMO SITE! *** DEMO SITE!`;
+        `|    Free to join - always free.  Start earning cashback and referral commissions on real purchases (Paid by Perk Miner)`;
 
       marqueeEl.innerHTML = text;   // clear any old children
     } catch (err) {
@@ -1033,6 +1036,29 @@ document.addEventListener('DOMContentLoaded', function () {
   // poll every 45 seconds (adjust as needed)
   const POLL_MS = 45000;
   setInterval(updateMarqueeOnce, POLL_MS);
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (!navigator.geolocation) {
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    var lat = pos.coords.latitude;
+    var lng = pos.coords.longitude;
+
+    fetch("/api/me/location", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lat: lat, lng: lng })
+    }).catch(function(err) {
+      console.error("home: location update failed", err);
+    });
+  }, function(error) {
+    // user denied or error; ignore
+  });
 });
 </script>
 

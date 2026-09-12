@@ -258,6 +258,73 @@
     </div>
   </div>
 
+  {% if member_level_code %}
+    <hr class="my-3">
+
+    <section class="mt-2">
+      <h5>Testimonial videos</h5>
+      <p class="mb-2">
+        You currently qualify for level:
+        <strong>{{ member_level_code }}</strong>.
+      </p>
+
+      <button
+        class="btn btn-primary mb-3"
+        id="upload-testimonial-btn"
+        data-level="{{ member_level_code }}"
+        type="button"
+      >
+        Upload / Replace testimonial video
+      </button>
+
+    <!-- existing list can stay if you like; or you can simplify -->
+    <ul class="list-unstyled mb-3">
+      {% for tv in member_testimonials %}
+        <li class="mb-1">
+          <strong>Level:</strong> {{ tv.level_code }}
+          &nbsp;|&nbsp;
+          <strong>Status:</strong> {{ tv.status }}
+          &nbsp;|&nbsp;
+          <strong>Amount at submission:</strong>
+          ${{ tv.lifetime_amount_at_submission }}
+        </li>
+      {% else %}
+        <li>No testimonial videos yet.</li>
+      {% endfor %}
+    </ul>
+
+    <!-- NEW: collapsible list of *approved* videos with links -->
+    <button
+      class="btn btn-outline-secondary btn-sm mb-2"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#memberApprovedVideos"
+      aria-expanded="false"
+      aria-controls="memberApprovedVideos"
+    >
+      My approved testimonial videos
+    </button>
+
+    <div class="collapse mt-2" id="memberApprovedVideos">
+      {% set approved = member_testimonials | selectattr("status", "equalto", "approved") | list %}
+      {% if approved %}
+        <ul class="list-unstyled mb-0">
+          {% for tv in approved %}
+            <li class="mb-1">
+              <a href="{{ url_for('testimonial_detail_page', testimonial_id=tv.id) }}" target="_blank">
+                {{ tv.title or tv.level_code }} – ${{ tv.lifetime_amount_at_submission }} ({{ tv.level_code }})
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted mb-0">No approved videos yet.</p>
+      {% endif %}
+    </div>
+    </section>
+  {% endif %}
+</div>
+
   <div class="collapse" id="profileCollapse">
     <!-- existing profile form content here -->
   </div>
@@ -283,7 +350,7 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="invitee_type" value="user">
       <div class="modal-header">
-        <h5 class="modal-title" id="inviteModalLabel">Invite Others to Join PerkMiner</h5>
+        <h5 class="modal-title" id="inviteModalLabel">Invite Others to Join by Email</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -303,7 +370,7 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="invitee_type" value="business">
       <div class="modal-header">
-        <h5 class="modal-title" id="inviteBusinessModalLabel">Invite a Business to Join PerkMiner</h5>
+        <h5 class="modal-title" id="inviteBusinessModalLabel">Invite a Business to Join by Email</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -344,28 +411,186 @@
 </div>
 
   <!-- Referral Code Section -->
-  <div class="card p-4 mb-4">
-    <h4>Your Referral Code</h4>
-    <div class="mb-0"><b>{{ referral_code }}</b></div>
-
-  {% if sponsor %}
-
-      <div>
-        <small class="text-muted">Sponsored by: <span class="text-success">{{ sponsor.name or sponsor.email }}</span></small></div>
-      </div>
-    {% endif %}
-
-    <div>
-      <button class="btn btn-success w-100" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal">
-        <i class="bi bi-person-plus me-1"></i>Invite others to join
-      </button>
-    </div>
-    <div>
-      <button class="btn btn-warning w-100 mt-2" type="button" data-bs-toggle="modal" data-bs-target="#inviteBusinessModal">
-        <i class="bi bi-building-add me-1"></i>Invite a Business to Join
-      </button>
-    </div>
+<div class="card p-4 mb-4">
+  <!-- header: title -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Referral Code Section</h4>
   </div>
+
+  <!-- referral code + sponsor -->
+  <div class="mb-3">
+    <div><strong>{{ referral_code }}</strong></div>
+
+    {% if sponsor %}
+      <small class="text-muted">
+        Sponsored by:
+        <span class="text-success">{{ sponsor.name or sponsor.email }}</span>
+      </small>
+    {% endif %}
+  </div>
+
+  <!-- invite + flyer buttons -->
+  <div class="mb-3">
+    <button class="btn btn-success w-100" type="button"
+            data-bs-toggle="modal" data-bs-target="#inviteModal">
+      <i class="bi bi-person-plus me-1"></i>Invite others to join by Email
+    </button>
+    <br><br>
+    <a href="{{ url_for('member_flyer') }}" class="btn w-100 btn-outline-secondary">
+      Member Referral Flyer
+    </a>
+  </div>
+
+  <!-- share on social: header + collapse trigger -->
+  <div class="d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Invite Others on Social Media</h5>
+    <button
+      class="btn btn-sm btn-outline-secondary"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#memberShareCollapse"
+      aria-expanded="false"
+      aria-controls="memberShareCollapse"
+    >
+      Show / Hide
+    </button>
+  </div>
+
+  <!-- collapsed share content -->
+  <div class="collapse mt-3" id="memberShareCollapse">
+    <label for="share-link" class="form-label">Your member invite link</label>
+    <input
+      id="share-link"
+      type="text"
+      class="form-control mb-2"
+      readonly
+      value="{{ share_url }}"
+    >
+
+    <a href="{{ url_for('download_member_flyer') }}" class="btn btn-outline-primary w-100 mb-2">
+      Download Member Flyer Image (for social posts - no QR code)
+    </a>
+
+    <p class="mt-1 mb-1" style="font-size:0.9rem;">
+      Suggested caption (this is what will be copied):
+    </p>
+
+    <textarea
+      id="member-caption"
+      readonly
+      rows="3"
+      class="form-control mb-2"
+      style="max-width:520px; font-size:0.9rem;"
+    >Earn 2% cash back and referral commission (real cash - not points or gift cards) on everyday purchases.
+    PAYOUT AND COST:  Perk Miner pays out up to 84% of it's ad revenue from every finalized transaction to members and business owners on up to $2,500 of every purchase made.  Free to Join and always free.
+    PEACE OF MIND:  Search for businesses, product or services with peace of mind through secure messaging and without ever worry about your information being sold as a lead.  No unsolicited phone calls, spam emails or uninvited sales people.  We connect one member to one business at a time and businesses never have access to member contact information.
+    FREE BUSINESS OPPORTUNITY:  Our members have the opportunity to own their own business with zero cost, zero investment and zero risk.  This is your opportunity to own your own advertising agency an grow a real business with real results.  No set hours or office needed.  Just invite people to become members and business owners to advertise and you earn from every finalized transaction (from real sales).
+    Join PerkMiner through my link today!:
+    {{ share_url }}</textarea>
+
+    <button
+      type="button"
+      class="btn btn-primary w-100"
+      onclick="copyCaptionAndLink('member-caption')"
+    >
+      Copy caption + link
+    </button>
+
+    <p class="mt-2 mb-0" style="font-size:0.85rem; color:#6b7280;">
+      Tip: Take a screen shot of your own <strong>Member Referral Flyer with QR code (on mobile device)</strong> or use a standardized downloadable flyer without QR code, upload it to your post,
+      then paste this copied caption.
+    </p>
+  </div>
+</div>
+
+
+<div class="card p-4 mb-4">
+  <!-- header: title -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Business referrals</h4>
+  </div>
+
+  <!-- (optional) business-specific code section -->
+  <!-- if you don't have a separate business referral code, you can skip this block or adapt it -->
+
+  <!-- invite + flyer buttons -->
+  <div class="mb-3">
+    <button class="btn btn-warning w-100 mt-2" type="button"
+            data-bs-toggle="modal" data-bs-target="#inviteBusinessModal">
+      <i class="bi bi-building-add me-1"></i>Invite a Business to Join by Email
+    </button>
+    <br><br>
+    <a href="{{ url_for('member_business_flyer') }}" class="btn w-100 btn-outline-secondary">
+      Business Referral Flyer
+    </a>
+  </div>
+
+  <!-- share on social: header + collapse trigger -->
+  <div class="d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Invite Businesses on Social Media</h5>
+    <button
+      class="btn btn-sm btn-outline-secondary"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#bizShareCollapse"
+      aria-expanded="false"
+      aria-controls="bizShareCollapse"
+    >
+      Show / Hide
+    </button>
+  </div>
+
+  <!-- collapsed share content -->
+  <div class="collapse mt-3" id="bizShareCollapse">
+    <label for="biz-share-link" class="form-label">Your business invite link</label>
+    <input
+      id="biz-share-link"
+      type="text"
+      class="form-control mb-2"
+      readonly
+      value="{{ business_share_url }}"
+    >
+
+    <a href="{{ url_for('download_member_business_flyer') }}" class="btn btn-outline-primary w-100 mb-2">
+      Download Business Flyer Image (for social posts - no QR code)
+    </a>
+
+    <p class="mt-1 mb-1" style="font-size:0.9rem;">
+      Suggested caption (this is what will be copied):
+    </p>
+
+    <textarea
+      id="biz-caption"
+      readonly
+      rows="3"
+      class="form-control mb-2"
+      style="max-width:520px; font-size:0.9rem;"
+  >Business owners: Want advertising where you only pay when a sale actually closes with 900% ROI or higher?  What about getting exclusive leads at no cost to your business (one member connected to one business at a time and not oversold to your competitors), plus zero cost for website and foot traffic, phone calls, appointments and meetups?
+   WHAT'S THE COST?  You simply pay 10% of the sale (capped at $250) after you get paid.  No hidden fees, no contracts, no monthly membership fees, subscriptions.  All you have to do is finalize the transaction once you've received payment and make sure that you have enough in your account balance to cover the advertising fee prior to getting paid.
+   REWARDS PROGRAM:  Perk Miner also rewards it's members for making purchases from it's advertisers and it's advertisers for finalizing transactions (all cash back and commissions are paid by Perk Miner from the advertising revenue paid - up to 84% of the advertising revenue is paid out to members and businesses from every finalized transaction).
+   MUTUAL GROWTH MODEL:  By joining and inviting other business owners to join, you each earn a commission from each other's sales (finalized transactions) through Perk Miner and at the same time, I am also rewarded.  It's a mutual growth model designed to help businesses prosper and it's all paid by Perk Miner ... not by your business.
+   NEEDED TO GET STARTED:  It only takes $25 to fund your account (this is not a fee, but is used to cover the advertising fee when you make a sale) to get started.  $25 covers $250 in sales.  If your lowest sale is over $2,500, you must deposit $250 or more to cover the advertising fee.
+   No special equipment required to finalize transactions and you or your staff can finalize transactions in seconds.  Upon successful finalization of every transaction, you also get real-time analytics and you also see your cash back earned.  That's right!  You earn cash back for finalizing transactions in return for offering a perk to Perk Miner members (you earn 10% of the advertising fee paid).
+   There is zero risk to your business.  Join PerkMiner as an advertiser through my business invite link today:
+{{ business_share_url }}</textarea>
+
+    <button
+      type="button"
+      class="btn btn-primary w-100"
+      onclick="copyCaptionAndLink('biz-caption')"
+    >
+      Copy caption + link
+    </button>
+
+    <p class="mt-2 mb-0" style="font-size:0.85rem; color:#6b7280;">
+      Tip: Take a screen shot of your own <strong>Business Referral Flyer with QR code (on mobile device)</strong> use our standardized downloadable flyer without QR code, upload it to your post,
+      then paste this copied caption.
+    </p>
+  </div>
+</div>
+
+
+
     <div class="card p-4 mb-4">
 
 <h4>Your Activity</h4>
@@ -374,7 +599,7 @@
 <div class="mb-3">
   <div class="card mb-3">
     <div class="card-header">
-      Earnings summary (7-day delay)
+      Earnings Summary
     </div>
     <div class="card-body">
       <table class="table table-sm">
@@ -386,16 +611,20 @@
         </thead>
         <tbody>
           <tr>
-            <td>Total earnings</td>
+            <td>Lifetime Total Earnings</td>
             <td>${{ "{:,.2f}".format(total_earnings or 0) }}</td>
           </tr>
           <tr>
-            <td>Pending earnings</td>
+            <td>Pending Earnings</td>
             <td>${{ "{:,.2f}".format(pending_earnings or 0) }}</td>
           </tr>
           <tr>
-            <td>Available for withdrawal</td>
-            <td>${{ "{:,.2f}".format(available_earnings or 0) }}</td>
+            <td>Available for Withdrawal</td>
+            <td>${{ "{:,.2f}".format(net_available_earnings or 0) }}</td>
+          </tr>
+          <tr>
+            <td>Total Withdrawn (All Time)</td>
+            <td>${{ "{:,.2f}".format(withdrawn_total or 0) }}</td>
           </tr>
         </tbody>
       </table>
@@ -420,27 +649,74 @@
         </a>
       {% endif %}
     </div>
-    {% if current_user.stripe_account_id %}
-      <div class="col-12 col-md text-md-end">
-        <a href="{{ url_for('stripe_update_info') }}" class="btn btn-outline-primary mb-2">
-          Update Payout/Banking Info
-        </a>
-      </div>
-    {% endif %}
-  </div>
 
-  <!-- REGULAR earnings (commissions + cashback) -->
-  <div class="fs-5 fw-semibold text-primary mb-2">
-    Withdrawable Earnings: ${{ "{:,.2f}".format(current_user.earnings_balance or 0) }}
-  </div>
-
-  <div>
-    {% if not current_user.stripe_account_id %}
-      <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary w-100">
-        Set Up Payouts (Bank Transfer)</br>
-        <b>(IMPORTANT: Must Select Professional Services Industry, Other Marketing Services, and perkminer.com for website during onboarding)</b>
+{% if current_user.stripe_account_id %}
+  <div class="col-12 col-md text-md-end">
+    <div class="btn-group" role="group" aria-label="Payout actions">
+      <a href="{{ url_for('stripe_update_info') }}"
+         class="btn btn-outline-primary">
+        Bank Details
       </a>
-    {% else %}
+
+      <a href="{{ url_for('member_stripe_dashboard') }}"
+         class="btn btn-secondary"
+         target="_blank"
+         rel="noopener noreferrer">
+        Stripe Dashboard
+      </a>
+    </div>
+  </div>
+{% endif %}
+</br></br>
+
+<!-- REGULAR earnings (commissions + cashback) -->
+<div class="fs-5 fw-semibold text-primary mb-2">
+  Withdrawable Earnings: ${{ "{:,.2f}".format(current_user.earnings_balance or 0) }}
+</div>
+
+<div>
+  {% if not current_user.stripe_account_id %}
+    <!-- No Stripe account yet -->
+    <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary w-100">
+      Set Up Payouts (Bank Transfer)</br>
+      <b>(IMPORTANT: Must Select Professional Services Industry, Other Marketing Services, and perkminer.com for website during onboarding)</b>
+    </a>
+
+  {% else %}
+    <!-- Stripe account exists: show payout status -->
+    <div class="mb-2">
+      {% if not stripe_status.connected %}
+        <span class="badge bg-secondary">Stripe not connected</span>
+
+      {% elif stripe_status.payouts_status == 'active' %}
+        <span class="badge bg-success">Stripe payouts active</span>
+
+      {% elif stripe_status.payouts_status == 'pending_requirements' %}
+        <span class="badge bg-warning text-dark">Stripe action required</span>
+        <div class="text-muted small mt-1">
+          Stripe needs more information before enabling payouts.
+        </div>
+        <div class="mt-1">
+          <a href="{{ url_for('onboard_stripe') }}" class="btn btn-sm btn-warning w-100">
+            Finish Stripe setup
+          </a>
+        </div>
+
+      {% else %}
+        <span class="badge bg-danger">Stripe payouts disabled</span>
+        <div class="text-muted small mt-1">
+          Your Stripe account is not ready for payouts. Please review your details in Stripe.
+        </div>
+        <div class="mt-1">
+          <a href="{{ url_for('onboard_stripe') }}" class="btn btn-sm btn-danger w-100">
+            Update Stripe account
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    {# only show withdrawal options if payouts are actually active #}
+    {% if stripe_status.payouts_status == 'active' %}
       {% set earnings = current_user.earnings_balance|float %}
       {% if earnings >= 10 %}
         <!-- Standard Payout (Regular Earnings) -->
@@ -456,69 +732,121 @@
           </div>
           <form action="{{ url_for('withdraw') }}" method="POST" class="d-inline">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="input-group mb-2">
+              <span class="input-group-text">$</span>
+              <input
+                type="number"
+                name="amount"
+                class="form-control"
+                step="0.01"
+                min="10"
+                max="{{ '{:.2f}'.format(current_user.earnings_balance or 0) }}"
+                placeholder="Amount (leave blank for full)"
+              >
+            </div>
             <button type="submit" class="btn btn-success w-100">
               Withdraw (Standard)
             </button>
           </form>
         </div>
-
-        <!-- Instant Payout (Regular Earnings) -->
-        {% set inst_fee = earnings * 0.011 + 0.50 %}
-        {% set inst_net = earnings - inst_fee %}
-        <div class="border rounded p-3 bg-warning-subtle mt-3">
-          <div class="fw-bold mb-1">
-            <i class="bi bi-lightning-fill text-warning"></i> Instant Payout (Instant, 24/7)
-          </div>
-          <div class="text-muted mb-1" style="font-size:0.97em;">
-            Stripe instant payout fee: ${{ '{:,.2f}'.format(inst_fee) }} (1.1% + $0.50)<br>
-            You will receive: <b>${{ '{:,.2f}'.format(inst_net) }}</b>
-          </div>
-          <form action="{{ url_for('withdraw_instant') }}" method="POST" class="d-inline">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-warning w-100">
-              Withdraw Instantly <i class="bi bi-lightning-charge-fill"></i>
-            </button>
-          </form>
-        </div>
+      {% else %}
+        <small class="text-muted">
+          You need at least $10 in available earnings to withdraw.
+        </small>
       {% endif %}
+    {% else %}
+      {# payouts not active: show info instead of withdraw forms #}
+      <small class="text-muted">
+        Once your Stripe payouts are active, you’ll be able to withdraw your earnings here.
+      </small>
     {% endif %}
-  </div>
+  {% endif %}
+</div>
 
   <!-- Silent investor block: visible only for silent investors -->
-{% if current_user.has_role('silent_investor') %}
-  <div class="card mt-4">
-    <div class="card-header">
-      Silent investor earnings (7-day delay)
+  {% if current_user.has_role('silent_investor') %}
+    <div class="card mt-4">
+      <div class="card-header">
+        Silent investor Earnings
+      </div>
+      <div class="card-body">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Lifetime Total Investor Earnings</td>
+              <td>${{ "{:,.2f}".format(investor_total or 0) }}</td>
+            </tr>
+            <tr>
+              <td>Pending Investor Earnings</td>
+              <td>${{ "{:,.2f}".format(investor_pending or 0) }}</td>
+            </tr>
+            <tr>
+              <td>Available for Withdrawal</td>
+              <td>${{ "{:,.2f}".format(investor_net_available or 0) }}</td>
+            </tr>
+            <tr>
+              <td>Total Withdrawn (All Time)</td>
+              <td>${{ "{:,.2f}".format(investor_withdrawn_total or 0) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <small class="text-muted d-block mb-3">
+          Investor earnings become available 7 days after they are recorded.
+        </small>
+
+        {% if current_user.stripe_account_id %}
+          {% set inv_net = current_user.investor_earnings_balance|float %}
+          {% if inv_net >= 10 %}
+            <!-- standard investor payout -->
+            {% set std_fee_inv = inv_net * 0.0025 + 0.35 %}
+            {% set std_net_inv = inv_net - std_fee_inv %}
+            <div class="mb-3 border rounded p-3">
+              <div class="fw-bold mb-1">
+                <i class="bi bi-bank"></i> Investor Standard Payout (1-3 business days)
+              </div>
+              <div class="text-muted mb-1" style="font-size:0.95em;">
+                Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee_inv) }} (0.25% + $0.35)<br>
+                If you withdraw full balance, you would receive: <b>${{ '{:,.2f}'.format(std_net_inv) }}</b>
+              </div>
+              <form action="{{ url_for('withdraw_investor') }}" method="POST" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="input-group mb-2">
+                  <span class="input-group-text">$</span>
+                  <input
+                    type="number"
+                    name="amount"
+                    class="form-control"
+                    step="0.01"
+                    min="10"
+                    max="{{ '{:.2f}'.format(inv_net) }}"
+                    placeholder="Amount (leave blank for full)"
+                  >
+                </div>
+                <button type="submit" class="btn btn-success w-100">
+                  Withdraw Investor Earnings (Standard)
+                </button>
+              </form>
+            </div>
+          {% else %}
+            <small class="text-muted">
+              You need at least $10 in available investor earnings to withdraw.
+            </small>
+          {% endif %}
+        {% else %}
+          <small class="text-muted">
+            To withdraw investor earnings, first set up payouts in Stripe.
+          </small>
+        {% endif %}
+      </div>
     </div>
-    <div class="card-body">
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th>Field</th>
-            <th>Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Total investor earnings</td>
-            <td>${{ "{:,.2f}".format(investor_total or 0) }}</td>
-          </tr>
-          <tr>
-            <td>Pending investor earnings</td>
-            <td>${{ "{:,.2f}".format(investor_pending or 0) }}</td>
-          </tr>
-          <tr>
-            <td>Available for withdrawal</td>
-            <td>${{ "{:,.2f}".format(investor_available or 0) }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <small class="text-muted">
-        Investor earnings become available 7 days after they are recorded.
-      </small>
-    </div>
-  </div>
-{% endif %}
+  {% endif %}
+</div>
 
 <div class="card p-4 mb-4">
   <h4>Businesses You Interacted With (last 60 days)</h4>
@@ -565,13 +893,13 @@
 </div>
 
 <div class="card p-4 mb-4">
-  <h4>Member Referral Network Cashback Calculator (one purchase from everyone in your network during the month)</h4>
+  <h4>Member Referral Network Cashback/Commissions Calculator (one single purchase from everyone in your network)</h4>
   <div class="mb-2">
     <label>If you and everyone in your network refers 
       <input id="network_people" type="number" class="form-control d-inline-block w-auto" min="1" value="3" style="width:80px;" />
-      people and you each make one purchase during the month in the amount of $ 
+      people and you each make <b><u>one single purchase</u></b> from any advertiser in the same amount of $ 
       <input id="network_amount" type="number" class="form-control d-inline-block w-auto" min="0" max="2500" step="0.01" value="100" style="width:110px;" />
-      , this is how much you would earn in Cashback and Commission for the month:
+      , this is how much you would earn in Cashback and Commission:
     </label>
     <small class="text-muted d-block">*Maximum purchase amount allowed is $2,500</small>
   </div>
@@ -584,7 +912,7 @@
       <li>Tier Four: (Purchases from 3rd Tier referrals) = <span id="network_t4"></span></li>
       <li>Tier Five: (Purchases from 4th Tier referrals) = <span id="network_t5"></span></li>
     </ul>
-    <strong>Your total cashback earnings for the month would be $<span id="network_total"></span></strong>
+    <strong>Your total earnings from everyone making one single purchase would be $<span id="network_total"></span></strong>
   </div>
 </div>
 
@@ -594,9 +922,9 @@
     <label class="form-label d-block">
       If you invite 
       <input id="biz_referrals" type="number" class="form-control d-inline-block w-auto" min="1" value="3" style="width:80px;" />
-      businesses to join, and each business you invited also invited the same number of new businesses (same as you) to become advertisers, AND each business generates one paid invoice in the amount of $ 
+      businesses to join, and each business you invited also invited the same number of new businesses (same as you) to become advertisers, AND each business generates one paid invoice in the same amount of $ 
       <input id="biz_invoice_amount" type="number" class="form-control d-inline-block w-auto" min="0" max="2500" step="0.01" value="250" style="width:110px;" /> (max $2,500),
-      you would earn (even if you don't make any purchases from any of these businesses):
+      you would earn <b><u>(even if you don't make any purchases from any of these businesses)</u></b>:
     </label>
     <small class="text-muted d-block">This shows your estimated commissions earnings from your business network (purchases are from any member, including those not in your network).</small>
     <small class="text-muted d-block"><b>Note:</b> If you make a purchase from any business in your network, you would earn cash back for your purchases, plus the regular business commissions earnings.</small>
@@ -781,6 +1109,148 @@
     </div>
   </div>
 </footer>
+
+<script>
+  function copyCaptionAndLink(textareaId) {
+    const textarea = document.getElementById(textareaId);
+    if (!textarea) return;
+
+    const value = textarea.value;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(value).then(function () {
+        alert('Caption + link copied to clipboard');
+      }).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+
+    function fallbackCopy() {
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        alert('Caption + link copied to clipboard');
+      } catch (e) {
+        alert('Could not copy automatically, please copy the text manually.');
+      }
+    }
+  }
+</script>
+
+{% if member_level_code %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('upload-testimonial-btn');
+    if (!btn) return;
+
+    let pendingTitle = null;
+
+    btn.addEventListener('click', async function () {
+      // first click: ask for title, then immediately open file chooser
+      const levelCode = btn.getAttribute('data-level');
+
+      pendingTitle = prompt("Title for your testimonial video (optional):", "") || "";
+
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'video/*';
+
+      fileInput.onchange = async function () {
+        const file = fileInput.files[0];
+        if (!file) {
+          alert("No file selected.");
+          return;
+        }
+
+        try {
+          // 1) get signed params from your Flask backend
+          const paramsRes = await fetch(`/api/member/upload_params?level_code=${encodeURIComponent(levelCode)}`);
+          const params = await paramsRes.json();
+          if (!paramsRes.ok) {
+            alert("Cannot upload video: " + (params.error || "Unknown error"));
+            return;
+          }
+
+          // 2) upload file directly to Cloudinary
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('api_key', params.api_key);
+          formData.append('timestamp', params.timestamp);
+          formData.append('signature', params.signature);
+          formData.append('folder', params.folder);
+
+          const uploadUrl = `https://api.cloudinary.com/v1_1/${params.cloud_name}/video/upload`;
+
+          const uploadRes = await fetch(uploadUrl, {
+            method: 'POST',
+            body: formData
+          });
+          const cld = await uploadRes.json();
+
+          if (!uploadRes.ok) {
+            console.error("Cloudinary upload error:", cld);
+            alert("Cloudinary upload failed: " + (cld.error && cld.error.message ? cld.error.message : "Unknown error"));
+            return;
+          }
+
+          if (cld.duration && cld.duration > 60) {
+            alert("Video is longer than 60 seconds. Please upload a shorter one.");
+            return;
+          }
+
+          // 3) send metadata + title to your Flask testimonials endpoint
+          const payload = {
+            level_code: levelCode,
+            title: pendingTitle || "",
+            public_id: cld.public_id,
+            secure_url: cld.secure_url,
+            duration: cld.duration,
+            bytes: cld.bytes,
+            format: cld.format,
+            width: cld.width,
+            height: cld.height
+          };
+
+          const resp = await fetch("/api/testimonials/upload", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const text = await resp.text();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            console.error("Non-JSON response from server:", text);
+            alert("Server returned non-JSON response for testimonial upload.");
+            return;
+          }
+
+          if (!resp.ok) {
+            console.error("Upload error:", data);
+            alert("Upload failed: " + (data.error || "Unknown error"));
+            return;
+          }
+
+          alert("Testimonial submitted for review!");
+          window.location.reload();
+
+        } catch (err) {
+          console.error("Network or JS error while uploading testimonial:", err);
+          alert("Something went wrong submitting your testimonial.");
+        }
+      };
+
+      // IMPORTANT: call click() directly in the same user-initiated handler
+      fileInput.click();
+    });
+  });
+</script>
+{% endif %}
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

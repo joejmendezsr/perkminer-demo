@@ -137,6 +137,9 @@
     </ol>
   </nav>
 
+  <!-- NEW: nearby stats line -->
+  <div id="nearby-stats" class="text-center mb-2" style="font-weight:600;"></div>
+
   <h2 class="mb-4 text-center">Search Results</h2>
   {% if q %}
     <div class="mb-3 text-muted text-center">
@@ -317,5 +320,103 @@
     });
   }
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
+
+  var latParam = getParam("lat");
+  var lngParam = getParam("lng");
+
+  if (latParam && lngParam) {
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    var lat = pos.coords.latitude;
+    var lng = pos.coords.longitude;
+
+    fetch("/api/me/location", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lat: lat, lng: lng })
+    }).catch(function(err) {
+      console.error("location update failed", err);
+    });
+
+    var params = new URLSearchParams(window.location.search);
+
+    params.set("lat", lat);
+    params.set("lng", lng);
+
+    if (!params.get("distance") || params.get("distance") === "") {
+      params.set("distance", "10");
+    }
+
+    var newUrl = window.location.pathname + "?" + params.toString();
+    window.location.replace(newUrl);
+  }, function(error) {
+    // user denied or error; just continue without location
+  });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var statsEl = document.getElementById('nearby-stats');
+  if (!statsEl) return;
+
+  function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
+
+  var lat = getParam("lat");
+  var lng = getParam("lng");
+  var distance = getParam("distance");
+  var category = "{{ category or '' }}";
+
+  if (!lat || !lng) {
+    // no location, nothing to show
+    return;
+  }
+
+  // default distance on frontend too, just in case
+  if (!distance || distance === "") {
+    distance = "10";
+  }
+
+  var url = "/api/search/nearby-stats"
+          + "?lat=" + encodeURIComponent(lat)
+          + "&lng=" + encodeURIComponent(lng)
+          + "&distance=" + encodeURIComponent(distance);
+
+  if (category) {
+    url += "&category=" + encodeURIComponent(category);
+  }
+
+  fetch(url)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (!data || data.error) return;
+
+      var d = data.distance;
+      var m = data.membersWithin;
+      var b = data.businessesWithin;
+
+      statsEl.textContent =
+        m + " active members and " + b + " businesses within " + d + " miles of your location";
+    })
+    .catch(function(err) {
+      console.error("nearby stats error", err);
+    });
+});
+</script>
+
 </body>
 </html>

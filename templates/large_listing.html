@@ -406,6 +406,17 @@
         <div class="text-muted">Map unavailable</div>
       {% endif %}
     </div>
+
+<div class="mt-1" style="font-size: 0.98em; color:#314655;">
+  <strong>Finalized transactions:</strong>
+  {% set tx_count = finalized_tx_count or 0 %}
+  {% if tx_count == 0 %}
+    New Business
+  {% else %}
+    {{ tx_count }}
+  {% endif %}
+</div>
+
   </div>
 </div>
 

@@ -147,6 +147,9 @@
     </ol>
   </nav>
 
+  <!-- NEW: nearby stats line -->
+  <div id="nearby-stats" class="text-center mb-2" style="font-weight:600;"></div>
+
   <h2 class="mb-1 text-center">{{ category }} Businesses</h2>
   <h5 class="text-center mb-4">(within 10 miles of your location)</h5>
 
@@ -323,6 +326,16 @@ document.addEventListener('DOMContentLoaded', function() {
       navigator.geolocation.getCurrentPosition(function(pos) {
         var lat = pos.coords.latitude;
         var lng = pos.coords.longitude;
+
+        // NEW: save member location
+        fetch("/api/me/location", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lat: lat, lng: lng })
+        }).catch(function(err) {
+          console.error("category: location update failed", err);
+        });
+
         var category = "{{ category|urlencode }}";
         var distance = distanceParam ? distanceParam : 25;
         var url = "/category/" + category +
@@ -335,5 +348,56 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var statsEl = document.getElementById('nearby-stats');
+  if (!statsEl) return;
+
+  function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
+
+  var lat = getParam("lat");
+  var lng = getParam("lng");
+  var distance = getParam("distance");
+  var category = "{{ category or '' }}";
+
+  if (!lat || !lng) {
+    // no location, nothing to show
+    return;
+  }
+
+  if (!distance || distance === "") {
+    distance = "10";
+  }
+
+  var url = "/api/search/nearby-stats"
+          + "?lat=" + encodeURIComponent(lat)
+          + "&lng=" + encodeURIComponent(lng)
+          + "&distance=" + encodeURIComponent(distance);
+
+  if (category) {
+    url += "&category=" + encodeURIComponent(category);
+  }
+
+  fetch(url)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (!data || data.error) return;
+
+      var d = data.distance;
+      var m = data.membersWithin;
+      var b = data.businessesWithin;
+
+      statsEl.textContent =
+        m + " active members and " + b + " businesses within " + d + " miles of your location";
+    })
+    .catch(function(err) {
+      console.error("nearby stats error", err);
+    });
+});
+</script>
+
 </body>
 </html>

@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3">
+    <div class="mb-2 mb-md-0">
+      <h2 class="mb-1">Approve/Reject Testimonials</h2>
+      <p class="text-muted mb-0">
+        Review pending member and business testimonial videos before they go public.
+      </p>
+    </div>
+    <div>
+      <a href="{{ url_for('admin_roles_landing') }}" class="btn btn-outline-secondary">
+        ← Back to admin roles dashboard
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3">
+        <div class="mb-2 mb-md-0">
+          <h5 class="mb-1">Pending testimonials</h5>
+          <p class="text-muted mb-0 small">
+            Only testimonials with status <strong>pending</strong> are shown here.
+          </p>
+        </div>
+      </div>
+
+      <div id="testimonial-admin">
+        <p class="text-muted">Loading pending testimonials...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const container = document.getElementById('testimonial-admin');
+
+  async function loadTestimonials() {
+    try {
+      const resp = await fetch("/api/admin/testimonials?status=pending");
+      const data = await resp.json();
+
+      container.innerHTML = "";
+
+      if (!data.items || data.items.length === 0) {
+        container.innerHTML = "<p class='text-muted mb-0'>No pending testimonials.</p>";
+        return;
+      }
+
+      const tableWrapper = document.createElement('div');
+      tableWrapper.className = "table-responsive";  // responsive on mobile/tablet
+
+      const table = document.createElement('table');
+      table.className = "table table-sm table-striped align-middle mb-0";
+      table.innerHTML = `
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Owner</th>
+            <th>Type</th>
+            <th>Level</th>
+            <th>Amount</th>
+            <th>Title</th>
+            <th>Video</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const tbody = table.querySelector('tbody');
+
+      data.items.forEach(item => {
+        const tr = document.createElement('tr');
+
+        const ownerLabel = item.owner_type === 'member'
+          ? `Member #${item.owner_id}`
+          : `Business #${item.owner_id}`;
+
+        // NEW: define title with a fallback
+        const title = item.title || '(no title)';
+
+        tr.innerHTML = `
+          <td>${item.id}</td>
+          <td>${ownerLabel}</td>
+          <td class="text-capitalize">${item.owner_type}</td>
+          <td>${item.level_code}</td>
+          <td>$${item.lifetime_amount_at_submission}</td>
+          <td>${title}</td>
+          <td>
+            <a href="/admin/testimonials/${item.id}/preview" target="_blank" class="btn btn-outline-secondary btn-sm">
+              View
+            </a>
+          </td>
+          <td>
+            <div class="d-flex flex-wrap gap-1">
+              <button class="btn btn-success btn-sm"
+                      data-action="approve"
+                      data-id="${item.id}">
+                Approve
+              </button>
+              <button class="btn btn-danger btn-sm"
+                      data-action="reject"
+                      data-id="${item.id}">
+                Reject
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tableWrapper.appendChild(table);
+      container.appendChild(tableWrapper);
+    } catch (e) {
+      console.error("Error loading testimonials:", e);
+      container.innerHTML = "<p class='text-danger'>Failed to load testimonials. Check console for details.</p>";
+    }
+  }
+
+  container.addEventListener('click', async function (e) {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+
+    const action = btn.getAttribute('data-action');
+    const id = btn.getAttribute('data-id');
+
+    if (action === 'approve') {
+      try {
+        const resp = await fetch(`/api/admin/testimonials/${id}/approve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+        const resData = await resp.json();
+        if (!resp.ok) {
+          alert("Approve failed: " + (resData.error || "Unknown error"));
+          return;
+        }
+        alert("Testimonial approved.");
+        loadTestimonials();
+      } catch (err) {
+        console.error("Approve error:", err);
+        alert("Error approving testimonial.");
+      }
+    } else if (action === 'reject') {
+      const reason = prompt("Rejection reason:", "Does not meet guidelines");
+      if (reason === null) return;
+      try {
+        const resp = await fetch(`/api/admin/testimonials/${id}/reject`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: reason })
+        });
+        const resData = await resp.json();
+        if (!resp.ok) {
+          alert("Reject failed: " + (resData.error || "Unknown error"));
+          return;
+        }
+        alert("Testimonial rejected.");
+        loadTestimonials();
+      } catch (err) {
+        console.error("Reject error:", err);
+        alert("Error rejecting testimonial.");
+      }
+    }
+  });
+
+  loadTestimonials();
+});
+</script>
+{% endblock %}

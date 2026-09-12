@@ -324,7 +324,7 @@
       </div>
       {% if business.status %}
         <div class="alert alert-info p-2 mb-3" style="font-size:1.09em; text-align:center;">
-          Status: <strong>
+          Listing Status: <strong>
             {% if business.status == "not_submitted" %}
               Not Submitted
             {% elif business.status == "pending" %}
@@ -341,6 +341,82 @@
           </strong>
         </div>
         {% endif %}
+
+{% if show_website_status %}
+  <div class="alert alert-info p-2 mb-2" style="font-size:1.09em; text-align:center;">
+    E-Commerce Website Status:
+    <strong>
+      {% if website_status == "Verified" %}
+        <span class="text-success">Verified</span>
+      {% else %}
+        <span class="text-warning">Pending Verification</span>
+      {% endif %}
+    </strong>
+  </div>
+{% endif %}
+
+{% if biz_level_code %}
+  <div class="card p-4 mb-4">
+    <h5>Congratulations! You qualify to upload a Testimonial Video</h5>
+    <p class="mb-2">
+      Your business currently qualifies for level:
+      <strong>{{ biz_level_code }}</strong>.
+    </p>
+
+    <button
+      class="btn btn-primary mb-3"
+      id="biz-upload-testimonial-btn"
+      data-level="{{ biz_level_code }}"
+      type="button"
+    >
+      Upload / Replace testimonial video
+    </button>
+
+    <ul class="list-unstyled mb-3">
+      {% for tv in biz_testimonials %}
+        <li class="mb-1">
+          <strong>Level:</strong> {{ tv.level_code }}
+          &nbsp;|&nbsp;
+          <strong>Status:</strong> {{ tv.status }}
+          &nbsp;|&nbsp;
+          <strong>Amount at submission:</strong>
+          ${{ tv.lifetime_amount_at_submission }}
+        </li>
+      {% else %}
+        <li>No testimonial videos yet.</li>
+      {% endfor %}
+    </ul>
+
+    <!-- NEW: collapsible list of approved business videos -->
+    <button
+      class="btn btn-outline-secondary btn-sm mb-2"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#bizApprovedVideos"
+      aria-expanded="false"
+      aria-controls="bizApprovedVideos"
+    >
+      My approved testimonial videos
+    </button>
+
+    <div class="collapse mt-2" id="bizApprovedVideos">
+      {% set approved_biz = biz_testimonials | selectattr("status", "equalto", "approved") | list %}
+      {% if approved_biz %}
+        <ul class="list-unstyled mb-0">
+          {% for tv in approved_biz %}
+            <li class="mb-1">
+              <a href="{{ url_for('testimonial_detail_page', testimonial_id=tv.id) }}" target="_blank">
+                {{ tv.title or tv.level_code }} – ${{ tv.lifetime_amount_at_submission }} ({{ tv.level_code }})
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted mb-0">No approved videos yet.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
 
       <!-- Invite Modal stays unchanged... -->
       <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
@@ -462,7 +538,9 @@
         <li>you are required to install and keep perkminer’s tracking script on your order confirmation / “thank you” page so qualifying purchases are reported.</li>
         <li>removing, disabling, or altering the script so purchases are not reported may result in suspension; repeated or intentional violations may result in permanent account closure and forfeiture of any remaining advertising balance.</li>
         <li>if a member reports that they completed a purchase on your website but did not receive cashback, perkminer may suspend your account while we investigate. if we confirm that purchases were not reported as required, your account may remain suspended or be closed.</li>
-        <li>view installation instructions <a href="{{ url_for('online_purchase_instructions') }}" target="_blank">HERE</a>.  You may also contact Perk Miner LLC at <a href="mailto:support@perkminer.com">support@perkminer.com</a>.</li>
+        <li>view installation instructions <a href="{{ url_for('online_purchase_instructions') }}" target="_blank">HERE</a>.</li>
+        <li>you must contact Perk Miner LLC at <a href="mailto:support@perkminer.com">support@perkminer.com upon proper installation of the script so that it could be verified.</a>.</li>
+        <li>once verified, the online purchase option button will appear on your listing.  you can keep track of the status (website status will appear when all 3 boxes are checked).</li>
       </ul>
       <div class="form-check">
         <input
@@ -606,16 +684,84 @@
 
     <div>
       <button class="btn btn-success w-100" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal">
-        <i class="bi bi-person-plus me-1"></i>Invite other businesses to join
-      </button>
+        <i class="bi bi-person-plus me-1"></i>Invite Businesses to join by Email
+      </button></br></br>
+  <a href="{{ url_for('b2b_flyer') }}" class="btn w-100 btn-outline-secondary">
+    B2B Flyer
+  </a>
     </div>
   </div>
+
+
+<div class="card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">Invite Businesses on Social Media</h4>
+    <button
+      class="btn btn-sm btn-outline-secondary"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#b2bShareCollapse"
+      aria-expanded="false"
+      aria-controls="b2bShareCollapse"
+    >
+      Show / Hide
+    </button>
+  </div>
+
+<div class="collapse mt-3" id="b2bShareCollapse">
+  <label for="b2b-share-link" class="form-label">Your B2B invite link</label>
+  <input
+    id="b2b-share-link"
+    type="text"
+    class="form-control mb-2"
+    readonly
+    value="{{ b2b_share_url }}"
+  >
+
+  <!-- download for social -->
+  <a href="{{ url_for('download_b2b_flyer') }}" class="btn btn-outline-primary w-100 mb-2">
+    Download B2B Flyer Image (for social posts - no QR code)
+  </a>
+
+  <p class="mt-1 mb-1" style="font-size:0.9rem;">
+    Suggested caption (this is what will be copied):
+  </p>
+  <textarea
+    id="b2b-caption"
+    readonly
+    rows="3"
+    class="form-control mb-2"
+    style="max-width:520px; font-size:0.9rem;"
+  >Business owners: Want advertising where you only pay when a sale actually closes with 900% ROI or higher?  What about getting exclusive leads at no cost to your business (one member connected to one business at a time and not oversold to your competitors), plus zero cost for website and foot traffic, phone calls, appointments and meetups?
+   WHAT'S THE COST?  You simply pay 10% of the sale (capped at $250) after you get paid.  No hidden fees, no contracts, no monthly membership fees, subscriptions.  All you have to do is finalize the transaction once you've received payment and make sure that you have enough in your account balance to cover the advertising fee prior to getting paid.
+   REWARDS PROGRAM:  Perk Miner also rewards it's members for making purchases from it's advertisers and it's advertisers for finalizing transactions (all cash back and commissions are paid by Perk Miner from the advertising revenue paid - up to 84% of the advertising revenue is paid out to members and businesses from every finalized transaction).
+   MUTUAL GROWTH MODEL:  By joining and using my referral code, my business earns a commission from every sale (finalized transactions) that your business makes through Perk Miner and at the same time, when my business finalizes a transaction, your business earns a commission (also from every finalized transaction).  It's a mutual growth model designed to help our businesses prosper and it's all paid by Perk Miner ... not by your business.
+   NEEDED TO GET STARTED:  It only takes $25 to fund your account (this is not a fee, but is used to cover the advertising fee when you make a sale) to get started.  $25 covers $250 in sales.  If your lowest sale is over $2,500, you must deposit $250 or more to cover the advertising fee.
+   No special equipment required to finalize transactions and you or your staff can finalize transactions in seconds.  Upon successful finalization of every transaction, you also get real-time analytics and you also see your cash back earned.  That's right!  You earn cash back for finalizing transactions in return for offering a perk to Perk Miner members (you earn 10% of the advertising fee paid).
+   There is zero risk to your business.  Join PerkMiner as an advertiser (become and advertiser like me) through my business invite link today:
+   {{ b2b_share_url }}</textarea>
+
+  <button
+    type="button"
+    class="btn btn-primary w-100"
+    onclick="copyCaptionAndLink('b2b-caption')"
+  >
+    Copy caption + link
+  </button>
+
+  <p class="mt-2 mb-0" style="font-size:0.85rem; color:#6b7280;">
+    1. Take a screen shot of your own Business flyer with QR code (on mobile device) or Download our standardized B2B flyer image without QR code above.<br>
+    2. Upload it to your post.<br>
+    3. Paste the copied caption + link.
+  </p>
+</div>
+</div>
     <div class="card p-4 mb-4">
 <h4>Finalize Transactions</h4>
 
           <!-- Finalized Transactions Report Button -->
           <a href="{{ url_for('finalized_report') }}" class="btn btn-info w-100 mt-3">
-            <i class="bi bi-list-check"></i> Finalized Transactions Report
+            <i class="bi bi-list-check"></i> Finalized Transactions by Staff
           </a>
         </div>
 
@@ -655,11 +801,47 @@
 
 <h4>Your Business Activity</h4>
 
+  <div class="card mb-3">
+    <div class="card-header">
+      Lifetime Sales Summary
+    </div>
+    <div class="card-body">
+      <table class="table table-sm">
+        <tbody>
+          <tr>
+            <td>Lifetime Gross Sales</td>
+            <td>
+              ${{ "{:,.2f}".format(business.lifetime_gross_sales or 0) }}
+            </td>
+          </tr>
+          <tr>
+            <td>Lifetime Advertising Fees Paid</td>
+            <td>
+              ${{ "{:,.2f}".format(business.lifetime_ad_fee_paid or 0) }}
+            </td>
+          </tr>
+          <tr>
+            <td>Lifetime Net Gross (after ad fees)</td>
+            <td>
+              ${{ "{:,.2f}".format(business.lifetime_net_gross or 0) }}
+            </td>
+          </tr>
+          <tr>
+            <td>Lifetime Marketing ROI</td>
+            <td>
+              {{ "{:,.2f}".format(business.lifetime_roi or 0) }}%
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 <!-- Business earnings summary with 7-day delay -->
 <div class="mb-3">
   <div class="card mb-3">
     <div class="card-header">
-      Business earnings summary (7-day delay)
+      Business Earnings Summary (7-day delay)
     </div>
     <div class="card-body">
       <table class="table table-sm">
@@ -671,16 +853,20 @@
         </thead>
         <tbody>
           <tr>
-            <td>Total earnings</td>
+            <td>Lifetime Total Earnings</td>
             <td>${{ "{:,.2f}".format(total_biz_earnings or 0) }}</td>
           </tr>
           <tr>
-            <td>Pending earnings</td>
+            <td>Pending Earnings</td>
             <td>${{ "{:,.2f}".format(pending_biz_earnings or 0) }}</td>
           </tr>
           <tr>
-            <td>Available for withdrawal</td>
-            <td>${{ "{:,.2f}".format(available_biz_earnings or 0) }}</td>
+            <td>Available for Withdrawal</td>
+            <td>${{ "{:,.2f}".format(net_available_biz_earnings or 0) }}</td>
+          </tr>
+          <tr>
+            <td>Total Withdrawn (All Time)</td>
+            <td>${{ "{:,.2f}".format(biz_withdrawn_total or 0) }}</td>
           </tr>
         </tbody>
       </table>
@@ -699,11 +885,21 @@
         <i class="bi bi-graph-up"></i> View Earnings
       </a>
     </div>
+
     {% if business.stripe_account_id %}
       <div class="col-12 col-md text-md-end">
-        <a href="{{ url_for('business_stripe_update_info') }}" class="btn btn-outline-primary mb-2">
-          Update Payout/Banking Info
-        </a>
+        <div class="btn-group" role="group" aria-label="Business payout actions">
+          <a href="{{ url_for('business_stripe_update_info') }}"
+             class="btn btn-outline-primary">
+            Bank Details
+          </a>
+          <a href="{{ url_for('business_stripe_dashboard') }}"
+             class="btn btn-secondary"
+             target="_blank"
+             rel="noopener noreferrer">
+            Stripe Dashboard
+          </a>
+        </div>
       </div>
     {% endif %}
   </div>
@@ -712,57 +908,94 @@
     Earnings Balance: ${{ "{:,.2f}".format(business.earnings_balance or 0) }}
   </div>
 
-  <div>
-    {% if not business.stripe_account_id %}
-      <a href="{{ url_for('onboard_business_stripe') }}" class="btn btn-primary w-100">
-        Set Up Payouts (Bank Transfer)
-      </a>
-    {% else %}
-      {% set earnings = business.earnings_balance|float %}
-      {% if earnings >= 10 %}
-        <!-- Standard Payout -->
-        {% set std_fee = earnings * 0.0025 + 0.35 %}
-        {% set std_net = earnings - std_fee %}
+<div>
+  {% if not business.stripe_account_id %}
+    <!-- No Stripe account yet -->
+    <a href="{{ url_for('onboard_business_stripe') }}" class="btn btn-primary w-100">
+      Set Up Payouts (Bank Transfer)
+    </a>
+
+  {% else %}
+    <!-- Stripe account exists: show payout status -->
+    <div class="mb-2">
+      {% if not stripe_status.connected %}
+        <span class="badge bg-secondary">Stripe not connected</span>
+
+      {% elif stripe_status.payouts_status == 'active' %}
+        <span class="badge bg-success">Stripe payouts active</span>
+
+      {% elif stripe_status.payouts_status == 'pending_requirements' %}
+        <span class="badge bg-warning text-dark">Stripe action required</span>
+        <div class="text-muted small mt-1">
+          Stripe needs more information before enabling payouts.
+        </div>
+        <div class="mt-1">
+          <a href="{{ url_for('onboard_business_stripe') }}" class="btn btn-sm btn-warning w-100">
+            Finish Stripe setup
+          </a>
+        </div>
+
+      {% else %}
+        <span class="badge bg-danger">Stripe payouts disabled</span>
+        <div class="text-muted small mt-1">
+          Your Stripe account is not ready for payouts. Please review your details in Stripe.
+        </div>
+        <div class="mt-1">
+          <a href="{{ url_for('onboard_business_stripe') }}" class="btn btn-sm btn-danger w-100">
+            Update Stripe account
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    {# only show withdrawal options if payouts are actually active #}
+    {% if stripe_status.payouts_status == 'active' %}
+      {% set biz_net = business.earnings_balance|float %}
+      {% if biz_net >= 10 %}
+        {# Standard business payout #}
+        {% set std_fee_biz = biz_net * 0.0025 + 0.35 %}
+        {% set std_net_biz = biz_net - std_fee_biz %}
         <div class="mb-3 border rounded p-3">
           <div class="fw-bold mb-1">
-            <i class="bi bi-bank"></i> Standard Payout (1-3 business days)
+            <i class="bi bi-bank"></i> Standard Payout (1-10 business days)
           </div>
           <div class="text-muted mb-1" style="font-size:0.97em;">
-            Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee) }} (0.25% + $0.35)<br>
-            You will receive: <b>${{ '{:,.2f}'.format(std_net) }}</b>
+            Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee_biz) }} (0.25% + $0.35)<br>
+            If you withdraw full balance, you would receive:
+            <b>${{ '{:,.2f}'.format(std_net_biz) }}</b>
           </div>
           <form action="{{ url_for('business_withdraw') }}" method="POST" class="d-inline">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="input-group mb-2">
+              <span class="input-group-text">$</span>
+              <input
+                type="number"
+                name="amount"
+                class="form-control"
+                step="0.01"
+                min="10"
+                max="{{ '{:.2f}'.format(biz_net) }}"
+                placeholder="Amount (leave blank for full)"
+              >
+            </div>
             <button type="submit" class="btn btn-success w-100">
               Withdraw to Bank (Standard)
             </button>
           </form>
         </div>
-
-        <!-- Instant Payout -->
-        {% set inst_fee = earnings * 0.011 + 0.50 %}
-        {% set inst_net = earnings - inst_fee %}
-        <div class="border rounded p-3 bg-warning-subtle">
-          <div class="fw-bold mb-1">
-            <i class="bi bi-lightning-fill text-warning"></i> Instant Payout (Instant, 24/7)
-          </div>
-          <div class="text-muted mb-1" style="font-size:0.97em;">
-            Stripe instant payout fee: ${{ '{:,.2f}'.format(inst_fee) }} (1.1% + $0.50)<br>
-            You will receive: <b>${{ '{:,.2f}'.format(inst_net) }}</b>
-          </div>
-          <form action="{{ url_for('business_withdraw_instant') }}" method="POST" class="d-inline">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-warning w-100">
-              Withdraw Instantly <i class="bi bi-lightning-charge-fill"></i>
-            </button>
-          </form>
-        </div>
+      {% else %}
+        <small class="text-muted">
+          You need at least $10 in available business earnings to withdraw.
+        </small>
       {% endif %}
+    {% else %}
+      <small class="text-muted">
+        Once your Stripe payouts are active, you'll be able to withdraw your business earnings here.
+      </small>
     {% endif %}
-  </div>
+  {% endif %}
 </div>
-
-
+</div>
 
 <div class="card p-4 mb-4">
   <h4>Staff Section</h4>
@@ -779,7 +1012,7 @@
           {% for staff in business.staff_members %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
               <span>
-                {{ staff.email }}{% if staff.is_active %} (Active){% else %} (Inactive){% endif %}
+                {{ staff.name }} - {{ staff.email }}{% if staff.is_active %} (Active){% else %} (Inactive){% endif %}
               </span>
               <form method="post" action="{{ url_for('remove_staff', staff_id=staff.id) }}"
                 style="display:inline;"
@@ -823,15 +1056,15 @@
   </div>
 
   <div class="card p-4 mb-4">
-    <h4>Referral Network Cashback Calculator (one paid invoice generated from every business in your network during the month)</h4>
+    <h4>Business Referral Network Calculator (one single finalized transaction from every business in your network)</h4>
     <div class="mb-2">
-      <label>If you and everyone in your network refers 
+      <label>If your business and every business in your network refers 
         <input id="network_people" type="number" class="form-control d-inline-block w-auto" min="1" value="4" style="width:80px;" />
-        businesses and you generate one paid invoice during the month in the amount of $ 
+        businesses and every business finalizes just one transaction (sale) in the amount of $ 
         <input id="network_amount" type="number" class="form-control d-inline-block w-auto" min="0" max="2500" step="0.01" value="100" style="width:110px;" />
-        , this is how much your business would earn in Cashback Rewards for the month:
+        , this is how much your business would earn in Cashback and Referral Commissions:
       </label>
-      <small class="text-muted d-block">*Maximum purchase amount allowed is $2,500</small>
+      <small class="text-muted d-block">*Maximum sale amount allowed is $2,500</small>
     </div>
     <button class="btn btn-info mb-2" type="button" onclick="calculateNetworkEarnings()">Calculate</button>
     <div id="network_results" style="display:none;">
@@ -842,7 +1075,7 @@
         <li>Tier Four: (Paid invoices from 3rd Tier referrals) = <span id="network_t4"></span></li>
         <li>Tier Five: (Paid invoices from 4th Tier referrals) = <span id="network_t5"></span></li>
       </ul>
-      <strong>Cash back earnings from every business in your network generating one sale would be $<span id="network_total"></span></strong>
+      <strong>Cash back and Commissions earnings from every business in your network finalizing just one sale for the same amount would be $<span id="network_total"></span></strong>
     </div>
   </div>
   <div class="card p-4 mb-4">
@@ -1265,6 +1498,146 @@ window.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+
+<script>
+  function copyCaptionAndLink(textareaId) {
+    const textarea = document.getElementById(textareaId);
+    if (!textarea) return;
+
+    const value = textarea.value;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(value).then(function () {
+        alert('Caption + link copied to clipboard');
+      }).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+
+    function fallbackCopy() {
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        alert('Caption + link copied to clipboard');
+      } catch (e) {
+        alert('Could not copy automatically, please copy the text manually.');
+      }
+    }
+  }
+</script>
+
+{% if biz_level_code %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('biz-upload-testimonial-btn');
+    if (!btn) return;
+
+    btn.addEventListener('click', async function () {
+      const levelCode = btn.getAttribute('data-level');
+
+      // 1) title prompt (optional)
+      const title = prompt("Title for your business testimonial video (optional):", "") || "";
+
+      // 2) open file picker
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'video/*';
+
+      fileInput.onchange = async function () {
+        const file = fileInput.files[0];
+        if (!file) {
+          alert("No file selected.");
+          return;
+        }
+
+        try {
+          // 3) get signed params for this business
+          const paramsRes = await fetch(`/api/business/upload_params?level_code=${encodeURIComponent(levelCode)}`);
+          const params = await paramsRes.json();
+          if (!paramsRes.ok) {
+            alert("Cannot upload video: " + (params.error || "Unknown error"));
+            return;
+          }
+
+          // 4) upload to Cloudinary
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('api_key', params.api_key);
+          formData.append('timestamp', params.timestamp);
+          formData.append('signature', params.signature);
+          formData.append('folder', params.folder);
+
+          const uploadUrl = `https://api.cloudinary.com/v1_1/${params.cloud_name}/video/upload`;
+
+          const uploadRes = await fetch(uploadUrl, {
+            method: 'POST',
+            body: formData
+          });
+          const cld = await uploadRes.json();
+
+          if (!uploadRes.ok) {
+            console.error("Cloudinary upload error (business):", cld);
+            alert("Cloudinary upload failed: " + (cld.error && cld.error.message ? cld.error.message : "Unknown error"));
+            return;
+          }
+
+          if (cld.duration && cld.duration > 60) {
+            alert("Video is longer than 60 seconds. Please upload a shorter one.");
+            return;
+          }
+
+          // 5) send metadata to business testimonial endpoint
+          const payload = {
+            level_code: levelCode,
+            title: title,
+            public_id: cld.public_id,
+            secure_url: cld.secure_url,
+            duration: cld.duration,
+            bytes: cld.bytes,
+            format: cld.format,
+            width: cld.width,
+            height: cld.height
+          };
+
+          const resp = await fetch("/api/business/testimonials/upload", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const text = await resp.text();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            console.error("Non-JSON response from server (business):", text);
+            alert("Server returned non-JSON response for business testimonial.");
+            return;
+          }
+
+          if (!resp.ok) {
+            console.error("Business upload error:", data);
+            alert("Business upload failed: " + (data.error || "Unknown error"));
+            return;
+          }
+
+          alert("Business testimonial submitted for review!");
+          window.location.reload();
+
+        } catch (err) {
+          console.error("Network or JS error (business testimonial):", err);
+          alert("Something went wrong submitting your business testimonial.");
+        }
+      };
+
+      // IMPORTANT: call click() directly in user click handler
+      fileInput.click();
+    });
+  });
+</script>
+{% endif %}
 
 </body>
 </html>

@@ -28,6 +28,8 @@ from sqlalchemy.orm import joinedload
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 from itsdangerous import URLSafeSerializer
+from cloudinary.utils import api_sign_request
+import time
 
 import os
 import stripe
@@ -153,10 +155,13 @@ def business_login_required(f):
     return decorated_function
 
 cloudinary.config(
-  cloud_name = 'dmrntlcfd',
-  api_key = '786387955898581',
-  api_secret = 'cLtDoC44BarYjVrr3dIgi_0XiKo'
+    cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME', 'dmrntlcfd'),
+    api_key    = os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret = os.environ.get('CLOUDINARY_API_SECRET')
 )
+
+if not cloudinary.config().api_key or not cloudinary.config().api_secret:
+    logging.error("Cloudinary API key/secret missing from environment!")
 
 app = Flask(__name__)
 
@@ -646,11 +651,10 @@ def build_invite_email(inviter_name, join_url, video_url):
                 Watch our intro video
                 </a>
 
-            <p style="margin:0 0 28px;">Free to join (no contracts, monthly subscriptions or commitment).</p>
-            <p style="margin:0 0 28px;"><b>Members:  Get exclusive member perks offered by our advertisers, plus earn cash back on all your purchases.</b>  We protect your privacy with secure messaging and never sell your contact information as a lead.  Search for businesses, products or services (our advertisers) with peace of mind (we don't track browsing history or listen to your conversations to send you unsolicited advertisements).  We connect <b>One Member</b> to <b>One Business</b> at a time.  <b><u>Our members</u></b> will never receive spammed emails, unsolicited phone calls or uninvited door-to-door sales people (advertisers don't have access to member contact information).</p>
-            <p style="margin:0 0 28px;"><b>Business Owners:</b>  YOU GET ZERO WASTED ADVERTISING DOLLARS!  <font color="#FF0000"></br>No Sale or Closed Deal = Zero Fees</font></br>(900% or higher Marketing ROI Guaranteed).  No cost for exclusive leads, phone calls, website or foot traffic, appointments or meetups.  You only pay after you get paid (10% of the sale, capped at $250).  We don't collect your payment (members pay our advertisers directly for all sales).  No hidden fees, no contracts and no commitment.  Only $25 required to get started (pre-funded dollars to cover the advertising fees per transaction), which covers $250 in sales (funds remain in your account balance until you make a sale).</p>
+            <p style="margin:0 0 28px;">Free to join (no contracts, monthly subscriptions or commitment).  ALWAYS FREE!</p>
+            <p style="margin:0 0 28px;"><b>Members:  Get exclusive member perks offered by our advertisers, plus earn cash back on all your purchases and referral commissions (from purchases made by others you invite).</b>  We protect your privacy with secure messaging and never sell your contact information as a lead.  Search for businesses, products or services (our advertisers) with peace of mind (we don't track browsing history or listen to your conversations to send you unsolicited advertisements).  We connect <b>One Member</b> to <b>One Business</b> at a time.  <b><u>Our members</u></b> will never receive spammed emails, unsolicited phone calls or uninvited door-to-door sales people (advertisers don't have access to member contact information).</p>
+            <p style="margin:0 0 28px;"><b>Business Owners:</b>  YOU GET ZERO WASTED ADVERTISING DOLLARS!  <font color="#FF0000"></br>No Sale or Closed Deal = Zero Fees</font></br>(900% or higher Marketing ROI Guaranteed).  No cost for exclusive leads, phone calls, website or foot traffic, appointments or meetups.  You only pay after you get paid (10% of the sale, capped at $250).  We don't collect your payment (members pay our advertisers directly for all sales).  No hidden fees, no contracts, no membership fees and no commitment.  Only $25 required to get started (pre-funded dollars to cover the advertising fees per transaction), which covers $250 in sales (funds remain in your account balance until you make a sale).  Perk Miner LLC also pays it's members for making purchases from it's advertisers ... repeat business.</p>
             <p style="margin:0 0 28px;">MEMBER SELECTS A BUSINESS -> BUSINESS AND MEMBER CONNECT</br></br>MEMBER OR BUSINESS CAN END SESSION WITHOUT PENALTY OR CHOOSE TO PROCEED (BUSINESS MUST FINALIZE THE TRANSACTION).</p>
-            <p style="margin:0 0 28px;"><b>Both Members and Business Owners earn Cash Back and Referral Commissions</b> (Paid by Perk Miner - from up to 84% of the ad revenue paid by our advertisers).</p>
         </td>
     </tr>
 
@@ -668,6 +672,10 @@ def build_invite_email(inviter_name, join_url, video_url):
             <a href="{join_url}" class="button" target="_blank" style="font-size:20px; padding:18px 48px;">
             Join PerkMiner Now
             </a>
+            <p style="margin:0 0 28px;">  </p>
+            <p style="margin:0 0 28px;">  </p>
+            <p style="margin:0 0 28px;"><b>Both Members and Business Owners earn Cash Back and generous Referral Commissions</b> (Paid by Perk Miner).  Up to 6 members and 6 businesses are paid from every finalized transaction (up to 84% of the ad revenue paid by our advertisers is used to pay all cash back and referral commissions from every finalized transaction).  Advertisers pay the ad fee after making a sale ... Perk Miner pays the cash back and commissions.  Real pay that is deposited to your bank account.  Not points or gift cards.</p>
+            <p style="margin:0 0 28px;"><b>EVERYONE WINS!</b></p>
         </td>
     </tr>
 
@@ -1113,6 +1121,67 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     }
     return summary
 
+def calculate_business_sales_summary(biz):
+    """
+    Returns (gross_sales, ad_fee_paid, net_gross, roi_percent)
+    based on BusinessTransaction rows for this business.
+    """
+    ref_code = biz.referral_code
+
+    # All transactions where this business is the main seller
+    txns = BusinessTransaction.query.filter_by(business_referral_id=ref_code).all()
+
+    gross = Decimal("0")
+    ad_fees = Decimal("0")
+
+    for t in txns:
+        gross += Decimal(str(t.amount or 0))
+        ad_fees += Decimal(str(t.ad_fee or 0))
+
+    net = gross - ad_fees
+
+    if ad_fees > 0:
+        roi = (net / ad_fees) * Decimal("100")  # percent ROI
+    else:
+        roi = Decimal("0")
+
+    return gross, ad_fees, net, roi
+
+def get_member_level_code(user: User) -> str | None:
+    """
+    Returns the highest level_code this member qualifies for
+    based on grand_total_earnings.
+    """
+    total = user.grand_total_earnings or Decimal('0')
+
+    if total >= Decimal('100000'):
+        return 'member_100k'
+    elif total >= Decimal('50000'):
+        return 'member_50k'
+    elif total >= Decimal('10000'):
+        return 'member_10k'
+    else:
+        return None
+
+ALLOWED_MEMBER_LEVELS = ['member_10k', 'member_50k', 'member_100k']
+ALLOWED_BUSINESS_LEVELS = ['biz_25k', 'biz_100k', 'biz_250k']
+
+def get_business_level_code(biz: Business) -> str | None:
+    """
+    Returns the highest level_code this business qualifies for
+    based on grand_total_earnings (sales).
+    """
+    total = biz.lifetime_gross_sales or Decimal('0')
+
+    if total >= Decimal('250000'):
+        return 'biz_250k'
+    elif total >= Decimal('100000'):
+        return 'biz_100k'
+    elif total >= Decimal('25000'):
+        return 'biz_25k'
+    else:
+        return None
+
 def issue_store_sale_rewards(business, amount, buyer_email=None):
     """
     Issues rewards and commissions for a store sale:
@@ -1212,6 +1281,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(200), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
     name = db.Column(db.String(100))
+    country = db.Column(db.String(2), default="US")  # NEW: 2-letter ISO code: US, CA, MX
     referral_code = db.Column(db.String(32), unique=True)
     sponsor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     business_referral_id = db.Column(db.String(32))
@@ -1220,6 +1290,8 @@ class User(db.Model, UserMixin):
     profile_photo = db.Column(db.String(200))
     roles = db.relationship('Role', secondary='user_roles', backref='users')
     is_suspended = db.Column(db.Boolean, default=False)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
     investor_share = db.Column(db.Numeric(5, 4), default=0)
     investor_total_earnings = db.Column(db.Numeric(12, 6), default=0)
     investor_withdrawn_total = db.Column(db.Numeric(12, 2), default=0)
@@ -1338,7 +1410,13 @@ class Business(db.Model):
     contact_js = db.Column(db.Text, nullable=True)
     is_ecommerce_site = db.Column(db.Boolean, default=False)
     allow_website_purchases = db.Column(db.Boolean, default=False)
+    lifetime_gross_sales = db.Column(db.Numeric(12, 2), default=0)
+    lifetime_ad_fee_paid = db.Column(db.Numeric(12, 2), default=0)
+    lifetime_net_gross = db.Column(db.Numeric(12, 2), default=0)
+    lifetime_roi = db.Column(db.Numeric(6, 2), default=0)  # e.g., 900.00 for 900% ROI
     online_terms_agreed = db.Column(db.Boolean, default=False)
+    country = db.Column(db.String(2), default="US")
+    ecommerce_verified = db.Column(db.Boolean, default=False)
     theme_type = db.Column(db.String(50))
 
 class Favorite(db.Model):
@@ -1349,6 +1427,456 @@ class Favorite(db.Model):
     user = db.relationship('User', backref='favorites', lazy=True)
     business = db.relationship('Business', backref='favorited_by', lazy=True)
     __table_args__ = (db.UniqueConstraint('user_id', 'business_id', name='_user_business_uc'),)
+
+class TestimonialVideo(db.Model):
+    __tablename__ = 'testimonial_videos'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    owner_type = db.Column(db.String(20), nullable=False)  # 'member' or 'business'
+    owner_id = db.Column(db.Integer, nullable=False)
+
+    level_code = db.Column(db.String(32), nullable=False)  # e.g. 'member_10k'
+
+    lifetime_amount_at_submission = db.Column(db.Numeric(12, 2), nullable=False)
+
+    title = db.Column(db.String(150), nullable=True)
+
+    cloudinary_public_id = db.Column(db.String(255), nullable=False)
+    cloudinary_secure_url = db.Column(db.String(500), nullable=False)
+    cloudinary_duration_sec = db.Column(db.Integer)
+    cloudinary_bytes = db.Column(db.Integer)
+    cloudinary_format = db.Column(db.String(20))
+    cloudinary_width = db.Column(db.Integer)
+    cloudinary_height = db.Column(db.Integer)
+
+    status = db.Column(db.String(20), nullable=False, default='pending')  # 'pending', 'approved', 'rejected'
+    rejection_reason = db.Column(db.Text)
+
+    reviewed_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    reviewed_by_user = db.relationship('User', foreign_keys=[reviewed_by_user_id])
+    reviewed_at = db.Column(db.DateTime(timezone=True))
+
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), nullable=False)
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        server_default=db.func.now(),
+        onupdate=db.func.now(),
+        nullable=False
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint('owner_type', 'owner_id', 'level_code', name='uq_owner_level'),
+    )
+
+@csrf.exempt
+@app.route('/api/testimonials/upload', methods=['POST'])
+@login_required
+def upload_testimonial():
+    user = current_user
+
+    # only members for now
+    owner_type = 'member'
+    owner_id = user.id
+
+    data = request.get_json() or {}
+
+    # NEW: optional title from client
+    title = data.get('title', '')
+    if isinstance(title, str):
+        title = title.strip() or None
+    else:
+        title = None
+
+    level_code = data.get('level_code')
+    if level_code not in ALLOWED_MEMBER_LEVELS:
+        return jsonify({'error': 'Invalid level_code'}), 400
+
+    # check they qualify for this level
+    highest_level = get_member_level_code(user)
+    if highest_level is None:
+        return jsonify({'error': 'You are not yet eligible to upload a testimonial video.'}), 403
+
+    # simple ordering: member_100k > member_50k > member_10k
+    level_order = {'member_10k': 1, 'member_50k': 2, 'member_100k': 3}
+    if level_order[level_code] > level_order[highest_level]:
+        return jsonify({'error': 'You are not yet eligible for this level.'}), 403
+
+    # duration validation (Cloudinary returns seconds)
+    duration = data.get('duration')
+    if duration is None or duration > 60:
+        return jsonify({'error': 'Video duration must be 60 seconds or less.'}), 400
+
+    # required Cloudinary fields
+    public_id = data.get('public_id')
+    secure_url = data.get('secure_url')
+    if not public_id or not secure_url:
+        return jsonify({'error': 'Missing Cloudinary data.'}), 400
+
+    # find existing row for this level
+    existing = TestimonialVideo.query.filter_by(
+        owner_type=owner_type,
+        owner_id=owner_id,
+        level_code=level_code
+    ).first()
+
+    if existing is None:
+        tv = TestimonialVideo(
+            owner_type=owner_type,
+            owner_id=owner_id,
+            level_code=level_code,
+            lifetime_amount_at_submission=user.grand_total_earnings or Decimal('0'),
+            status='pending'
+        )
+        db.session.add(tv)
+    else:
+        tv = existing
+        tv.status = 'pending'
+        tv.rejection_reason = None
+        tv.lifetime_amount_at_submission = user.grand_total_earnings or Decimal('0')
+
+    # NEW: set or clear title for this submission
+    tv.title = title
+
+    # update Cloudinary fields
+    tv.cloudinary_public_id = public_id
+    tv.cloudinary_secure_url = secure_url
+    tv.cloudinary_duration_sec = duration
+    tv.cloudinary_bytes = data.get('bytes')
+    tv.cloudinary_format = data.get('format')
+    tv.cloudinary_width = data.get('width')
+    tv.cloudinary_height = data.get('height')
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Your video has been submitted for review.',
+        'status': tv.status,
+        'id': tv.id
+    }), 201
+
+@csrf.exempt
+@app.route('/api/business/testimonials/upload', methods=['POST'])
+@business_login_required
+def upload_business_testimonial():
+    # current business from session
+    biz_id = session.get('business_id')
+    biz = Business.query.get_or_404(biz_id)
+
+    owner_type = 'business'
+    owner_id = biz.id
+
+    data = request.get_json() or {}
+
+    # NEW
+    title = data.get('title', '')
+    if isinstance(title, str):
+        title = title.strip() or None
+    else:
+        title = None
+
+    level_code = data.get('level_code')
+    if level_code not in ALLOWED_BUSINESS_LEVELS:
+        return jsonify({'error': 'Invalid level_code'}), 400
+
+    highest_level = get_business_level_code(biz)
+    if highest_level is None:
+        return jsonify({'error': 'You are not yet eligible to upload a testimonial video.'}), 403
+
+    level_order = {'biz_25k': 1, 'biz_100k': 2, 'biz_250k': 3}
+    if level_order[level_code] > level_order[highest_level]:
+        return jsonify({'error': 'You are not yet eligible for this level.'}), 403
+
+    duration = data.get('duration')
+    if duration is None or duration > 60:
+        return jsonify({'error': 'Video duration must be 60 seconds or less.'}), 400
+
+    public_id = data.get('public_id')
+    secure_url = data.get('secure_url')
+    if not public_id or not secure_url:
+        return jsonify({'error': 'Missing Cloudinary data.'}), 400
+
+    existing = TestimonialVideo.query.filter_by(
+        owner_type=owner_type,
+        owner_id=owner_id,
+        level_code=level_code
+    ).first()
+
+    if existing is None:
+        tv = TestimonialVideo(
+            owner_type=owner_type,
+            owner_id=owner_id,
+            level_code=level_code,
+            lifetime_amount_at_submission=biz.lifetime_gross_sales or Decimal('0'),
+            status='pending'
+        )
+        db.session.add(tv)
+    else:
+        tv = existing
+        tv.status = 'pending'
+        tv.rejection_reason = None
+        tv.lifetime_amount_at_submission = biz.lifetime_gross_sales or Decimal('0')
+
+    # NEW
+    tv.title = title
+
+    tv.cloudinary_public_id = public_id
+    tv.cloudinary_secure_url = secure_url
+    tv.cloudinary_duration_sec = duration
+    tv.cloudinary_bytes = data.get('bytes')
+    tv.cloudinary_format = data.get('format')
+    tv.cloudinary_width = data.get('width')
+    tv.cloudinary_height = data.get('height')
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Your business testimonial has been submitted for review.',
+        'status': tv.status,
+        'id': tv.id
+    }), 201
+
+@app.route('/api/testimonials/public', methods=['GET'])
+def public_testimonials():
+    owner_type = request.args.get('owner_type')  # 'member', 'business', or None for all
+    level = request.args.get('level')            # e.g. 'member_10k'
+    sort_by = request.args.get('sort', 'newest') # 'newest' or 'amount'
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 12))
+
+    query = TestimonialVideo.query.filter_by(status='approved')
+
+    if owner_type in ('member', 'business'):
+        query = query.filter_by(owner_type=owner_type)
+
+    if level:
+        query = query.filter_by(level_code=level)
+
+    # sorting
+    if sort_by == 'amount':
+        query = query.order_by(TestimonialVideo.lifetime_amount_at_submission.desc())
+    else:  # newest
+        query = query.order_by(TestimonialVideo.created_at.desc())
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    items = []
+    for tv in pagination.items:
+        # basic owner info lookups
+        if tv.owner_type == 'member':
+            owner = User.query.get(tv.owner_id)
+            owner_name = owner.name or owner.email if owner else None
+            business_name = None
+        else:
+            biz = Business.query.get(tv.owner_id)
+            owner_name = None
+            business_name = biz.business_name if biz else None
+
+        items.append({
+            'id': tv.id,
+            'owner_type': tv.owner_type,
+            'owner_id': tv.owner_id,
+            'owner_name': owner_name,
+            'business_name': business_name,
+            'level_code': tv.level_code,
+            'lifetime_amount_at_submission': str(tv.lifetime_amount_at_submission),
+            'title': tv.title,
+            'thumbnail_url': tv.cloudinary_secure_url,  # front-end can use this for thumb/player
+            'created_at': tv.created_at.isoformat() if tv.created_at else None,
+        })
+
+    return jsonify({
+        'items': items,
+        'page': pagination.page,
+        'pages': pagination.pages,
+        'total': pagination.total
+    })
+
+@app.route('/api/testimonials/<int:testimonial_id>', methods=['GET'])
+def public_testimonial_detail(testimonial_id):
+    tv = TestimonialVideo.query.filter_by(id=testimonial_id, status='approved').first_or_404()
+
+    if tv.owner_type == 'member':
+        owner = User.query.get(tv.owner_id)
+        owner_name = owner.name or owner.email if owner else None
+        business_name = None
+        avatar_url = owner.profile_photo if owner else None
+    else:
+        biz = Business.query.get(tv.owner_id)
+        owner_name = None
+        business_name = biz.business_name if biz else None
+        avatar_url = biz.profile_photo if biz else None
+
+    return jsonify({
+        'id': tv.id,
+        'owner_type': tv.owner_type,
+        'owner_id': tv.owner_id,
+        'owner_name': owner_name,
+        'business_name': business_name,
+        'avatar_url': avatar_url,
+        'level_code': tv.level_code,
+        'lifetime_amount_at_submission': str(tv.lifetime_amount_at_submission),
+        'cloudinary_public_id': tv.cloudinary_public_id,
+        'cloudinary_secure_url': tv.cloudinary_secure_url,
+        'cloudinary_duration_sec': tv.cloudinary_duration_sec,
+        'title': tv.title,
+        'status': tv.status,
+        'created_at': tv.created_at.isoformat() if tv.created_at else None,
+        'reviewed_at': tv.reviewed_at.isoformat() if tv.reviewed_at else None,
+    })
+
+@app.route('/api/testimonials/<int:testimonial_id>/others', methods=['GET'])
+def public_testimonial_others(testimonial_id):
+    tv = TestimonialVideo.query.filter_by(id=testimonial_id, status='approved').first_or_404()
+
+    others = TestimonialVideo.query.filter(
+        TestimonialVideo.owner_type == tv.owner_type,
+        TestimonialVideo.owner_id == tv.owner_id,
+        TestimonialVideo.status == 'approved',
+        TestimonialVideo.id != tv.id
+    ).order_by(TestimonialVideo.created_at.desc()).all()
+
+    items = []
+    for other in others:
+        items.append({
+            'id': other.id,
+            'level_code': other.level_code,
+            'lifetime_amount_at_submission': str(other.lifetime_amount_at_submission),
+            'thumbnail_url': other.cloudinary_secure_url,
+            'created_at': other.created_at.isoformat() if other.created_at else None,
+        })
+
+    return jsonify({'items': items})
+
+@app.route('/api/admin/testimonials/<int:testimonial_id>', methods=['GET'])
+@login_required
+@admin_required
+def admin_testimonial_detail(testimonial_id):
+    """
+    Admin-only detail for a testimonial.
+    Does NOT require status='approved' so admins can review pending/rejected videos.
+    """
+    tv = TestimonialVideo.query.get_or_404(testimonial_id)
+
+    if tv.owner_type == 'member':
+        owner = User.query.get(tv.owner_id)
+        owner_name = owner.name or owner.email if owner else None
+        business_name = None
+        avatar_url = owner.profile_photo if owner else None
+    else:
+        biz = Business.query.get(tv.owner_id)
+        owner_name = None
+        business_name = biz.business_name if biz else None
+        avatar_url = biz.profile_photo if biz else None
+
+    return jsonify({
+        'id': tv.id,
+        'owner_type': tv.owner_type,
+        'owner_id': tv.owner_id,
+        'owner_name': owner_name,
+        'business_name': business_name,
+        'avatar_url': avatar_url,
+        'level_code': tv.level_code,
+        'lifetime_amount_at_submission': str(tv.lifetime_amount_at_submission),
+        'title': tv.title,
+        'cloudinary_public_id': tv.cloudinary_public_id,
+        'cloudinary_secure_url': tv.cloudinary_secure_url,
+        'cloudinary_duration_sec': tv.cloudinary_duration_sec,
+        'status': tv.status,
+        'created_at': tv.created_at.isoformat() if tv.created_at else None,
+        'reviewed_at': tv.reviewed_at.isoformat() if tv.reviewed_at else None,
+        'rejection_reason': tv.rejection_reason,
+    })
+
+@app.route("/admin/testimonials/<int:testimonial_id>/preview")
+@login_required
+@admin_required
+def admin_testimonial_preview_page(testimonial_id):
+    # template will fetch data via JS using the admin API
+    return render_template("admin_testimonial_preview.html", testimonial_id=testimonial_id)
+
+@app.route('/api/member/upload_params', methods=['GET'])
+@login_required
+def member_upload_params():
+    """
+    Returns signed Cloudinary upload params for a *member* testimonial video.
+    Frontend uses this to POST the file directly to Cloudinary.
+    """
+    user = current_user
+
+    level_code = request.args.get('level_code')
+    if level_code not in ALLOWED_MEMBER_LEVELS:
+        return jsonify({'error': 'Invalid level_code'}), 400
+
+    # check they qualify (same logic you already use)
+    highest_level = get_member_level_code(user)
+    if highest_level is None:
+        return jsonify({'error': 'You are not yet eligible to upload a testimonial video.'}), 403
+
+    level_order = {'member_10k': 1, 'member_50k': 2, 'member_100k': 3}
+    if level_order[level_code] > level_order[highest_level]:
+        return jsonify({'error': 'You are not yet eligible for this level.'}), 403
+
+    # build params to sign
+    timestamp = int(time.time())
+
+    params_to_sign = {
+        'timestamp': timestamp,
+        'folder': f'testimonials/members/{user.id}',
+    }
+
+    api_secret = cloudinary.config().api_secret
+    signature = api_sign_request(params_to_sign, api_secret)
+
+    return jsonify({
+        'cloud_name': cloudinary.config().cloud_name,
+        'api_key': cloudinary.config().api_key,
+        'timestamp': timestamp,
+        'signature': signature,
+        'folder': params_to_sign['folder'],
+        'resource_type': 'video'
+    })
+
+@app.route('/api/business/upload_params', methods=['GET'])
+@business_login_required
+def business_upload_params():
+    """
+    Returns signed Cloudinary upload params for a *business* testimonial video.
+    Frontend uses this to POST the file directly to Cloudinary.
+    """
+    biz_id = session.get('business_id')
+    biz = Business.query.get_or_404(biz_id)
+
+    level_code = request.args.get('level_code')
+    if level_code not in ALLOWED_BUSINESS_LEVELS:
+        return jsonify({'error': 'Invalid level_code'}), 400
+
+    highest_level = get_business_level_code(biz)
+    if highest_level is None:
+        return jsonify({'error': 'You are not yet eligible to upload a testimonial video.'}), 403
+
+    level_order = {'biz_25k': 1, 'biz_100k': 2, 'biz_250k': 3}
+    if level_order[level_code] > level_order[highest_level]:
+        return jsonify({'error': 'You are not yet eligible for this level.'}), 403
+
+    timestamp = int(time.time())
+
+    params_to_sign = {
+        'timestamp': timestamp,
+        'folder': f'testimonials/businesses/{biz.id}',
+    }
+
+    api_secret = cloudinary.config().api_secret
+    signature = api_sign_request(params_to_sign, api_secret)
+
+    return jsonify({
+        'cloud_name': cloudinary.config().cloud_name,
+        'api_key': cloudinary.config().api_key,
+        'timestamp': timestamp,
+        'signature': signature,
+        'folder': params_to_sign['folder'],
+        'resource_type': 'video'
+    })
 
 class Quote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1505,6 +2033,7 @@ class Invite(db.Model):
 class Staff(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
+    name = db.Column(db.String(255))
     email = db.Column(db.String(255), unique=True, nullable=False)
     hashed_password = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), default="staff")  # Future roles possible
@@ -1518,6 +2047,17 @@ class Staff(db.Model):
     __table_args__ = (
         db.UniqueConstraint("business_id", "email", name="uniq_staff_per_biz"),
     )
+
+class EcommerceVerificationPing(db.Model):
+    __tablename__ = "ecommerce_verification_pings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_agent = db.Column(db.Text)
+    ip_address = db.Column(db.String(64))
+
+    business = db.relationship("Business", backref="ecommerce_verification_pings")
 
 class StaffRegisterForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])
@@ -1732,6 +2272,124 @@ def calculate_business_earnings_split(business, delay_days=7):
     pending = total - available
     return total, available, pending
 
+def get_finalized_tx_count_for_business(business: Business) -> int:
+    """
+    Returns how many finalized transactions this business has.
+    Finalized txs are recorded as BusinessTransaction rows
+    with business_referral_id = business.referral_code.
+    """
+    if not business or not business.referral_code:
+        return 0
+
+    count = (
+        BusinessTransaction.query
+        .filter_by(business_referral_id=business.referral_code)
+        .count()
+    )
+    return count or 0
+
+def get_stripe_payout_status(user):
+    if not user.stripe_account_id:
+        return {
+            "connected": False,
+            "payouts_status": "not_connected",
+            "requirements_due": [],
+        }
+
+    try:
+        acct = stripe.Account.retrieve(user.stripe_account_id)
+
+        logging.info(
+            "Stripe acct %s capabilities=%s requirements.currently_due=%s",
+            user.stripe_account_id,
+            getattr(acct, "capabilities", None),
+            getattr(acct, "requirements", None).currently_due
+            if getattr(acct, "requirements", None) else None,
+        )
+
+        transfers_cap = getattr(acct.capabilities, "transfers", None)
+
+        if transfers_cap == "active":
+            payouts_status = "active"
+        elif transfers_cap == "pending":
+            payouts_status = "pending_requirements"
+        else:
+            payouts_status = "disabled"
+
+        requirements_due = acct.requirements.currently_due or []
+
+        return {
+            "connected": True,
+            "payouts_status": payouts_status,
+            "requirements_due": requirements_due,
+        }
+
+    except Exception as e:
+        logging.error("Error fetching Stripe account for user %s: %s", user.id, e)
+        return {
+            "connected": True,
+            "payouts_status": "disabled",
+            "requirements_due": [],
+        }
+
+def get_business_stripe_payout_status(business):
+    if not business.stripe_account_id:
+        return {
+            "connected": False,
+            "payouts_status": "not_connected",
+            "requirements_due": [],
+        }
+
+    try:
+        acct = stripe.Account.retrieve(business.stripe_account_id)
+
+        logging.info(
+            "Stripe biz acct %s capabilities=%s requirements.currently_due=%s",
+            business.stripe_account_id,
+            getattr(acct, "capabilities", None),
+            getattr(acct, "requirements", None).currently_due
+            if getattr(acct, "requirements", None) else None,
+        )
+
+        transfers_cap = getattr(acct.capabilities, "transfers", None)
+
+        if transfers_cap == "active":
+            payouts_status = "active"
+        elif transfers_cap == "pending":
+            payouts_status = "pending_requirements"
+        else:
+            payouts_status = "disabled"
+
+        requirements_due = acct.requirements.currently_due or []
+
+        return {
+            "connected": True,
+            "payouts_status": payouts_status,
+            "requirements_due": requirements_due,
+        }
+
+    except Exception as e:
+        logging.error("Error fetching Stripe account for business %s: %s", business.id, e)
+        return {
+            "connected": True,
+            "payouts_status": "disabled",
+            "requirements_due": [],
+        }
+
+def ensure_business_payout_capability(business: Business):
+    if not business.stripe_account_id:
+        return
+
+    try:
+        stripe.Account.modify(
+            business.stripe_account_id,
+            capabilities={
+                "transfers": {"requested": True},
+            },
+        )
+    except Exception as e:
+        logging.error("Error requesting payout capability for business %s: %s", business.id, e)
+
 def get_featured_businesses(lat, lng):
     # 1. Find nearby businesses within 10 miles using the haversine formula
     RADIUS = 10  # miles
@@ -1862,6 +2520,33 @@ def calculate_investor_earnings_split(user, delay_days=7):
 
     pending = total - available
     return total, available, pending
+
+def connected_account_has_debit_card(account_id: str) -> (bool, str):
+    """
+    Returns (ok, message).
+    ok == True if the connected account has at least one card external account.
+    """
+    try:
+        external_accounts = stripe.Account.list_external_accounts(
+            account_id,
+            object="card"
+        )
+
+        if not external_accounts.data:
+            return (
+                False,
+                "You need to add a debit card in your Stripe dashboard before using instant payouts."
+            )
+
+        return True, "ok"
+
+    except Exception as e:
+        logging.error("Error checking debit card for account %s: %r", account_id, e)
+        return (
+            False,
+            "We couldn't verify your instant payout setup. "
+            "Please try again in a few minutes or use a standard payout."
+        )
 
 def biz_tier_commission(t, tier_field, ref_field):
     ref_id = getattr(t, ref_field)
@@ -3425,11 +4110,11 @@ def invite():
     )
     return redirect(url_for('dashboard'))
 
-from flask import render_template, request, redirect, url_for, flash
-from flask_login import login_required, current_user
 from decimal import Decimal
 from datetime import datetime, timedelta
-from sqlalchemy import desc, func
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
+from sqlalchemy import func
 
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
@@ -3440,22 +4125,31 @@ def dashboard():
     invite_form = InviteForm()
     user = current_user
 
-    # --- Earnings Calculation with 7-day delay ---
-    total_earnings, available_earnings, pending_earnings = calculate_user_earnings_split(user, delay_days=7)
+    # --- Earnings Calculation with 7-day delay (REGULAR MEMBER) ---
+    total_earnings, available_earnings, pending_earnings = calculate_user_earnings_split(
+        user, delay_days=7
+    )
 
     # summary fields for regular member earnings
     user.grand_total_earnings = total_earnings
-
-    # amount actually available to withdraw = 7-day available minus already withdrawn
-    net_available = available_earnings - (user.withdrawn_total or Decimal(0))
-    user.earnings_balance = net_available
-
-    # NEW: detailed split
     user.pending_earnings = pending_earnings
+    # this is the "raw" available that just passed the 7-day delay
     user.available_for_withdrawal = available_earnings
+
+    # withdrawn total already tracked on user
+    withdrawn_total = user.withdrawn_total or Decimal("0")
+
+    # net available for withdrawal:
+    # option A (equivalent): available_earnings - withdrawn_total
+    # option B (invariant): total - pending - withdrawn
+    net_available = total_earnings - pending_earnings - withdrawn_total
+
+    # this is what you use as "Withdrawable Earnings"
+    user.earnings_balance = net_available
 
     db.session.commit()
 
+    # --- Profile form handling ---
     if request.method == "POST" and profile_form.submit.data and profile_form.validate():
         updated = False
         if profile_form.name.data and profile_form.name.data != user.name:
@@ -3471,7 +4165,7 @@ def dashboard():
             flash("Profile updated!")
         return redirect(url_for('dashboard'))
 
-    # Calculator setup (rewards, tiers, etc)
+    # --- Rewards calculator setup ---
     if request.method == "GET":
         form.downline_level.data = '1'
         form.invoice_amount.data = 0
@@ -3480,6 +4174,7 @@ def dashboard():
     invoice_amount = float(form.invoice_amount.data or 0)
     downline_level = int(form.downline_level.data or 1)
     cap = None
+
     if not request.method == "POST" or not form.validate_on_submit():
         downline_level = 1
         form.downline_level.data = '1'
@@ -3506,6 +4201,7 @@ def dashboard():
         else:
             reward = 0
             rewards_desc = ""
+
     if invoice_amount > 0 and reward is not None:
         if cap:
             rewards_table += f"<h5 class='mt-4 mb-2'>{rewards_desc} of ${invoice_amount:,.2f}:</h5>"
@@ -3514,6 +4210,7 @@ def dashboard():
             rewards_table += f"<h5 class='mt-4 mb-2'>{rewards_desc} of ${invoice_amount:,.2f}:</h5>"
             rewards_table += f"<div class='alert alert-success'>You earn <strong>${reward:.2f}</strong> as cashback.</div>"
 
+    # --- Referral network (users) ---
     sponsor = User.query.get(current_user.sponsor_id) if current_user.sponsor_id else None
     level2 = User.query.filter_by(sponsor_id=current_user.id).all()
     level3, level4, level5 = [], [], []
@@ -3530,21 +4227,39 @@ def dashboard():
     # --- Business network tiers ---
     user_id = current_user.id
     biz_level1 = Business.query.filter_by(user_sponsor_id=user_id).all()
-    def biz_ids(bizlist): return [b.id for b in bizlist]
-    biz_level2 = Business.query.filter(Business.sponsor_id.in_(biz_ids(biz_level1))).all() if biz_level1 else []
-    biz_level3 = Business.query.filter(Business.sponsor_id.in_(biz_ids(biz_level2))).all() if biz_level2 else []
-    biz_level4 = Business.query.filter(Business.sponsor_id.in_(biz_ids(biz_level3))).all() if biz_level3 else []
-    biz_level5 = Business.query.filter(Business.sponsor_id.in_(biz_ids(biz_level4))).all() if biz_level4 else []
+
+    def biz_ids(bizlist):
+        return [b.id for b in bizlist]
+
+    biz_level2 = Business.query.filter(
+        Business.sponsor_id.in_(biz_ids(biz_level1))
+    ).all() if biz_level1 else []
+
+    biz_level3 = Business.query.filter(
+        Business.sponsor_id.in_(biz_ids(biz_level2))
+    ).all() if biz_level2 else []
+
+    biz_level4 = Business.query.filter(
+        Business.sponsor_id.in_(biz_ids(biz_level3))
+    ).all() if biz_level3 else []
+
+    biz_level5 = Business.query.filter(
+        Business.sponsor_id.in_(biz_ids(biz_level4))
+    ).all() if biz_level4 else []
+
     has_invited_business = len(biz_level1) > 0
 
-    # Query for active sessions for this user
-    active_sessions = Interaction.query.filter_by(user_id=current_user.id, status='active').all()
+    # --- Active sessions for this user ---
+    active_sessions = Interaction.query.filter_by(
+        user_id=current_user.id, status='active'
+    ).all()
     has_active_sessions = len(active_sessions) > 0
     active_sessions_count = len(active_sessions)
 
-    # --- Businesses user has interacted with (unique, recent, limit 5, Postgres-safe) ---
+    # --- Businesses user has interacted with (unique, recent, limit 5) ---
     days = 60
     since = datetime.utcnow() - timedelta(days=days)
+
     latest_per_business = (
         db.session.query(
             Interaction.business_id,
@@ -3559,6 +4274,7 @@ def dashboard():
         .limit(5)
         .subquery()
     )
+
     businesses = (
         db.session.query(Business)
         .join(latest_per_business, latest_per_business.c.business_id == Business.id)
@@ -3567,19 +4283,43 @@ def dashboard():
 
     # --- Silent investor earnings (7-day delay) ---
     investor_total = investor_available = investor_pending = Decimal("0")
+    investor_withdrawn_total = Decimal("0")
+    investor_net_available = Decimal("0")
+
     if current_user.has_role('silent_investor'):
-        investor_total, investor_available, investor_pending = calculate_investor_earnings_split(current_user, delay_days=7)
+        investor_total, investor_available, investor_pending = calculate_investor_earnings_split(
+            current_user, delay_days=7
+        )
 
         # update investor summary fields on the user model
         user.investor_total_earnings = investor_total
-        net_investor_available = investor_available - (user.investor_withdrawn_total or Decimal("0"))
-        user.investor_earnings_balance = net_investor_available
-
-        # NEW: detailed investor split
         user.pending_investor_earnings = investor_pending
+        # raw investor available after 7-day delay
         user.investor_earnings_withdraw_ready = investor_available
 
+        # investor withdrawn total from user model
+        investor_withdrawn_total = user.investor_withdrawn_total or Decimal("0")
+
+        # investor net available (same invariant pattern)
+        investor_net_available = investor_total - investor_pending - investor_withdrawn_total
+
+        # this is what you use as investor withdrawable balance
+        user.investor_earnings_balance = investor_net_available
+
         db.session.commit()
+
+    share_url = url_for("register", ref=user.referral_code, _external=True)
+    business_share_url = url_for("business_register", ref=user.referral_code, _external=True)
+
+    # member testimonial info
+    member_level_code = get_member_level_code(user)
+
+    member_testimonials = TestimonialVideo.query.filter_by(
+        owner_type='member',
+        owner_id=user.id
+    ).order_by(TestimonialVideo.level_code, TestimonialVideo.created_at.desc()).all()
+
+    stripe_status = get_stripe_payout_status(current_user)
 
     return render_template(
         "dashboard.html",
@@ -3591,19 +4331,34 @@ def dashboard():
         sponsor=sponsor if sponsor else None,
         rewards_table=rewards_table,
         level2=level2, level3=level3, level4=level4, level5=level5,
-        biz_level1=biz_level1, biz_level2=biz_level2, biz_level3=biz_level3, biz_level4=biz_level4, biz_level5=biz_level5,
+        biz_level1=biz_level1, biz_level2=biz_level2,
+        biz_level3=biz_level3, biz_level4=biz_level4, biz_level5=biz_level5,
         has_invited_business=has_invited_business,
         user_name=current_user.name,
         profile_img_url=current_user.profile_photo,
         has_active_sessions=has_active_sessions,
         active_sessions_count=active_sessions_count,
         businesses=businesses,
+
+        # regular earnings summary (for top table)
         total_earnings=total_earnings,
-        available_earnings=available_earnings,
         pending_earnings=pending_earnings,
+        available_earnings=available_earnings,           # raw, if you still want it
+        net_available_earnings=net_available,            # matches Withdrawable Earnings
+        withdrawn_total=withdrawn_total,                 # for "Total withdrawn" row
+
+        # silent investor summary
         investor_total=investor_total,
-        investor_available=investor_available,
+        investor_available=investor_available,           # raw
         investor_pending=investor_pending,
+        investor_withdrawn_total=investor_withdrawn_total,
+        investor_net_available=investor_net_available,
+
+        share_url=share_url,
+        business_share_url=business_share_url,
+        stripe_status=stripe_status,
+        member_level_code=member_level_code,
+        member_testimonials=member_testimonials,
     )
 
 @app.route("/logout")
@@ -5221,6 +5976,11 @@ def biz_active_session(interaction_id):
         messages=messages
     )
 
+from decimal import Decimal
+from datetime import datetime, timedelta
+from flask import render_template, request, redirect, url_for, flash, session
+from sqlalchemy import func
+
 @app.route("/business/dashboard", methods=["GET", "POST"])
 def business_dashboard():
     form = BusinessRewardForm(request.form)
@@ -5234,17 +5994,31 @@ def business_dashboard():
         return redirect(url_for("business_login"))
 
     # ---- Update earnings with 7-day delay ----
-    total_biz_earnings, available_biz_earnings, pending_biz_earnings = calculate_business_earnings_split(biz, delay_days=7)
+    total_biz_earnings, available_biz_earnings, pending_biz_earnings = calculate_business_earnings_split(
+        biz, delay_days=7
+    )
 
     # summary for business earnings
     biz.grand_total_earnings = total_biz_earnings
+    biz.pending_earnings = pending_biz_earnings
+    # raw available right after 7-day delay
+    biz.available_to_withdraw = available_biz_earnings
 
-    net_available_biz = available_biz_earnings - (biz.withdrawn_total or Decimal(0))
+    # withdrawn total already tracked on biz
+    biz_withdrawn_total = biz.withdrawn_total or Decimal("0")
+
+    # net available: total - pending - withdrawn
+    net_available_biz = total_biz_earnings - pending_biz_earnings - biz_withdrawn_total
+
+    # this is what you show as "Earnings Balance" / withdrawable
     biz.earnings_balance = net_available_biz
 
-    # NEW: detailed split
-    biz.pending_earnings = pending_biz_earnings
-    biz.available_to_withdraw = available_biz_earnings
+    # NEW: lifetime sales summary (gross, ad fee, net, ROI)
+    gross, ad_fees, net, roi = calculate_business_sales_summary(biz)
+    biz.lifetime_gross_sales = gross
+    biz.lifetime_ad_fee_paid = ad_fees
+    biz.lifetime_net_gross = net
+    biz.lifetime_roi = roi
 
     db.session.commit()
 
@@ -5313,7 +6087,6 @@ def business_dashboard():
                 updated = True
 
         # --- NEW: online purchase flags (e‑commerce + allow website purchases) ---
-
         website_url = request.form.get("website_url", "").strip()
         has_website = bool(website_url)
 
@@ -5379,7 +6152,8 @@ def business_dashboard():
     if request.method == "GET":
         form.downline_level.data = '1'
         form.invoice_amount.data = 0
-    rewards_table = ""; reward = None
+    rewards_table = ""
+    reward = None
     invoice_amount = float(form.invoice_amount.data or 0)
     downline_level = int(form.downline_level.data or 1)
     cap = None
@@ -5435,12 +6209,38 @@ def business_dashboard():
     has_active_biz_sessions = len(active_biz_sessions) > 0
     active_biz_sessions_count = len(active_biz_sessions)
 
-    # Add this line to fetch payment alerts/awaiting payments
+    # payment alerts / awaiting payments
     payment_alerts = Interaction.query.filter_by(
         business_id=biz.id,
         awaiting_payment=True,
         status='active'
     ).all()
+
+    b2b_share_url = url_for("business_register", ref=biz.referral_code, _external=True)
+
+    # business testimonial info
+    biz_level_code = get_business_level_code(biz)
+    biz_testimonials = TestimonialVideo.query.filter_by(
+        owner_type='business',
+        owner_id=biz.id
+    ).order_by(TestimonialVideo.level_code, TestimonialVideo.created_at.desc()).all()
+
+    # --- website / e-commerce status for dashboard ---
+    has_website = bool(biz.website_url)
+    is_ecom = getattr(biz, "is_ecommerce_site", False)
+    allows_web = getattr(biz, "allow_website_purchases", False)
+    online_terms = getattr(biz, "online_terms_agreed", False)
+    verified = getattr(biz, "ecommerce_verified", False)
+
+    # only show status if first 3 flags are true
+    show_website_status = has_website and is_ecom and allows_web and online_terms
+
+    if show_website_status:
+        website_status = "Verified" if verified else "Pending Verification"
+    else:
+        website_status = None
+
+    stripe_status = get_business_stripe_payout_status(biz)
 
     return render_template(
         "business_dashboard.html",
@@ -5448,7 +6248,7 @@ def business_dashboard():
         profile_form=profile_form,
         invite_form=invite_form,
         business=biz,
-        payment_alerts=payment_alerts,  # <-- This line passes to template
+        payment_alerts=payment_alerts,
         form_data=form_data,
         sponsor=sponsor,
         referral_code=biz.referral_code,
@@ -5461,9 +6261,23 @@ def business_dashboard():
         longitude=longitude,
         active_biz_sessions_count=active_biz_sessions_count,
         has_active_biz_sessions=has_active_biz_sessions,
+
+        # business earnings summary for template
         total_biz_earnings=total_biz_earnings,
-        available_biz_earnings=available_biz_earnings,
         pending_biz_earnings=pending_biz_earnings,
+        available_biz_earnings=available_biz_earnings,   # raw available (if you still want it)
+        net_available_biz_earnings=net_available_biz,    # net available = balance
+        biz_withdrawn_total=biz_withdrawn_total,         # total withdrawn
+
+        b2b_share_url=b2b_share_url,
+        biz_level_code=biz_level_code,
+        biz_testimonials=biz_testimonials,
+
+        stripe_status=stripe_status,
+
+        # NEW: website status
+        show_website_status=show_website_status,
+        website_status=website_status,
     )
 
 @app.route("/business/logout")
@@ -5611,6 +6425,90 @@ def admin_dashboard():
         user_lookup={user.id: user for user in users},
     )
 
+@app.route('/api/admin/testimonials', methods=['GET'])
+@login_required
+@admin_required
+def admin_list_testimonials():
+    status = request.args.get('status', 'pending')
+    owner_type = request.args.get('owner_type')  # 'member' or 'business'
+
+    query = TestimonialVideo.query
+
+    if status:
+        query = query.filter_by(status=status)
+
+    if owner_type in ('member', 'business'):
+        query = query.filter_by(owner_type=owner_type)
+
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 20))
+
+    pagination = query.order_by(TestimonialVideo.created_at.desc()).paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
+
+    items = []
+    for tv in pagination.items:
+        items.append({
+            'id': tv.id,
+            'owner_type': tv.owner_type,
+            'owner_id': tv.owner_id,
+            'level_code': tv.level_code,
+            'lifetime_amount_at_submission': str(tv.lifetime_amount_at_submission),
+            'title': tv.title,
+            'status': tv.status,
+            'created_at': tv.created_at.isoformat() if tv.created_at else None,
+        })
+
+    return jsonify({
+        'items': items,
+        'page': pagination.page,
+        'pages': pagination.pages,
+        'total': pagination.total
+    })
+
+from datetime import datetime, timezone  # you already import datetime; add timezone if needed
+
+@csrf.exempt
+@app.route('/api/admin/testimonials/<int:testimonial_id>/approve', methods=['POST'])
+@login_required
+@admin_required
+def admin_approve_testimonial(testimonial_id):
+    tv = TestimonialVideo.query.get_or_404(testimonial_id)
+
+    if tv.status == 'approved':
+        return jsonify({'error': 'Already approved.'}), 400
+
+    tv.status = 'approved'
+    tv.rejection_reason = None
+    tv.reviewed_by_user_id = current_user.id
+    tv.reviewed_at = datetime.now(timezone.utc)
+
+    db.session.commit()
+
+    return jsonify({'message': 'Testimonial approved.', 'status': tv.status})
+
+@csrf.exempt
+@app.route('/api/admin/testimonials/<int:testimonial_id>/reject', methods=['POST'])
+@login_required
+@admin_required
+def admin_reject_testimonial(testimonial_id):
+    tv = TestimonialVideo.query.get_or_404(testimonial_id)
+
+    data = request.get_json() or {}
+    reason = data.get('reason', 'Rejected by admin.')
+
+    tv.status = 'rejected'
+    tv.rejection_reason = reason
+    tv.reviewed_by_user_id = current_user.id
+    tv.reviewed_at = datetime.now(timezone.utc)
+
+    db.session.commit()
+
+    return jsonify({'message': 'Testimonial rejected.', 'status': tv.status})
+
 @app.route("/finance-dashboard", methods=["GET"])
 @role_required("finance")
 def finance_dashboard():
@@ -5719,11 +6617,11 @@ def finance_dashboard():
     misc_services = operating_capital * 0.15
 
     # Silent Partners breakdown (with per-partner cap)
-    joe = min(silent_partners * 0.125, 10000000)
-    marjorie = min(silent_partners * 0.125, 10000000)
-    pedro = min(silent_partners * 0.12, 1000000)
-    paul_tara = min(silent_partners * 0.055, 500000)
-    james = min(silent_partners * 0.05, 350000)
+    joe = min(silent_partners * 0.15, 10000000)
+    marjorie = min(silent_partners * 0.14, 10000000)
+    pedro = min(silent_partners * 0.08, 1000000)
+    paul_tara = min(silent_partners * 0.05, 500000)
+    james = min(silent_partners * 0.04, 350000)
     josh = min(silent_partners * 0.03, 300000)
     angel = min(silent_partners * 0.02, 200000)
     diego = min(silent_partners * 0.02, 200000)
@@ -5735,21 +6633,21 @@ def finance_dashboard():
     alex_s = min(silent_partners * 0.02, 200000)
     victor_r = min(silent_partners * 0.02, 200000)
     john_paul = min(silent_partners * 0.02, 200000)
-    ana_pepe = min(silent_partners * 0.015, 150000)
-    karen = min(silent_partners * 0.015, 150000)
-    raul = min(silent_partners * 0.015, 150000)
-    genesis = min(silent_partners * 0.025, 500000)
-    jen = min(silent_partners * 0.025, 500000)
-    jj = min(silent_partners * 0.025, 500000)
-    dominick = min(silent_partners * 0.025, 500000)
-    alex_m = min(silent_partners * 0.025, 500000)
-    jose = min(silent_partners * 0.025, 500000)
-    tito = min(silent_partners * 0.025, 500000)
-    loida = min(silent_partners * 0.015, 250000)
-    milvia = min(silent_partners * 0.015, 250000)
-    adela = min(silent_partners * 0.015, 250000)
-    shelly = min(silent_partners * 0.015, 250000)
-    nana = min(silent_partners * 0.015, 250000)
+    ana_pepe = min(silent_partners * 0.01, 150000)
+    karen = min(silent_partners * 0.02, 150000)
+    raul = min(silent_partners * 0.01, 150000)
+    genesis = min(silent_partners * 0.03, 500000)
+    jen = min(silent_partners * 0.03, 500000)
+    jj = min(silent_partners * 0.03, 500000)
+    dominick = min(silent_partners * 0.03, 500000)
+    alex_m = min(silent_partners * 0.03, 500000)
+    jose = min(silent_partners * 0.03, 500000)
+    tito = min(silent_partners * 0.03, 500000)
+    loida = min(silent_partners * 0.01, 250000)
+    milvia = min(silent_partners * 0.01, 250000)
+    adela = min(silent_partners * 0.02, 250000)
+    shelly = min(silent_partners * 0.01, 250000)
+    nana = min(silent_partners * 0.01, 250000)
 
     summary = dict(
         total_gross_sales=f"{total_gross_sales:,.2f}",
@@ -5911,6 +6809,60 @@ def support_session(interaction_id):
         "support_session.html",
         interaction=interaction,
         messages=messages_with_labels
+    )
+
+from datetime import datetime, timedelta
+
+@app.route("/admin/business/<int:biz_id>/verify-ecommerce", methods=["GET", "POST"])
+@admin_required
+def admin_verify_ecommerce(biz_id):
+    biz = Business.query.get_or_404(biz_id)
+
+    if not (biz.is_ecommerce_site and biz.allow_website_purchases and biz.online_terms_agreed):
+        flash("This business is not eligible for e‑commerce verification yet.", "warning")
+        return redirect(url_for("admin_roles_landing"))
+
+    # get last 5 pings
+    recent_pings = (
+        EcommerceVerificationPing.query
+        .filter_by(business_id=biz.id)
+        .order_by(EcommerceVerificationPing.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    if request.method == "POST":
+        biz.ecommerce_verified = True
+        db.session.commit()
+        flash(f"{biz.business_name} has been marked as e‑commerce verified.", "success")
+        return redirect(url_for("admin_verify_ecommerce", biz_id=biz.id))
+
+    return render_template(
+        "admin_verify_ecommerce.html",
+        business=biz,
+        recent_pings=recent_pings,
+    )
+
+@app.route("/admin/ecommerce-verifications")
+@admin_required
+def admin_ecommerce_verifications():
+    # businesses that are eligible but not yet verified
+    pending_biz = Business.query.filter(
+        Business.is_ecommerce_site.is_(True),
+        Business.allow_website_purchases.is_(True),
+        Business.online_terms_agreed.is_(True),
+        Business.ecommerce_verified.is_(False)
+    ).order_by(Business.business_name.asc()).all()
+
+    # already verified businesses (optional)
+    verified_biz = Business.query.filter(
+        Business.ecommerce_verified.is_(True)
+    ).order_by(Business.business_name.asc()).all()
+
+    return render_template(
+        "admin_ecommerce_verifications.html",
+        pending_biz=pending_biz,
+        verified_biz=verified_biz,
     )
 
 @app.route("/support-dashboard")
@@ -6245,27 +7197,25 @@ def view_listing(biz_id):
     has_website = bool(biz.website_url)
     is_ecom = getattr(biz, "is_ecommerce_site", False)
     allows_web = getattr(biz, "allow_website_purchases", False)
+    online_terms = getattr(biz, "online_terms_agreed", False)
+    verified = getattr(biz, "ecommerce_verified", False)
     balance = biz.account_balance or 0.0
 
-    can_shop_online_listing = (
-        has_website and
-        is_ecom and
-        allows_web and
-        balance >= 250.0
-    )
+    # all four flags must be true
+    core_flags_ok = has_website and is_ecom and allows_web and online_terms and verified
 
-    show_online_warning = (
-        has_website and
-        is_ecom and
-        allows_web and
-        balance < 250.0
-    )
+    can_shop_online_listing = core_flags_ok and balance >= 250.0
+    show_online_warning = core_flags_ok and balance < 250.0
+
+    # NEW: finalized transaction count
+    finalized_tx_count = get_finalized_tx_count_for_business(biz)
 
     return render_template(
         "large_listing.html",
         business=biz,
         can_shop_online_listing=can_shop_online_listing,
         show_online_warning=show_online_warning,
+        finalized_tx_count=finalized_tx_count,
     )
 
 @app.route("/finance/combined-detailed-report", methods=["GET"])
@@ -7128,8 +8078,10 @@ def staff_new():
 
         temp_password = secrets.token_urlsafe(10)
         hashed_pw = bcrypt.generate_password_hash(temp_password).decode('utf-8')
+
         staff = Staff(
             business_id=session["business_id"],
+            name=name,
             email=email,
             hashed_password=hashed_pw,
             role="staff",
@@ -7505,6 +8457,7 @@ def seed_admins_once():
         "approve_reject_listings",
         "finance",
         "feedback_moderation",
+        "approve_reject_testimonials",
         "customer_support"
     ]
     roles = {}
@@ -7610,32 +8563,49 @@ def press_release():
 
 @app.route("/new-featured-businesses")
 def new_featured_businesses():
-    return render_template('your_template.html', business=business)
+    return render_template('your_template.html')
 
 @app.route('/onboard/stripe')
 @login_required
 def onboard_stripe():
-    # Check if user has a Stripe Connect account
+    def get_country_for_user(user):
+        """
+        Return a valid 2-letter country code for Stripe Connect.
+        Allowed: US, CA, MX. Fallback: US.
+        """
+        code = (user.country or "").upper()
+        if code in ("US", "CA", "MX"):
+            return code
+        return "US"
+
     if not current_user.stripe_account_id:
-        # Create a new Express account
+        country_code = get_country_for_user(current_user)
+
         account = stripe.Account.create(
             type="express",
             email=current_user.email,
+            country=country_code,
+            capabilities={
+                "card_payments": {"requested": True},
+                "transfers": {"requested": True},
+            },
         )
+
         current_user.stripe_account_id = account.id
         db.session.commit()
-    # Create Stripe onboarding link
+
     account_link = stripe.AccountLink.create(
         account=current_user.stripe_account_id,
         refresh_url=url_for('onboard_stripe', _external=True),
-        return_url=url_for('dashboard', _external=True),  # or any page you want after onboarding
-        type='account_onboarding'
+        return_url=url_for('dashboard', _external=True),
+        type='account_onboarding',
     )
+
     return redirect(account_link.url)
 
 @app.route('/onboard/business/stripe')
 def onboard_business_stripe():
-    # Check business login (adjust logic if you use something else)
+    # Check business login
     business_id = session.get('business_id')
     if not business_id:
         flash("Please log in as a business.")
@@ -7646,21 +8616,38 @@ def onboard_business_stripe():
         flash("Business not found.")
         return redirect(url_for('business_login'))
 
+    def get_country_for_business(biz):
+        """
+        Return a valid 2-letter country code for Stripe Connect.
+        Allowed: US, CA, MX. Fallback: US.
+        """
+        code = (getattr(biz, "country", None) or "").upper()
+        if code in ("US", "CA", "MX"):
+            return code
+        return "US"
+
     # Create Stripe Express account if not already created
     if not business.stripe_account_id:
+        country_code = get_country_for_business(business)
+
         account = stripe.Account.create(
             type="express",
-            email=business.business_email  # or use business's admin email
+            email=business.business_email,
+            country=country_code,
+            capabilities={
+                "card_payments": {"requested": True},
+                "transfers": {"requested": True},
+            },
         )
         business.stripe_account_id = account.id
         db.session.commit()
 
-    # Create onboarding link
+    # Create onboarding link (works to complete requirements too)
     account_link = stripe.AccountLink.create(
         account=business.stripe_account_id,
         refresh_url=url_for('onboard_business_stripe', _external=True),
-        return_url=url_for('business_dashboard', _external=True),  # Or wherever you want to redirect after onboarding
-        type='account_onboarding'
+        return_url=url_for('business_dashboard', _external=True),
+        type='account_onboarding',
     )
     return redirect(account_link.url)
 
@@ -7708,170 +8695,6 @@ def ensure_platform_balance_at_least(amount_cents, currency="usd"):
     )
     return available_usd >= amount_cents
 
-@app.route('/withdraw', methods=['POST'])
-@login_required
-def withdraw():
-    """
-    Standard member withdrawal (1–3 business days).
-    Flow:
-      1) check DB (7-day delay + $10 min)
-      2) check platform Stripe balance
-      3) transfer platform -> member connected account
-      4) standard payout from connected account
-      5) update withdrawn_total / earnings_balance
-    """
-    MIN_PAYOUT = Decimal("10")
-    user = current_user
-
-    if not user.stripe_account_id:
-        flash("Please set up your Stripe payouts first.", "warning")
-        return redirect(url_for('onboard_stripe'))
-
-    # 1) compute what is actually withdrawable from DB
-    net_available, total_earnings, available_earnings, pending_earnings = get_member_withdrawable(user, delay_days=7)
-
-    if net_available < MIN_PAYOUT:
-        flash(f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.", "warning")
-        return redirect(url_for('dashboard'))
-
-    balance_to_withdraw = net_available  # withdraw full available for now
-
-    # standard bank transfer fee (0.25% + $0.35)
-    fee = balance_to_withdraw * Decimal("0.0025") + Decimal("0.35")
-    payout_amount = (balance_to_withdraw - fee).quantize(Decimal("0.01"))
-
-    if payout_amount <= 0:
-        flash("Insufficient balance after the standard payout fee is deducted.", "warning")
-        return redirect(url_for('dashboard'))
-
-    amount_cents = int(payout_amount * 100)
-
-    # 2) check platform balance
-    if not ensure_platform_balance_at_least(amount_cents):
-        flash("Platform balance is too low to fund this payout. Please contact support.", "danger")
-        return redirect(url_for('dashboard'))
-
-    try:
-        # 3) transfer from platform -> member connected account
-        transfer = stripe.Transfer.create(
-            amount=amount_cents,
-            currency='usd',
-            destination=user.stripe_account_id,
-            description=f"PerkMiner member earnings transfer for user {user.id}"
-        )
-
-        # 4) standard payout from connected account to bank
-        payout = stripe.Payout.create(
-            amount=amount_cents,
-            currency='usd',
-            method='standard',
-            statement_descriptor="PerkMiner Payout",
-            stripe_account=user.stripe_account_id,
-        )
-
-        # 5) mark withdrawn on our side using the *gross* we removed from their earnings
-        user.withdrawn_total = (user.withdrawn_total or Decimal("0")) + balance_to_withdraw
-
-        # recompute summary fields to stay in sync
-        user.grand_total_earnings = total_earnings
-        user.pending_earnings = pending_earnings
-        user.available_for_withdrawal = available_earnings
-        user.earnings_balance = available_earnings - user.withdrawn_total
-
-        db.session.commit()
-
-        flash(
-            f"Withdrawal of ${payout_amount:.2f} initiated! "
-            f"Standard payout fee: ${fee:.2f} deducted.",
-            "success"
-        )
-    except Exception as e:
-        flash(f"Failed to withdraw: {e}", "danger")
-
-    return redirect(url_for('dashboard'))
-
-@app.route('/business/withdraw', methods=['POST'])
-def business_withdraw():
-    """
-    Standard business withdrawal (bank transfer).
-    """
-    MIN_PAYOUT = Decimal("10")
-    business_id = session.get('business_id')
-    if not business_id:
-        flash("Please log in as a business.")
-        return redirect(url_for('business_login'))
-
-    biz = Business.query.get(business_id)
-    if not biz:
-        flash("Business not found.", "danger")
-        return redirect(url_for('business_login'))
-
-    if not biz.stripe_account_id:
-        flash("Please set up your Stripe payouts first.", "warning")
-        return redirect(url_for('onboard_business_stripe'))
-
-    # 1) compute what is withdrawable
-    net_available, total, available, pending = get_business_withdrawable(biz, delay_days=7)
-
-    if net_available < MIN_PAYOUT:
-        flash(f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.", "warning")
-        return redirect(url_for('business_dashboard'))
-
-    balance_to_withdraw = net_available
-
-    # standard bank fee for businesses
-    fee = balance_to_withdraw * Decimal("0.0025") + Decimal("0.35")
-    payout_amount = (balance_to_withdraw - fee).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-    if payout_amount <= 0:
-        flash("Insufficient balance after the standard payout fee is deducted.", "warning")
-        return redirect(url_for('business_dashboard'))
-
-    amount_cents = int(payout_amount * 100)
-
-    # 2) platform balance check
-    if not ensure_platform_balance_at_least(amount_cents):
-        flash("Platform balance is too low to fund this business payout. Please contact support.", "danger")
-        return redirect(url_for('business_dashboard'))
-
-    try:
-        # 3) transfer platform -> business connected account
-        transfer = stripe.Transfer.create(
-            amount=amount_cents,
-            currency='usd',
-            destination=biz.stripe_account_id,
-            description="PerkMiner Business Payout (Standard)"
-        )
-
-        # 4) standard payout from business connected account
-        payout = stripe.Payout.create(
-            amount=amount_cents,
-            currency='usd',
-            method='standard',
-            statement_descriptor="PerkMiner Biz Payout",
-            stripe_account=biz.stripe_account_id
-        )
-
-        # 5) update DB
-        biz.withdrawn_total = (biz.withdrawn_total or Decimal("0")) + balance_to_withdraw
-
-        biz.grand_total_earnings = total
-        biz.pending_earnings = pending
-        biz.available_to_withdraw = available
-        biz.earnings_balance = available - biz.withdrawn_total
-
-        db.session.commit()
-
-        flash(
-            f"Business withdrawal of ${payout_amount:.2f} initiated! "
-            f"Stripe fee: ${fee:.2f} deducted.",
-            "success"
-        )
-    except Exception as e:
-        flash(f"Failed to withdraw: {e}", "danger")
-
-    return redirect(url_for('business_dashboard'))
-
 @app.route('/stripe/update-info')
 @login_required
 def stripe_update_info():
@@ -7903,6 +8726,792 @@ def business_stripe_update_info():
         type='account_onboarding'
     )
     return redirect(account_link.url)
+
+@app.route('/member/stripe_dashboard')
+@login_required
+def member_stripe_dashboard():
+    user = current_user
+
+    if not user.stripe_account_id:
+        flash("Please set up your Stripe payouts first.", "warning")
+        return redirect(url_for('onboard_stripe'))
+
+    try:
+        login_link = stripe.Account.create_login_link(
+            user.stripe_account_id,
+            redirect_url=url_for('dashboard', _external=True)
+        )
+    except Exception as e:
+        print("DEBUG: member_stripe_dashboard failed:", repr(e))
+        flash("Could not open your Stripe payout dashboard. Please try again later.", "danger")
+        return redirect(url_for('dashboard'))
+
+    return redirect(login_link.url)
+
+@app.route('/business/stripe_dashboard')
+def business_stripe_dashboard():
+    biz_id = session.get('business_id')
+    if not biz_id:
+        flash("Please log in as a business.")
+        return redirect(url_for('business_login'))
+
+    business = Business.query.get(biz_id)
+    if not business or not business.stripe_account_id:
+        flash("Business payouts not set up yet.", "warning")
+        return redirect(url_for('onboard_business_stripe'))
+
+    try:
+        login_link = stripe.Account.create_login_link(
+            business.stripe_account_id,
+            redirect_url=url_for('business_dashboard', _external=True)
+        )
+    except Exception as e:
+        print("DEBUG: business_stripe_dashboard failed:", repr(e))
+        flash("Could not open your Stripe payout dashboard. Please try again later.", "danger")
+        return redirect(url_for('business_dashboard'))
+
+    return redirect(login_link.url)
+
+@app.route('/withdraw', methods=['POST'])
+@login_required
+def withdraw():
+    """
+    Standard member withdrawal (1–3 business days).
+    Flow:
+      1) check DB (7-day delay + $10 min)
+      2) transfer platform -> member connected account
+      3) standard payout from connected account
+      4) update withdrawn_total / earnings_balance
+    """
+    print("DEBUG: /withdraw (member standard) called for user", current_user.id)
+
+    MIN_PAYOUT = Decimal("10.00")
+    user = current_user
+
+    # 1) must have a connected Stripe account
+    if not user.stripe_account_id:
+        print("DEBUG: withdraw blocked – no stripe_account_id for user", current_user.id)
+        flash("Please set up your Stripe payouts first.", "warning")
+        return redirect(url_for('onboard_stripe'))
+
+    # 2) compute what is actually withdrawable from DB (after 7-day delay and prior withdrawals)
+    net_available, total_earnings, available_earnings, pending_earnings = get_member_withdrawable(
+        user, delay_days=7
+    )
+    print("DEBUG: net_available =", net_available,
+          "total_earnings =", total_earnings,
+          "available_earnings =", available_earnings,
+          "pending_earnings =", pending_earnings)
+
+    if net_available < MIN_PAYOUT:
+        print("DEBUG: withdraw blocked – net_available", net_available, "<", MIN_PAYOUT)
+        flash(
+            f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.",
+            "warning"
+        )
+        return redirect(url_for('dashboard'))
+
+    # 3) optional amount from form
+    amt_str = request.form.get("amount", "").strip()
+    if amt_str:
+        try:
+            requested = Decimal(amt_str)
+        except Exception:
+            print("DEBUG: withdraw blocked – invalid amount:", amt_str)
+            flash("Invalid withdrawal amount.", "warning")
+            return redirect(url_for('dashboard'))
+
+        if requested < MIN_PAYOUT:
+            print("DEBUG: withdraw blocked – requested", requested, "<", MIN_PAYOUT)
+            flash(f"Minimum withdrawal amount is ${MIN_PAYOUT}.", "warning")
+            return redirect(url_for('dashboard'))
+
+        if requested > net_available:
+            print("DEBUG: withdraw blocked – requested", requested, ">", net_available)
+            flash("You cannot withdraw more than your available balance.", "warning")
+            return redirect(url_for('dashboard'))
+
+        balance_to_withdraw = requested
+    else:
+        # no custom amount → withdraw all net_available
+        balance_to_withdraw = net_available
+
+    print("DEBUG: balance_to_withdraw =", balance_to_withdraw)
+
+    # 4) standard bank transfer fee (0.25% + $0.35), with explicit rounding
+    fee = (balance_to_withdraw * Decimal("0.0025") + Decimal("0.35")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    payout_amount = (balance_to_withdraw - fee).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+
+    print("DEBUG: fee =", fee, "payout_amount =", payout_amount)
+
+    if payout_amount <= 0:
+        print("DEBUG: withdraw blocked – payout_amount <=", payout_amount)
+        flash("Insufficient balance after the standard payout fee is deducted.", "warning")
+        return redirect(url_for('dashboard'))
+
+    amount_cents = int(payout_amount * 100)
+
+    try:
+        # Optional: check connected account status
+        acct = stripe.Account.retrieve(user.stripe_account_id)
+        acct_dict = acct.to_dict()
+        print("DEBUG: member connected account flags:", {
+            "id": acct_dict.get("id"),
+            "payouts_enabled": acct_dict.get("payouts_enabled"),
+            "charges_enabled": acct_dict.get("charges_enabled"),
+            "capabilities": acct_dict.get("capabilities"),
+            "requirements_currently_due": (acct_dict.get("requirements") or {}).get("currently_due"),
+        })
+
+        # 5) transfer from platform -> member connected account
+        print("DEBUG: creating Member Transfer (standard) for", amount_cents, "cents to", user.stripe_account_id)
+        transfer = stripe.Transfer.create(
+            amount=amount_cents,
+            currency='usd',
+            destination=user.stripe_account_id,
+            description=f"PerkMiner member earnings transfer for user {user.id}"
+        )
+        print("DEBUG: Member Transfer created:", transfer.id, "status:", transfer.status)
+
+        # 6) standard payout from connected account to bank/debit
+        print("DEBUG: creating Member Payout (standard) for", amount_cents, "cents from", user.stripe_account_id)
+        payout = stripe.Payout.create(
+            amount=amount_cents,
+            currency='usd',
+            method='standard',
+            statement_descriptor="PerkMiner Payout",
+            stripe_account=user.stripe_account_id,
+        )
+        print("DEBUG: Member Payout created:", payout.id, payout.status, payout.destination)
+
+        # 7) mark withdrawn on our side using the *gross* we removed from their earnings
+        user.withdrawn_total = (user.withdrawn_total or Decimal("0")) + balance_to_withdraw
+
+        # recompute summary fields to stay in sync
+        user.grand_total_earnings = total_earnings
+        user.pending_earnings = pending_earnings
+        user.available_for_withdrawal = available_earnings
+        user.earnings_balance = available_earnings - user.withdrawn_total
+
+        db.session.commit()
+
+        print("DEBUG: withdraw success – withdrawn_total now", user.withdrawn_total,
+              "earnings_balance now", user.earnings_balance)
+
+        flash(
+            f"Withdrawal of ${payout_amount:.2f} initiated! "
+            f"Standard payout fee: ${fee:.2f} deducted.",
+            "success"
+        )
+    except Exception as e:
+        print("DEBUG: withdraw failed with exception:", repr(e))
+        flash(f"Failed to withdraw: {e}", "danger")
+
+    return redirect(url_for('dashboard'))
+
+@app.route('/withdraw_instant', methods=['POST'])
+@login_required
+def withdraw_instant():
+    print("DEBUG: /withdraw_instant (member instant) called for user", current_user.id)
+
+    MIN_PAYOUT = Decimal("10.00")
+    user = current_user
+
+    if not user.stripe_account_id:
+        print("DEBUG: withdraw_instant blocked – no stripe_account_id for user", current_user.id)
+        flash("Please set up your Stripe payouts first.", "warning")
+        return redirect(url_for('onboard_stripe'))
+
+    net_available, total_earnings, available_earnings, pending_earnings = get_member_withdrawable(
+        user, delay_days=7
+    )
+    print("DEBUG: net_available =", net_available,
+          "total_earnings =", total_earnings,
+          "available_earnings =", available_earnings,
+          "pending_earnings =", pending_earnings)
+
+    if net_available < MIN_PAYOUT:
+        print("DEBUG: withdraw_instant blocked – net_available", net_available, "<", MIN_PAYOUT)
+        flash(
+            f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.",
+            "warning"
+        )
+        return redirect(url_for('dashboard'))
+
+    amt_str = request.form.get("amount", "").strip()
+    if amt_str:
+        try:
+            requested = Decimal(amt_str)
+        except Exception:
+            print("DEBUG: withdraw_instant blocked – invalid amount:", amt_str)
+            flash("Invalid withdrawal amount.", "warning")
+            return redirect(url_for('dashboard'))
+
+        if requested < MIN_PAYOUT:
+            print("DEBUG: withdraw_instant blocked – requested", requested, "<", MIN_PAYOUT)
+            flash(f"Minimum withdrawal amount is ${MIN_PAYOUT}.", "warning")
+            return redirect(url_for('dashboard'))
+
+        if requested > net_available:
+            print("DEBUG: withdraw_instant blocked – requested", requested, ">", net_available)
+            flash("You cannot withdraw more than your available balance.", "warning")
+            return redirect(url_for('dashboard'))
+
+        balance_to_withdraw = requested
+    else:
+        balance_to_withdraw = net_available
+
+    print("DEBUG: balance_to_withdraw (instant) =", balance_to_withdraw)
+
+    # instant payout fee: 1.1% + $0.50
+    fee = (balance_to_withdraw * Decimal("0.011") + Decimal("0.50")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    payout_amount = (balance_to_withdraw - fee).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+
+    print("DEBUG: instant fee =", fee, "payout_amount =", payout_amount)
+
+    if payout_amount <= 0:
+        print("DEBUG: withdraw_instant blocked – payout_amount <=", payout_amount)
+        flash("Insufficient balance after instant payout fee.", "warning")
+        return redirect(url_for('dashboard'))
+
+    amount_cents = int(payout_amount * 100)
+
+    # 2) check connected account has a debit card
+    ok, reason = connected_account_has_debit_card(user.stripe_account_id)
+    if not ok:
+        print("DEBUG: withdraw_instant blocked – no debit card:", reason)
+        flash(reason, "warning")
+        return redirect(url_for('dashboard'))
+
+    try:
+        # transfer platform -> member connected account
+        print("DEBUG: creating Instant Transfer for", amount_cents, "cents to", user.stripe_account_id)
+        transfer = stripe.Transfer.create(
+            amount=amount_cents,
+            currency='usd',
+            destination=user.stripe_account_id,
+            description=f"PerkMiner member instant earnings transfer for user {user.id}"
+        )
+
+        # instant payout from connected account
+        print("DEBUG: creating Instant Payout for", amount_cents, "cents from", user.stripe_account_id)
+        payout = stripe.Payout.create(
+            amount=amount_cents,
+            currency='usd',
+            method='instant',
+            statement_descriptor="PerkMiner Payout",
+            stripe_account=user.stripe_account_id
+        )
+
+        # update DB
+        user.withdrawn_total = (user.withdrawn_total or Decimal("0")) + balance_to_withdraw
+
+        user.grand_total_earnings = total_earnings
+        user.pending_earnings = pending_earnings
+        user.available_for_withdrawal = available_earnings
+        user.earnings_balance = available_earnings - user.withdrawn_total
+
+        db.session.commit()
+
+        print("DEBUG: withdraw_instant success – withdrawn_total now", user.withdrawn_total,
+              "earnings_balance now", user.earnings_balance)
+
+        flash(
+            f"Instant withdrawal of ${payout_amount:.2f} initiated! "
+            f"Instant payout fee: ${fee:.2f} deducted.",
+            "success"
+        )
+    except Exception as e:
+        print("DEBUG: withdraw_instant failed with exception:", repr(e))
+        flash(
+            "Instant withdrawal failed. Please make sure you have a debit card added "
+            "in your Stripe dashboard and try again, or use a standard payout.",
+            "danger"
+        )
+
+    return redirect(url_for('dashboard'))
+
+@app.route('/business/withdraw', methods=['POST'])
+def business_withdraw():
+    """
+    Standard business withdrawal (bank transfer).
+    """
+    print("DEBUG: /business/withdraw (standard) called")
+
+    MIN_PAYOUT = Decimal("10.00")
+    business_id = session.get('business_id')
+    if not business_id:
+        flash("Please log in as a business.", "warning")
+        return redirect(url_for('business_login'))
+
+    biz = Business.query.get(business_id)
+    if not biz:
+        flash("Business not found.", "danger")
+        return redirect(url_for('business_login'))
+
+    if not biz.stripe_account_id:
+        print("DEBUG: business_withdraw blocked – no stripe_account_id for biz", biz.id)
+        flash("Please set up your Stripe payouts first.", "warning")
+        return redirect(url_for('onboard_business_stripe'))
+
+    net_available, total, available, pending = get_business_withdrawable(biz, delay_days=7)
+    print("DEBUG: biz net_available =", net_available,
+          "total =", total, "available =", available, "pending =", pending)
+
+    if net_available < MIN_PAYOUT:
+        print("DEBUG: business_withdraw blocked – net_available", net_available, "<", MIN_PAYOUT)
+        flash(f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.", "warning")
+        return redirect(url_for('business_dashboard'))
+
+    amt_str = request.form.get("amount", "").strip()
+    if amt_str:
+        try:
+            requested = Decimal(amt_str)
+        except Exception:
+            print("DEBUG: business_withdraw blocked – invalid amount:", amt_str)
+            flash("Invalid withdrawal amount.", "warning")
+            return redirect(url_for('business_dashboard'))
+
+        if requested < MIN_PAYOUT:
+            print("DEBUG: business_withdraw blocked – requested", requested, "<", MIN_PAYOUT)
+            flash(f"Minimum withdrawal amount is ${MIN_PAYOUT}.", "warning")
+            return redirect(url_for('business_dashboard'))
+
+        if requested > net_available:
+            print("DEBUG: business_withdraw blocked – requested", requested, ">", net_available)
+            flash("You cannot withdraw more than your available balance.", "warning")
+            return redirect(url_for('business_dashboard'))
+
+        balance_to_withdraw = requested
+    else:
+        balance_to_withdraw = net_available
+
+    print("DEBUG: business balance_to_withdraw =", balance_to_withdraw)
+
+    fee = (balance_to_withdraw * Decimal("0.0025") + Decimal("0.35")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    payout_amount = (balance_to_withdraw - fee).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+
+    print("DEBUG: business standard fee =", fee, "payout_amount =", payout_amount)
+
+    if payout_amount <= 0:
+        flash("Insufficient balance after the standard payout fee is deducted.", "warning")
+        return redirect(url_for('business_dashboard'))
+
+    amount_cents = int(payout_amount * 100)
+
+    try:
+        print("DEBUG: creating Business Transfer for", amount_cents, "cents to", biz.stripe_account_id)
+        transfer = stripe.Transfer.create(
+            amount=amount_cents,
+            currency='usd',
+            destination=biz.stripe_account_id,
+            description="PerkMiner Business Payout (Standard)"
+        )
+
+        print("DEBUG: creating Business Payout (standard) for", amount_cents, "cents from", biz.stripe_account_id)
+        payout = stripe.Payout.create(
+            amount=amount_cents,
+            currency='usd',
+            method='standard',
+            statement_descriptor="PerkMiner Biz Payout",
+            stripe_account=biz.stripe_account_id,
+        )
+
+        print("DEBUG: Business Payout created:", payout.id, payout.status, payout.destination)
+
+        biz.withdrawn_total = (biz.withdrawn_total or Decimal("0")) + balance_to_withdraw
+
+        biz.grand_total_earnings = total
+        biz.pending_earnings = pending
+        biz.available_to_withdraw = available
+        biz.earnings_balance = available - biz.withdrawn_total
+
+        db.session.commit()
+
+        print("DEBUG: business_withdraw success – withdrawn_total now", biz.withdrawn_total,
+              "earnings_balance now", biz.earnings_balance)
+
+        flash(
+            f"Business withdrawal of ${payout_amount:.2f} initiated! "
+            f"Stripe fee: ${fee:.2f} deducted.",
+            "success"
+        )
+    except Exception as e:
+        print("DEBUG: business_withdraw failed with exception:", repr(e))
+        flash(f"Failed to withdraw: {e}", "danger")
+
+    return redirect(url_for('business_dashboard'))
+
+@app.route('/business/withdraw_instant', methods=['POST'])
+def business_withdraw_instant():
+    print("DEBUG: /business/withdraw_instant (instant) called")
+
+    MIN_PAYOUT = Decimal("10.00")
+    business_id = session.get('business_id')
+    if not business_id:
+        flash("Please log in as a business.", "warning")
+        return redirect(url_for('business_login'))
+
+    biz = Business.query.get(business_id)
+    if not biz:
+        flash("Business not found.", "danger")
+        return redirect(url_for('business_login'))
+
+    if not biz.stripe_account_id:
+        print("DEBUG: business_withdraw_instant blocked – no stripe_account_id for biz", biz.id)
+        flash("Please set up your Stripe payouts first.", "warning")
+        return redirect(url_for('onboard_business_stripe'))
+
+    net_available, total, available, pending = get_business_withdrawable(biz, delay_days=7)
+    print("DEBUG: biz net_available =", net_available,
+          "total =", total, "available =", available, "pending =", pending)
+
+    if net_available < MIN_PAYOUT:
+        print("DEBUG: business_withdraw_instant blocked – net_available", net_available, "<", MIN_PAYOUT)
+        flash(f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.", "warning")
+        return redirect(url_for('business_dashboard'))
+
+    amt_str = request.form.get("amount", "").strip()
+    if amt_str:
+        try:
+            requested = Decimal(amt_str)
+        except Exception:
+            print("DEBUG: business_withdraw_instant blocked – invalid amount:", amt_str)
+            flash("Invalid withdrawal amount.", "warning")
+            return redirect(url_for('business_dashboard'))
+
+        if requested < MIN_PAYOUT:
+            print("DEBUG: business_withdraw_instant blocked – requested", requested, "<", MIN_PAYOUT)
+            flash(f"Minimum withdrawal amount is ${MIN_PAYOUT}.", "warning")
+            return redirect(url_for('business_dashboard'))
+
+        if requested > net_available:
+            print("DEBUG: business_withdraw_instant blocked – requested", requested, ">", net_available)
+            flash("You cannot withdraw more than your available balance.", "warning")
+            return redirect(url_for('business_dashboard'))
+
+        balance_to_withdraw = requested
+    else:
+        balance_to_withdraw = net_available
+
+    print("DEBUG: business balance_to_withdraw (instant) =", balance_to_withdraw)
+
+    fee = (balance_to_withdraw * Decimal("0.011") + Decimal("0.50")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    payout_amount = (balance_to_withdraw - fee).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+
+    print("DEBUG: business instant fee =", fee, "payout_amount =", payout_amount)
+
+    if payout_amount <= 0:
+        flash("Insufficient balance after instant payout fee.", "warning")
+        return redirect(url_for('business_dashboard'))
+
+    amount_cents = int(payout_amount * 100)
+
+    # 2) debit card check
+    ok, reason = connected_account_has_debit_card(biz.stripe_account_id)
+    if not ok:
+        print("DEBUG: business_withdraw_instant blocked – no debit card:", reason)
+        flash(reason, "warning")
+        return redirect(url_for('business_dashboard'))
+
+    try:
+        print("DEBUG: creating Business Transfer (instant) for", amount_cents, "cents to", biz.stripe_account_id)
+        transfer = stripe.Transfer.create(
+            amount=amount_cents,
+            currency='usd',
+            destination=biz.stripe_account_id,
+            description="PerkMiner Business Payout (Instant)"
+        )
+
+        print("DEBUG: creating Business Payout (instant) for", amount_cents, "cents from", biz.stripe_account_id)
+        payout = stripe.Payout.create(
+            amount=amount_cents,
+            currency='usd',
+            method='instant',
+            statement_descriptor="PerkMiner Biz Payout",
+            stripe_account=biz.stripe_account_id
+        )
+
+        biz.withdrawn_total = (biz.withdrawn_total or Decimal("0")) + balance_to_withdraw
+
+        biz.grand_total_earnings = total
+        biz.pending_earnings = pending
+        biz.available_to_withdraw = available
+        biz.earnings_balance = available - biz.withdrawn_total
+
+        db.session.commit()
+
+        print("DEBUG: business_withdraw_instant success – withdrawn_total now", biz.withdrawn_total,
+              "earnings_balance now", biz.earnings_balance)
+
+        flash(
+            f"Instant business withdrawal of ${payout_amount:.2f} initiated! "
+            f"Instant payout fee: ${fee:.2f} deducted.",
+            "success"
+        )
+    except Exception as e:
+        print("DEBUG: business_withdraw_instant failed with exception:", repr(e))
+        flash(
+            "Instant withdrawal failed for your business account. Please make sure a debit card is added "
+            "in your Stripe dashboard and try again, or use a standard payout.",
+            "danger"
+        )
+
+    return redirect(url_for('business_dashboard'))
+
+@app.route('/withdraw_investor', methods=['POST'])
+@login_required
+def withdraw_investor():
+    """
+    Standard silent investor withdrawal (bank transfer, 1–3 business days).
+    Flow:
+      1) check DB (7-day delay + $10 min)
+      2) transfer platform -> investor connected account
+      3) standard payout from connected account
+      4) update investor_withdrawn_total / investor balances
+    """
+    print("DEBUG: /withdraw_investor (standard) called for user", current_user.id)
+
+    MIN_PAYOUT = Decimal("10.00")
+    user = current_user
+
+    if not user.stripe_account_id:
+        print("DEBUG: withdraw_investor blocked – no stripe_account_id for user", current_user.id)
+        flash("Please set up your Stripe payouts first.", "warning")
+        return redirect(url_for('onboard_stripe'))
+
+    net_available, total, available, pending = get_investor_withdrawable(user, delay_days=7)
+    print("DEBUG: investor net_available =", net_available,
+          "total =", total, "available =", available, "pending =", pending)
+
+    if net_available < MIN_PAYOUT:
+        print("DEBUG: withdraw_investor blocked – net_available", net_available, "<", MIN_PAYOUT)
+        flash(f"You need at least ${MIN_PAYOUT} in silent investor earnings (after the 7-day delay) to withdraw.", "warning")
+        return redirect(url_for('dashboard'))
+
+    amt_str = request.form.get("amount", "").strip()
+    if amt_str:
+        try:
+            requested = Decimal(amt_str)
+        except Exception:
+            print("DEBUG: withdraw_investor blocked – invalid amount:", amt_str)
+            flash("Invalid withdrawal amount.", "warning")
+            return redirect(url_for('dashboard'))
+
+        if requested < MIN_PAYOUT:
+            print("DEBUG: withdraw_investor blocked – requested", requested, "<", MIN_PAYOUT)
+            flash(f"Minimum withdrawal amount is ${MIN_PAYOUT}.", "warning")
+            return redirect(url_for('dashboard'))
+
+        if requested > net_available:
+            print("DEBUG: withdraw_investor blocked – requested", requested, ">", net_available)
+            flash("You cannot withdraw more than your available balance.", "warning")
+            return redirect(url_for('dashboard'))
+
+        balance_to_withdraw = requested
+    else:
+        balance_to_withdraw = net_available
+
+    print("DEBUG: investor balance_to_withdraw =", balance_to_withdraw)
+
+    fee = (balance_to_withdraw * Decimal("0.0025") + Decimal("0.35")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    payout_amount = (balance_to_withdraw - fee).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+
+    print("DEBUG: investor standard fee =", fee, "payout_amount =", payout_amount)
+
+    if payout_amount <= 0:
+        flash("Insufficient balance after the transfer fee is deducted.", "warning")
+        return redirect(url_for('dashboard'))
+
+    amount_cents = int(payout_amount * 100)
+
+    try:
+        # Optional: check connected account flags
+        acct = stripe.Account.retrieve(user.stripe_account_id)
+        acct_dict = acct.to_dict()
+        print("DEBUG: member connected account flags:", {
+            "id": acct_dict.get("id"),
+            "payouts_enabled": acct_dict.get("payouts_enabled"),
+            "charges_enabled": acct_dict.get("charges_enabled"),
+            "capabilities": acct_dict.get("capabilities"),
+            "requirements_currently_due": (acct_dict.get("requirements") or {}).get("currently_due"),
+        })
+
+        print("DEBUG: creating Investor Transfer (standard) for", amount_cents, "cents to", user.stripe_account_id)
+        transfer = stripe.Transfer.create(
+            amount=amount_cents,
+            currency='usd',
+            destination=user.stripe_account_id,
+            description="PerkMiner Silent Investor Withdrawal (standard)"
+        )
+        print("DEBUG: Investor Transfer created:", transfer.id, "status:", transfer.status)
+
+        print("DEBUG: creating Investor Payout (standard) for", amount_cents, "cents from", user.stripe_account_id)
+        payout = stripe.Payout.create(
+            amount=amount_cents,
+            currency='usd',
+            method='standard',
+            statement_descriptor="PerkMiner Investor Payout",
+            stripe_account=user.stripe_account_id
+        )
+        print("DEBUG: Investor Payout created:", payout.id, payout.status, payout.destination)
+
+        user.investor_withdrawn_total = (user.investor_withdrawn_total or Decimal("0")) + balance_to_withdraw
+
+        user.investor_total_earnings = total
+        user.pending_investor_earnings = pending
+        user.investor_earnings_withdraw_ready = available
+        user.investor_earnings_balance = available - user.investor_withdrawn_total
+
+        db.session.commit()
+
+        print("DEBUG: withdraw_investor success – withdrawn_total now", user.investor_withdrawn_total,
+              "investor_earnings_balance now", user.investor_earnings_balance)
+
+        flash(
+            f"Silent investor withdrawal of ${payout_amount:.2f} initiated! "
+            f"Stripe fee: ${fee:.2f} deducted.",
+            "success"
+        )
+    except Exception as e:
+        print("DEBUG: withdraw_investor failed with exception:", repr(e))
+        flash(f"Silent investor withdrawal failed: {e}", "danger")
+
+    return redirect(url_for('dashboard'))
+
+@app.route('/withdraw_investor_instant', methods=['POST'])
+@login_required
+def withdraw_investor_instant():
+    print("DEBUG: /withdraw_investor_instant (instant) called for user", current_user.id)
+
+    MIN_PAYOUT = Decimal("10.00")
+    user = current_user
+
+    if not user.stripe_account_id:
+        print("DEBUG: withdraw_investor_instant blocked – no stripe_account_id for user", current_user.id)
+        flash("Please set up your Stripe payouts first.", "warning")
+        return redirect(url_for('onboard_stripe'))
+
+    net_available, total, available, pending = get_investor_withdrawable(user, delay_days=7)
+    print("DEBUG: investor net_available =", net_available,
+          "total =", total, "available =", available, "pending =", pending)
+
+    if net_available < MIN_PAYOUT:
+        print("DEBUG: withdraw_investor_instant blocked – net_available", net_available, "<", MIN_PAYOUT)
+        flash(f"You need at least ${MIN_PAYOUT} in silent investor earnings (after the 7-day delay) to withdraw.", "warning")
+        return redirect(url_for('dashboard'))
+
+    amt_str = request.form.get("amount", "").strip()
+    if amt_str:
+        try:
+            requested = Decimal(amt_str)
+        except Exception:
+            print("DEBUG: withdraw_investor_instant blocked – invalid amount:", amt_str)
+            flash("Invalid withdrawal amount.", "warning")
+            return redirect(url_for('dashboard'))
+
+        if requested < MIN_PAYOUT:
+            print("DEBUG: withdraw_investor_instant blocked – requested", requested, "<", MIN_PAYOUT)
+            flash(f"Minimum withdrawal amount is ${MIN_PAYOUT}.", "warning")
+            return redirect(url_for('dashboard'))
+
+        if requested > net_available:
+            print("DEBUG: withdraw_investor_instant blocked – requested", requested, ">", net_available)
+            flash("You cannot withdraw more than your available balance.", "warning")
+            return redirect(url_for('dashboard'))
+
+        balance_to_withdraw = requested
+    else:
+        balance_to_withdraw = net_available
+
+    print("DEBUG: investor balance_to_withdraw (instant) =", balance_to_withdraw)
+
+    fee = (balance_to_withdraw * Decimal("0.011") + Decimal("0.50")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    payout_amount = (balance_to_withdraw - fee).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+
+    print("DEBUG: investor instant fee =", fee, "payout_amount =", payout_amount)
+
+    if payout_amount <= 0:
+        flash("Insufficient balance after instant payout fee.", "warning")
+        return redirect(url_for('dashboard'))
+
+    amount_cents = int(payout_amount * 100)
+
+    # 2) debit card check
+    ok, reason = connected_account_has_debit_card(user.stripe_account_id)
+    if not ok:
+        print("DEBUG: withdraw_investor_instant blocked – no debit card:", reason)
+        flash(reason, "warning")
+        return redirect(url_for('dashboard'))
+
+    try:
+        print("DEBUG: creating Investor Transfer (instant) for", amount_cents, "cents to", user.stripe_account_id)
+        transfer = stripe.Transfer.create(
+            amount=amount_cents,
+            currency='usd',
+            destination=user.stripe_account_id,
+            description="PerkMiner Silent Investor Withdrawal (instant)"
+        )
+
+        print("DEBUG: creating Investor Payout (instant) for", amount_cents, "cents from", user.stripe_account_id)
+        payout = stripe.Payout.create(
+            amount=amount_cents,
+            currency='usd',
+            method='instant',
+            statement_descriptor="PerkMiner Investor Payout",
+            stripe_account=user.stripe_account_id
+        )
+
+        user.investor_withdrawn_total = (user.investor_withdrawn_total or Decimal("0")) + balance_to_withdraw
+
+        user.investor_total_earnings = total
+        user.pending_investor_earnings = pending
+        user.investor_earnings_withdraw_ready = available
+        user.investor_earnings_balance = available - user.investor_withdrawn_total
+
+        db.session.commit()
+
+        print("DEBUG: withdraw_investor_instant success – withdrawn_total now", user.investor_withdrawn_total,
+              "investor_earnings_balance now", user.investor_earnings_balance)
+
+        flash(
+            f"Instant silent investor withdrawal of ${payout_amount:.2f} initiated! "
+            f"Instant payout fee: ${fee:.2f} deducted.",
+            "success"
+        )
+    except Exception as e:
+        print("DEBUG: withdraw_investor_instant failed with exception:", repr(e))
+        flash(
+            "Instant withdrawal failed for your investor earnings. Please make sure you have a debit card added "
+            "in your Stripe dashboard and try again, or use a standard payout.",
+            "danger"
+        )
+
+    return redirect(url_for('dashboard'))
 
 @app.route("/investor_report")
 @login_required
@@ -7939,320 +9548,6 @@ def export_investor_earnings_csv():
     })
 
 MIN_PAYOUT = Decimal("10.00")
-
-@app.route('/withdraw_investor', methods=['POST'])
-@login_required
-def withdraw_investor():
-    """
-    Standard silent investor withdrawal (bank transfer, 1–3 business days).
-    """
-    MIN_PAYOUT = Decimal("10")
-    user = current_user
-
-    if not user.stripe_account_id:
-        flash("Please set up your Stripe payouts first.", "warning")
-        return redirect(url_for('onboard_stripe'))
-
-    # 1) compute what is actually withdrawable
-    net_available, total, available, pending = get_investor_withdrawable(user, delay_days=7)
-
-    if net_available < MIN_PAYOUT:
-        flash(f"You need at least ${MIN_PAYOUT} in silent investor earnings (after the 7-day delay) to withdraw.", "warning")
-        return redirect(url_for('dashboard'))
-
-    balance_to_withdraw = net_available
-
-    # standard bank transfer fee
-    fee = balance_to_withdraw * Decimal("0.0025") + Decimal("0.35")
-    payout_amount = (balance_to_withdraw - fee).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-    if payout_amount <= 0:
-        flash("Insufficient balance after the transfer fee is deducted.", "warning")
-        return redirect(url_for('dashboard'))
-
-    amount_cents = int(payout_amount * 100)
-
-    # 2) check platform balance
-    if not ensure_platform_balance_at_least(amount_cents):
-        flash("Platform balance is too low to fund this investor payout. Please contact support.", "danger")
-        return redirect(url_for('dashboard'))
-
-    try:
-        # 3) transfer platform -> investor connected account
-        transfer = stripe.Transfer.create(
-            amount=amount_cents,
-            currency='usd',
-            destination=user.stripe_account_id,
-            description="PerkMiner Silent Investor Withdrawal (standard)"
-        )
-
-        # 4) standard payout from investor connected account
-        payout = stripe.Payout.create(
-            amount=amount_cents,
-            currency='usd',
-            method='standard',
-            statement_descriptor="PerkMiner Investor Payout",
-            stripe_account=user.stripe_account_id
-        )
-
-        # 5) update DB
-        user.investor_withdrawn_total = (user.investor_withdrawn_total or Decimal("0")) + balance_to_withdraw
-
-        # recompute investor summary fields
-        user.investor_total_earnings = total
-        user.pending_investor_earnings = pending
-        user.investor_earnings_withdraw_ready = available
-        user.investor_earnings_balance = available - user.investor_withdrawn_total
-
-        db.session.commit()
-
-        flash(
-            f"Silent investor withdrawal of ${payout_amount:.2f} initiated! "
-            f"Stripe fee: ${fee:.2f} deducted.",
-            "success"
-        )
-    except Exception as e:
-        flash(f"Silent investor withdrawal failed: {e}", "danger")
-
-    return redirect(url_for('dashboard'))
-
-@app.route('/withdraw_instant', methods=['POST'])
-@login_required
-def withdraw_instant():
-    """
-    Instant member withdrawal.
-    Flow:
-      1) check DB (7-day delay + $10 min)
-      2) check platform Stripe balance
-      3) transfer platform -> member connected account
-      4) instant payout from connected account
-      5) update withdrawn_total / earnings_balance
-    """
-    MIN_PAYOUT = Decimal("10")
-    user = current_user
-
-    if not user.stripe_account_id:
-        flash("Please set up your Stripe payouts first.", "warning")
-        return redirect(url_for('onboard_stripe'))
-
-    # 1) compute what is actually withdrawable
-    net_available, total_earnings, available_earnings, pending_earnings = get_member_withdrawable(user, delay_days=7)
-
-    if net_available < MIN_PAYOUT:
-        flash(f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.", "warning")
-        return redirect(url_for('dashboard'))
-
-    balance_to_withdraw = net_available
-
-    # instant payout fee: 1.1% + $0.50
-    fee = balance_to_withdraw * Decimal("0.011") + Decimal("0.50")
-    payout_amount = (balance_to_withdraw - fee).quantize(Decimal("0.01"))
-
-    if payout_amount <= 0:
-        flash("Insufficient balance after instant payout fee.", "warning")
-        return redirect(url_for('dashboard'))
-
-    amount_cents = int(payout_amount * 100)
-
-    # 2) platform balance check
-    if not ensure_platform_balance_at_least(amount_cents):
-        flash("Platform balance is too low to fund this instant payout. Please contact support.", "danger")
-        return redirect(url_for('dashboard'))
-
-    try:
-        # 3) transfer from platform -> member connected account
-        transfer = stripe.Transfer.create(
-            amount=amount_cents,
-            currency='usd',
-            destination=user.stripe_account_id,
-            description=f"PerkMiner member instant earnings transfer for user {user.id}"
-        )
-
-        # 4) instant payout from connected account
-        payout = stripe.Payout.create(
-            amount=amount_cents,
-            currency='usd',
-            method='instant',
-            statement_descriptor="PerkMiner Payout",
-            stripe_account=user.stripe_account_id
-        )
-
-        # 5) update DB
-        user.withdrawn_total = (user.withdrawn_total or Decimal("0")) + balance_to_withdraw
-
-        user.grand_total_earnings = total_earnings
-        user.pending_earnings = pending_earnings
-        user.available_for_withdrawal = available_earnings
-        user.earnings_balance = available_earnings - user.withdrawn_total
-
-        db.session.commit()
-
-        flash(
-            f"Instant withdrawal of ${payout_amount:.2f} initiated! "
-            f"Instant payout fee: ${fee:.2f} deducted.",
-            "success"
-        )
-    except Exception as e:
-        flash(f"Instant withdrawal failed: {e}", "danger")
-
-    return redirect(url_for('dashboard'))
-
-@app.route('/business/withdraw_instant', methods=['POST'])
-def business_withdraw_instant():
-    """
-    Instant business withdrawal.
-    """
-    MIN_PAYOUT = Decimal("10")
-    business_id = session.get('business_id')
-    if not business_id:
-        flash("Please log in as a business.")
-        return redirect(url_for('business_login'))
-
-    biz = Business.query.get(business_id)
-    if not biz:
-        flash("Business not found.", "danger")
-        return redirect(url_for('business_login'))
-
-    if not biz.stripe_account_id:
-        flash("Please set up your Stripe payouts first.", "warning")
-        return redirect(url_for('onboard_business_stripe'))
-
-    # 1) compute withdrawable
-    net_available, total, available, pending = get_business_withdrawable(biz, delay_days=7)
-
-    if net_available < MIN_PAYOUT:
-        flash(f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.", "warning")
-        return redirect(url_for('business_dashboard'))
-
-    balance_to_withdraw = net_available
-
-    # instant payout fee
-    fee = balance_to_withdraw * Decimal("0.011") + Decimal("0.50")
-    payout_amount = (balance_to_withdraw - fee).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-    if payout_amount <= 0:
-        flash("Insufficient balance after instant payout fee.", "warning")
-        return redirect(url_for('business_dashboard'))
-
-    amount_cents = int(payout_amount * 100)
-
-    # 2) platform balance check
-    if not ensure_platform_balance_at_least(amount_cents):
-        flash("Platform balance is too low to fund this instant business payout. Please contact support.", "danger")
-        return redirect(url_for('business_dashboard'))
-
-    try:
-        # 3) transfer platform -> business connected account
-        transfer = stripe.Transfer.create(
-            amount=amount_cents,
-            currency='usd',
-            destination=biz.stripe_account_id,
-            description="PerkMiner Business Payout (Instant)"
-        )
-
-        # 4) instant payout from business connected account
-        payout = stripe.Payout.create(
-            amount=amount_cents,
-            currency='usd',
-            method='instant',
-            statement_descriptor="PerkMiner Biz Payout",
-            stripe_account=biz.stripe_account_id
-        )
-
-        # 5) update DB
-        biz.withdrawn_total = (biz.withdrawn_total or Decimal("0")) + balance_to_withdraw
-
-        biz.grand_total_earnings = total
-        biz.pending_earnings = pending
-        biz.available_to_withdraw = available
-        biz.earnings_balance = available - biz.withdrawn_total
-
-        db.session.commit()
-
-        flash(
-            f"Instant business withdrawal of ${payout_amount:.2f} initiated! "
-            f"Instant payout fee: ${fee:.2f} deducted.",
-            "success"
-        )
-    except Exception as e:
-        flash(f"Instant withdrawal failed: {e}", "danger")
-
-    return redirect(url_for('business_dashboard'))
-
-@app.route('/withdraw_investor_instant', methods=['POST'])
-@login_required
-def withdraw_investor_instant():
-    """
-    Instant silent investor withdrawal.
-    """
-    MIN_PAYOUT = Decimal("10")
-    user = current_user
-
-    if not user.stripe_account_id:
-        flash("Please set up your Stripe payouts first.", "warning")
-        return redirect(url_for('onboard_stripe'))
-
-    # 1) compute withdrawable
-    net_available, total, available, pending = get_investor_withdrawable(user, delay_days=7)
-
-    if net_available < MIN_PAYOUT:
-        flash(f"You need at least ${MIN_PAYOUT} in silent investor earnings (after the 7-day delay) to withdraw.", "warning")
-        return redirect(url_for('dashboard'))
-
-    balance_to_withdraw = net_available
-
-    # instant payout fee: 1.1% + $0.50
-    fee = balance_to_withdraw * Decimal("0.011") + Decimal("0.50")
-    payout_amount = (balance_to_withdraw - fee).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-    if payout_amount <= 0:
-        flash("Insufficient balance after instant payout fee.", "warning")
-        return redirect(url_for('dashboard'))
-
-    amount_cents = int(payout_amount * 100)
-
-    # 2) platform balance check
-    if not ensure_platform_balance_at_least(amount_cents):
-        flash("Platform balance is too low to fund this instant investor payout. Please contact support.", "danger")
-        return redirect(url_for('dashboard'))
-
-    try:
-        # 3) transfer platform -> investor connected account
-        transfer = stripe.Transfer.create(
-            amount=amount_cents,
-            currency='usd',
-            destination=user.stripe_account_id,
-            description="PerkMiner Silent Investor Withdrawal (instant)"
-        )
-
-        # 4) instant payout from investor connected account
-        payout = stripe.Payout.create(
-            amount=amount_cents,
-            currency='usd',
-            method='instant',
-            statement_descriptor="PerkMiner Investor Payout",
-            stripe_account=user.stripe_account_id
-        )
-
-        # 5) update DB
-        user.investor_withdrawn_total = (user.investor_withdrawn_total or Decimal("0")) + balance_to_withdraw
-
-        user.investor_total_earnings = total
-        user.pending_investor_earnings = pending
-        user.investor_earnings_withdraw_ready = available
-        user.investor_earnings_balance = available - user.investor_withdrawn_total
-
-        db.session.commit()
-
-        flash(
-            f"Instant silent investor withdrawal of ${payout_amount:.2f} initiated! "
-            f"Instant payout fee: ${fee:.2f} deducted.",
-            "success"
-        )
-    except Exception as e:
-        flash(f"Instant withdrawal failed: {e}", "danger")
-
-    return redirect(url_for('dashboard'))
 
 @app.route("/favorites")
 @login_required
@@ -8306,6 +9601,79 @@ def stats():
     }
     return jsonify(data), 200
 
+from flask import request, jsonify
+from sqlalchemy import func
+
+@app.route("/api/search/nearby-stats", methods=["GET"])
+def nearby_stats():
+    """
+    Returns counts of members and businesses within a given distance
+    of the provided lat/lng.
+    - distance in miles (default 10)
+    - if category is provided, business count is restricted to that category
+    """
+
+    lat = request.args.get("lat", type=float)
+    lng = request.args.get("lng", type=float)
+    distance = request.args.get("distance", type=float)  # miles
+    category = request.args.get("category", type=str)
+
+    # basic validation
+    if lat is None or lng is None:
+        return jsonify({"error": "lat and lng are required"}), 400
+
+    # default distance if missing/invalid
+    if not distance or distance <= 0:
+        distance = 10.0
+
+    # haversine in miles, same pattern you already use
+    def haversine_expr(model_lat, model_lng):
+        return (
+            3959 * func.acos(
+                func.least(
+                    1.0,
+                    func.cos(func.radians(lat)) *
+                    func.cos(func.radians(model_lat)) *
+                    func.cos(func.radians(model_lng) - func.radians(lng)) +
+                    func.sin(func.radians(lat)) *
+                    func.sin(func.radians(model_lat))
+                )
+            )
+        )
+
+    # ---- members within distance (using User.latitude/longitude) ----
+    user_haversine = haversine_expr(User.latitude, User.longitude)
+
+    member_query = (
+        User.query
+        .filter(User.email_confirmed.is_(True))
+        .filter(User.latitude.isnot(None), User.longitude.isnot(None))
+        .filter(user_haversine <= distance)
+    )
+
+    members_within = member_query.count()
+
+    # ---- businesses within distance (optionally by category) ----
+    biz_haversine = haversine_expr(Business.latitude, Business.longitude)
+
+    biz_query = (
+        Business.query
+        .filter(Business.status == "approved")
+        .filter(Business.latitude.isnot(None), Business.longitude.isnot(None))
+        .filter(biz_haversine <= distance)
+    )
+
+    if category:
+        biz_query = biz_query.filter(Business.category == category)
+
+    businesses_within = biz_query.count()
+
+    return jsonify({
+        "distance": distance,
+        "membersWithin": members_within,
+        "businessesWithin": businesses_within
+    })
+
 @app.route("/shop/link/<int:interaction_id>")
 @login_required
 def shop_link(interaction_id):
@@ -8354,6 +9722,8 @@ def online_marketplace():
         Business.website_url != "",
         Business.is_ecommerce_site.is_(True),
         Business.allow_website_purchases.is_(True),
+        Business.online_terms_agreed.is_(True),   # NEW
+        Business.ecommerce_verified.is_(True),    # NEW
         Business.account_balance >= 250.0
     )
 
@@ -8391,6 +9761,8 @@ def online_marketplace_results():
         Business.website_url != "",
         Business.is_ecommerce_site.is_(True),
         Business.allow_website_purchases.is_(True),
+        Business.online_terms_agreed.is_(True),   # NEW
+        Business.ecommerce_verified.is_(True),    # NEW
         Business.account_balance >= 250.0
     )
 
@@ -8419,6 +9791,147 @@ def online_marketplace_results():
         q=q,
         pagination=pagination
     )
+
+from flask_login import login_required
+from flask import render_template
+
+@app.route("/member_flyer")
+@login_required
+def member_flyer():
+    """
+    Member referral flyer: QR links to /register?ref=<member referral_code>
+    Only accessible when logged in as a member.
+    """
+    user = current_user
+    if not user.referral_code:
+        # in your app this shouldn't happen, but just in case
+        flash("You need a referral code to use the flyer.", "warning")
+        return redirect(url_for("dashboard"))
+
+    # build the registration URL with ref parameter
+    register_url = url_for("register", ref=user.referral_code, _external=True)
+    return render_template("flyer.html",
+                           user=user,
+                           register_url=register_url)
+
+
+@app.route("/member_business_flyer")
+@login_required
+def member_business_flyer():
+    """
+    Member → business referral flyer:
+    QR links to /business/register?ref=<member referral_code>
+    """
+    user = current_user
+    if not user.referral_code:
+        flash("You need a referral code to use the flyer.", "warning")
+        return redirect(url_for("dashboard"))
+
+    business_register_url = url_for("business_register", ref=user.referral_code, _external=True)
+    return render_template("business_flyer.html",
+                           user=user,
+                           business_register_url=business_register_url)
+
+
+@app.route("/b2b_flyer")
+@business_login_required
+def b2b_flyer():
+    """
+    Business → business referral flyer:
+    QR links to /business/register?ref=<business referral_code>
+    Only accessible when a business is logged in.
+    """
+    biz_id = session.get("business_id")
+    if not biz_id:
+        flash("Please log in as a business to access the B2B flyer.", "warning")
+        return redirect(url_for("business_login"))
+
+    biz = Business.query.get_or_404(biz_id)
+    if not biz.referral_code:
+        flash("This business does not have a referral code yet.", "warning")
+        return redirect(url_for("business_dashboard"))
+
+    b2b_register_url = url_for("business_register", ref=biz.referral_code, _external=True)
+    return render_template("b2b_flyer.html",
+                           business=biz,
+                           b2b_register_url=b2b_register_url)
+
+@app.route("/download/member_flyer")
+@login_required
+def download_member_flyer():
+    return send_from_directory(
+        os.path.join(app.root_path, "static", "flyers"),
+        "member_flyer.jpg",
+        as_attachment=True
+    )
+
+@app.route("/download/member_business_flyer")
+@login_required
+def download_member_business_flyer():
+    return send_from_directory(
+        os.path.join(app.root_path, "static", "flyers"),
+        "member_business_flyer.jpg",
+        as_attachment=True
+    )
+
+@app.route("/download/b2b_flyer")
+@business_login_required
+def download_b2b_flyer():
+    return send_from_directory(
+        os.path.join(app.root_path, "static", "flyers"),
+        "b2b_flyer.jpg",
+        as_attachment=True
+    )
+
+@app.route("/testimonials")
+def testimonials_members():
+    return render_template("testimonials.html", initial_owner_type="member")
+
+
+@app.route("/testimonials/businesses")
+def testimonials_businesses():
+    return render_template("testimonials.html", initial_owner_type="business")
+
+@app.route("/testimonials/<int:testimonial_id>")
+def testimonial_detail_page(testimonial_id):
+    # template fetches via JS using the API
+    return render_template("testimonial_detail.html", testimonial_id=testimonial_id)
+
+@app.route("/video-testimonials-dashboard")
+@role_required("approve_reject_testimonials")
+@login_required
+def video_testimonials_dashboard():
+    return render_template("video_testimonials_dashboard.html")
+
+from flask_login import login_required, current_user
+from flask import request, jsonify
+
+@csrf.exempt
+@app.route("/api/me/location", methods=["POST"])
+@login_required
+def update_my_location():
+    data = request.get_json() or {}
+    lat = data.get("lat")
+    lng = data.get("lng")
+
+    print("DEBUG /api/me/location payload:", data)  # or logging.info(...)
+
+    # basic validation
+    try:
+        lat = float(lat)
+        lng = float(lng)
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid lat/lng"}), 400
+
+    # optional: sanity bounds
+    if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+        return jsonify({"error": "lat/lng out of range"}), 400
+
+    current_user.latitude = lat
+    current_user.longitude = lng
+    db.session.commit()
+
+    return jsonify({"ok": True})
 
 @csrf.exempt
 @app.route("/api/record_external_sale", methods=["POST"])
@@ -8481,6 +9994,35 @@ def record_external_sale():
     db.session.commit()
 
     return jsonify({"status": "ok", "summary": summary}), 200
+
+@csrf.exempt
+@app.route("/api/ecommerce/verify-beacon", methods=["POST"])
+def ecommerce_verify_beacon():
+    data = request.get_json(silent=True) or {}
+    business_id = data.get("business_id")
+    secret = data.get("secret")
+
+    expected_secret = os.environ.get("ECOMMERCE_VERIFY_SECRET")
+    if not expected_secret or secret != expected_secret:
+        return jsonify({"ok": False, "error": "unauthorized"}), 401
+
+    if not business_id:
+        return jsonify({"ok": False, "error": "missing business_id"}), 400
+
+    biz = Business.query.get(business_id)
+    if not biz:
+        return jsonify({"ok": False, "error": "unknown business"}), 404
+
+    # log the ping
+    ping = EcommerceVerificationPing(
+        business_id=biz.id,
+        user_agent=request.headers.get("User-Agent"),
+        ip_address=request.remote_addr,
+    )
+    db.session.add(ping)
+    db.session.commit()
+
+    return jsonify({"ok": True}), 200
 
 @app.errorhandler(500)
 def internal_server_error(error):

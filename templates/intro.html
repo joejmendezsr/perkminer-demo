@@ -12,6 +12,7 @@
       padding: 0;
       color: #222;
     }
+
     .header {
       width: 100%;
       background: #fff;
@@ -58,6 +59,7 @@
       font-size: 1.4rem;
       margin: 0 0 6px;
       color: #23223f;
+      text-transform: lowercase;
     }
     .page-intro p {
       margin: 0;
@@ -71,59 +73,87 @@
       font-weight: 600;
     }
 
+    /* shared layout for both sections */
+    section.video-section {
+      padding: 10px 0 0;
+    }
+    section.video-section-header {
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .section-heading {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #23223f;
+      margin: 0 0 4px;
+      text-align: center;
+    }
+    .section-subheading {
+      font-size: 0.95rem;
+      color: #555;
+      margin: 0 0 4px;
+      text-align: center;
+    }
+
     .videos-row {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 28px;
-      justify-content: center;
       padding: 24px 20px 40px;
       max-width: 1100px;
       margin: 0 auto;
     }
+
     .video-card {
       background: #fff;
       border-radius: 14px;
       box-shadow: 0 2px 12px #0002;
       padding: 22px 18px 28px;
-      max-width: 460px;
-      flex: 1 1 380px;
-      min-width: 300px;
+      max-width: 420px;
+      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
+
     .video-title {
-      font-size: 1.25em;
+      font-size: 1.15em;
       font-weight: 700;
       margin-bottom: 4px;
       color: #23223f;
       text-align: center;
     }
     .video-subtitle {
-      font-size: 0.92em;
+      font-size: 0.9em;
       color: #555;
       margin-bottom: 14px;
       text-align: center;
     }
+
     video {
       width: 100%;
-      max-width: 420px;
+      max-width: 100%;
+      aspect-ratio: 16 / 9;
       border-radius: 8px;
       margin-bottom: 8px;
       background: #000;
     }
 
     @media (max-width: 900px) {
+      .header img { max-width: 200px; }
       .videos-row {
-        flex-direction: column;
-        align-items: center;
         padding-top: 18px;
       }
-      .video-card {
-        width: 92vw;
-        max-width: 480px;
+    }
+
+    /* force single column on narrow portrait phones */
+    @media (max-width: 480px) {
+      .videos-row {
+        grid-template-columns: 1fr;
       }
     }
+
     @media (max-width: 600px) {
       .header img { max-width: 170px; }
       .page-intro h1 { font-size: 1.15rem; }
@@ -143,48 +173,98 @@
 
   <div class="header">
     <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1769980535/PerkMiner_Logo_o2qgfy.jpg" alt="PerkMiner Logo">
-    <button class="close-btn">×</button>
+    <button class="close-btn" aria-label="Close video page">×</button>
   </div>
 
   <section class="page-intro">
     <h1>welcome to perkminer</h1>
     <p>Watch the short video that applies to you, then return to complete your registration or login.</p>
-    <div class="mobile-note">(on mobile, scroll down to see the business owners video)</div>
+    <div class="mobile-note">(on mobile, scroll to see all videos)</div>
   </section>
 
-  <div class="videos-row">
-    <!-- MEMBER VIDEO CARD -->
-    <div class="video-card">
-      <div class="video-title">Video for Members</div>
-      <div class="video-subtitle">~3 minutes</div>
-      <video
-        id="user-video"
-        controls
-        controlsList="nodownload"
-        oncontextmenu="return false;"
-        preload="auto"
-        poster="https://via.placeholder.com/800x450/6366f1/ffffff?text=Member+Intro">
-        <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1787029926/Final_PM_Member_Promo_lkgvbi.mp4" type="video/mp4">
-        Sorry, your browser doesn't support embedded videos.
-      </video>
+  <!-- MEMBER SECTION -->
+  <section id="member-videos" class="video-section" aria-labelledby="member-heading">
+    <div class="video-section-header">
+      <h2 id="member-heading" class="section-heading">Videos for Members</h2>
+      <p class="section-subheading">Learn about Member benefits and more!</p>
     </div>
 
-    <!-- BUSINESS VIDEO CARD -->
-    <div class="video-card">
-      <div class="video-title">Video for Business Owners</div>
-      <div class="video-subtitle">~3.5 minutes</div>
-      <video
-        id="biz-video"
-        controls
-        controlsList="nodownload"
-        oncontextmenu="return false;"
-        preload="auto"
-        poster="https://via.placeholder.com/800x450/232323/ffffff?text=Business+Intro">
-        <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1787029952/Final_PM_Biz_Promo_iyncur.mp4" type="video/mp4">
-        Sorry, your browser doesn't support embedded videos.
-      </video>
+    <div class="videos-row">
+      <!-- MEMBER VIDEO 1 -->
+      <article class="video-card">
+        <h3 class="video-title">How We Protect Our Members</h3>
+        <p class="video-subtitle">~3 minutes • overview of how we protect our members</p>
+        <video
+          id="member-video-1"
+          controls
+          controlsList="nodownload"
+          oncontextmenu="return false;"
+          preload="auto"
+          poster="https://via.placeholder.com/800x450/6366f1/ffffff?text=Member+Intro+1">
+          <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1787029926/Final_PM_Member_Promo_lkgvbi.mp4" type="video/mp4">
+          Sorry, your browser doesn't support embedded videos.
+        </video>
+      </article>
+
+      <!-- MEMBER VIDEO 2 (same source, different slot) -->
+      <article class="video-card">
+        <h3 class="video-title">Making Money with Perk Miner</h3>
+        <p class="video-subtitle">~4 minutes • member ownership and revenue share</p>
+        <video
+          id="member-video-2"
+          controls
+          controlsList="nodownload"
+          oncontextmenu="return false;"
+          preload="auto"
+          poster="https://via.placeholder.com/800x450/6366f1/ffffff?text=Member+Intro+2">
+          <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1788736607/Member-Money-Final_mkkrdg.mp4" type="video/mp4">
+          Sorry, your browser doesn't support embedded videos.
+        </video>
+      </article>
     </div>
-  </div>
+  </section>
+
+  <!-- BUSINESS SECTION -->
+  <section id="business-videos" class="video-section" aria-labelledby="business-heading">
+    <div class="video-section-header">
+      <h2 id="business-heading" class="section-heading">Videos for Business Owners</h2>
+      <p class="section-subheading">Learn about Business benefits and more!</p>
+    </div>
+
+    <div class="videos-row">
+      <!-- BUSINESS VIDEO 1 -->
+      <article class="video-card">
+        <h3 class="video-title">Why Advertise With Us?</h3>
+        <p class="video-subtitle">~3.5 minutes • the paradigm shift and min 900% ROI</p>
+        <video
+          id="biz-video-1"
+          controls
+          controlsList="nodownload"
+          oncontextmenu="return false;"
+          preload="auto"
+          poster="https://via.placeholder.com/800x450/232323/ffffff?text=Business+Intro+1">
+          <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1787029952/Final_PM_Biz_Promo_iyncur.mp4" type="video/mp4">
+          Sorry, your browser doesn't support embedded videos.
+        </video>
+      </article>
+
+      <!-- BUSINESS VIDEO 2 (same source, second slot) -->
+      <article class="video-card">
+        <h3 class="video-title">Generating Additional Business $$$</h3>
+        <p class="video-subtitle">~3.5 minutes • more revenue = greater success</p>
+        <video
+          id="biz-video-2"
+          controls
+          controlsList="nodownload"
+          oncontextmenu="return false;"
+          preload="auto"
+          poster="https://via.placeholder.com/800x450/232323/ffffff?text=Business+Intro+2">
+          <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1788904874/Business_Money_Video_Final_o6xbbo.mp4" type="video/mp4">
+          Sorry, your browser doesn't support embedded videos.
+        </video>
+      </article>
+    </div>
+  </section>
 
   <script>
     function protectVideo(id) {

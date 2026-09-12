@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PerkMiner B2B Referral Flyer</title>
+  <style>
+    :root {
+      --pm-primary: #2a5859;
+      --pm-accent: #ffd66b;
+      --pm-bg: #f5f7fb;
+      --pm-card-bg: #ffffff;
+      --pm-text: #1f2933;
+      --pm-muted: #6b7280;
+      --pm-highlight: #e0f2fe;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: radial-gradient(circle at top left, #e0f7f6, #f5f7fb);
+      color: var(--pm-text);
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .toolbar {
+      max-width: 900px;
+      margin: 0 auto 12px auto;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .toolbar button,
+    .toolbar a {
+      border: none;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-print { background: var(--pm-primary); color: #fff; }
+    .btn-back  { background: #e5e7eb; color: #111827; }
+    .btn-print:hover { background: #214344; }
+    .btn-back:hover  { background: #d1d5db; }
+
+    /* full-page flyer */
+    .flyer {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #000;
+      border-radius: 18px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 8.5 / 11;
+      color: #ffffff;
+    }
+
+    .flyer-background {
+      position: absolute;
+      inset: 0;
+      background-image: url("https://res.cloudinary.com/dmrntlcfd/image/upload/v1788994825/biz-flyer-final-1200_vmeb6k.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 0;
+    }
+
+    .flyer-content {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      padding: 40px 40px 32px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .qr-block {
+      position: absolute;
+      top: 32px;
+      right: 32px;
+      text-align: center;
+    }
+    .qr-block img {
+      width: 140px;
+      height: 140px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 8px;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.6);
+      display: block;
+    }
+    .qr-caption {
+      font-size: 0.78rem;
+      color: #e5e7eb;
+      margin-top: 4px;
+      max-width: 160px;
+    }
+
+    .title-block {
+      max-width: 520px;
+    }
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.72rem;
+      color: #e5e7eb;
+      margin-bottom: 4px;
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 2rem;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(15, 23, 42, 0.8);
+    }
+    .subtitle {
+      font-size: 0.95rem;
+      color: #e5e7eb;
+      text-shadow: 0 1px 2px rgba(15, 23, 42, 0.75);
+    }
+
+    .content-panel {
+      margin-top: auto;
+      background: linear-gradient(
+        to top,
+        rgba(15, 23, 42, 0.9),
+        rgba(15, 23, 42, 0.7),
+        transparent
+      );
+      padding: 18px 18px 12px 18px;
+      border-radius: 14px;
+      backdrop-filter: blur(2px);
+    }
+
+    .bullet-section {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.3fr);
+      gap: 16px;
+      font-size: 0.93rem;
+      color: #f9fafb;
+    }
+    .bullet-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    .bullet-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .bullet-dot {
+      margin-top: 5px;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #facc15;
+      flex-shrink: 0;
+    }
+    .bullet-paragraph {
+      font-size: 0.93rem;
+      color: #e5e7eb;
+    }
+
+    .footer {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(209, 213, 219, 0.4);
+      font-size: 0.84rem;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 12px;
+      }
+      .flyer {
+        border-radius: 12px;
+      }
+      .flyer-content {
+        padding: 24px 18px 18px 18px;
+      }
+      .qr-block {
+        top: 18px;
+        right: 18px;
+      }
+      .qr-block img {
+        width: 110px;
+        height: 110px;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      .bullet-section {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .footer {
+        font-size: 0.8rem;
+      }
+    }
+
+/* full-screen preview mode */
+.full-preview body {
+  padding: 0;
+  background: #000;
+}
+
+.full-preview .flyer {
+  max-width: none;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.full-preview .flyer-content {
+  padding: 24px 24px 20px 24px;
+  transform-origin: top center;
+  /* optional scaling if needed */
+  /* transform: scale(0.9); */
+}
+
+    @media print {
+      @page {
+        size: letter;
+        margin: 0;
+      }
+      body {
+        padding: 0;
+        background: #ffffff;
+      }
+      .toolbar {
+        display: none !important;
+      }
+      .flyer {
+        max-width: none;
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .flyer-content {
+        padding: 32px 32px 24px 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <a href="{{ url_for('business_dashboard') }}" class="btn-back">
+    ⬅ Back to Business Dashboard
+  </a>
+  <button class="btn-print" type="button" onclick="window.print()">
+    🖨 Print Flyer
+  </button>
+</div>
+
+<div class="flyer">
+  <div class="flyer-background"></div>
+
+  <div class="flyer-content">
+    <div class="qr-block">
+      <img
+        src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={{ b2b_register_url | urlencode }}"
+        alt="Scan to register your business on PerkMiner">
+      <div class="qr-caption">
+        Scan to register
+      </div>
+    </div>
+
+    <div class="title-block">
+      <div class="eyebrow">b2b invitation</div>
+      <h2>No Sale or Closed Deal = Zero Fees</h2>
+      <div class="subtitle">
+        Grow your business with our Pay-Per-Sale / Pay-Per-Close Model.
+      </div>
+    </div>
+
+    <!-- main content over the image -->
+    <div class="content-panel">
+      <div class="bullet-section">
+        <!-- left column bullets -->
+        <ul class="bullet-list">
+          <li>
+            <span class="bullet-dot"></span>
+            <span><strong>Earn 1% Cash Back</strong> on up to $2,500 of every sale you make for offering a perk to our members.</span>
+          </li>
+          <li>
+            <span class="bullet-dot"></span>
+            <span><strong>Our members pay your business directly for the sale</strong> before you pay any advertising fees.</span>
+          </li>
+          <li>
+            <span class="bullet-dot"></span>
+            <span><strong>No hidden fees</strong> — No monthly subscriptions, membership fees, contracts or commitment.</span>
+          </li>
+        </ul>
+
+        <!-- right column bullets -->
+        <ul class="bullet-list">
+          <li>
+            <span class="bullet-dot"></span>
+            <span><strong>No cost to list your business</strong> - only $25 to fund your account to cover the ad fees to get started.</span>
+          </li>
+          <li>
+            <span class="bullet-dot"></span>
+            <span><strong>A Paradigm Shift in Marketing</strong> - It's not what you were taugh to believe.  We don't succeed unless you do.</span>
+          </li>
+          <li>
+            <span class="bullet-dot"></span>
+            <span><strong>Built in Rewards Program</strong> - Perk Miner pays all cash back and commissions for repeat business.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="footer">
+        <span>PerkMiner — zero wasted ad spend, pay only when a sale is closed.</span>
+        <span>Generated for <strong>{{ business.business_name or business.business_email }}</strong></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function toggleFullPreview() {
+    document.documentElement.classList.toggle('full-preview');
+  }
+</script>
+
+</body>
+</html>
