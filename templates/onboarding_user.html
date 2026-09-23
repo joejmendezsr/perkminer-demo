@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>User onboarding – payouts setup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --pm-primary: #2a5859;
+      --pm-accent: #ffd66b;
+      --pm-bg: #f7f7fb;
+      --pm-text: #222;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--pm-bg);
+      margin: 0;
+      padding: 0;
+      color: var(--pm-text);
+    }
+
+    .header {
+      width: 100%;
+      background: #fff;
+      padding: 14px 0 10px;
+      box-shadow: 0 2px 8px #0001;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      text-align: center;
+    }
+
+    .header img {
+      max-width: 220px;
+      height: auto;
+    }
+
+    .page-wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px 16px 40px;
+    }
+
+    .page-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 12px 0 4px;
+      text-align: center;
+      color: #23223f;
+      text-transform: lowercase;
+    }
+
+    .page-subtitle {
+      font-size: 0.98rem;
+      text-align: center;
+      color: #555;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px #0002;
+      padding: 18px 16px 22px;
+      margin-bottom: 18px;
+    }
+
+    .video-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .video-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      text-align: center;
+      color: #23223f;
+    }
+
+    .video-subtitle {
+      font-size: 0.9rem;
+      color: #555;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    video {
+      width: 100%;
+      max-width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #000;
+    }
+
+    .steps-text {
+      font-size: 0.96rem;
+      color: #333;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    .steps-text ul {
+      padding-left: 1.2rem;
+      margin: 8px 0 0;
+    }
+
+    .steps-text li {
+      margin-bottom: 4px;
+    }
+
+    .stripe-card-title {
+      font-weight: 700;
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+
+    .btn {
+      display: inline-block;
+      text-align: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.98rem;
+    }
+
+    .btn-primary {
+      background: var(--pm-primary);
+      color: #fff;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background: var(--pm-accent);
+      color: #222;
+    }
+
+    .btn-sm {
+      padding: 6px 10px;
+      font-size: 0.9rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .badge-success { background:#16a34a; color:#fff; }
+    .badge-warning { background:#facc15; color:#422006; }
+    .badge-danger  { background:#dc2626; color:#fff; }
+    .badge-secondary{ background:#e5e7eb; color:#374151; }
+
+    .text-muted { color:#6b7280; font-size:0.9rem; }
+    .mt-1 { margin-top:4px; }
+    .mt-2 { margin-top:8px; }
+    .mb-1 { margin-bottom:4px; }
+    .mb-2 { margin-bottom:8px; }
+
+    @media (max-width: 600px) {
+      .page-wrap {
+        padding: 12px 10px 24px;
+      }
+      .page-title {
+        font-size: 1.2rem;
+      }
+      .card {
+        padding: 14px 10px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1769980535/PerkMiner_Logo_o2qgfy.jpg" alt="PerkMiner Logo">
+  </div>
+
+  <div class="page-wrap">
+    <h1 class="page-title">set up your payouts</h1>
+    <p class="page-subtitle">
+      watch this short video, then click the button below to complete your Stripe onboarding.
+    </p>
+
+    <!-- video card -->
+    <div class="card video-card">
+      <div class="video-title">how to complete your payout onboarding</div>
+      <div class="video-subtitle">~3–4 minutes • watch first, then follow the steps</div>
+      <video
+        id="user-onboard-video"
+        controls
+        controlsList="nodownload"
+        oncontextmenu="return false;"
+        preload="auto"
+        poster="https://via.placeholder.com/800x450/6366f1/ffffff?text=User+Onboarding">
+        <source src="{{ user_onboard_video_url }}" type="video/mp4">
+        Sorry, your browser doesn't support embedded videos.
+      </video>
+      <p class="steps-text">
+        in this video, we walk you through:
+        <ul>
+          <li>what information you need ready (ID, bank account, etc.)</li>
+          <li>how to choose the correct industry and website info</li>
+          <li>how to finish onboarding so payouts can be enabled</li>
+        </ul>
+      </p>
+    </div>
+
+    <!-- stripe button / status card -->
+    <div class="card">
+      <div class="stripe-card-title">complete your Stripe setup</div>
+
+      {% if not stripe_status.connected %}
+        <span class="badge badge-secondary mb-1">Stripe not connected</span>
+        <p class="text-muted mt-1">
+          when you click the button below, you’ll be taken to a secure Stripe page to start onboarding.
+        </p>
+        <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary">
+          set up payouts (bank transfer)<br>
+          <b style="font-size:0.85rem;">
+            IMPORTANT: select professional services → other marketing services, and use perkminer.com as your website.
+          </b>
+        </a>
+
+      {% elif stripe_status.payouts_status == 'active' %}
+        <span class="badge badge-success mb-1">Stripe payouts active</span>
+        <p class="text-muted mt-1">
+          your payouts are active. you can still open Stripe to review or update your details if needed.
+        </p>
+        <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary btn-sm">
+          open Stripe dashboard
+        </a>
+
+      {% elif stripe_status.payouts_status == 'pending_requirements' %}
+        <span class="badge badge-warning mb-1">Stripe action required</span>
+        <p class="text-muted mt-1">
+          Stripe needs more information before enabling payouts. click below to finish onboarding.
+        </p>
+        <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary">
+          finish Stripe setup
+        </a>
+
+      {% else %}
+        <span class="badge badge-danger mb-1">Stripe payouts disabled</span>
+        <p class="text-muted mt-1">
+          your Stripe account is not ready for payouts. click below to review and update your information.
+        </p>
+        <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary">
+          update Stripe account
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    // extra protection for the video (similar to intro.html)
+    (function protectVideo(id) {
+      const video = document.getElementById(id);
+      if (!video) return;
+
+      video.addEventListener('contextmenu', e => e.preventDefault());
+      video.addEventListener('mouseover', function () {
+        video.setAttribute('controlsList', 'nodownload');
+      });
+      video.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+          e.preventDefault();
+        }
+      });
+    })('user-onboard-video');
+  </script>
+</body>
+</html>

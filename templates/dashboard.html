@@ -677,9 +677,8 @@
 <div>
   {% if not current_user.stripe_account_id %}
     <!-- No Stripe account yet -->
-    <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary w-100">
-      Set Up Payouts (Bank Transfer)</br>
-      <b>(IMPORTANT: Must Select Professional Services Industry, Other Marketing Services, and perkminer.com for website during onboarding)</b>
+    <a href="{{ url_for('user_onboarding') }}" class="btn btn-primary w-100">
+      Set Up Payouts (Bank Transfer)
     </a>
 
   {% else %}
@@ -697,7 +696,7 @@
           Stripe needs more information before enabling payouts.
         </div>
         <div class="mt-1">
-          <a href="{{ url_for('onboard_stripe') }}" class="btn btn-sm btn-warning w-100">
+          <a href="{{ url_for('user_onboarding') }}" class="btn btn-sm btn-warning w-100">
             Finish Stripe setup
           </a>
         </div>
@@ -708,7 +707,7 @@
           Your Stripe account is not ready for payouts. Please review your details in Stripe.
         </div>
         <div class="mt-1">
-          <a href="{{ url_for('onboard_stripe') }}" class="btn btn-sm btn-danger w-100">
+          <a href="{{ url_for('user_onboarding') }}" class="btn btn-sm btn-danger w-100">
             Update Stripe account
           </a>
         </div>
@@ -720,14 +719,14 @@
       {% set earnings = current_user.earnings_balance|float %}
       {% if earnings >= 10 %}
         <!-- Standard Payout (Regular Earnings) -->
-        {% set std_fee = earnings * 0.0025 + 0.35 %}
+        {% set std_fee = earnings * 0.005 + 0.35 %}
         {% set std_net = earnings - std_fee %}
         <div class="mb-3 border rounded p-3">
           <div class="fw-bold mb-1">
             <i class="bi bi-bank"></i> Standard Payout (1-3 business days)
           </div>
           <div class="text-muted mb-1" style="font-size:0.97em;">
-            Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee) }} (0.25% + $0.35)<br>
+            Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee) }} (0.5% + $0.35)<br>
             You will receive: <b>${{ '{:,.2f}'.format(std_net) }}</b>
           </div>
           <form action="{{ url_for('withdraw') }}" method="POST" class="d-inline">
@@ -744,9 +743,10 @@
                 placeholder="Amount (leave blank for full)"
               >
             </div>
-            <button type="submit" class="btn btn-success w-100">
-              Withdraw (Standard)
-            </button>
+              <button type="submit" class="btn btn-success w-100"
+                      onclick="this.disabled=true; this.form.submit();">
+                Withdraw (Standard)
+              </button>
           </form>
         </div>
       {% else %}
@@ -804,14 +804,14 @@
           {% set inv_net = current_user.investor_earnings_balance|float %}
           {% if inv_net >= 10 %}
             <!-- standard investor payout -->
-            {% set std_fee_inv = inv_net * 0.0025 + 0.35 %}
+            {% set std_fee_inv = inv_net * 0.005 + 0.35 %}
             {% set std_net_inv = inv_net - std_fee_inv %}
             <div class="mb-3 border rounded p-3">
               <div class="fw-bold mb-1">
-                <i class="bi bi-bank"></i> Investor Standard Payout (1-3 business days)
+                <i class="bi bi-bank"></i> Investor Standard Payout (1-3 business days) - Note: If you withdraw regular earnings, you must wait for regular earnings to clear in order to withdraw silent investor earnings.
               </div>
               <div class="text-muted mb-1" style="font-size:0.95em;">
-                Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee_inv) }} (0.25% + $0.35)<br>
+                Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee_inv) }} (0.5% + $0.35)<br>
                 If you withdraw full balance, you would receive: <b>${{ '{:,.2f}'.format(std_net_inv) }}</b>
               </div>
               <form action="{{ url_for('withdraw_investor') }}" method="POST" class="d-inline">
@@ -828,9 +828,10 @@
                     placeholder="Amount (leave blank for full)"
                   >
                 </div>
-                <button type="submit" class="btn btn-success w-100">
-                  Withdraw Investor Earnings (Standard)
-                </button>
+                  <button type="submit" class="btn btn-success w-100"
+                          onclick="this.disabled=true; this.form.submit();">
+                    Withdraw (Standard)
+                  </button>
               </form>
             </div>
           {% else %}

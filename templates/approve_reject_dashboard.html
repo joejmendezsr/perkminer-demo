@@ -11,6 +11,24 @@
         .card, .border, .bg-white { box-sizing: border-box; width: 100%; }
         .rounded-circle { width: 44px !important; height: 44px !important; }
       }
+
+  .listing-photo-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 4px;
+    margin-bottom: 12px;
+  }
+
+  .listing-photo-item img {
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
     </style>
 </head>
 <body>
@@ -150,6 +168,32 @@
                           {% endif %}
                         </ul>
                       </div>
+
+{% set photos_for_review = [
+    biz.draft_photo1_url or biz.photo1_url,
+    biz.draft_photo2_url or biz.photo2_url,
+    biz.draft_photo3_url or biz.photo3_url,
+    biz.draft_photo4_url or biz.photo4_url,
+    biz.draft_photo5_url or biz.photo5_url,
+    biz.draft_photo6_url or biz.photo6_url
+] %}
+{% set photos_for_review = photos_for_review | select | list %}
+
+{% if photos_for_review %}
+  <div class="mt-3">
+    <h5 class="text-center mb-2">Gallery (pending changes)</h5>
+    <div class="listing-photo-strip">
+      {% for url in photos_for_review %}
+        <div class="listing-photo-item">
+          <a href="{{ url }}" target="_blank" rel="noopener noreferrer">
+            <img src="{{ url }}" alt="Photo of {{ biz.business_name }}">
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
                     </div>
                   </div>
                 </td>

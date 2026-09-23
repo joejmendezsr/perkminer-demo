@@ -98,43 +98,36 @@
         }
 
         /* Modern small preview card */
-        .small-listing-modern {
-          border: 1px solid #d9ece7;
-          border-radius: 14px;
-          background: #fafefe;
-          box-shadow: 0 1px 5px #e6f9f4;
-          margin-bottom: 1.2rem;
-          padding: 10px 12px 10px 0;
-          display: flex;
-          align-items: center;
-          gap: 1.2rem;
-          max-width: 380px;
-        }
-        .small-listing-modern-img {
-          width: 180px;
-          height: 180px;
-          object-fit: cover;
-          border-radius:12px;
-          box-shadow: 0 2px 8px #ddebe8;
-          margin-right: 8px;
-          background: #f7f7f7;
-        }
-        @media (max-width:600px) {
-          .small-listing-modern { flex-direction: column; align-items: flex-start; max-width: 99vw;}
-          .small-listing-modern-img { width:120px; height:120px;}
-        }
-        .small-listing-info { font-size: 0.98em;}
-        .small-listing-title { font-weight: 700; margin-bottom: 6px; font-size:1.06em; }
-        .small-listing-category-badge {
-          font-size:.95em;
-          font-weight:500;
-          border-radius:10px;
-          background: #e6f6f5;
-          color: #2a5859;
-          padding:4px 10px;
-          margin-bottom:4px;
-          display:inline-block;
-        }
+          .small-listing-modern {
+            border: 1px solid #d9ece7;
+            border-radius: 14px;
+            background: #fafefe;
+            box-shadow: 0 1px 5px #e6f9f4;
+            margin-bottom: 1.2rem;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;   /* stack logo on top, text below */
+            align-items: center;      /* center the logo + text */
+            gap: 0.6rem;
+            max-width: 380px;
+          }
+
+          .small-listing-modern-img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px #ddebe8;
+            background: #f7f7f7;
+            margin: 0 auto;
+          }
+
+          .small-listing-info {
+            font-size: 0.98em;
+            text-align: center;       /* center text under logo */
+            width: 100%;
+          }
+
         /* Large listing preview */
         .listing-pic-wrap {
           display: flex;
@@ -199,6 +192,24 @@
           margin-bottom:4px;
           font-size:1em;
         }
+
+        .listing-photo-strip {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          justify-content: center;
+          margin-top: 4px;
+          margin-bottom: 12px;
+        }
+
+        .listing-photo-item img {
+          width: 180px;
+          height: 180px;
+          object-fit: cover;
+          border-radius: 8px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
         .service-list {
           background: #f7faf8;
           border-radius: 9px;
@@ -604,6 +615,70 @@
         <textarea class="form-control" id="perks" name="perks" rows="2" maxlength="500" placeholder="List your business perks here">{{ form_data.perks or '' }}</textarea>
         <div class="form-text">At least one perk required. Separate with commas or new lines.</div>
       </div>
+
+      <!-- Photos from Social Media -->
+      <div class="col-12 mt-3">
+        <button
+          class="btn btn-outline-primary mb-2"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#photosCollapse"
+          aria-expanded="false"
+          aria-controls="photosCollapse">
+          Add Photos from Social Media or Web
+          <br>(click to add image URLs for your gallery)
+        </button>
+
+        <div class="collapse mt-2" id="photosCollapse">
+          <small class="text-muted d-block mb-2">
+            Paste direct image URLs (for example from Facebook, Instagram, or other hosts).  
+            Recommended size: 800 × 800 pixels (square) for best display.
+          </small>
+
+          <div id="photos-list">
+            {# prepare up to 6 current values from draft/live #}
+            {% set photos = [
+              business.draft_photo1_url or business.photo1_url,
+              business.draft_photo2_url or business.photo2_url,
+              business.draft_photo3_url or business.photo3_url,
+              business.draft_photo4_url or business.photo4_url,
+              business.draft_photo5_url or business.photo5_url,
+              business.draft_photo6_url or business.photo6_url
+            ] %}
+
+            {# always show at least 3 fields; show more if there is data #}
+            {% for i in range(0, 6) %}
+              {% if photos[i] or i < 3 %}
+                <div class="input-group mb-2 photo-field" data-index="{{ i }}">
+                  <span class="input-group-text">Photo {{ i+1 }}</span>
+                  <input
+                    type="url"
+                    class="form-control"
+                    name="photo_url_{{ i+1 }}"
+                    placeholder="https://example.com/your-image.jpg"
+                    value="{{ photos[i] or '' }}">
+                  <button
+                    class="btn btn-outline-danger photo-remove"
+                    type="button"
+                    onclick="removePhotoField(this)"
+                    {% if i < 3 %}disabled{% endif %}>
+                    &minus;
+                  </button>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <button
+            class="btn btn-outline-primary"
+            type="button"
+            id="addPhotoBtn">
+            + Add Photo
+          </button>
+          <small class="text-muted d-block mt-1">Max 6 photos.</small>
+        </div>
+      </div>
+
       <div class="col-12 mb-3">
         <label class="form-label">Listing Type <span class="text-danger">*</span></label>
         <select class="form-select" name="listing_type" required>
@@ -911,7 +986,7 @@
 <div>
   {% if not business.stripe_account_id %}
     <!-- No Stripe account yet -->
-    <a href="{{ url_for('onboard_business_stripe') }}" class="btn btn-primary w-100">
+    <a href="{{ url_for('business_onboarding') }}" class="btn btn-primary w-100">
       Set Up Payouts (Bank Transfer)
     </a>
 
@@ -930,7 +1005,7 @@
           Stripe needs more information before enabling payouts.
         </div>
         <div class="mt-1">
-          <a href="{{ url_for('onboard_business_stripe') }}" class="btn btn-sm btn-warning w-100">
+          <a href="{{ url_for('business_onboarding') }}" class="btn btn-sm btn-warning w-100">
             Finish Stripe setup
           </a>
         </div>
@@ -941,7 +1016,7 @@
           Your Stripe account is not ready for payouts. Please review your details in Stripe.
         </div>
         <div class="mt-1">
-          <a href="{{ url_for('onboard_business_stripe') }}" class="btn btn-sm btn-danger w-100">
+          <a href="{{ url_for('business_onboarding') }}" class="btn btn-sm btn-danger w-100">
             Update Stripe account
           </a>
         </div>
@@ -953,14 +1028,14 @@
       {% set biz_net = business.earnings_balance|float %}
       {% if biz_net >= 10 %}
         {# Standard business payout #}
-        {% set std_fee_biz = biz_net * 0.0025 + 0.35 %}
+        {% set std_fee_biz = biz_net * 0.005 + 0.35 %}
         {% set std_net_biz = biz_net - std_fee_biz %}
         <div class="mb-3 border rounded p-3">
           <div class="fw-bold mb-1">
             <i class="bi bi-bank"></i> Standard Payout (1-10 business days)
           </div>
           <div class="text-muted mb-1" style="font-size:0.97em;">
-            Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee_biz) }} (0.25% + $0.35)<br>
+            Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee_biz) }} (0.5% + $0.35)<br>
             If you withdraw full balance, you would receive:
             <b>${{ '{:,.2f}'.format(std_net_biz) }}</b>
           </div>
@@ -978,9 +1053,10 @@
                 placeholder="Amount (leave blank for full)"
               >
             </div>
-            <button type="submit" class="btn btn-success w-100">
-              Withdraw to Bank (Standard)
-            </button>
+              <button type="submit" class="btn btn-success w-100"
+                      onclick="this.disabled=true; this.form.submit();">
+                Withdraw (Standard)
+              </button>
           </form>
         </div>
       {% else %}
@@ -1208,7 +1284,13 @@
                   business.draft_service_1 or business.draft_service_2 or business.draft_service_3 or
                   business.draft_service_4 or business.draft_service_5 or business.draft_service_6 or
                   business.draft_service_7 or business.draft_service_8 or business.draft_service_9 or
-                  business.draft_service_10 or business.draft_search_keywords
+                  business.draft_service_10 or business.draft_search_keywords or
+                  business.draft_photo1_url or
+                  business.draft_photo2_url or
+                  business.draft_photo3_url or
+                  business.draft_photo4_url or
+                  business.draft_photo5_url or
+                  business.draft_photo6_url
                 ))
           %}
             <form method="post" action="{{ url_for('listing_disclaimer') }}" class="mb-3 mt-2">
@@ -1261,6 +1343,7 @@ window.addEventListener('DOMContentLoaded', function() {
       if(input.value.trim()!="") services.push(input.value.trim());
     });
     let img = {{ (profile_img_url if profile_img_url else "") | tojson }};
+    let galleryPhotos = {{ preview_photos | tojson }};
     let lat = document.getElementById('latitude')?.value || "0";
     let lng = document.getElementById('longitude')?.value || "0";
     if (!lat || isNaN(Number(lat))) lat = "";
@@ -1332,13 +1415,36 @@ let largeListing = `
       </a>
     </div>
   ` : '<div class="text-muted mb-2">Map unavailable</div>'}
+
+
+  ${galleryPhotos.length ? `
+    <hr class="mt-4 mb-3">
+    <div class="text-center mb-2">
+      <h4 style="color: var(--pm-primary); font-weight: 700; margin-bottom: 0.25rem;">
+        Gallery
+      </h4>
+      <div style="font-size: 0.9em; color: #555;">
+        (Click on image to view full size - opens in new window)
+      </div>
+    </div>
+    <div class="listing-photo-strip">
+      ${galleryPhotos.map(url => `
+        <div class="listing-photo-item">
+          <a href="${url}" target="_blank" rel="noopener noreferrer">
+            <img src="${url}" alt="Photo of ${name}">
+          </a>
+        </div>
+      `).join('')}
+    </div>
+  ` : ''}
+
 `;
 
     let html = `
-      <h5>Small Listing Preview</h5>
+      <h5>Small Listing Preview</h5><h6> (Live will be slightly different)</h6>
       ${smallListing}
       <hr/>
-      <h5>Large Listing Preview</h5>
+      <h5>Large Listing Preview</h5><h6> (Live will be slightly different)</h6>
       ${largeListing}
     `;
     // Only replace what follows the form in the modal body.
@@ -1436,6 +1542,62 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   });
+});
+</script>
+
+<script>
+  // existing window.addEventListener('DOMContentLoaded', function() { ... }) is already there.
+  // we’ll extend it, not replace it.
+
+window.addEventListener('DOMContentLoaded', function() {
+  // ... your existing previewListingBtn code is here ...
+
+  // ---- photos dynamic fields (3–6) ----
+  const photosList = document.getElementById('photos-list');
+  const addPhotoBtn = document.getElementById('addPhotoBtn');
+
+  function currentPhotoCount() {
+    return photosList ? photosList.querySelectorAll('.photo-field').length : 0;
+  }
+
+  window.removePhotoField = function (btn) {
+    const field = btn.closest('.photo-field');
+    if (!field) return;
+    const idx = parseInt(field.getAttribute('data-index'), 10);
+    // only allow removing fields 4–6 (index >= 3)
+    if (idx >= 3) {
+      field.remove();
+    }
+  };
+
+  if (addPhotoBtn && photosList) {
+    addPhotoBtn.addEventListener('click', function () {
+      let count = currentPhotoCount();
+      if (count >= 6) return;
+
+      const index = count; // next index
+      const wrapper = document.createElement('div');
+      wrapper.className = 'input-group mb-2 photo-field';
+      wrapper.setAttribute('data-index', index);
+
+      wrapper.innerHTML = `
+        <span class="input-group-text">Photo ${index + 1}</span>
+        <input
+          type="url"
+          class="form-control"
+          name="photo_url_${index + 1}"
+          placeholder="https://example.com/your-image.jpg">
+        <button
+          class="btn btn-outline-danger photo-remove"
+          type="button"
+          onclick="removePhotoField(this)">
+          &minus;
+        </button>
+      `;
+
+      photosList.appendChild(wrapper);
+    });
+  }
 });
 </script>
 
