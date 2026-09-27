@@ -231,6 +231,15 @@
       {% endif %}
       <h2 class="listing-title">{{ business.business_name }}</h2>
       <span class="biz-category-badge mb-2">{{ business.category }}</span>
+
+{% if business.location_varies and business.live_gps_lat and business.live_gps_long %}
+  <div class="mt-1 mb-2 text-center">
+    <span class="badge bg-info text-dark">
+      live location enabled
+    </span>
+  </div>
+{% endif %}
+
       <span class="biz-finalization-badge mb-2">
         <b>Finalization: {{ business.finalization }}</b><br>
         {% if business.account_balance >= 250 %}
@@ -412,21 +421,26 @@
 
     <div>
       <strong>Location Map:</strong>
-      {% if business.latitude and business.longitude %}
+
+      {# choose which coordinates to use: live GPS if location_varies and live coords exist, else static business lat/lng #}
+      {% set map_lat = business.live_gps_lat if business.location_varies and business.live_gps_lat is not none else business.latitude %}
+      {% set map_lng = business.live_gps_long if business.location_varies and business.live_gps_long is not none else business.longitude %}
+
+      {% if map_lat and map_lng %}
         <div class="map-wrap">
           <iframe
                 width="100%" height="100%" style="border:0"
                 loading="lazy" allowfullscreen
                 referrerpolicy="no-referrer-when-downgrade"
                 src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDo-AojTUQUwwvvywrSiDRcF-oVpw9m_w4
-                &q={{ business.latitude }},{{ business.longitude }}">
+                &q={{ map_lat }},{{ map_lng }}">
           </iframe>
         </div>
         <div class="mt-2 mb-3">
           <a id="directions-link"
              class="btn btn-outline-primary map-link-btn"
              target="_blank"
-             href="https://www.google.com/maps/dir/?api=1&destination={{ business.latitude }},{{ business.longitude }}">
+             href="https://www.google.com/maps/dir/?api=1&destination={{ map_lat }},{{ map_lng }}">
             Driving directions
           </a>
         </div>

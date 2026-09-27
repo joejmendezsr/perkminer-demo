@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Track Service Provider</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: #f3f4f6;
+    }
+
+    /* Container spans full viewport */
+    #app {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top bar */
+    #top-bar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      z-index: 1000;
+    }
+
+    #status-block {
+      font-size: 0.9rem;
+    }
+
+    #status-label {
+      font-weight: 600;
+    }
+
+    #eta-text {
+      font-size: 0.8rem;
+      color: #4b5563;
+    }
+
+    #dest-text {
+      margin-top: 4px;
+      font-size: 0.8rem;
+      color: #4b5563;
+    }
+
+    #close-btn {
+      border: none;
+      background: transparent;
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px 8px;
+      color: #374151;
+    }
+
+    #close-btn:hover {
+      color: #111827;
+      background: #f3f4f6;
+      border-radius: 999px;
+    }
+
+    /* Map takes the rest of the screen */
+    #map {
+      flex: 1 1 auto;
+      min-height: 200px;
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 600px) {
+      #top-bar {
+        padding: 6px 8px;
+      }
+
+      #status-block {
+        font-size: 0.85rem;
+      }
+
+      #dest-text {
+        font-size: 0.78rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="top-bar">
+    <div id="status-block">
+      <div>
+        Status:
+        <span id="status-label">Loading...</span>
+      </div>
+      <div id="eta-text"></div>
+      <div id="dest-text">
+        {% if interaction.destination_address %}
+          <strong>Destination:</strong> {{ interaction.destination_address }}
+        {% else %}
+          <strong>Destination:</strong> {{ interaction.business.business_name }}
+        {% endif %}
+      </div>
+    </div>
+    <button id="close-btn" onclick="window.close()">×</button>
+  </div>
+  <div id="map"></div>
+</div>
+
+<!-- Leaflet JS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin="">
+</script>
+<script>
+  const interactionId = {{ interaction.id }};
+  const statusLabel = document.getElementById('status-label');
+  const etaText = document.getElementById('eta-text');
+  const destText = document.getElementById('dest-text');
+
+  // Destination coords from interaction, with business as fallback
+  const destLat = {{ interaction.destination_lat if interaction.destination_lat is not none else (interaction.business.latitude or 0) }};
+  const destLng = {{ interaction.destination_lng if interaction.destination_lng is not none else (interaction.business.longitude or 0) }};
+
+  // Initialize map view: center near destination if available, else world
+  let initialCenter = [0, 0];
+  let initialZoom = 2;
+  if (destLat && destLng) {
+    initialCenter = [destLat, destLng];
+    initialZoom = 12;
+  }
+
+  const map = L.map('map').setView(initialCenter, initialZoom);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  let providerMarker = null;
+  let destinationMarker = null;
+  let routeLine = null;
+
+  if (destLat && destLng) {
+    destinationMarker = L.marker([destLat, destLng], {
+      title: "Destination"
+    }).addTo(map);
+  }
+
+  function humanStatus(code) {
+    const mapStatus = {
+      "on_the_way": "On the way",
+      "arrived": "Arrived",
+      "contract_initial_paid": "Contract signed - initial fee paid",
+      "contract_full_paid": "Contract signed - full fee paid",
+      "service_fee_only": "Service call fee only paid",
+      "rejected_no_contract": "Rejected quote - no contract or fee",
+      "estimate_only": "Estimate only"
+    };
+    return mapStatus[code] || "Unknown";
+  }
+
+  function updateRoute(lat, lng) {
+    if (!destLat || !destLng) return;
+
+    const points = [
+      [lat, lng],
+      [destLat, destLng]
+    ];
+
+    if (!routeLine) {
+      routeLine = L.polyline(points, {
+        color: "#2563eb",  // blue-600
+        weight: 3,
+        dashArray: "6,4"
+      }).addTo(map);
+    } else {
+      routeLine.setLatLngs(points);
+    }
+  }
+
+  async function fetchStatusAndLocation() {
+    try {
+      const res = await fetch(`/session/${interactionId}/provider_status_location`);
+      if (!res.ok) return;
+      const data = await res.json();
+
+      // status + ETA
+      statusLabel.textContent = humanStatus(data.provider_status) || "No status yet";
+
+      if (data.eta_minutes != null) {
+        etaText.textContent = `Estimated arrival: ~${data.eta_minutes} min`;
+      } else {
+        etaText.textContent = "";
+      }
+
+      if (!data.has_location) {
+        return;
+      }
+
+      const lat = data.lat;
+      const lng = data.lng;
+
+      if (!providerMarker) {
+        providerMarker = L.marker([lat, lng], {
+          title: "Service provider"
+        }).addTo(map);
+        // Fit bounds to show both provider and destination if we have both
+        if (destLat && destLng) {
+          const group = L.featureGroup([providerMarker, destinationMarker].filter(Boolean));
+          map.fitBounds(group.getBounds().pad(0.25));
+        } else {
+          map.setView([lat, lng], 14);
+        }
+      } else {
+        providerMarker.setLatLng([lat, lng]);
+      }
+
+      // Update simple visual route line
+      updateRoute(lat, lng);
+    } catch (e) {
+      console.error("Error fetching provider status/location:", e);
+    }
+  }
+
+  // Poll every 5 seconds
+  setInterval(fetchStatusAndLocation, 5000);
+  fetchStatusAndLocation();
+</script>
+</body>
+</html>

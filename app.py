@@ -12,7 +12,7 @@ from flask_login import (
 from flask_wtf import FlaskForm, CSRFProtect, RecaptchaField
 from wtforms import (
     StringField, PasswordField, SubmitField, DecimalField, SelectField, FileField,
-    TextAreaField, Form
+    TextAreaField, Form, BooleanField
 )
 from wtforms.validators import (
     DataRequired, Email, Length, EqualTo, Optional, NumberRange
@@ -191,6 +191,7 @@ app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
 app.config['RECAPTCHA_PUBLIC_KEY'] = '6LdhAV8sAAAAABwITf0HytcbADISlcMd87NP-i2H'
 app.config['RECAPTCHA_PRIVATE_KEY'] = '6LdhAV8sAAAAAFi9YjxnZqFLUl3SlQjHc1g7IEOq'
+app.config['GOOGLE_MAPS_API_KEY'] = os.environ.get('GOOGLE_MAPS_API_KEY')
 
 SHOP_SECRET = os.environ.get("SHOP_SECRET", app.config['SECRET_KEY'])
 shop_serializer = URLSafeSerializer(SHOP_SECRET, salt="shop-redirect")
@@ -1431,6 +1432,9 @@ class Business(db.Model):
     draft_photo4_url = db.Column(db.Text)
     draft_photo5_url = db.Column(db.Text)
     draft_photo6_url = db.Column(db.Text)
+    live_gps_lat = db.Column(db.Float)
+    live_gps_long = db.Column(db.Float)
+    location_varies = db.Column(db.Boolean, default=False)
     theme_type = db.Column(db.String(50))
 
 class Favorite(db.Model):
@@ -1957,6 +1961,8 @@ class Interaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
+    # NEW: assigned service provider (staff)
+    assigned_staff_id = db.Column(db.Integer, db.ForeignKey('staff.id'), nullable=True)
     service_type = db.Column(db.String(100), nullable=False)
     details = db.Column(db.Text, nullable=False)
     budget_low = db.Column(db.Float)
@@ -1969,6 +1975,16 @@ class Interaction(db.Model):
     awaiting_payment = db.Column(db.Boolean, default=False)
     # relationships for easier querying (optional)
     user = db.relationship('User', backref='interactions', lazy=True)
+    # NEW relationship
+    assigned_staff = db.relationship("Staff", backref="assigned_interactions", lazy=True)
+    provider_status = db.Column(db.String(50))
+    provider_status_note = db.Column(db.Text)
+    provider_status_updated_at = db.Column(db.DateTime)
+    destination_address = db.Column(db.Text)
+    destination_lat = db.Column(db.Float)
+    destination_lng = db.Column(db.Float)
+    member_destination_confirmed = db.Column(db.Boolean)  # True, False, or None (not responded yet)
+    member_destination_note = db.Column(db.Text)          # optional text or flag like "Incorrect Address - Address Updated by Member"
     business = db.relationship('Business', backref='interactions', lazy=True)
 
 class Message(db.Model):
@@ -2050,12 +2066,19 @@ class Staff(db.Model):
     name = db.Column(db.String(255))
     email = db.Column(db.String(255), unique=True, nullable=False)
     hashed_password = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(20), default="staff")  # Future roles possible
+
+    # NEW
+    role = db.Column(db.String(20), default="admin", nullable=False)
+    can_add_providers = db.Column(db.Boolean, default=False, nullable=False)
+
+    # NEW (live location)
+    live_gps_lat = db.Column(db.Float)
+    live_gps_long = db.Column(db.Float)
+
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     password_reset_required = db.Column(db.Boolean, default=True)
 
-    # Relationships
     business = db.relationship("Business", backref="staff_members")
 
     __table_args__ = (
@@ -2076,6 +2099,16 @@ class EcommerceVerificationPing(db.Model):
 class StaffRegisterForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])
     name = StringField("Name", validators=[DataRequired()])
+    role = SelectField(
+        "Role",
+        choices=[
+            ("", "Select one"),           # default, invalid choice
+            ("admin", "Admin"),
+            ("service_provider", "Service Provider"),
+        ],
+        validators=[DataRequired(message="Please select a role.")]
+    )
+    can_add_providers = BooleanField("Allow this admin to add service providers")
     submit = SubmitField("Add Staff")
 
 class StaffLoginForm(FlaskForm):
@@ -2134,6 +2167,33 @@ class ConversationParticipant(db.Model):
     conversation_id = db.Column(db.Integer, db.ForeignKey('conversation.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     # Optionally add role ("member", "business", "admin")
+
+class SimplePagination:
+    def __init__(self, page, per_page, total):
+        self.page = page
+        self.per_page = per_page
+        self.total = total
+
+    @property
+    def pages(self):
+        from math import ceil
+        return ceil(self.total / float(self.per_page)) if self.per_page else 0
+
+    @property
+    def has_prev(self):
+        return self.page > 1
+
+    @property
+    def has_next(self):
+        return self.page < self.pages
+
+    @property
+    def prev_num(self):
+        return self.page - 1 if self.has_prev else None
+
+    @property
+    def next_num(self):
+        return self.page + 1 if self.has_next else None
 
 def calculate_user_grand_total(user):
     ref_code = user.referral_code
@@ -2302,6 +2362,27 @@ def get_finalized_tx_count_for_business(business: Business) -> int:
     )
     return count or 0
 
+def staff_login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        staff_id = session.get('staff_id')
+        if not staff_id:
+            flash("Please log in as staff.", "warning")
+            return redirect(url_for('staff_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_staff_required(f):
+    @wraps(f)
+    @staff_login_required
+    def decorated_function(*args, **kwargs):
+        staff_id = session.get('staff_id')
+        staff = Staff.query.get(staff_id)
+        if not staff or staff.role != "admin":
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
 def get_stripe_payout_status(user):
     if not user.stripe_account_id:
         return {
@@ -2404,69 +2485,128 @@ def ensure_business_payout_capability(business: Business):
     except Exception as e:
         logging.error("Error requesting payout capability for business %s: %s", business.id, e)
 
-def get_featured_businesses(lat, lng):
-    # 1. Find nearby businesses within 10 miles using the haversine formula
-    RADIUS = 10  # miles
-    N_FEATURED = 10
+from math import radians, sin, cos, acos
 
-    haversine = (
-        3959 * func.acos(
-            func.least(
-                1.0,
-                func.cos(func.radians(lat)) *
-                func.cos(func.radians(Business.latitude)) *
-                func.cos(func.radians(Business.longitude) - func.radians(lng)) +
-                func.sin(func.radians(lat)) *
-                func.sin(func.radians(Business.latitude))
-            )
+def get_business_coords_for_distance(biz):
+    """
+    Returns (lat, lng) for distance/map calculations.
+    - if location_varies and live_gps is set → use live_gps_lat/long
+    - else → use static latitude/longitude
+    """
+    if getattr(biz, "location_varies", False) and biz.live_gps_lat is not None and biz.live_gps_long is not None:
+        return biz.live_gps_lat, biz.live_gps_long
+    return biz.latitude, biz.longitude
+
+
+def haversine_py(lat1, lon1, lat2, lon2):
+    """Haversine distance in miles."""
+    return 3959 * acos(
+        min(
+            1.0,
+            cos(radians(lat1)) * cos(radians(lat2)) * cos(radians(lon2) - radians(lon1)) +
+            sin(radians(lat1)) * sin(radians(lat2))
         )
     )
 
-    # 2. Filter all approved businesses within radius
-    all_nearby = Business.query \
-        .filter(Business.status == "approved") \
-        .filter(Business.latitude.isnot(None), Business.longitude.isnot(None)) \
-        .add_columns(haversine.label('distance')) \
-        .filter(haversine <= RADIUS) \
+import math
+
+def haversine_miles(lat1, lon1, lat2, lon2):
+    R = 3959  # Earth radius miles
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+
+    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+def get_featured_businesses(lat, lng):
+    RADIUS = 10  # miles
+    N_FEATURED = 10
+
+    # 1. get all approved businesses that have *some* coords (static or live)
+    candidates = (
+        Business.query
+        .filter(Business.status == "approved")
+        .filter(
+            (Business.latitude.isnot(None) & Business.longitude.isnot(None)) |
+            (Business.live_gps_lat.isnot(None) & Business.live_gps_long.isnot(None))
+        )
         .all()
+    )
 
-    # Pull the Business objects only
-    businesses = [b for (b, d) in all_nearby]
+    # 2. compute distance in Python using live vs static coords
+    nearby = []
+    for biz in candidates:
+        biz_lat, biz_lng = get_business_coords_for_distance(biz)
+        if biz_lat is None or biz_lng is None:
+            continue
+        try:
+            d = haversine_py(lat, lng, biz_lat, biz_lng)
+        except ValueError:
+            continue
+        if d <= RADIUS:
+            nearby.append((biz, d))
 
-    # 3. Manually featured businesses in this group
-    manual_featured = [b for (b, d) in all_nearby if b.manual_feature]
+    # pull the Business objects only
+    businesses = [b for (b, d) in nearby]
 
-    # If 10 or more manuals, use only those
+    # no nearby businesses at all
+    if not businesses:
+        return []
+
+    # 3. manually featured within nearby group
+    manual_featured = [b for (b, d) in nearby if b.manual_feature]
+
+    # if 10 or more manuals, use only those (closest first)
     if len(manual_featured) >= N_FEATURED:
-        featured = manual_featured[:N_FEATURED]
-        return featured
+        # sort manuals by distance so we pick the closest 10
+        manuals_with_dist = [(b, d) for (b, d) in nearby if b.manual_feature]
+        manuals_with_dist.sort(key=lambda x: x[1])
+        return [b for (b, d) in manuals_with_dist[:N_FEATURED]]
 
-    # 4. Calculate rank for the rest
-    # Metrics for all in range
-    tx_counts = {b.id: BusinessTransaction.query.filter_by(business_referral_id=b.referral_code).count() for b in businesses}
-    max_tx = max(tx_counts.values() or [1])  # default to 1 if empty
+    # 4. rank the rest
+    tx_counts = {
+        b.id: BusinessTransaction.query.filter_by(business_referral_id=b.referral_code).count()
+        for b in businesses
+    }
+    max_tx = max(tx_counts.values() or [1])
 
-    ad_fees = {b.id: float(db.session.query(func.coalesce(func.sum(BusinessTransaction.ad_fee), 0)).filter_by(business_referral_id=b.referral_code).scalar()) for b in businesses}
+    ad_fees = {
+        b.id: float(
+            db.session.query(func.coalesce(func.sum(BusinessTransaction.ad_fee), 0))
+            .filter_by(business_referral_id=b.referral_code)
+            .scalar()
+        )
+        for b in businesses
+    }
     max_ad_fee = max(ad_fees.values() or [1])
 
-    # Direct referrals: count how many businesses have this biz as sponsor
-    referrals = {b.id: Business.query.filter_by(sponsor_id=b.id).count() for b in businesses}
+    referrals = {
+        b.id: Business.query.filter_by(sponsor_id=b.id).count()
+        for b in businesses
+    }
     max_referrals = max(referrals.values() or [1])
 
-    # Compute rank (1,000 pt scale)
     for b in businesses:
         tx_score = (tx_counts[b.id] / max_tx) * 250 if max_tx else 0
         ad_score = (ad_fees[b.id] / max_ad_fee) * 150 if max_ad_fee else 0
         ref_score = (referrals[b.id] / max_referrals) * 600 if max_referrals else 0
         b.rank = round(tx_score + ad_score + ref_score, 2)
 
-    # 5. Exclude manuals, sort all others by rank (desc), fill up to 10
-    remaining = [b for b in businesses if not b.manual_feature]
-    ranked = sorted(remaining, key=lambda b: b.rank, reverse=True)
-    n_needed = N_FEATURED - len(manual_featured)
-    featured = manual_featured + ranked[:n_needed]
+    # 5. exclude manuals, sort others by rank (desc), then by distance (asc)
+    manual_ids = {b.id for b in manual_featured}
+    remaining = [(b, d) for (b, d) in nearby if b.id not in manual_ids]
 
-    # Always max 10
+    # sort remaining by rank desc, then distance asc
+    remaining.sort(key=lambda bd: (-bd[0].rank, bd[1]))
+
+    n_needed = N_FEATURED - len(manual_featured)
+    featured_extra = [b for (b, d) in remaining[:n_needed]]
+
+    featured = manual_featured + featured_extra
+
+    # ensure max 10
     return featured[:N_FEATURED]
 
 def add_monthly_investor_earnings(user, year, month, investment_amount, rate):
@@ -3527,80 +3667,112 @@ def home():
     search_radius = 10  # miles
 
     if lat is not None and lng is not None:
-        haversine = (
-            3959 * func.acos(
-                func.least(
-                    1.0,
-                    func.cos(func.radians(lat)) *
-                    func.cos(func.radians(Business.latitude)) *
-                    func.cos(func.radians(Business.longitude) - func.radians(lng)) +
-                    func.sin(func.radians(lat)) *
-                    func.sin(func.radians(Business.latitude))
-                )
+        # get approved businesses that have either static or live coords
+        candidates = (
+            Business.query
+            .filter_by(status="approved")
+            .filter(
+                (Business.latitude.isnot(None) & Business.longitude.isnot(None)) |
+                (Business.live_gps_lat.isnot(None) & Business.live_gps_long.isnot(None))
             )
+            .all()
         )
 
-        # Businesses in range
-        all_nearby = Business.query.filter_by(status="approved") \
-            .filter(Business.latitude.isnot(None), Business.longitude.isnot(None)) \
-            .add_columns(haversine.label('distance')) \
-            .filter(haversine <= search_radius) \
-            .all()
-        nearby_businesses = [b for b, d in all_nearby]
-        business_ids = [b.id for b in nearby_businesses]
+        # compute distance in Python using live vs static coords
+        nearby = []
+        for biz in candidates:
+            biz_lat, biz_lng = get_business_coords_for_distance(biz)
+            if biz_lat is None or biz_lng is None:
+                continue
+            try:
+                d = haversine_py(lat, lng, biz_lat, biz_lng)
+            except ValueError:
+                continue
+            if d <= search_radius:
+                nearby.append((biz, d))
 
-        # Manual featured first
-        manual_featured = [b for b, d in all_nearby if b.manual_feature]
-        if len(manual_featured) >= N_FEATURED:
-            featured_listings = manual_featured[:N_FEATURED]
+        nearby_businesses = [b for (b, d) in nearby]
+
+        # if nothing nearby, just fall back to no-location logic
+        if not nearby_businesses:
+            manual_featured = Business.query.filter_by(status="approved", manual_feature=True) \
+                                            .order_by(Business.rank.desc()) \
+                                            .limit(N_FEATURED).all()
+            needed = N_FEATURED - len(manual_featured)
+            if needed > 0:
+                ranked = Business.query.filter_by(status="approved", manual_feature=False) \
+                                       .order_by(Business.rank.desc()) \
+                                       .limit(needed).all()
+                for b in manual_featured + ranked:
+                    b.distance_mi = None
+                featured_listings = manual_featured + ranked
+            else:
+                for b in manual_featured:
+                    b.distance_mi = None
+                featured_listings = manual_featured[:N_FEATURED]
         else:
-            # --- Calculate rank dynamically for each business in range ---
-            # 1. Transactions
-            tx_counts = {
-                b.id: BusinessTransaction.query.filter_by(business_referral_id=b.referral_code).count()
-                for b in nearby_businesses
-            }
-            max_tx = max(tx_counts.values() or [1])
+            # manual featured first within nearby group
+            manual_featured = [b for (b, d) in nearby if b.manual_feature]
 
-            # 2. Ad fees
-            ad_fees = {
-                b.id: float(db.session.query(func.coalesce(func.sum(BusinessTransaction.ad_fee), 0))
-                    .filter_by(business_referral_id=b.referral_code).scalar())
-                for b in nearby_businesses
-            }
-            max_ad_fee = max(ad_fees.values() or [1])
+            # map for distances
+            dist_lookup = {b.id: d for (b, d) in nearby}
 
-            # 3. Direct referrals
-            referrals = {
-                b.id: Business.query.filter_by(sponsor_id=b.id).count()
-                for b in nearby_businesses
-            }
-            max_ref = max(referrals.values() or [1])
+            if len(manual_featured) >= N_FEATURED:
+                # sort manuals by distance and pick closest 10
+                manuals_with_dist = [(b, dist_lookup.get(b.id)) for b in manual_featured]
+                manuals_with_dist.sort(key=lambda x: x[1] if x[1] is not None else 999999)
+                featured_listings = [b for (b, d) in manuals_with_dist[:N_FEATURED]]
+            else:
+                # --- Calculate rank dynamically for each business in range ---
+                tx_counts = {
+                    b.id: BusinessTransaction.query.filter_by(business_referral_id=b.referral_code).count()
+                    for b in nearby_businesses
+                }
+                max_tx = max(tx_counts.values() or [1])
 
-            # Calculate rank for all non-manual-featured
-            not_manual = [b for b in nearby_businesses if not b.manual_feature]
-            for b in not_manual:
-                tx_score = (tx_counts[b.id] / max_tx) * 250 if max_tx else 0
-                ad_score = (ad_fees[b.id] / max_ad_fee) * 150 if max_ad_fee else 0
-                ref_score = (referrals[b.id] / max_ref) * 600 if max_ref else 0
-                b.rank = round(tx_score + ad_score + ref_score, 2)
-            # Fill up with highest rank
-            n_needed = N_FEATURED - len(manual_featured)
-            ranked = sorted(not_manual, key=lambda b: b.rank, reverse=True)
-            featured_listings = manual_featured + ranked[:n_needed]
-            # Set distance_mi for display
-            dist_lookup = {b.id: d for b, d in all_nearby}
+                ad_fees = {
+                    b.id: float(
+                        db.session.query(func.coalesce(func.sum(BusinessTransaction.ad_fee), 0))
+                        .filter_by(business_referral_id=b.referral_code)
+                        .scalar()
+                    )
+                    for b in nearby_businesses
+                }
+                max_ad_fee = max(ad_fees.values() or [1])
+
+                referrals = {
+                    b.id: Business.query.filter_by(sponsor_id=b.id).count()
+                    for b in nearby_businesses
+                }
+                max_ref = max(referrals.values() or [1])
+
+                not_manual = [b for b in nearby_businesses if not b.manual_feature]
+                for b in not_manual:
+                    tx_score = (tx_counts[b.id] / max_tx) * 250 if max_tx else 0
+                    ad_score = (ad_fees[b.id] / max_ad_fee) * 150 if max_ad_fee else 0
+                    ref_score = (referrals[b.id] / max_ref) * 600 if max_ref else 0
+                    b.rank = round(tx_score + ad_score + ref_score, 2)
+
+                n_needed = N_FEATURED - len(manual_featured)
+                ranked = sorted(not_manual, key=lambda b: b.rank, reverse=True)
+                featured_listings = manual_featured + ranked[:n_needed]
+
+            # set distance_mi for display using live/static coords
             for b in featured_listings:
-                b.distance_mi = round(dist_lookup.get(b.id, 0) or 0, 2)
+                d = dist_lookup.get(b.id)
+                b.distance_mi = round(d, 2) if d is not None else None
+
     else:
         # No location: show 10, manual first, then highest rank
-        manual_featured = Business.query.filter_by(status="approved", manual_feature=True).order_by(Business.rank.desc()).limit(N_FEATURED).all()
+        manual_featured = Business.query.filter_by(status="approved", manual_feature=True) \
+                                        .order_by(Business.rank.desc()) \
+                                        .limit(N_FEATURED).all()
         needed = N_FEATURED - len(manual_featured)
         if needed > 0:
-            ranked = Business.query.filter_by(status="approved", manual_feature=False).order_by(Business.rank.desc()).limit(needed).all()
-            for b in manual_featured:
-                b.distance_mi = None
-            for b in ranked:
+            ranked = Business.query.filter_by(status="approved", manual_feature=False) \
+                                   .order_by(Business.rank.desc()) \
+                                   .limit(needed).all()
+            for b in manual_featured + ranked:
                 b.distance_mi = None
             featured_listings = manual_featured + ranked
         else:
@@ -3608,7 +3780,7 @@ def home():
                 b.distance_mi = None
             featured_listings = manual_featured[:N_FEATURED]
 
-    # ------------ Totals ------------
+    # ------------ Totals ------------ (unchanged)
     user_transactions = UserTransaction.query.all()
     total_user_tier1 = sum(t.cash_back or 0 for t in user_transactions)
     total_user_commission = sum(
@@ -3689,47 +3861,54 @@ def search():
     use_location = lat is not None and lng is not None
 
     if use_location:
-        haversine = (
-            3959 * func.acos(
-                func.least(
-                    1.0,
-                    func.cos(func.radians(lat)) *
-                    func.cos(func.radians(Business.latitude)) *
-                    func.cos(func.radians(Business.longitude) - func.radians(lng)) +
-                    func.sin(func.radians(lat)) *
-                    func.sin(func.radians(Business.latitude))
-                )
-            )
-        ).label('distance_mi')
-
-        query = (
+        # fetch all candidates that have either static or live coords
+        candidates = (
             base_query
-            .filter(Business.latitude.isnot(None), Business.longitude.isnot(None))
-            .add_columns(haversine)
+            .filter(
+                (Business.latitude.isnot(None) & Business.longitude.isnot(None)) |
+                (Business.live_gps_lat.isnot(None) & Business.live_gps_long.isnot(None))
+            )
+            .all()
         )
+
+        listings_with_dist = []
+        for biz in candidates:
+            biz_lat, biz_lng = get_business_coords_for_distance(biz)
+            if biz_lat is None or biz_lng is None:
+                continue
+            try:
+                d = haversine_py(lat, lng, biz_lat, biz_lng)
+            except ValueError:
+                continue
+            listings_with_dist.append((biz, d))
 
         # Filter by distance if set and not "all"
         if distance and distance != "all":
             try:
                 dist_num = float(distance)
-                query = query.filter(haversine <= dist_num)
+                listings_with_dist = [(b, d) for (b, d) in listings_with_dist if d <= dist_num]
             except ValueError:
                 pass
 
         # Order by distance
-        query = query.order_by(haversine)
+        listings_with_dist.sort(key=lambda x: x[1])
 
-        # paginate on the combined (Business, distance) rows
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-        results_raw = pagination.items  # list of (Business, distance)
+        # Manual pagination
+        total = len(listings_with_dist)
+        start = (page - 1) * per_page
+        end = start + per_page
+        page_items = listings_with_dist[start:end]
 
         listings = []
-        for biz, d in results_raw:
-            biz.distance_mi = round(d, 2) if d is not None else None
+        for biz, d in page_items:
+            biz.distance_mi = round(d, 2)
             listings.append(biz)
 
+        # simple pagination object for template
+        pagination = SimplePagination(page=page, per_page=per_page, total=total)
+
     else:
-        # No lat/lng: paginate plain business query (by rank/name or however you like)
+        # No lat/lng: paginate plain business query (by rank/name)
         pagination = (
             base_query
             .order_by(Business.rank.desc(), Business.business_name.asc())
@@ -3764,44 +3943,49 @@ def category_browse(name):
     use_location = lat is not None and lng is not None
 
     if use_location:
-        haversine = (
-            3959 * func.acos(
-                func.least(
-                    1.0,
-                    func.cos(func.radians(lat)) *
-                    func.cos(func.radians(Business.latitude)) *
-                    func.cos(func.radians(Business.longitude) - func.radians(lng)) +
-                    func.sin(func.radians(lat)) *
-                    func.sin(func.radians(Business.latitude))
-                )
-            )
-        ).label("distance_mi")
-
-        query = (
+        candidates = (
             base_query
-            .filter(Business.latitude.isnot(None), Business.longitude.isnot(None))
-            .add_columns(haversine)
+            .filter(
+                (Business.latitude.isnot(None) & Business.longitude.isnot(None)) |
+                (Business.live_gps_lat.isnot(None) & Business.live_gps_long.isnot(None))
+            )
+            .all()
         )
+
+        listings_with_dist = []
+        for biz in candidates:
+            biz_lat, biz_lng = get_business_coords_for_distance(biz)
+            if biz_lat is None or biz_lng is None:
+                continue
+            try:
+                d = haversine_py(lat, lng, biz_lat, biz_lng)
+            except ValueError:
+                continue
+            listings_with_dist.append((biz, d))
 
         # If a max distance is set, limit results
         if distance and distance != "all":
             try:
                 dist_num = float(distance)
-                query = query.filter(haversine <= dist_num)
+                listings_with_dist = [(b, d) for (b, d) in listings_with_dist if d <= dist_num]
             except ValueError:
                 pass
 
         # Sort by nearest
-        query = query.order_by(haversine)
+        listings_with_dist.sort(key=lambda x: x[1])
 
-        # paginate combined (Business, distance) rows
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-        results_raw = pagination.items  # list of (Business, distance)
+        total = len(listings_with_dist)
+        start = (page - 1) * per_page
+        end = start + per_page
+        page_items = listings_with_dist[start:end]
 
         listings = []
-        for biz, d in results_raw:
-            biz.distance_mi = round(d, 2) if d is not None else None
+        for biz, d in page_items:
+            biz.distance_mi = round(d, 2)
             listings.append(biz)
+
+        pagination = SimplePagination(page=page, per_page=per_page, total=total)
+
     else:
         # No lat/lng: just paginate all in this category
         pagination = (
@@ -5300,6 +5484,7 @@ def active_session(interaction_id):
         is_biz=is_biz,
         messages=messages_with_labels,
         can_shop_online=can_shop_online,
+        google_maps_api_key=current_app.config.get('GOOGLE_MAPS_API_KEY'),
         business=business
     )
 
@@ -5917,13 +6102,63 @@ def business_invite():
 @app.route("/business/interactions")
 @business_login_required
 def biz_user_interactions():
-    # Make sure only a logged-in business can view this
     biz_id = session.get('business_id')
     if not biz_id:
         flash("You must be logged in as a business.")
         return redirect(url_for('business_login'))
-    interactions = Interaction.query.filter_by(business_id=biz_id, status='active').order_by(Interaction.created_at.desc()).all()
-    return render_template("biz_user_interactions.html", interactions=interactions)
+
+    interactions = (
+        Interaction.query
+        .filter_by(business_id=biz_id, status='active')
+        .order_by(Interaction.created_at.desc())
+        .all()
+    )
+
+    # all active service providers for this business
+    service_providers = (
+        Staff.query
+        .filter_by(business_id=biz_id, is_active=True, role="service_provider")
+        .all()
+    )
+
+    return render_template(
+        "biz_user_interactions.html",
+        interactions=interactions,
+        service_providers=service_providers,
+    )
+
+@app.route("/business/interactions/<int:interaction_id>/assign", methods=["POST"])
+@business_login_required
+def assign_interaction(interaction_id):
+    biz_id = session.get("business_id")
+    interaction = Interaction.query.get_or_404(interaction_id)
+
+    # make sure this session belongs to this business
+    if interaction.business_id != biz_id:
+        abort(403)
+
+    staff_id = request.form.get("staff_id")
+    if not staff_id:
+        flash("Please choose a service provider.", "danger")
+        return redirect(url_for('biz_user_interactions'))
+
+    # ensure the chosen staff is a service_provider of this business
+    staff = Staff.query.filter_by(
+        id=staff_id,
+        business_id=biz_id,
+        is_active=True,
+        role="service_provider",
+    ).first()
+
+    if not staff:
+        flash("Invalid service provider.", "danger")
+        return redirect(url_for('biz_user_interactions'))
+
+    interaction.assigned_staff_id = staff.id
+    db.session.commit()
+
+    flash(f"Session assigned to {staff.name}.", "success")
+    return redirect(url_for('biz_user_interactions'))
 
 @app.route("/business/interactions/<int:interaction_id>/details")
 @business_login_required
@@ -6132,6 +6367,13 @@ def business_dashboard():
 
                 setattr(biz, live_attr, form_val if form_val else None)
                 updated = True
+
+        # --- NEW: location_varies flag ---
+        # checkbox sends "1" when checked, nothing when unchecked
+        location_varies_form = request.form.get("location_varies") == "1"
+        if biz.location_varies != location_varies_form:
+            biz.location_varies = location_varies_form
+            updated = True
 
         # --- NEW: online purchase flags (e‑commerce + allow website purchases) ---
         website_url = request.form.get("website_url", "").strip()
@@ -8137,6 +8379,40 @@ def export_commissions_paid_csv():
     return Response(output, mimetype="text/csv",
                     headers={"Content-Disposition": "attachment; filename=commissions_paid.csv"})
 
+@app.route("/business/staff/<int:staff_id>/toggle_provider_permission", methods=["POST"])
+@business_login_required
+def toggle_provider_permission(staff_id):
+    biz_id = session.get("business_id")
+    staff = Staff.query.filter_by(id=staff_id, business_id=biz_id).first_or_404()
+
+    if staff.role != "admin":
+        flash("Only admin staff can be given provider-creation permission.", "danger")
+        return redirect(url_for("business_dashboard"))
+
+    # simple toggle based on form
+    can_add = request.form.get("can_add_providers") == "1"
+    staff.can_add_providers = can_add
+    db.session.commit()
+
+    flash("Admin permissions updated.", "success")
+    return redirect(url_for("business_dashboard"))
+
+@app.route("/business/staff/<int:staff_id>/provider-permission", methods=["POST"])
+@business_login_required
+def update_staff_provider_permission(staff_id):
+    biz_id = session.get("business_id")
+    staff = Staff.query.filter_by(id=staff_id, business_id=biz_id).first_or_404()
+
+    if staff.role != "admin":
+        flash("Only admin staff can be given provider-creation permission.", "danger")
+        return redirect(url_for("business_dashboard"))
+
+    staff.can_add_providers = (request.form.get("can_add_providers") == "1")
+    db.session.commit()
+
+    flash("Admin’s permissions updated.", "success")
+    return redirect(url_for("business_dashboard"))
+
 # ---------------- STAFF ROUTES ----------------
 
 @app.route("/staff/new", methods=["GET", "POST"])
@@ -8146,8 +8422,9 @@ def staff_new():
     if form.validate_on_submit():
         email = form.email.data.strip().lower()
         name = form.name.data.strip()
+        role = form.role.data  # "admin" or "service_provider"
+        can_add_providers = bool(form.can_add_providers.data)
 
-        # --- UNIQUE EMAIL CHECK HERE ---
         existing_staff = Staff.query.filter_by(email=email).first()
         if existing_staff:
             flash("Email address already in use with another business advertiser!", "danger")
@@ -8161,14 +8438,15 @@ def staff_new():
             name=name,
             email=email,
             hashed_password=hashed_pw,
-            role="staff",
+            role=role,
             is_active=True,
-            password_reset_required=True
+            password_reset_required=True,
+            can_add_providers=can_add_providers if role == "admin" else False,
         )
         db.session.add(staff)
         db.session.commit()
 
-        # Email temp password to staff
+        # email content unchanged...
         send_email(
             staff.email,
             "Your PerkMiner Staff Login",
@@ -8184,6 +8462,7 @@ def staff_new():
 
         flash("Staff member created! Login instructions were emailed to the staff member.", "success")
         return redirect(url_for("business_dashboard"))
+
     return render_template("your_staff_form.html", form=form)
 
 @app.route("/staff/login", methods=["GET", "POST"])
@@ -8270,10 +8549,39 @@ def staff_dashboard():
     staff_id = session.get("staff_id")
     if not staff_id:
         return redirect(url_for("staff_login"))
+
     staff = Staff.query.get(staff_id)
-    # Get sessions for this staff's business
-    interactions = Interaction.query.filter_by(business_id=staff.business_id, status="active").order_by(Interaction.created_at.desc()).all()
-    return render_template("staff_dashboard.html", staff=staff, interactions=interactions)
+
+    base_query = Interaction.query.filter_by(
+        business_id=staff.business_id,
+        status="active"
+    )
+
+    service_providers = []
+    is_admin = (staff.role == "admin")
+
+    if is_admin:
+        # admins see all sessions
+        interactions = base_query.order_by(Interaction.created_at.desc()).all()
+        # admins can assign to service providers
+        service_providers = Staff.query.filter_by(
+            business_id=staff.business_id,
+            is_active=True,
+            role="service_provider"
+        ).all()
+    else:
+        # service providers see only their sessions
+        interactions = base_query.filter(
+            Interaction.assigned_staff_id == staff.id
+        ).order_by(Interaction.created_at.desc()).all()
+
+    return render_template(
+        "staff_dashboard.html",
+        staff=staff,
+        interactions=interactions,
+        service_providers=service_providers,
+        is_admin=is_admin,
+    )
 
 @app.route("/staff/logout")
 def staff_logout():
@@ -8367,10 +8675,13 @@ def staff_active_session(interaction_id):
             "file_name": msg.file_name,
         })
 
-    return render_template("staff_active_session.html",
-                           interaction=interaction,
-                           staff=staff,
-                           messages=messages_with_labels)
+    return render_template(
+        "staff_active_session.html",
+        interaction=interaction,
+        staff=staff,
+        messages=messages_with_labels,
+        google_maps_api_key=current_app.config.get('GOOGLE_MAPS_API_KEY')
+    )
 
 @app.route("/staff/session/<int:interaction_id>/messages")
 def staff_session_messages(interaction_id):
@@ -8514,6 +8825,28 @@ def remove_staff(staff_id):
     db.session.commit()
     flash("Staff member removed.", "success")
     return redirect(url_for("business_dashboard"))
+
+@app.route("/staff/new-provider", methods=["GET", "POST"])
+def staff_new_provider():
+    staff_id = session.get("staff_id")
+    if not staff_id:
+        flash("Please log in as staff.", "danger")
+        return redirect(url_for("staff_login"))
+
+    admin = Staff.query.get(staff_id)
+    if not admin or admin.role != "admin" or not admin.can_add_providers:
+        abort(403)
+
+    form = StaffRegisterForm()
+    # we might pre-lock role="service_provider" for this flow:
+    form.role.data = "service_provider"
+
+    if form.validate_on_submit():
+        # same creation logic, but role forced to "service_provider"
+        # ...
+        pass
+
+    return render_template("staff_new_provider.html", form=form)
 
 @app.route("/owner/reports/finalized")
 @business_login_required
@@ -10159,7 +10492,6 @@ def user_onboarding():
         user_onboard_video_url=user_onboard_video_url,
     )
 
-
 @app.route("/business/onboarding")
 @login_required
 def business_onboarding():
@@ -10175,6 +10507,316 @@ def business_onboarding():
         stripe_status=stripe_status,
         biz_onboard_video_url=biz_onboard_video_url,
     )
+
+@app.route("/business/update_live_location", methods=["POST"])
+def update_live_location():
+    biz_id = session.get("business_id")
+    if not biz_id:
+        # not in a business session – redirect or 401
+        return jsonify({"status": "unauthorized"}), 401
+
+    biz = Business.query.get_or_404(biz_id)
+
+    lat = request.form.get("lat")
+    lng = request.form.get("lng")
+
+    try:
+        biz.live_gps_lat = float(lat)
+        biz.live_gps_long = float(lng)
+        db.session.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"update_live_location error: {e}")
+        return jsonify({"status": "error"}), 400
+
+@csrf.exempt
+@app.route("/staff/update_live_location", methods=["POST"])
+def staff_update_live_location():
+    staff_id = session.get("staff_id")
+    if not staff_id:
+        current_app.logger.warning("update_live_location unauthorized: no staff_id in session")
+        return jsonify({"status": "unauthorized"}), 401
+
+    staff = Staff.query.get_or_404(staff_id)
+
+    lat = request.form.get("lat")
+    lng = request.form.get("lng")
+
+    try:
+        current_app.logger.info("update_live_location raw input: lat=%r lng=%r", lat, lng)
+
+        staff.live_gps_lat = float(lat)
+        staff.live_gps_long = float(lng)
+        db.session.commit()
+
+        current_app.logger.info(
+            "Updated live GPS for staff %s: lat=%s, lng=%s",
+            staff.id, lat, lng
+        )
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(
+            "staff_update_live_location error for staff %s: %r",
+            staff_id, e
+        )
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+@app.route("/staff/interactions/<int:interaction_id>/assign", methods=["POST"])
+@admin_staff_required
+def staff_assign_interaction(interaction_id):
+    staff_id = session.get("staff_id")
+    staff = Staff.query.get_or_404(staff_id)
+
+    interaction = Interaction.query.get_or_404(interaction_id)
+
+    if interaction.business_id != staff.business_id:
+        abort(403)
+
+    staff_id_to_assign = request.form.get("staff_id")
+    if not staff_id_to_assign:
+        flash("Please choose a service provider.", "danger")
+        return redirect(url_for('staff_dashboard'))
+
+    provider = Staff.query.filter_by(
+        id=staff_id_to_assign,
+        business_id=staff.business_id,
+        is_active=True,
+        role="service_provider",
+    ).first()
+
+    if not provider:
+        flash("Invalid service provider.", "danger")
+        return redirect(url_for('staff_dashboard'))
+
+    interaction.assigned_staff_id = provider.id
+    db.session.commit()
+
+    flash(f"Session assigned to {provider.name}.", "success")
+    return redirect(url_for('staff_dashboard'))
+
+from datetime import datetime
+
+@app.route("/staff/session/<int:interaction_id>/status", methods=["POST"])
+def staff_update_status(interaction_id):
+    staff_id = session.get("staff_id")
+    if not staff_id:
+        flash("Please log in as staff.", "danger")
+        return redirect(url_for("staff_login"))
+
+    staff = Staff.query.get_or_404(staff_id)
+
+    # only service_providers can update status
+    if staff.role != "service_provider":
+        abort(403)
+
+    # must be assigned to this session
+    interaction = Interaction.query.filter_by(
+        id=interaction_id,
+        business_id=staff.business_id,
+        assigned_staff_id=staff.id
+    ).first_or_404()
+
+    new_status = request.form.get("provider_status")
+    note = request.form.get("provider_status_note", "").strip()
+
+    allowed_statuses = {
+        "on_the_way",
+        "arrived",
+        "contract_initial_paid",
+        "contract_full_paid",
+        "service_fee_only",
+        "rejected_no_contract",
+        "estimate_only",
+    }
+
+    if new_status not in allowed_statuses:
+        flash("Invalid status.", "danger")
+        return redirect(url_for('staff_active_session', interaction_id=interaction.id))
+
+    interaction.provider_status = new_status
+    interaction.provider_status_note = note or None
+    interaction.provider_status_updated_at = datetime.utcnow()
+
+    db.session.commit()
+    flash("Status updated.", "success")
+    return redirect(url_for('staff_active_session', interaction_id=interaction.id))
+
+@app.route("/session/<int:interaction_id>/provider_status_location")
+@login_required
+def provider_status_location(interaction_id):
+    interaction = Interaction.query.get_or_404(interaction_id)
+
+    # who can see: user, business, assigned staff
+    is_user = interaction.user_id == getattr(current_user, 'id', None)
+    is_biz = session.get('business_id') == interaction.business_id
+
+    staff_id = session.get('staff_id')
+    is_assigned_staff = False
+    if staff_id:
+        s = Staff.query.get(staff_id)
+        is_assigned_staff = (s and s.id == interaction.assigned_staff_id)
+
+    if not (is_user or is_biz or is_assigned_staff):
+        abort(403)
+
+    staff = interaction.assigned_staff
+    if not staff or staff.live_gps_lat is None or staff.live_gps_long is None:
+        return jsonify({
+            "has_location": False,
+            "provider_status": interaction.provider_status,
+            "provider_status_note": interaction.provider_status_note,
+        })
+
+    # ETA: member destination = business address coords (or maybe member coords if you add those)
+    dest_lat = None
+    dest_lng = None
+
+    # prefer destination_lat/lng if set (future), else fall back to business coords
+    if interaction.destination_lat is not None and interaction.destination_lng is not None:
+        dest_lat = interaction.destination_lat
+        dest_lng = interaction.destination_lng
+    elif interaction.business.latitude is not None and interaction.business.longitude is not None:
+        dest_lat = interaction.business.latitude
+        dest_lng = interaction.business.longitude
+
+    distance_miles = None
+    eta_minutes = None
+    if dest_lat is not None and dest_lng is not None:
+        distance_miles = haversine_miles(
+            staff.live_gps_lat, staff.live_gps_long,
+            dest_lat, dest_lng
+        )
+        # assume 25 mph average travel speed
+        if distance_miles is not None:
+            eta_hours = distance_miles / 25.0
+            eta_minutes = round(eta_hours * 60)
+
+    return jsonify({
+        "has_location": True,
+        "lat": staff.live_gps_lat,
+        "lng": staff.live_gps_long,
+        "provider_status": interaction.provider_status,
+        "provider_status_note": interaction.provider_status_note,
+        "distance_miles": round(distance_miles, 2) if distance_miles is not None else None,
+        "eta_minutes": eta_minutes,
+    })
+
+@app.route("/session/<int:interaction_id>/track")
+@login_required
+def track_provider(interaction_id):
+    interaction = Interaction.query.get_or_404(interaction_id)
+
+    # only the user for now
+    if interaction.user_id != getattr(current_user, 'id', None):
+        abort(403)
+
+    return render_template("track_provider.html", interaction=interaction)
+
+@app.route("/staff/session/<int:interaction_id>/destination", methods=["POST"])
+def staff_set_destination(interaction_id):
+    staff_id = session.get("staff_id")
+    if not staff_id:
+        flash("Please log in as staff.", "danger")
+        return redirect(url_for("staff_login"))
+
+    staff = Staff.query.get_or_404(staff_id)
+
+    # only service_providers can set destination, and only for their assigned session
+    if staff.role != "service_provider":
+        abort(403)
+
+    interaction = Interaction.query.filter_by(
+        id=interaction_id,
+        business_id=staff.business_id,
+        assigned_staff_id=staff.id
+    ).first_or_404()
+
+    address = request.form.get("destination_address", "").strip()
+    lat = request.form.get("destination_lat")
+    lng = request.form.get("destination_lng")
+
+    interaction.destination_address = address or None
+
+    # store lat/lng only if we got valid numbers
+    try:
+        if lat and lng:
+            interaction.destination_lat = float(lat)
+            interaction.destination_lng = float(lng)
+        else:
+            interaction.destination_lat = None
+            interaction.destination_lng = None
+    except ValueError:
+        interaction.destination_lat = None
+        interaction.destination_lng = None
+
+    db.session.commit()
+    flash("Destination address saved.", "success")
+    return redirect(url_for("staff_active_session", interaction_id=interaction.id))
+
+@app.route("/session/<int:interaction_id>/confirm_destination", methods=["POST"])
+@login_required
+def confirm_destination(interaction_id):
+    interaction = Interaction.query.get_or_404(interaction_id)
+
+    # only the member who owns this session
+    if interaction.user_id != getattr(current_user, 'id', None):
+        abort(403)
+
+    interaction.member_destination_confirmed = True
+    interaction.member_destination_note = "Address Correct"
+    db.session.commit()
+
+    flash("You confirmed the destination address is correct.", "success")
+    return redirect(url_for('active_session', interaction_id=interaction.id))
+
+@app.route("/session/<int:interaction_id>/update_destination_by_member", methods=["POST"])
+@login_required
+def update_destination_by_member(interaction_id):
+    interaction = Interaction.query.get_or_404(interaction_id)
+
+    if interaction.user_id != getattr(current_user, 'id', None):
+        abort(403)
+
+    new_address = request.form.get("member_new_address", "").strip()
+    lat = request.form.get("member_destination_lat")
+    lng = request.form.get("member_destination_lng")
+
+    if not new_address:
+        flash("Please enter the correct address.", "danger")
+        return redirect(url_for('active_session', interaction_id=interaction.id))
+
+    # Always update address text
+    interaction.destination_address = new_address
+
+    # Overwrite lat/lng ONLY if member actually selected a place
+    try:
+        if lat and lng:
+            interaction.destination_lat = float(lat)
+            interaction.destination_lng = float(lng)
+            current_app.logger.info(
+                "Member updated destination with new coords: %s, %s",
+                interaction.destination_lat, interaction.destination_lng
+            )
+        else:
+            # If member typed manually and didn't pick a suggestion,
+            # keep existing coords instead of wiping them.
+            current_app.logger.info(
+                "Member updated destination text but no coords sent; keeping existing lat/lng."
+            )
+    except ValueError:
+        current_app.logger.warning(
+            "Member destination lat/lng invalid; leaving existing coords unchanged."
+        )
+
+    interaction.member_destination_confirmed = False
+    interaction.member_destination_note = "Incorrect Address - Address Updated by Member"
+
+    db.session.commit()
+
+    flash("You updated the destination address. The service provider will see this.", "success")
+    return redirect(url_for('active_session', interaction_id=interaction.id))
 
 @app.errorhandler(500)
 def internal_server_error(error):

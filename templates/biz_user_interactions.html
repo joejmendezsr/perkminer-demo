@@ -34,13 +34,23 @@
   <div id="interaction-list">
   {% if interactions %}
     <ul class="list-group">
+
       {% for i in interactions %}
         <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
           <div class="py-1">
             <strong>{{ i.user.name or i.user.email }}</strong><br>
-            <small class="text-muted">{{ i.service_type }}</small>
+            <small class="text-muted">{{ i.service_type }}</small><br>
+            {% if i.assigned_staff %}
+              <small class="text-success">
+                Assigned to: {{ i.assigned_staff.name }} ({{ i.assigned_staff.email }})
+              </small>
+            {% else %}
+              <small class="text-muted">Not assigned</small>
+            {% endif %}
           </div>
+
           <div class="py-1 d-flex flex-column gap-1 align-items-end">
+            <!-- existing buttons -->
             <a href="{{ url_for('biz_interaction_details', interaction_id=i.id) }}" class="btn btn-info btn-sm mb-1">Details</a>
             <a href="{{ url_for('biz_active_session', interaction_id=i.id) }}" class="btn btn-primary btn-sm mb-1">Select</a>
             <a href="{{ url_for('finalize_transaction', interaction_id=i.id) }}" class="btn btn-outline-primary btn-sm mb-1">
@@ -50,6 +60,31 @@
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-danger btn-sm mb-1">End Session</button>
             </form>
+
+            <!-- NEW: assign to service provider -->
+            {% if service_providers %}
+            <form method="post" action="{{ url_for('assign_interaction', interaction_id=i.id) }}" class="mt-2 w-100">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="input-group input-group-sm">
+                <select name="staff_id" class="form-select form-select-sm">
+                  <option value="">Assign to...</option>
+                  {% for sp in service_providers %}
+                    <option value="{{ sp.id }}"
+                      {% if i.assigned_staff_id == sp.id %}selected{% endif %}>
+                      {{ sp.name }} ({{ sp.email }})
+                    </option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm">
+                  Save
+                </button>
+              </div>
+            </form>
+            {% else %}
+              <small class="text-muted mt-2">
+                No service providers yet.
+              </small>
+            {% endif %}
           </div>
         </li>
       {% endfor %}

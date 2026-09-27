@@ -3,7 +3,8 @@
 <head>
     <title>Active Session</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <style>
       #messages-box {
         max-height: 45vh;
@@ -37,11 +38,17 @@
       .msg-bubble-support {
         background: #fce7b1;
         border-radius: 14px 2px 14px 14px;
-        /* You can adjust padding or other properties as needed */
       }
-
-      .msg-time { font-size: .82em; color: #aaa; margin-left: 4px;}
-      .file-clip { color: #888; font-size:1.05em; margin-right: 1px;}
+      .msg-time {
+        font-size: .82em;
+        color: #aaa;
+        margin-left: 4px;
+      }
+      .file-clip {
+        color: #888;
+        font-size:1.05em;
+        margin-right: 1px;
+      }
       .chat-img-thumb {
         max-height: 120px;
         max-width: 180px;
@@ -58,106 +65,279 @@
 </head>
 <body>
 <div class="container py-3">
-    <div class="card p-3">
-        <div class="mb-2">
-            {% if is_user %}
-                <h5>Active Session with {{ interaction.business.business_name }}</h5>
-            {% elif is_biz %}
-                <h5>Active Session with {{ interaction.user.name or interaction.user.email }}</h5>
-            {% endif %}
-        </div>
+  <div class="card p-3">
 
-        {% if is_user and not interaction.awaiting_finalization %}
-          <div class="mb-3 text-center">
-            <form method="post" action="{{ url_for('active_session', interaction_id=interaction.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input type="hidden" name="accept_and_pay" value="1">
-              <button type="submit" class="btn btn-success w-100">Accept & Pay (Show My QR Code)</button>
-            </form>
-          </div>
-        {% elif is_user and interaction.awaiting_finalization %}
-          <div class="mb-3 text-center">
-            <p class="mb-2 text-success fw-bold">Show this QR code to the business to complete payment:</p>
-            <img src="{{ url_for('user_qr_code') }}" alt="Your QR Code" style="max-width:160px; margin-top:10px;">
-            <div id="user-receipt-wait" class="alert alert-info mt-3 mb-0">
-              Waiting for business to finalize payment...<br>
-              <span class="spinner-border spinner-border-sm text-warning"></span>
-            </div>
-          </div>
-        {% endif %}
-
-        {% if is_biz and interaction.awaiting_finalization %}
-          <div class="mb-3 text-center">
-            <a href="{{ url_for('scan_qr', interaction_id=interaction.id) }}" class="btn btn-warning w-100">Scan QR to Finalize Payment</a>
-          </div>
-        {% endif %}
-
-        {% if is_biz %}
-          <a href="{{ url_for('create_quote', interaction_id=interaction.id) }}" class="btn btn-warning mb-2 w-100">Send Quote</a>
-        {% endif %}
-
-        {% if is_user and interaction.quote %}
-          <div class="alert alert-info text-center">
-            <a href="{{ url_for('user_quote_view', interaction_id=interaction.id) }}" class="btn btn-warning">
-              View Quote &#128176;
-            </a>
-          </div>
-        {% endif %}
-
-        <div id="messages-box">
-          {% for msg in messages %}
-            <div class="row {% if msg.sender_label == (interaction.user.name or interaction.user.email) %}justify-content-end{% else %}justify-content-start{% endif %} mb-2">
-              <div class="col-auto">
-                <div class="{% if msg.sender_label == (interaction.user.name or interaction.user.email) %}msg-bubble-user{% else %}msg-bubble-biz{% endif %}">
-                  <span class="fw-bold small {% if msg.sender_label == (interaction.user.name or interaction.user.email) %}text-primary{% else %}text-success{% endif %}">
-                    {{ msg.sender_label }}
-                  </span>
-                  <span class="msg-time">{{ msg.timestamp.strftime('%Y-%m-%d %I:%M%p') }}</span>
-                  <div>{{ msg.text | e }}</div>
-                  {% if msg.file_url and msg.file_name and msg.file_name.lower().endswith(('.png','.jpg','.jpeg','.gif','.webp')) %}
-                    <a href="{{ msg.file_url }}" target="_blank">
-                      <img src="{{ msg.file_url }}" alt="{{ msg.file_name }}" class="chat-img-thumb">
-                    </a>
-                  {% elif msg.file_url %}
-                    <div class="mt-1">
-                      <a href="{{ msg.file_url }}" target="_blank">
-                        <span class="file-clip">&#128206;</span>{{ msg.file_name or "Download Attachment" }}
-                      </a>
-                    </div>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-          {% else %}
-            <div class="text-center text-muted fst-italic mt-2">No messages yet. Start the conversation!</div>
-          {% endfor %}
-        </div>
-
-        <form method="post" enctype="multipart/form-data" autocomplete="off" id="chat-form">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="mb-2">
-            <input type="text" name="message_text" id="message_text" class="form-control" placeholder="Type a message..." maxlength="500" style="min-width:140px" autocomplete="off" autofocus>
-          </div>
-          <div class="d-flex gap-2 flex-wrap">
-            <input type="file" name="message_file" class="form-control flex-shrink-1" style="max-width:220px" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt">
-            <button class="btn btn-primary flex-grow-1" type="submit">Send</button>
-          </div>
-          <small class="form-text text-muted d-block mt-1">Supports emoji 😊 images, .pdf, .doc, .xls, .txt. Max size: 5MB.</small>
-        </form>
-
-        <div class="mt-3 d-flex flex-wrap gap-2">
-          <form method="post" action="{{ url_for('end_session', interaction_id=interaction.id) }}" style="display:inline;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="btn btn-danger flex-grow-1" type="submit">End Session</button>
-          </form>
-        </div>
-        {% if is_user %}
-            <a href="{{ url_for('user_biz_interactions') }}" class="btn btn-secondary mt-3 w-100">Back</a>
-        {% elif is_biz %}
-            <a href="{{ url_for('biz_user_interactions') }}" class="btn btn-secondary mt-3 w-100">Back</a>
-        {% endif %}
+    <!-- header -->
+    <div class="mb-2">
+      {% if is_user %}
+        <h5>Active Session with {{ interaction.business.business_name }}</h5>
+      {% elif is_biz %}
+        <h5>Active Session with {{ interaction.user.name or interaction.user.email }}</h5>
+      {% endif %}
     </div>
+
+    <!-- destination + member confirmation section -->
+{% if is_user and interaction.destination_address %}
+  <div class="alert alert-info py-2 px-3 mb-3" style="font-size:0.9rem;">
+    <strong>Service destination:</strong><br>
+    {{ interaction.destination_address }}<br>
+    {% if interaction.member_destination_confirmed is none %}
+      <span class="text-muted">Please confirm this address is correct.</span>
+    {% elif interaction.member_destination_confirmed %}
+      <span class="text-success fw-semibold d-block mt-1">
+        You confirmed this address is correct.
+      </span>
+    {% else %}
+      <span class="text-danger fw-semibold d-block mt-1">
+        You reported this address as incorrect.
+      </span>
+      {% if interaction.member_destination_note %}
+        <span class="text-muted" style="font-size:0.85rem;">
+          {{ interaction.member_destination_note }}
+        </span>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <div class="mb-3">
+    <!-- always show the two buttons -->
+    <div class="d-flex flex-wrap gap-2 mb-2">
+      <!-- correct address -->
+      <form method="post"
+            action="{{ url_for('confirm_destination', interaction_id=interaction.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-success btn-sm">
+          Correct address
+        </button>
+      </form>
+
+      <!-- incorrect address: toggles the edit form -->
+      <button type="button"
+              class="btn btn-danger btn-sm"
+              id="show-member-update-form-btn"
+              data-destination="{{ interaction.destination_address }}">
+        Incorrect address
+      </button>
+    </div>
+
+    <!-- hidden address update form (opens when incorrect is clicked) -->
+    <form id="member-destination-form"
+          method="post"
+          action="{{ url_for('update_destination_by_member', interaction_id=interaction.id) }}"
+          class="d-flex flex-wrap gap-2 align-items-center"
+          style="display: none;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <input
+        type="text"
+        id="member-destination-address"
+        name="member_new_address"
+        class="form-control form-control-sm"
+        placeholder="Enter correct address"
+        style="min-width: 220px;"
+        autocomplete="off"
+      >
+
+      <input type="hidden" id="member-destination-lat" name="member_destination_lat">
+      <input type="hidden" id="member-destination-lng" name="member_destination_lng">
+
+      <button type="submit" class="btn btn-primary btn-sm">
+        Submit updated address
+      </button>
+    </form>
+
+    {% if interaction.member_destination_confirmed is not none %}
+      <small class="text-muted d-block mt-1" style="font-size:0.8rem;">
+        You can update this address again at any time if needed.
+      </small>
+    {% endif %}
+  </div>
+{% endif %}
+
+    <!-- provider status + tracking button (user view) -->
+    {% if interaction.assigned_staff_id %}
+      {% set status_label = "Assigned" %}
+      {% if interaction.provider_status == 'on_the_way' %}
+        {% set status_label = "On the way" %}
+      {% elif interaction.provider_status == 'arrived' %}
+        {% set status_label = "Arrived" %}
+      {% elif interaction.provider_status == 'no show - charge fee - no finalization' %}
+        {% set status_label = "no show - charge fee - no finalization" %}
+      {% elif interaction.provider_status == 'no show - charge fee - finalization' %}
+        {% set status_label = "no show - charge fee - finalization" %}
+      {% elif interaction.provider_status == 'no show - no fee' %}
+        {% set status_label = "no show - no fee" %}
+      {% elif interaction.provider_status == 'contract_initial_paid' %}
+        {% set status_label = "Contract signed - initial fee paid" %}
+      {% elif interaction.provider_status == 'contract_full_paid' %}
+        {% set status_label = "Contract signed - full fee paid" %}
+      {% elif interaction.provider_status == 'service_fee_only' %}
+        {% set status_label = "Service call fee only paid" %}
+      {% elif interaction.provider_status == 'rejected_no_contract' %}
+        {% set status_label = "Rejected quote - no contract or fee" %}
+      {% elif interaction.provider_status == 'estimate_only' %}
+        {% set status_label = "Estimate only" %}
+      {% endif %}
+
+      <div class="mb-2">
+        <span class="badge bg-primary">
+          Status: {{ status_label }}
+        </span>
+        {% if interaction.provider_status_note %}
+          <div class="mt-1 text-muted" style="font-size:0.85rem;">
+            {{ interaction.provider_status_note }}
+          </div>
+        {% endif %}
+      </div>
+
+      {% if is_user and interaction.destination_address and interaction.provider_status == 'on_the_way' %}
+        <div class="mb-3">
+          <button class="btn btn-outline-primary btn-sm"
+                  onclick="window.open('{{ url_for('track_provider', interaction_id=interaction.id) }}', '_blank', 'width=420,height=700');">
+            Track service provider
+          </button>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    <!-- Accept & Pay section (user) -->
+    {% if is_user and not interaction.awaiting_finalization %}
+      <div class="mb-3 text-center">
+        <form method="post" action="{{ url_for('active_session', interaction_id=interaction.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="accept_and_pay" value="1">
+          <button type="submit" class="btn btn-success w-100">
+            Accept &amp; Pay (Show My QR Code)
+          </button>
+        </form>
+      </div>
+    {% elif is_user and interaction.awaiting_finalization %}
+      <div class="mb-3 text-center">
+        <p class="mb-2 text-success fw-bold">
+          Show this QR code to the business to complete payment:
+        </p>
+        <img src="{{ url_for('user_qr_code') }}" alt="Your QR Code"
+             style="max-width:160px; margin-top:10px;">
+        <div id="user-receipt-wait" class="alert alert-info mt-3 mb-0">
+          Waiting for business to finalize payment...<br>
+          <span class="spinner-border spinner-border-sm text-warning"></span>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- business finalize + quote -->
+    {% if is_biz and interaction.awaiting_finalization %}
+      <div class="mb-3 text-center">
+        <a href="{{ url_for('scan_qr', interaction_id=interaction.id) }}"
+           class="btn btn-warning w-100">
+          Scan QR to Finalize Payment
+        </a>
+      </div>
+    {% endif %}
+
+    {% if is_biz %}
+      <a href="{{ url_for('create_quote', interaction_id=interaction.id) }}"
+         class="btn btn-warning mb-2 w-100">
+        Send Quote
+      </a>
+    {% endif %}
+
+    {% if is_user and interaction.quote %}
+      <div class="alert alert-info text-center">
+        <a href="{{ url_for('user_quote_view', interaction_id=interaction.id) }}"
+           class="btn btn-warning">
+          View Quote &#128176;
+        </a>
+      </div>
+    {% endif %}
+
+    <!-- messages -->
+    <div id="messages-box">
+      {% for msg in messages %}
+        <div class="row {% if msg.sender_label == (interaction.user.name or interaction.user.email) %}justify-content-end{% else %}justify-content-start{% endif %} mb-2">
+          <div class="col-auto">
+            <div class="{% if msg.sender_label == (interaction.user.name or interaction.user.email) %}msg-bubble-user{% else %}msg-bubble-biz{% endif %}">
+              <span class="fw-bold small {% if msg.sender_label == (interaction.user.name or interaction.user.email) %}text-primary{% else %}text-success{% endif %}">
+                {{ msg.sender_label }}
+              </span>
+              <span class="msg-time">{{ msg.timestamp.strftime('%Y-%m-%d %I:%M%p') }}</span>
+              <div>{{ msg.text | e }}</div>
+              {% if msg.file_url and msg.file_name and msg.file_name.lower().endswith(('.png','.jpg','.jpeg','.gif','.webp')) %}
+                <a href="{{ msg.file_url }}" target="_blank">
+                  <img src="{{ msg.file_url }}" alt="{{ msg.file_name }}" class="chat-img-thumb">
+                </a>
+              {% elif msg.file_url %}
+                <div class="mt-1">
+                  <a href="{{ msg.file_url }}" target="_blank">
+                    <span class="file-clip">&#128206;</span>{{ msg.file_name or "Download Attachment" }}
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="text-center text-muted fst-italic mt-2">
+          No messages yet. Start the conversation!
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- chat form -->
+    <form method="post" enctype="multipart/form-data" autocomplete="off" id="chat-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="mb-2">
+        <input type="text"
+               name="message_text"
+               id="message_text"
+               class="form-control"
+               placeholder="Type a message..."
+               maxlength="500"
+               style="min-width:140px"
+               autocomplete="off"
+               autofocus>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <input type="file"
+               name="message_file"
+               class="form-control flex-shrink-1"
+               style="max-width:220px"
+               accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt">
+        <button class="btn btn-primary flex-grow-1" type="submit">Send</button>
+      </div>
+      <small class="form-text text-muted d-block mt-1">
+        Supports emoji 😊 images, .pdf, .doc, .xls, .txt. Max size: 5MB.
+      </small>
+    </form>
+
+    <!-- end session + back -->
+    <div class="mt-3 d-flex flex-wrap gap-2">
+      <form method="post"
+            action="{{ url_for('end_session', interaction_id=interaction.id) }}"
+            style="display:inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger flex-grow-1" type="submit">
+          End Session
+        </button>
+      </form>
+    </div>
+
+    {% if is_user %}
+      <a href="{{ url_for('user_biz_interactions') }}"
+         class="btn btn-secondary mt-3 w-100">
+        Back
+      </a>
+    {% elif is_biz %}
+      <a href="{{ url_for('biz_user_interactions') }}"
+         class="btn btn-secondary mt-3 w-100">
+        Back
+      </a>
+    {% endif %}
+
+  </div>
 </div>
+
+<!-- chat + polling scripts -->
 <script>
   function scrollToBottom() {
       var box = document.getElementById('messages-box');
@@ -182,7 +362,6 @@
   }
   setInterval(reloadMessages, 4000);
 
-  // When user is waiting on finalize, poll for a receipt and redirect on new transaction
   {% if is_user and interaction.awaiting_finalization %}
   function checkForReceipt() {
     fetch("{{ url_for('check_user_receipt', interaction_id=interaction.id) }}")
@@ -197,6 +376,159 @@
   }
   checkForReceipt();
   {% endif %}
+
+  // toggle member destination update form
+  document.addEventListener('DOMContentLoaded', function () {
+    const showUpdateBtn = document.getElementById('show-member-update-form-btn');
+    const updateForm = document.getElementById('member-destination-form');
+    const addressInput = document.getElementById('member-destination-address');
+
+if (showUpdateBtn && updateForm && addressInput) {
+  // store destination text in a data- attribute to avoid JS escaping issues
+  const destText = showUpdateBtn.getAttribute('data-destination') || "";
+
+  showUpdateBtn.addEventListener('click', function () {
+    if (updateForm.style.display === 'none' || updateForm.style.display === '') {
+      updateForm.style.display = 'flex';
+      addressInput.value = destText;
+      addressInput.focus();
+    } else {
+      updateForm.style.display = 'none';
+    }
+  });
+}
+  });
 </script>
+
+<!-- Google Places for member destination autocomplete -->
+{% if is_user and interaction.destination_address and google_maps_api_key %}
+<script
+  src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"
+  async defer>
+</script>
+<script>
+function initMemberDestinationAutocomplete() {
+  const input = document.getElementById('member-destination-address');
+  const latInput = document.getElementById('member-destination-lat');
+  const lngInput = document.getElementById('member-destination-lng');
+  if (!input) return;
+
+  const autocomplete = new google.maps.places.Autocomplete(input, {
+    types: ['geocode']
+  });
+
+  autocomplete.addListener('place_changed', function () {
+    const place = autocomplete.getPlace();
+    if (!place.geometry || !place.geometry.location) {
+      console.warn("Selected place has no geometry");
+      return;
+    }
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+
+    latInput.value = lat;
+    lngInput.value = lng;
+
+    if (place.formatted_address) {
+      input.value = place.formatted_address;
+    }
+  });
+}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // toggle member destination update form
+    const showUpdateBtn = document.getElementById('show-member-update-form-btn');
+    const updateForm = document.getElementById('member-destination-form');
+    const addressInput = document.getElementById('member-destination-address');
+
+    if (showUpdateBtn && updateForm && addressInput) {
+      const destText = showUpdateBtn.getAttribute('data-destination') || "";
+
+      // ensure form starts hidden
+      updateForm.style.display = 'none';
+
+      showUpdateBtn.addEventListener('click', function () {
+        if (updateForm.style.display === 'none' || updateForm.style.display === '') {
+          updateForm.style.display = 'flex';
+          // prefill with current destination so member can adjust it
+          addressInput.value = destText;
+          addressInput.focus();
+        } else {
+          updateForm.style.display = 'none';
+        }
+      });
+    }
+  });
+</script>
+
+document.addEventListener('DOMContentLoaded', function () {
+  let tries = 0;
+  const interval = setInterval(function () {
+    if (window.google && google.maps && google.maps.places) {
+      clearInterval(interval);
+      initMemberDestinationAutocomplete();
+    } else if (tries++ > 20) {
+      clearInterval(interval);
+      console.warn("Google Places API not loaded for member.");
+    }
+  }, 300);
+});
+</script>
+{% endif %}
+
+{% if is_user and interaction.destination_address and google_maps_api_key %}
+<script
+  src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"
+  async defer>
+</script>
+<script>
+function initMemberDestinationAutocomplete() {
+  const input = document.getElementById('member-destination-address');
+  const latInput = document.getElementById('member-destination-lat');
+  const lngInput = document.getElementById('member-destination-lng');
+  if (!input) {
+    console.warn("member-destination-address input not found");
+    return;
+  }
+
+  const autocomplete = new google.maps.places.Autocomplete(input, {
+    types: ['geocode']
+  });
+
+  autocomplete.addListener('place_changed', function () {
+    const place = autocomplete.getPlace();
+    if (!place.geometry || !place.geometry.location) {
+      console.warn("Selected place has no geometry");
+      return;
+    }
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+
+    latInput.value = lat;
+    lngInput.value = lng;
+
+    if (place.formatted_address) {
+      input.value = place.formatted_address;
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  let tries = 0;
+  const interval = setInterval(function () {
+    if (window.google && google.maps && google.maps.places) {
+      clearInterval(interval);
+      console.log("Initializing member autocomplete");
+      initMemberDestinationAutocomplete();
+    } else if (tries++ > 20) {
+      clearInterval(interval);
+      console.warn("Google Places API not loaded for member.");
+    }
+  }, 300);
+});
+</script>
+{% endif %}
+
 </body>
 </html>

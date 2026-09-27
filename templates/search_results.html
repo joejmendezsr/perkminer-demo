@@ -185,6 +185,11 @@
                       <i class="bi bi-geo-alt-fill"></i>
                       {{ biz.distance_mi|round(2) }} mi away
                     </span>
+                    {% if biz.location_varies and biz.live_gps_lat and biz.live_gps_long %}
+                      <span class="badge bg-info text-dark ms-1" style="font-size:0.75rem;">
+                        live location
+                      </span>
+                    {% endif %}
                   {% endif %}
                 </div>
 

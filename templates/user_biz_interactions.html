@@ -21,7 +21,7 @@
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="mb-0">
-      My Secure Messaging Active Sessions
+      My Active Sessions (Business Connections)
       {% if interactions %}
         ({{ interactions|length }})
       {% endif %}
@@ -49,10 +49,10 @@
           </small>
         </div>
           <div class="py-1 d-flex flex-column gap-1 align-items-end">
-            <a href="{{ url_for('active_session', interaction_id=i.id) }}" class="btn btn-primary btn-sm mb-1">Select</a>
+            <a href="{{ url_for('active_session', interaction_id=i.id) }}" class="btn btn-primary btn-sm mb-1">Open Active Session</a>
             <form method="post" action="{{ url_for('end_session', interaction_id=i.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-danger btn-sm mb-1">End Session</button>
+              <button type="submit" class="btn btn-danger btn-sm mb-1">End Session (Ends the Connection)</button>
             </form>
           </div>
         </li>

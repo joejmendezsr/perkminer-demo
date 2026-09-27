@@ -23,7 +23,7 @@
     <div class="dashboard-card">
       <div class="d-flex flex-wrap mb-2 align-items-center">
         <div class="flex-grow-1">
-          <h2 class="mb-0" style="font-size:1.5em;">Welcome, <span class="staff-email">{{ staff.email }}</span></h2>
+          <h2 class="mb-0" style="font-size:1.5em;">Welcome, <span class="staff-name">{{ staff.name }}</span></h2>
           <p class="mb-2" style="font-size:1.04em;">
             You are finalizing transactions and, if applicable, communicating with members through secure messaging on behalf of 
             <b>{{ staff.business.business_name }}</b> located at <b>{{ staff.business.address }}</b>.
@@ -47,11 +47,43 @@
             <span class="text-muted d-block" style="font-size:0.95em;">
               Member: {{ ia.user.name or ia.user.email }}
             </span>
+            {% if ia.assigned_staff %}
+              <span class="d-block" style="font-size:0.9em; color: #198754;">
+                Assigned to: {{ ia.assigned_staff.name }} ({{ ia.assigned_staff.email }})
+              </span>
+            {% else %}
+              <span class="d-block" style="font-size:0.9em; color: #6c757d;">
+                Not assigned
+              </span>
+            {% endif %}
+
+            {% if is_admin and service_providers %}
+            <form method="post"
+                  action="{{ url_for('staff_assign_interaction', interaction_id=ia.id) }}"
+                  class="mt-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="input-group input-group-sm" style="max-width: 320px;">
+                <select name="staff_id" class="form-select form-select-sm">
+                  <option value="">Assign to...</option>
+                  {% for sp in service_providers %}
+                    <option value="{{ sp.id }}"
+                      {% if ia.assigned_staff_id == sp.id %}selected{% endif %}>
+                      {{ sp.name }} ({{ sp.email }})
+                    </option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm">
+                  Save
+                </button>
+              </div>
+            </form>
+            {% endif %}
           </div>
+
           <div class="mt-2 mt-md-0 d-flex gap-2 flex-wrap">
             {% if ia.status == 'active' and ia.service_type and ia.service_type != 'Closed' %}
               <a href="{{ url_for('staff_active_session', interaction_id=ia.id) }}" class="btn btn-secondary btn-sm">
-                Open Secure Messaging Session
+                Open Active Session
               </a>
             {% endif %}
             <a href="{{ url_for('staff_scan_qr', interaction_id=ia.id) }}" class="btn btn-success btn-sm">
@@ -60,6 +92,14 @@
             <a href="{{ url_for('staff_finalize_transaction', interaction_id=ia.id) }}" class="btn btn-outline-primary btn-sm">
               Finalize Manually
             </a>
+  <form method="post"
+        action="{{ url_for('end_session', interaction_id=ia.id) }}"
+        class="d-inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-danger btn-sm">
+      End Session
+    </button>
+  </form>
           </div>
         </li>
         {% else %}
