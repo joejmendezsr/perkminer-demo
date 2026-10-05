@@ -1,0 +1,382 @@
+{# templates/public_profiles_directory.html #}
+{% extends "base.html" %}
+
+{% block title %}
+Perk Miner Public Business Profiles Directory – Search our public profiles
+{% endblock %}
+
+{% block head_extra %}
+  <meta name="description" content="Search our public business profiles directory - no registration or login required. We make it easy for you to obtain enough information before deciding if you want to move forward.">
+  <meta name="keywords" content="perk, perks, perk miner, grow your business, pay per sale, pay per close, no risk advertising, best advertising, high roi, roi, return on investment, return on advertising spend, highest roi, no sale no fee">
+
+  {# canonical #}
+  {% if page and page > 1 %}
+    <link rel="canonical" href="{{ url_for('public_profiles_directory', page=page, _external=True) }}">
+  {% else %}
+    <link rel="canonical" href="{{ url_for('public_profiles_directory', _external=True) }}">
+  {% endif %}
+
+  {# prev/next hints #}
+  {% if pagination %}
+    {% if pagination.has_prev %}
+      <link rel="prev" href="{{ url_for('public_profiles_directory', page=pagination.prev_num, _external=True) }}">
+    {% endif %}
+    {% if pagination.has_next %}
+      <link rel="next" href="{{ url_for('public_profiles_directory', page=pagination.next_num, _external=True) }}">
+    {% endif %}
+  {% endif %}
+
+  <style>
+    body {
+      background-color: #f7f7f7;
+    }
+
+    .page-shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0;
+    }
+
+    .hero-section {
+      position: relative;
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #fff;
+      margin-left: -0.75rem;
+      margin-right: -0.75rem;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url("https://res.cloudinary.com/dmrntlcfd/image/upload/v1782601402/Cash-Back_rignwa.jpg?auto=format&fit=crop&w=1600&q=80");
+      background-size: cover;
+      background-position: center;
+      filter: brightness(0.45);
+      z-index: -1;
+    }
+
+    .hero-content {
+      padding: 3rem 1rem 5rem;
+    }
+
+    .directory-search-wrapper {
+      margin-top: -3rem;
+      margin-bottom: 2rem;
+    }
+
+    .directory-search-box {
+      background: #fff;
+      border-radius: 0.75rem;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+      padding: 1rem;
+    }
+
+    @media (min-width: 768px) {
+      .hero-section {
+        min-height: 340px;
+      }
+      .hero-content {
+        padding: 4rem 1rem 6rem;
+      }
+      .directory-search-box {
+        padding: 1.5rem;
+      }
+    }
+
+    .business-card {
+      border-radius: 0.5rem;
+      border: 1px solid #e4e4e4;
+      padding: 1rem;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background-color: #fff;
+    }
+
+    .business-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .business-category {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+
+    .business-location {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 0.5rem;
+    }
+
+    .business-snippet {
+      font-size: 0.9rem;
+      color: #444;
+      margin-bottom: 0.75rem;
+    }
+
+    .btn-profile {
+      font-size: 0.9rem;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  {# consider it a "search" if any of these are present #}
+{% set has_filters =
+  q or
+  category or
+  (selected_distance and selected_distance != 'all') or
+  request.args.get('lat') or
+  request.args.get('lng') or
+  request.args.get('page')
+%}
+{% set show_results = has_filters and businesses %}
+
+  <div class="page-shell">
+
+    <div class="mt-3 mb-2">
+      <a href="{{ url_for('home') }}" class="btn btn-outline-secondary btn-sm">
+        ← Return to Home
+      </a>
+    </div>
+
+    {# HERO SECTION #}
+    <section class="hero-section">
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <h1 class="h2 h1-md fw-semibold">
+          Discover Perk Miner public business profiles
+        </h1>
+        <p class="lead mt-2 mb-0">
+          Browse approved advertisers and learn about their exclusive member perks – no login required.
+        </p>
+      </div>
+    </section>
+
+    {# SEARCH BAR OVERLAPPING HERO #}
+    <section class="directory-search-wrapper">
+      <div class="directory-search-box">
+        <form method="get" action="{{ url_for('public_profiles_directory') }}">
+          <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-4">
+              <label for="q" class="form-label mb-1">Search by business name or keyword</label>
+              <input
+                type="text"
+                class="form-control"
+                id="q"
+                name="q"
+                value="{{ q or '' }}"
+                placeholder="e.g. car wash, dentist, marketing"
+              >
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label for="category" class="form-label mb-1">Category</label>
+              <select
+                class="form-select"
+                id="category"
+                name="category"
+              >
+                <option value="">All categories</option>
+                {% for cat in categories %}
+                  <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>
+                    {{ cat }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label for="distance" class="form-label mb-1">Distance</label>
+              <select
+                class="form-select"
+                id="distance"
+                name="distance"
+              >
+                {% set current_distance = selected_distance or 'all' %}
+                <option value="all" {% if current_distance == 'all' %}selected{% endif %}>Any distance</option>
+                <option value="5" {% if current_distance == '5' %}selected{% endif %}>Within 5 miles</option>
+                <option value="10" {% if current_distance == '10' %}selected{% endif %}>Within 10 miles</option>
+                <option value="25" {% if current_distance == '25' %}selected{% endif %}>Within 25 miles</option>
+                <option value="50" {% if current_distance == '50' %}selected{% endif %}>Within 50 miles</option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-2 d-grid mt-2 mt-md-4">
+              <button type="submit" class="btn btn-primary">
+                Search
+              </button>
+            </div>
+          </div>
+
+          {# hidden lat/lng, filled by geolocation script #}
+          <input type="hidden" name="lat" id="lat" value="{{ request.args.get('lat', '') }}">
+          <input type="hidden" name="lng" id="lng" value="{{ request.args.get('lng', '') }}">
+        </form>
+      </div>
+    </section>
+
+    {# DIRECTORY LIST – only when there are results + filters #}
+    {% if show_results %}
+      <main class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-column flex-md-row">
+          <h2 class="h5 mb-2 mb-md-0">
+            Public business profiles
+          </h2>
+          {% if pagination %}
+            <span class="text-muted small">
+              Page {{ pagination.page }} of {{ pagination.pages }}
+            </span>
+          {% endif %}
+        </div>
+
+        <div class="row g-3">
+          {% for biz in businesses %}
+            <div class="col-12 col-md-6 col-lg-4">
+              <div class="business-card">
+                <div>
+                  <div class="business-name">
+                    {{ biz.business_name }}
+                  </div>
+
+                  {% if biz.category %}
+                    <div class="business-category">
+                      {{ biz.category }}
+                    </div>
+                  {% endif %}
+
+                  {% if biz.distance_mi is defined %}
+                    <div class="business-location">
+                      {% if biz.city %}{{ biz.city }}{% endif %}
+                      {% if biz.city and biz.state %}, {% endif %}
+                      {% if biz.state %}{{ biz.state }}{% endif %}
+                      · ~{{ "%.1f"|format(biz.distance_mi) }} miles away
+                    </div>
+                  {% elif biz.city or biz.state %}
+                    <div class="business-location">
+                      {% if biz.city %}{{ biz.city }}{% endif %}
+                      {% if biz.city and biz.state %}, {% endif %}
+                      {% if biz.state %}{{ biz.state }}{% endif %}
+                    </div>
+                  {% endif %}
+
+                  {% if biz.about_us %}
+                    <div class="business-snippet">
+                      {{ biz.about_us[:140] }}{% if biz.about_us|length > 140 %}…{% endif %}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="mt-2">
+                  <a
+                    href="{{ url_for('public_profile', store_slug=biz.store_slug) }}"
+                    class="btn btn-outline-primary btn-sm btn-profile w-100"
+                  >
+                    View public profile
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        {# PAGINATION #}
+        {% if pagination and pagination.pages > 1 %}
+          <nav aria-label="Public business profiles page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+              {% if pagination.has_prev %}
+                <li class="page-item">
+                  <a class="page-link"
+                     href="{{ url_for('public_profiles_directory',
+                                      page=pagination.prev_num,
+                                      q=q,
+                                      category=category,
+                                      distance=selected_distance) }}">
+                    &laquo; Previous
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">&laquo; Previous</span>
+                </li>
+              {% endif %}
+
+              <li class="page-item disabled">
+                <span class="page-link">
+                  Page {{ pagination.page }} of {{ pagination.pages }}
+                </span>
+              </li>
+
+              {% if pagination.has_next %}
+                <li class="page-item">
+                  <a class="page-link"
+                     href="{{ url_for('public_profiles_directory',
+                                      page=pagination.next_num,
+                                      q=q,
+                                      category=category,
+                                      distance=selected_distance) }}">
+                    Next &raquo;
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">Next &raquo;</span>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      </main>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
+
+  var latParam = getParam("lat");
+  var lngParam = getParam("lng");
+
+  // if URL already has lat/lng, don't overwrite
+  if (latParam && lngParam) {
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    var lat = pos.coords.latitude;
+    var lng = pos.coords.longitude;
+
+    var params = new URLSearchParams(window.location.search);
+
+    params.set("lat", lat);
+    params.set("lng", lng);
+
+    if (!params.get("distance") || params.get("distance") === "") {
+      params.set("distance", "10");
+    }
+
+    var newUrl = window.location.pathname + "?" + params.toString();
+    window.location.replace(newUrl);
+  }, function(error) {
+    // user denied or error; just continue without location
+  });
+});
+</script>
+{% endblock %}

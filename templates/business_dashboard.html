@@ -383,11 +383,18 @@
 
 {% if biz_level_code %}
   <div class="card p-4 mb-4">
-    <h5>Congratulations! You qualify to upload a Testimonial Video</h5>
-    <p class="mb-2">
-      Your business currently qualifies for level:
-      <strong>{{ biz_level_code }}</strong>.
-    </p>
+    {% if biz_level_code == 'biz_founding_5' %}
+      <h5>Congratulations, Founding Business!</h5>
+      <p class="mb-2">
+        As one of our advertisers with <strong>5 finalized transactions</strong>, you can upload a testimonial video.
+      </p>
+    {% else %}
+      <h5>Congratulations! You qualify to upload a Testimonial Video</h5>
+      <p class="mb-2">
+        Your business currently qualifies for level:
+        <strong>{{ biz_level_code }}</strong>.
+      </p>
+    {% endif %}
 
     <button
       class="btn btn-primary mb-3"
@@ -534,6 +541,23 @@
                value="{{ form_data.hours_of_operation or '' }}" placeholder="e.g. Mon-Fri 9am–5pm">
         <div class="form-text">Example: Mon-Fri 9am–5pm; Sat 10am–2pm</div>
       </div>
+
+<div class="mb-3">
+  <label class="form-label">Public profile URL</label>
+  <div class="input-group">
+    <span class="input-group-text">perkminer.com/public_profiles/</span>
+    <input
+      type="text"
+      name="store_slug"
+      class="form-control"
+      value="{{ form_data.get('store_slug', business.store_slug or '') }}"
+      placeholder="your-business-name"
+    >
+  </div>
+  <small class="text-muted">
+    Letters, numbers, and dashes only. Example: <code>my-plumbing-co</code>
+  </small>
+</div>
 
       <div class="col-12 mb-3">
         <label class="form-label">Website</label>
@@ -841,14 +865,15 @@
     rows="3"
     class="form-control mb-2"
     style="max-width:520px; font-size:0.9rem;"
-  >Business owners: Want advertising where you only pay when a sale actually closes with 900% ROI or higher?  What about getting exclusive leads at no cost to your business (one member connected to one business at a time and not oversold to your competitors), plus zero cost for website and foot traffic, phone calls, appointments and meetups?
+  >Business owners: Want advertising where you only pay when a sale actually closes with 1000% ROAS (Return on Advertising Spend) or higher (spend $1 = $10 sale)?  What about getting exclusive leads at no cost to your business (one member connected to one business at a time and not oversold to your competitors), plus zero cost for website and foot traffic, phone calls, appointments and meetups?
+   LIVE TRACKING:  Have service techs in the field?  We give you the ability to see every service provider's location in real-time when the status is set to "on the way" and with zero cost to your business.  You receive status updates for every service call and if the destination address is incorrect, members can update the destination address for you (reduced fuel waste, time and unnecessary vehicle wear and tear).
    WHAT'S THE COST?  You simply pay 10% of the sale (capped at $250) after you get paid.  No hidden fees, no contracts, no monthly membership fees, subscriptions.  All you have to do is finalize the transaction once you've received payment and make sure that you have enough in your account balance to cover the advertising fee prior to getting paid.
    REWARDS PROGRAM:  Perk Miner also rewards it's members for making purchases from it's advertisers and it's advertisers for finalizing transactions (all cash back and commissions are paid by Perk Miner from the advertising revenue paid - up to 84% of the advertising revenue is paid out to members and businesses from every finalized transaction).
-   MUTUAL GROWTH MODEL:  By joining and using my referral code, my business earns a commission from every sale (finalized transactions) that your business makes through Perk Miner and at the same time, when my business finalizes a transaction, your business earns a commission (also from every finalized transaction).  It's a mutual growth model designed to help our businesses prosper and it's all paid by Perk Miner ... not by your business.
+   MUTUAL GROWTH MODEL:  By joining and inviting other business owners to join, you each earn a commission from each other's sales (finalized transactions) through Perk Miner and at the same time, I am also rewarded.  It's a mutual growth model designed to help businesses prosper and it's all paid by Perk Miner ... not by your business.
    NEEDED TO GET STARTED:  It only takes $25 to fund your account (this is not a fee, but is used to cover the advertising fee when you make a sale) to get started.  $25 covers $250 in sales.  If your lowest sale is over $2,500, you must deposit $250 or more to cover the advertising fee.
    No special equipment required to finalize transactions and you or your staff can finalize transactions in seconds.  Upon successful finalization of every transaction, you also get real-time analytics and you also see your cash back earned.  That's right!  You earn cash back for finalizing transactions in return for offering a perk to Perk Miner members (you earn 10% of the advertising fee paid).
-   There is zero risk to your business.  Join PerkMiner as an advertiser (become and advertiser like me) through my business invite link today:
-   {{ b2b_share_url }}</textarea>
+   There is zero risk to your business.  Join PerkMiner as an advertiser through my business invite link today:
+{{ business_share_url }}</textarea>
 
   <button
     type="button"
@@ -1069,9 +1094,9 @@
             <i class="bi bi-bank"></i> Standard Payout (1-10 business days)
           </div>
           <div class="text-muted mb-1" style="font-size:0.97em;">
-            Stripe transfer fee: ${{ '{:,.2f}'.format(std_fee_biz) }} (0.5% + $0.35)<br>
-            If you withdraw full balance, you would receive:
-            <b>${{ '{:,.2f}'.format(std_net_biz) }}</b>
+            Perk Miner transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee_biz) }} (0.5% + $0.35)<br>
+            If you withdraw full balance to your Stripe balance, you will receive: <b>${{ '{:,.2f}'.format(std_net_biz) }}<br>
+            Stripe may charge an additional fee to send funds to your bank account.</b>
           </div>
           <form action="{{ url_for('business_withdraw') }}" method="POST" class="d-inline">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -4,6 +4,7 @@ from flask import (
 )
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Numeric
 from flask_mail import Mail, Message as MailMessage
 from flask_bcrypt import Bcrypt
 from flask_login import (
@@ -15,7 +16,7 @@ from wtforms import (
     TextAreaField, Form, BooleanField
 )
 from wtforms.validators import (
-    DataRequired, Email, Length, EqualTo, Optional, NumberRange
+    DataRequired, Regexp, Email, Length, EqualTo, Optional, NumberRange
 )
 from werkzeug.utils import secure_filename
 from sqlalchemy import func, case
@@ -519,6 +520,14 @@ class BusinessProfileForm(FlaskForm):
     address = StringField('Address', validators=[Optional(), Length(max=255)])
     latitude = StringField('Latitude', validators=[Optional()])
     longitude = StringField('Longitude', validators=[Optional()])
+    store_slug = StringField(
+        "Public profile URL",
+        validators=[
+            Optional(),
+            Length(max=80),
+            Regexp(r"^[a-zA-Z0-9\-]+$", message="Use only letters, numbers, and dashes."),
+        ],
+    )
     submit = SubmitField('Save Profile')
 
 class EmptyForm(FlaskForm):
@@ -637,7 +646,7 @@ def build_invite_email(inviter_name, join_url, video_url):
         <!-- Hero Banner with Logo -->
                 <tr>
                     <td style="position:relative;">
-                        <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771635742/Email_Background_kgfx10.jpg" width="600"
+                        <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791003112/member_flyer_gncgvf.jpg" width="600"
                         alt="PerkMiner Hero Banner"
                         style="display:block; width:100%; height:auto; border:0;" border="0">
         </td>
@@ -646,23 +655,23 @@ def build_invite_email(inviter_name, join_url, video_url):
         <!-- Introduction Text + Watch Video Button -->
     <tr>
         <td style="padding: 40px 40px 20px; font-family: Arial, Helvetica, sans-serif; font-size: 28px; color: #374151; line-height: 1.6; text-align:center;">
-            <p style="margin:0 0 24px;">Discover how you earn Cash Back and Referral Commissions with Perk Miner.  <b>Cash Back like a pro on everyday purchases!  Members earn 2% Cashback for up to $2,500 of any purchase from our advertisers and Businesses earn 1% Cashback on up to $2,500 or their sale for offering at least one perk to our members.</b></p>
+            <p style="margin:0 0 24px;">Discover how you earn Cash Back and Referral Commissions with Perk Miner.  <b>Members earn 2% Cashback for up to $2,500 of any purchase from our advertisers and Businesses earn 1% Cashback on up to $2,500 or their sale for offering at least one perk to our members.</b></p>
 
                 <a href="{video_url}" class="button" target="_blank" style="margin: 12px 0 32px;">
                 Watch our intro video
                 </a>
 
-            <p style="margin:0 0 28px;">Free to join (no contracts, monthly subscriptions or commitment).  ALWAYS FREE!</p>
-            <p style="margin:0 0 28px;"><b>Members:  Get exclusive member perks offered by our advertisers, plus earn cash back on all your purchases and referral commissions (from purchases made by others you invite).</b>  We protect your privacy with secure messaging and never sell your contact information as a lead.  Search for businesses, products or services (our advertisers) with peace of mind (we don't track browsing history or listen to your conversations to send you unsolicited advertisements).  We connect <b>One Member</b> to <b>One Business</b> at a time.  <b><u>Our members</u></b> will never receive spammed emails, unsolicited phone calls or uninvited door-to-door sales people (advertisers don't have access to member contact information).</p>
-            <p style="margin:0 0 28px;"><b>Business Owners:</b>  YOU GET ZERO WASTED ADVERTISING DOLLARS!  <font color="#FF0000"></br>No Sale or Closed Deal = Zero Fees</font></br>(900% or higher Marketing ROI Guaranteed).  No cost for exclusive leads, phone calls, website or foot traffic, appointments or meetups.  You only pay after you get paid (10% of the sale, capped at $250).  We don't collect your payment (members pay our advertisers directly for all sales).  No hidden fees, no contracts, no membership fees and no commitment.  Only $25 required to get started (pre-funded dollars to cover the advertising fees per transaction), which covers $250 in sales (funds remain in your account balance until you make a sale).  Perk Miner LLC also pays it's members for making purchases from it's advertisers ... repeat business.</p>
-            <p style="margin:0 0 28px;">MEMBER SELECTS A BUSINESS -> BUSINESS AND MEMBER CONNECT</br></br>MEMBER OR BUSINESS CAN END SESSION WITHOUT PENALTY OR CHOOSE TO PROCEED (BUSINESS MUST FINALIZE THE TRANSACTION).</p>
+            <p style="margin:0 0 28px;">Free to join (no contracts, monthly subscriptions or commitment).</p>
+            <p style="margin:0 0 28px;"><b>Members:  Get exclusive member perks offered by our advertisers.</b>  We protect your privacy with secure messaging and never sell your contact information as a lead.  Search for businesses, products or services with peace of mind (we don't track browsing history or listen to your conversations).  We connect <b>One Member</b> to <b>One Business</b> at a time.</p>
+            <p style="margin:0 0 28px;"><b>Business Owners:</b>  YOU GET ZERO WASTED ADVERTISING DOLLARS!  <font color="#FF0000"></br>No Sale or Closed Deal = Zero Fees</font></br><b>(1,000% ROAS or higher - Spend $1 and get $10 in Return).</b>  No cost for exclusive leads, phone calls, website or foot traffic, appointments or meetups.  You only pay after you get paid (10% of the sale, capped at $250).  No hidden fees, no contracts, no membership fees and no commitment.  Only $25 required to get started in pre-funded dollars to cover the advertising (transactions over $250 require more funds).  Funds remain in your account balance until you make a sale).  Perk Miner LLC pays all cash back and referral commissions ... repeat business.</p>
+            <p style="margin:0 0 28px;">MEMBER SELECTS A BUSINESS -> BUSINESS AND MEMBER CONNECT</p>
         </td>
     </tr>
 
         <!-- Secondary Image -->
     <tr>
         <td style="padding: 0 40px 30px;">
-            <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1775719494/List-for-Free_pykazg.jpg" width="520" alt="PerkMiner Features"
+            <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791000401/biz-flyer_pfg6os.jpg" width="600" alt="PerkMiner Features"
             style="display:block; width:100%; max-width:520px; height:auto; border-radius:10px; border:0;" border="0">
         </td>
     </tr>
@@ -1165,23 +1174,36 @@ def get_member_level_code(user: User) -> str | None:
         return None
 
 ALLOWED_MEMBER_LEVELS = ['member_10k', 'member_50k', 'member_100k']
-ALLOWED_BUSINESS_LEVELS = ['biz_25k', 'biz_100k', 'biz_250k']
+ALLOWED_BUSINESS_LEVELS = ['biz_25k', 'biz_100k', 'biz_250k', 'biz_founding_5']
 
 def get_business_level_code(biz: Business) -> str | None:
     """
-    Returns the highest level_code this business qualifies for
-    based on grand_total_earnings (sales).
+    Returns the highest testimonial level the business qualifies for
+    based on lifetime sales, or a special level for founding businesses
+    with >= 5 finalized transactions.
     """
-    total = biz.lifetime_gross_sales or Decimal('0')
 
-    if total >= Decimal('250000'):
-        return 'biz_250k'
-    elif total >= Decimal('100000'):
-        return 'biz_100k'
-    elif total >= Decimal('25000'):
-        return 'biz_25k'
-    else:
-        return None
+    # 1) founding-business special rule: 5 finalized transactions
+    if getattr(biz, "is_founding_business", False):
+        finalized_count = Interaction.query.filter_by(
+            business_id=biz.id,
+            status="ended",          # or whatever status you use for finalized
+        ).count()
+        if finalized_count >= 5:
+            # special level; does NOT depend on lifetime_gross_sales
+            return "biz_founding_5"
+
+    # 2) normal levels (keep your existing logic here)
+    gross = biz.lifetime_gross_sales or Decimal("0")
+
+    if gross >= Decimal("250000"):
+        return "biz_250k"
+    elif gross >= Decimal("100000"):
+        return "biz_100k"
+    elif gross >= Decimal("25000"):
+        return "biz_25k"
+
+    return None
 
 def issue_store_sale_rewards(business, amount, buyer_email=None):
     """
@@ -1412,10 +1434,10 @@ class Business(db.Model):
     contact_js = db.Column(db.Text, nullable=True)
     is_ecommerce_site = db.Column(db.Boolean, default=False)
     allow_website_purchases = db.Column(db.Boolean, default=False)
-    lifetime_gross_sales = db.Column(db.Numeric(12, 2), default=0)
-    lifetime_ad_fee_paid = db.Column(db.Numeric(12, 2), default=0)
-    lifetime_net_gross = db.Column(db.Numeric(12, 2), default=0)
-    lifetime_roi = db.Column(db.Numeric(6, 2), default=0)  # e.g., 900.00 for 900% ROI
+    lifetime_gross_sales = db.Column(Numeric(18, 2))
+    lifetime_ad_fee_paid = db.Column(Numeric(18, 2))
+    lifetime_net_gross = db.Column(Numeric(18, 2))
+    lifetime_roi = db.Column(Numeric(18, 4))
     online_terms_agreed = db.Column(db.Boolean, default=False)
     country = db.Column(db.String(2), default="US")
     withdrawal_in_progress = db.Column(db.Boolean, default=False, nullable=False)
@@ -1435,6 +1457,7 @@ class Business(db.Model):
     live_gps_lat = db.Column(db.Float)
     live_gps_long = db.Column(db.Float)
     location_varies = db.Column(db.Boolean, default=False)
+    is_founding_business = db.Column(db.Boolean, nullable=False, default=False)
     theme_type = db.Column(db.String(50))
 
 class Favorite(db.Model):
@@ -1499,7 +1522,7 @@ def upload_testimonial():
 
     data = request.get_json() or {}
 
-    # NEW: optional title from client
+    # optional title from client
     title = data.get('title', '')
     if isinstance(title, str):
         title = title.strip() or None
@@ -1517,11 +1540,18 @@ def upload_testimonial():
 
     # simple ordering: member_100k > member_50k > member_10k
     level_order = {'member_10k': 1, 'member_50k': 2, 'member_100k': 3}
+    if level_code not in level_order:
+        return jsonify({'error': 'You are not yet eligible for this level.'}), 403
     if level_order[level_code] > level_order[highest_level]:
         return jsonify({'error': 'You are not yet eligible for this level.'}), 403
 
-    # duration validation (Cloudinary returns seconds)
+    # duration validation (Cloudinary returns seconds, may be float)
     duration = data.get('duration')
+    try:
+        duration = float(duration) if duration is not None else None
+    except (TypeError, ValueError):
+        duration = None
+
     if duration is None or duration > 60:
         return jsonify({'error': 'Video duration must be 60 seconds or less.'}), 400
 
@@ -1553,13 +1583,13 @@ def upload_testimonial():
         tv.rejection_reason = None
         tv.lifetime_amount_at_submission = user.grand_total_earnings or Decimal('0')
 
-    # NEW: set or clear title for this submission
+    # set or clear title for this submission
     tv.title = title
 
     # update Cloudinary fields
     tv.cloudinary_public_id = public_id
     tv.cloudinary_secure_url = secure_url
-    tv.cloudinary_duration_sec = duration
+    tv.cloudinary_duration_sec = int(round(duration))
     tv.cloudinary_bytes = data.get('bytes')
     tv.cloudinary_format = data.get('format')
     tv.cloudinary_width = data.get('width')
@@ -1586,7 +1616,7 @@ def upload_business_testimonial():
 
     data = request.get_json() or {}
 
-    # NEW
+    # optional title from client
     title = data.get('title', '')
     if isinstance(title, str):
         title = title.strip() or None
@@ -1601,11 +1631,28 @@ def upload_business_testimonial():
     if highest_level is None:
         return jsonify({'error': 'You are not yet eligible to upload a testimonial video.'}), 403
 
-    level_order = {'biz_25k': 1, 'biz_100k': 2, 'biz_250k': 3}
-    if level_order[level_code] > level_order[highest_level]:
-        return jsonify({'error': 'You are not yet eligible for this level.'}), 403
+    # special case: founding-business level (5 finalized transactions)
+    if highest_level == "biz_founding_5":
+        # founding businesses can only use this special level
+        if level_code != "biz_founding_5":
+            return jsonify({'error': 'You are only eligible for the founding business testimonial level.'}), 403
+    else:
+        # normal sales-based levels (biz_25k, biz_100k, biz_250k)
+        level_order = {'biz_25k': 1, 'biz_100k': 2, 'biz_250k': 3}
 
+        if level_code not in level_order:
+            return jsonify({'error': 'You are not yet eligible for this level.'}), 403
+
+        if level_order[level_code] > level_order[highest_level]:
+            return jsonify({'error': 'You are not yet eligible for this level.'}), 403
+
+    # duration validation (Cloudinary returns seconds, may be float)
     duration = data.get('duration')
+    try:
+        duration = float(duration) if duration is not None else None
+    except (TypeError, ValueError):
+        duration = None
+
     if duration is None or duration > 60:
         return jsonify({'error': 'Video duration must be 60 seconds or less.'}), 400
 
@@ -1635,12 +1682,13 @@ def upload_business_testimonial():
         tv.rejection_reason = None
         tv.lifetime_amount_at_submission = biz.lifetime_gross_sales or Decimal('0')
 
-    # NEW
+    # set or clear title
     tv.title = title
 
+    # Cloudinary fields
     tv.cloudinary_public_id = public_id
     tv.cloudinary_secure_url = secure_url
-    tv.cloudinary_duration_sec = duration
+    tv.cloudinary_duration_sec = int(round(duration))
     tv.cloudinary_bytes = data.get('bytes')
     tv.cloudinary_format = data.get('format')
     tv.cloudinary_width = data.get('width')
@@ -1873,15 +1921,27 @@ def business_upload_params():
     if highest_level is None:
         return jsonify({'error': 'You are not yet eligible to upload a testimonial video.'}), 403
 
-    level_order = {'biz_25k': 1, 'biz_100k': 2, 'biz_250k': 3}
-    if level_order[level_code] > level_order[highest_level]:
-        return jsonify({'error': 'You are not yet eligible for this level.'}), 403
+    # special case: founding-business level (5 finalized transactions)
+    if highest_level == "biz_founding_5":
+        # for founding businesses, we only allow this one special level
+        if level_code != "biz_founding_5":
+            return jsonify({'error': 'You are only eligible for the founding business testimonial level.'}), 403
+    else:
+        # normal sales-based levels (biz_25k, biz_100k, biz_250k)
+        level_order = {'biz_25k': 1, 'biz_100k': 2, 'biz_250k': 3}
+
+        # if they somehow requested biz_founding_5 but aren't a founding business
+        if level_code not in level_order:
+            return jsonify({'error': 'You are not yet eligible for this level.'}), 403
+
+        if level_order[level_code] > level_order[highest_level]:
+            return jsonify({'error': 'You are not yet eligible for this level.'}), 403
 
     timestamp = int(time.time())
 
     params_to_sign = {
-        'timestamp': timestamp,
-        'folder': f'testimonials/businesses/{biz.id}',
+      'timestamp': timestamp,
+      'folder': f'testimonials/businesses/{biz.id}',
     }
 
     api_secret = cloudinary.config().api_secret
@@ -2067,11 +2127,14 @@ class Staff(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     hashed_password = db.Column(db.String(128), nullable=False)
 
-    # NEW
+    # roles/permissions
     role = db.Column(db.String(20), default="admin", nullable=False)
     can_add_providers = db.Column(db.Boolean, default=False, nullable=False)
 
-    # NEW (live location)
+    # NEW: whether this staff member can track live location
+    allow_live_tracking = db.Column(db.Boolean, default=False, nullable=False)
+
+    # live location
     live_gps_lat = db.Column(db.Float)
     live_gps_long = db.Column(db.Float)
 
@@ -2109,6 +2172,9 @@ class StaffRegisterForm(FlaskForm):
         validators=[DataRequired(message="Please select a role.")]
     )
     can_add_providers = BooleanField("Allow this admin to add service providers")
+    allow_live_tracking = BooleanField(
+        "Allow this admin to track live locations of service providers"
+    )
     submit = SubmitField("Add Staff")
 
 class StaffLoginForm(FlaskForm):
@@ -3840,6 +3906,7 @@ def business_home():
     return render_template("business_home.html")
 
 @app.route("/search")
+@login_required
 def search():
     q = request.args.get("q", "").strip()
     category = request.args.get("category", "").strip()
@@ -3928,6 +3995,7 @@ def search():
     )
 
 @app.route("/category/<name>")
+@login_required
 def category_browse(name):
     # Get user location from query params if provided
     lat = request.args.get("lat", type=float)
@@ -4363,6 +4431,23 @@ def dashboard():
             flash("Profile updated!")
         return redirect(url_for('dashboard'))
 
+    # --- Perk Miner transfer fee preview for regular member earnings ---
+    FEE_RATE = Decimal("0.005")   # 0.5%
+    FIXED_FEE = Decimal("0.35")   # $0.35
+
+    # example basis: use current net_available if > 0, else show example on $100
+    if net_available and net_available > 0:
+        example_balance = net_available
+    else:
+        example_balance = Decimal("100.00")
+
+    std_fee = (example_balance * FEE_RATE + FIXED_FEE).quantize(Decimal("0.01"))
+    std_net = (example_balance - std_fee).quantize(Decimal("0.01"))
+
+    # --- initialize investor fee preview defaults (may be overwritten below) ---
+    std_fee_inv = Decimal("0")
+    std_net_inv = Decimal("0")
+
     # --- Rewards calculator setup ---
     if request.method == "GET":
         form.downline_level.data = '1'
@@ -4506,6 +4591,15 @@ def dashboard():
 
         db.session.commit()
 
+        # investor transfer fee preview
+        if investor_net_available and investor_net_available > 0:
+            example_inv_balance = investor_net_available
+        else:
+            example_inv_balance = Decimal("100.00")
+
+        std_fee_inv = (example_inv_balance * FEE_RATE + FIXED_FEE).quantize(Decimal("0.01"))
+        std_net_inv = (example_inv_balance - std_fee_inv).quantize(Decimal("0.01"))
+
     share_url = url_for("register", ref=user.referral_code, _external=True)
     business_share_url = url_for("business_register", ref=user.referral_code, _external=True)
 
@@ -4544,6 +4638,11 @@ def dashboard():
         available_earnings=available_earnings,           # raw, if you still want it
         net_available_earnings=net_available,            # matches Withdrawable Earnings
         withdrawn_total=withdrawn_total,                 # for "Total withdrawn" row
+
+        std_fee=std_fee,
+        std_net=std_net,
+        std_fee_inv=std_fee_inv,
+        std_net_inv=std_net_inv,
 
         # silent investor summary
         investor_total=investor_total,
@@ -6271,13 +6370,25 @@ def business_dashboard():
 
     db.session.commit()
 
+    # --- Perk Miner transfer fee preview for business earnings ---
+    FEE_RATE = Decimal("0.005")   # 0.5%
+    FIXED_FEE = Decimal("0.35")   # $0.35
+
+    if net_available_biz and net_available_biz > 0:
+        example_balance_biz = net_available_biz
+    else:
+        example_balance_biz = Decimal("100.00")
+
+    std_fee_biz = (example_balance_biz * FEE_RATE + FIXED_FEE).quantize(Decimal("0.01"))
+    std_net_biz = (example_balance_biz - std_fee_biz).quantize(Decimal("0.01"))
+
     if request.args.get("fund_success") == "1":
         flash("Funds added to your account!", "success")
 
     editable_fields = [
         "business_name", "listing_type", "category", "finalization", "perks", "phone_number", "address", "latitude", "longitude",
         "website_url", "about_us", "hours_of_operation", "search_keywords",
-        "service_1", "service_2", "service_3", "service_4", "service_5",
+        "store_slug", "service_1", "service_2", "service_3", "service_4", "service_5",
         "service_6", "service_7", "service_8", "service_9", "service_10"
     ]
 
@@ -6410,6 +6521,30 @@ def business_dashboard():
 
         if getattr(biz, "online_terms_agreed", False) != new_online_terms_agreed:
             biz.online_terms_agreed = new_online_terms_agreed
+            updated = True
+
+        # handle store_slug separately to enforce uniqueness
+        slug = request.form.get("store_slug", "").strip() or None
+        if slug:
+            # normalize to lower-case if you want
+            slug = slug.lower()
+            # validate characters (you can reuse your WTForms validator too)
+            import re
+            if not re.match(r"^[a-z0-9\-]+$", slug):
+                flash("Public profile URL can only contain letters, numbers, and dashes.", "danger")
+                return redirect(url_for("business_dashboard"))
+
+            # check uniqueness among businesses (excluding this one)
+            existing_slug = Business.query.filter(
+                Business.store_slug == slug,
+                Business.id != biz.id
+            ).first()
+            if existing_slug:
+                flash("That public profile URL is already taken. Please choose another.", "danger")
+                return redirect(url_for("business_dashboard"))
+        # assign slug (or clear if empty)
+        if biz.store_slug != slug:
+            biz.store_slug = slug
             updated = True
 
         if updated:
@@ -6569,6 +6704,9 @@ def business_dashboard():
         available_biz_earnings=available_biz_earnings,   # raw available (if you still want it)
         net_available_biz_earnings=net_available_biz,    # net available = balance
         biz_withdrawn_total=biz_withdrawn_total,         # total withdrawn
+
+        std_fee_biz=std_fee_biz,
+        std_net_biz=std_net_biz,
 
         b2b_share_url=b2b_share_url,
         biz_level_code=biz_level_code,
@@ -7276,21 +7414,21 @@ def start_review(listing_id):
 def approve_listing(listing_id):
     biz = Business.query.get_or_404(listing_id)
     if biz.status in ["pending", "in_review", "approved"]:
-        # Promote draft fields to live fields if needed; this block is unchanged
-
+        # Promote draft fields to live fields if needed
         promote_fields = [
             "business_name", "listing_type", "category", "finalization", "phone_number", "address", "latitude", "longitude",
             "website_url", "about_us", "hours_of_operation", "search_keywords",
             "service_1", "service_2", "service_3", "service_4", "service_5",
             "service_6", "service_7", "service_8", "service_9", "service_10",
             "profile_photo",
-            # NEW: gallery photos
+            # gallery photos
             "photo1_url", "photo2_url", "photo3_url",
             "photo4_url", "photo5_url", "photo6_url",
         ]
 
         if biz.draft_category == "Other" and biz.category not in [None, "", "Other"]:
             biz.draft_category = biz.category
+
         for field in promote_fields:
             draft_attr = f"draft_{field}"
             draft_value = getattr(biz, draft_attr, None)
@@ -7301,16 +7439,22 @@ def approve_listing(listing_id):
         # Status update
         biz.status = "approved"
 
-        # Add this to record who approved it:
-        biz.approved_by = current_user.id   # (or current_user.email if you want email)
+        # record who approved it
+        biz.approved_by = current_user.id
 
-        # Only super_admin can update manual_feature
-        if current_user.is_authenticated and getattr(current_user, 'has_role', None) and current_user.has_role("super_admin"):
+        # Only super_admin can update manual_feature and founding flag
+        if current_user.is_authenticated and getattr(current_user, "has_role", None) and current_user.has_role("super_admin"):
             biz.manual_feature = bool(request.form.get("manual_feature"))
-        # Otherwise, ignore
+            biz.is_founding_business = bool(request.form.get("is_founding_business"))
+        # Otherwise, ignore both
 
         db.session.commit()
-        flash(f"Listing {biz.business_name} approved!" + (" Manually Featured." if getattr(biz, 'manual_feature', False) else ""))
+
+        flash(
+            f"Listing {biz.business_name} approved!"
+            + (" Manually Featured." if getattr(biz, "manual_feature", False) else "")
+        )
+
     return redirect(url_for("approve_reject_dashboard"))
 
 @app.route("/admin/listing/<int:listing_id>/reject", methods=["POST"])
@@ -7508,16 +7652,44 @@ def view_listing(biz_id):
     verified = getattr(biz, "ecommerce_verified", False)
     balance = biz.account_balance or 0.0
 
-    # all four flags must be true
-    core_flags_ok = has_website and is_ecom and allows_web and online_terms and verified
+    # build a meta description using business fields
+    base_parts = []
 
+    if biz.business_name:
+        base_parts.append(biz.business_name)
+
+    if biz.category:
+        base_parts.append(biz.category)
+
+    # keywords might be a comma-separated string
+    if getattr(biz, "keywords", None):
+        kw = biz.keywords.strip()
+        kw = " ".join(kw.split())
+        base_parts.append(kw)
+
+    if getattr(biz, "about_us", None):
+        about_snippet = biz.about_us.strip().replace("\n", " ")
+        about_snippet = about_snippet[:160]
+        base_parts.append(about_snippet)
+
+    description = " - ".join(part for part in base_parts if part)
+
+    if not description:
+        description = "Learn more about this Perk Miner advertiser and their exclusive member perks."
+
+    # meta keywords from business.keywords
+    meta_keywords = None
+    if getattr(biz, "keywords", None):
+        kw = biz.keywords.strip()
+        kw = " ".join(kw.split())
+        meta_keywords = kw
+
+    core_flags_ok = has_website and is_ecom and allows_web and online_terms and verified
     can_shop_online_listing = core_flags_ok and balance >= 250.0
     show_online_warning = core_flags_ok and balance < 250.0
 
-    # NEW: finalized transaction count
     finalized_tx_count = get_finalized_tx_count_for_business(biz)
 
-    # >>> NEW: collect only non-empty photo URLs from live fields <<<
     raw_photos = [
         biz.photo1_url,
         biz.photo2_url,
@@ -7526,15 +7698,17 @@ def view_listing(biz_id):
         biz.photo5_url,
         biz.photo6_url,
     ]
-    photos = [url for url in raw_photos if url]  # filters out None and ""
+    photos = [url for url in raw_photos if url]
 
     return render_template(
         "large_listing.html",
         business=biz,
+        meta_description=description,
+        meta_keywords=meta_keywords,
         can_shop_online_listing=can_shop_online_listing,
         show_online_warning=show_online_warning,
         finalized_tx_count=finalized_tx_count,
-        photos=photos,  # <<< pass to template
+        photos=photos,
     )
 
 @app.route("/finance/combined-detailed-report", methods=["GET"])
@@ -8423,7 +8597,9 @@ def staff_new():
         email = form.email.data.strip().lower()
         name = form.name.data.strip()
         role = form.role.data  # "admin" or "service_provider"
+
         can_add_providers = bool(form.can_add_providers.data)
+        allow_live_tracking = bool(form.allow_live_tracking.data)
 
         existing_staff = Staff.query.filter_by(email=email).first()
         if existing_staff:
@@ -8441,12 +8617,12 @@ def staff_new():
             role=role,
             is_active=True,
             password_reset_required=True,
+            allow_live_tracking=allow_live_tracking if role == "admin" else False,
             can_add_providers=can_add_providers if role == "admin" else False,
         )
         db.session.add(staff)
         db.session.commit()
 
-        # email content unchanged...
         send_email(
             staff.email,
             "Your PerkMiner Staff Login",
@@ -8973,7 +9149,7 @@ def press_release():
 
 @app.route("/new-featured-businesses")
 def new_featured_businesses():
-    return render_template('your_template.html')
+    return render_template('new_featured_businesses.html')
 
 @app.route('/onboard/stripe')
 @login_required
@@ -9003,6 +9179,23 @@ def onboard_stripe():
 
         current_user.stripe_account_id = account.id
         db.session.commit()
+
+        # NOW set automatic daily payouts using Balance Settings API
+        try:
+            stripe.BalanceSettings.update(
+                stripe_account=account.id,
+                payments={
+                    'payouts': {
+                        'schedule': {
+                            'interval': 'daily'
+                        }
+                    }
+                }
+            )
+            print(f"DEBUG: Enabled daily automatic payouts for user {current_user.id}, account {account.id}")
+        except Exception as e:
+            print(f"DEBUG: Failed to set payout schedule for {account.id}: {e}")
+            # Non-critical - account still works, just won't have custom schedule
 
     account_link = stripe.AccountLink.create(
         account=current_user.stripe_account_id,
@@ -9051,6 +9244,23 @@ def onboard_business_stripe():
         )
         business.stripe_account_id = account.id
         db.session.commit()
+
+        # NOW set automatic daily payouts using Balance Settings API
+        try:
+            stripe.BalanceSettings.update(
+                stripe_account=account.id,
+                payments={
+                    'payouts': {
+                        'schedule': {
+                            'interval': 'daily'
+                        }
+                    }
+                }
+            )
+            print(f"DEBUG: Enabled daily automatic payouts for business {business.id}, account {account.id}")
+        except Exception as e:
+            print(f"DEBUG: Failed to set payout schedule for {account.id}: {e}")
+            # Non-critical - account still works, just won't have custom schedule
 
     # Create onboarding link (works to complete requirements too)
     account_link = stripe.AccountLink.create(
@@ -9185,23 +9395,29 @@ def business_stripe_dashboard():
 import time
 import uuid
 
+@csrf.exempt
 @app.route('/withdraw', methods=['POST'])
 @login_required
 def withdraw():
     """
-    Standard member withdrawal (1–3 business days).
-    Fee: 0.5% + $0.35
+    Standard member withdrawal.
+
+    Platform behavior:
+      - Perk Miner transfer fee: 0.5% + $0.35 (deducted before transfer)
+      - We create a TRANSFER from platform balance -> member's connected account.
+      - Connected account's payouts to bank are handled by Stripe (e.g., automatic payouts).
+
     Flow:
       1) lock via user.withdrawal_in_progress
       2) recompute earnings (7-day delay)
-      3) standard payout from connected account
+      3) stripe.Transfer.create(...) from platform to connected account
       4) update withdrawn_total / earnings_balance
     """
     print("DEBUG: /withdraw (member standard) called for user", current_user.id)
 
     MIN_PAYOUT = Decimal("10.00")
     FEE_RATE = Decimal("0.005")   # 0.5%
-    FIXED_FEE = Decimal("0.35")
+    FIXED_FEE = Decimal("0.35")   # Perk Miner transfer fee (fixed portion)
 
     user = current_user
 
@@ -9263,38 +9479,49 @@ def withdraw():
 
         print("DEBUG: member balance_to_withdraw =", balance_to_withdraw)
 
-        # standard payout fee: 0.5% + $0.35
+        # Perk Miner transfer fee: 0.5% + $0.35
         fee = (balance_to_withdraw * FEE_RATE + FIXED_FEE).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
-        payout_amount = (balance_to_withdraw - fee).quantize(
+        transfer_amount = (balance_to_withdraw - fee).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
 
-        print("DEBUG: member fee =", fee, "payout_amount =", payout_amount)
+        print("DEBUG: member fee =", fee, "transfer_amount =", transfer_amount)
 
-        if payout_amount <= 0:
-            flash("Insufficient balance after the payout fee is deducted.", "warning")
+        if transfer_amount <= 0:
+            flash("Insufficient balance after the Perk Miner transfer fee is deducted.", "warning")
             return redirect(url_for('dashboard'))
 
-        amount_cents = int(payout_amount * 100)
+        amount_cents = int(transfer_amount * 100)
 
-        # idempotency key to protect against duplicate charges at Stripe level
         idem_key = f"member_withdraw_{user.id}_{int(time.time())}_{amount_cents}_{uuid.uuid4().hex}"
         print("DEBUG: member withdraw idempotency_key =", idem_key)
 
-        payout = stripe.Payout.create(
-            amount=amount_cents,
-            currency='usd',
-            method='standard',
-            statement_descriptor="PerkMiner Payout",
-            stripe_account=user.stripe_account_id,
-            idempotency_key=idem_key,
-        )
-        payout_dict = payout.to_dict()
-        print("DEBUG: Member Payout created:", payout_dict.get("id"), payout_dict.get("status"))
+        # Transfer from platform -> member connected account
+        try:
+            transfer = stripe.Transfer.create(
+                amount=amount_cents,
+                currency='usd',
+                destination=user.stripe_account_id,
+                description=f"Perk Miner member earnings for user {user.id}",
+                idempotency_key=idem_key,
+            )
+            transfer_dict = transfer.to_dict()
+            print("DEBUG: Member Transfer created:", transfer_dict.get("id"), transfer_dict.get("status"))
+        except stripe.error.InvalidRequestError as e:
+            print("DEBUG: member transfer failed with InvalidRequestError:", repr(e))
+            if getattr(e, "code", None) == "balance_insufficient":
+                flash(
+                    "Transfer cannot be completed yet because the platform balance is not ready. "
+                    "Please try again later.",
+                    "danger"
+                )
+            else:
+                flash("There was a problem creating your payout transfer. Please try again later.", "danger")
+            return redirect(url_for('dashboard'))
 
-        # mark withdrawn funds
+        # mark withdrawn funds in our DB
         user.withdrawn_total = (user.withdrawn_total or Decimal("0")) + balance_to_withdraw
         user.earnings_balance = available_earnings - user.withdrawn_total
 
@@ -9304,8 +9531,9 @@ def withdraw():
               "earnings_balance now", user.earnings_balance)
 
         flash(
-            f"Withdrawal of ${payout_amount:.2f} initiated! "
-            f"Payout fee: ${fee:.2f} deducted.",
+            f"Withdrawal of ${transfer_amount:.2f} initiated! "
+            f"Perk Miner transfer fee: ${fee:.2f} deducted. "
+            f"Note: Stripe may also charge a separate withdrawal fee.\"",
             "success"
         )
     except Exception as e:
@@ -9317,18 +9545,22 @@ def withdraw():
 
     return redirect(url_for('dashboard'))
 
-
+@csrf.exempt
 @app.route('/business/withdraw', methods=['POST'])
 def business_withdraw():
     """
-    Standard business withdrawal (bank transfer).
-    Fee: 0.5% + $0.35
+    Standard business withdrawal.
+
+    Platform behavior:
+      - Perk Miner transfer fee: 0.5% + $0.35 (deducted before transfer)
+      - We create a TRANSFER from platform balance -> business connected account.
+      - Connected account's payouts to bank are handled by Stripe (e.g., automatic payouts).
+
     Flow:
       1) lock via biz.withdrawal_in_progress
       2) recompute business earnings (7-day delay)
-      3) transfer platform -> business connected account
-      4) standard payout from connected account
-      5) update withdrawn_total / earnings_balance
+      3) stripe.Transfer.create(...) from platform to business connected account
+      4) update withdrawn_total / earnings_balance
     """
     print("DEBUG: /business/withdraw (standard) called")
 
@@ -9370,7 +9602,6 @@ def business_withdraw():
             flash(f"You need at least ${MIN_PAYOUT} in available earnings (after the 7-day delay) to withdraw.", "warning")
             return redirect(url_for('business_dashboard'))
 
-        # optional amount
         amt_str = request.form.get("amount", "").strip()
         if amt_str:
             try:
@@ -9396,51 +9627,50 @@ def business_withdraw():
 
         print("DEBUG: business balance_to_withdraw =", balance_to_withdraw)
 
-        # 0.5% + $0.35 fee
+        # Perk Miner transfer fee: 0.5% + $0.35
         fee = (balance_to_withdraw * FEE_RATE + FIXED_FEE).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
-        payout_amount = (balance_to_withdraw - fee).quantize(
+        transfer_amount = (balance_to_withdraw - fee).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
 
-        print("DEBUG: business fee =", fee, "payout_amount =", payout_amount)
+        print("DEBUG: business fee =", fee, "transfer_amount =", transfer_amount)
 
-        if payout_amount <= 0:
-            flash("Insufficient balance after the payout fee is deducted.", "warning")
+        if transfer_amount <= 0:
+            flash("Insufficient balance after the Perk Miner transfer fee is deducted.", "warning")
             return redirect(url_for('business_dashboard'))
 
-        amount_cents = int(payout_amount * 100)
+        amount_cents = int(transfer_amount * 100)
 
-        # idempotency key
         idem_key = f"biz_withdraw_{biz.id}_{int(time.time())}_{amount_cents}_{uuid.uuid4().hex}"
         print("DEBUG: business withdraw idempotency_key =", idem_key)
 
-        # 1) Transfer platform -> business connected account
-        print("DEBUG: creating Business Transfer for", amount_cents, "cents to", biz.stripe_account_id)
-        transfer = stripe.Transfer.create(
-            amount=amount_cents,
-            currency='usd',
-            destination=biz.stripe_account_id,
-            description="PerkMiner Business Payout (Standard)",
-            idempotency_key=idem_key,
-        )
-        transfer_dict = transfer.to_dict()
-        print("DEBUG: Business Transfer created:", transfer_dict.get("id"), transfer_dict.get("status"))
+        # Transfer from platform -> business connected account
+        try:
+            print("DEBUG: creating Business Transfer for", amount_cents, "cents to", biz.stripe_account_id)
+            transfer = stripe.Transfer.create(
+                amount=amount_cents,
+                currency='usd',
+                destination=biz.stripe_account_id,
+                description="Perk Miner Business Earnings",
+                idempotency_key=idem_key,
+            )
+            transfer_dict = transfer.to_dict()
+            print("DEBUG: Business Transfer created:", transfer_dict.get("id"), transfer_dict.get("status"))
+        except stripe.error.InvalidRequestError as e:
+            print("DEBUG: business transfer failed with InvalidRequestError:", repr(e))
+            if getattr(e, "code", None) == "balance_insufficient":
+                flash(
+                    "Transfer cannot be completed yet because the platform balance is not ready. "
+                    "Please try again later.",
+                    "danger"
+                )
+            else:
+                flash("There was a problem creating your business payout transfer. Please try again later.", "danger")
+            return redirect(url_for('business_dashboard'))
 
-        # 2) standard payout from connected account to bank/debit
-        print("DEBUG: creating Business Payout (standard) for", amount_cents, "cents from", biz.stripe_account_id)
-        payout = stripe.Payout.create(
-            amount=amount_cents,
-            currency='usd',
-            method='standard',
-            statement_descriptor="PerkMiner Biz Payout",
-            stripe_account=biz.stripe_account_id,
-        )
-        payout_dict = payout.to_dict()
-        print("DEBUG: Business Payout created:", payout_dict.get("id"), payout_dict.get("status"), payout_dict.get("destination"))
-
-        # update DB
+        # update DB after successful transfer
         biz.withdrawn_total = (biz.withdrawn_total or Decimal("0")) + balance_to_withdraw
         biz.grand_total_earnings = total
         biz.pending_earnings = pending
@@ -9453,8 +9683,9 @@ def business_withdraw():
               "earnings_balance now", biz.earnings_balance)
 
         flash(
-            f"Business withdrawal of ${payout_amount:.2f} initiated! "
-            f"Payout fee: ${fee:.2f} deducted.",
+            f"Business withdrawal of ${transfer_amount:.2f} initiated! "
+            f"Perk Miner transfer fee: ${fee:.2f} deducted. "
+            f"Note: Stripe may also charge a separate withdrawal fee.\"",
             "success"
         )
     except Exception as e:
@@ -9466,19 +9697,23 @@ def business_withdraw():
 
     return redirect(url_for('business_dashboard'))
 
-
+@csrf.exempt
 @app.route('/withdraw_investor', methods=['POST'])
 @login_required
 def withdraw_investor():
     """
-    Standard silent investor withdrawal (bank transfer).
-    Fee: 0.5% + $0.35
+    Standard silent investor withdrawal.
+
+    Platform behavior:
+      - Perk Miner transfer fee: 0.5% + $0.35 (deducted before transfer)
+      - We create a TRANSFER from platform balance -> investor's connected account.
+      - Connected account's payouts to bank are handled by Stripe (e.g., automatic payouts).
+
     Flow:
       1) lock via user.withdrawal_in_progress
       2) recompute investor earnings (7-day delay)
-      3) transfer platform -> investor connected account
-      4) standard payout from connected account
-      5) update investor_withdrawn_total / investor balances
+      3) stripe.Transfer.create(...) from platform to investor connected account
+      4) update investor_withdrawn_total / investor balances
     """
     print("DEBUG: /withdraw_investor (standard) called for user", current_user.id)
 
@@ -9541,47 +9776,50 @@ def withdraw_investor():
 
         print("DEBUG: investor balance_to_withdraw =", balance_to_withdraw)
 
-        # 0.5% + $0.35 fee
+        # Perk Miner transfer fee: 0.5% + $0.35
         fee = (balance_to_withdraw * FEE_RATE + FIXED_FEE).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
-        payout_amount = (balance_to_withdraw - fee).quantize(
+        transfer_amount = (balance_to_withdraw - fee).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
 
-        print("DEBUG: investor fee =", fee, "payout_amount =", payout_amount)
+        print("DEBUG: investor fee =", fee, "transfer_amount =", transfer_amount)
 
-        if payout_amount <= 0:
-            flash("Insufficient balance after the payout fee is deducted.", "warning")
+        if transfer_amount <= 0:
+            flash("Insufficient balance after the Perk Miner transfer fee is deducted.", "warning")
             return redirect(url_for('dashboard'))
 
-        amount_cents = int(payout_amount * 100)
+        amount_cents = int(transfer_amount * 100)
 
         idem_key = f"investor_withdraw_{user.id}_{int(time.time())}_{amount_cents}_{uuid.uuid4().hex}"
         print("DEBUG: investor withdraw idempotency_key =", idem_key)
 
-        print("DEBUG: creating Investor Transfer (standard) for", amount_cents, "cents to", user.stripe_account_id)
-        transfer = stripe.Transfer.create(
-            amount=amount_cents,
-            currency='usd',
-            destination=user.stripe_account_id,
-            description="PerkMiner Silent Investor Withdrawal",
-            idempotency_key=idem_key,
-        )
-        transfer_dict = transfer.to_dict()
-        print("DEBUG: Investor Transfer created:", transfer_dict.get("id"), transfer_dict.get("status"))
+        # Transfer from platform -> investor connected account
+        try:
+            print("DEBUG: creating Investor Transfer (standard) for", amount_cents, "cents to", user.stripe_account_id)
+            transfer = stripe.Transfer.create(
+                amount=amount_cents,
+                currency='usd',
+                destination=user.stripe_account_id,
+                description="Perk Miner Silent Investor Earnings",
+                idempotency_key=idem_key,
+            )
+            transfer_dict = transfer.to_dict()
+            print("DEBUG: Investor Transfer created:", transfer_dict.get("id"), transfer_dict.get("status"))
+        except stripe.error.InvalidRequestError as e:
+            print("DEBUG: investor transfer failed with InvalidRequestError:", repr(e))
+            if getattr(e, "code", None) == "balance_insufficient":
+                flash(
+                    "Transfer cannot be completed yet because the platform balance is not ready. "
+                    "Please try again later.",
+                    "danger"
+                )
+            else:
+                flash("There was a problem creating your silent investor payout transfer. Please try again later.", "danger")
+            return redirect(url_for('dashboard'))
 
-        print("DEBUG: creating Investor Payout (standard) for", amount_cents, "cents from", user.stripe_account_id)
-        payout = stripe.Payout.create(
-            amount=amount_cents,
-            currency='usd',
-            method='standard',
-            statement_descriptor="PerkMiner Investor Payout",
-            stripe_account=user.stripe_account_id
-        )
-        payout_dict = payout.to_dict()
-        print("DEBUG: Investor Payout created:", payout_dict.get("id"), payout_dict.get("status"), payout_dict.get("destination"))
-
+        # update DB after successful transfer
         user.investor_withdrawn_total = (user.investor_withdrawn_total or Decimal("0")) + balance_to_withdraw
         user.investor_earnings_balance = investor_available - user.investor_withdrawn_total
 
@@ -9591,8 +9829,9 @@ def withdraw_investor():
               "investor_earnings_balance now", user.investor_earnings_balance)
 
         flash(
-            f"Silent investor withdrawal of ${payout_amount:.2f} initiated! "
-            f"Payout fee: ${fee:.2f} deducted.",
+            f"Silent investor withdrawal of ${transfer_amount:.2f} initiated! "
+            f"Perk Miner transfer fee: ${fee:.2f} deducted. "
+            f"Note: Stripe may also charge a separate withdrawal fee.\"",
             "success"
         )
     except Exception as e:
@@ -10041,6 +10280,10 @@ def business_tutorials():
 
 @app.route("/stats")
 def stats():
+
+    if not getattr(current_user, "is_authenticated", False):
+        abort(401)  # or return a small JSON like {"error":"login required"}
+
     # count confirmed users as members
     member_count = User.query.filter_by(email_confirmed=True).count()
 
@@ -10644,21 +10887,35 @@ def staff_update_status(interaction_id):
     return redirect(url_for('staff_active_session', interaction_id=interaction.id))
 
 @app.route("/session/<int:interaction_id>/provider_status_location")
-@login_required
 def provider_status_location(interaction_id):
     interaction = Interaction.query.get_or_404(interaction_id)
 
-    # who can see: user, business, assigned staff
-    is_user = interaction.user_id == getattr(current_user, 'id', None)
-    is_biz = session.get('business_id') == interaction.business_id
-
+    # identities
+    business_id = session.get('business_id')
     staff_id = session.get('staff_id')
+
+    # member via flask-login
+    is_member_authenticated = getattr(current_user, 'is_authenticated', False)
+    member_id = getattr(current_user, 'id', None)
+
+    # if nobody logged in at all
+    if not (is_member_authenticated or business_id or staff_id):
+        abort(401)
+
+    # who can see: user, business, assigned staff provider, admin with allow_live_tracking
+    is_user = is_member_authenticated and (interaction.user_id == member_id)
+    is_biz = (business_id == interaction.business_id)
+
     is_assigned_staff = False
+    is_admin_with_tracking = False
+
     if staff_id:
         s = Staff.query.get(staff_id)
-        is_assigned_staff = (s and s.id == interaction.assigned_staff_id)
+        if s and s.business_id == interaction.business_id:
+            is_assigned_staff = (s.role == 'service_provider' and s.id == interaction.assigned_staff_id)
+            is_admin_with_tracking = (s.role == 'admin' and s.allow_live_tracking)
 
-    if not (is_user or is_biz or is_assigned_staff):
+    if not (is_user or is_biz or is_assigned_staff or is_admin_with_tracking):
         abort(403)
 
     staff = interaction.assigned_staff
@@ -10669,11 +10926,10 @@ def provider_status_location(interaction_id):
             "provider_status_note": interaction.provider_status_note,
         })
 
-    # ETA: member destination = business address coords (or maybe member coords if you add those)
+    # ETA: destination coords (if set) or business coords
     dest_lat = None
     dest_lng = None
 
-    # prefer destination_lat/lng if set (future), else fall back to business coords
     if interaction.destination_lat is not None and interaction.destination_lng is not None:
         dest_lat = interaction.destination_lat
         dest_lng = interaction.destination_lng
@@ -10704,15 +10960,79 @@ def provider_status_location(interaction_id):
     })
 
 @app.route("/session/<int:interaction_id>/track")
-@login_required
 def track_provider(interaction_id):
+    """
+    Show live tracking for a service provider, for:
+      - the member (user) who owns the interaction
+      - the business owner for the interaction
+      - staff from the same business:
+          * assigned service provider for this interaction
+          * admins with allow_live_tracking = True
+    """
+
     interaction = Interaction.query.get_or_404(interaction_id)
 
-    # only the user for now
-    if interaction.user_id != getattr(current_user, 'id', None):
-        abort(403)
+    # identities
+    business_id = session.get("business_id")
+    staff_id = session.get("staff_id")
 
-    return render_template("track_provider.html", interaction=interaction)
+    # member (user) via flask-login
+    is_member_authenticated = getattr(current_user, "is_authenticated", False)
+    member_id = getattr(current_user, "id", None)
+
+    # if absolutely nobody is logged in, block
+    if not (is_member_authenticated or business_id or staff_id):
+        abort(401)  # unauthorized
+
+    allowed = False
+    staff = None
+
+    # 1) member who owns the interaction
+    if is_member_authenticated and interaction.user_id == member_id:
+        allowed = True
+
+    # 2) business owner for this interaction
+    if business_id and interaction.business_id == business_id:
+        allowed = True
+
+    # 3) staff from the same business
+    if staff_id:
+        staff = Staff.query.get(staff_id)
+        if staff and staff.business_id == interaction.business_id:
+            # service provider assigned to this interaction
+            if staff.role == "service_provider" and interaction.assigned_staff_id == staff.id:
+                allowed = True
+            # admin with explicit tracking permission
+            elif staff.role == "admin" and staff.allow_live_tracking:
+                allowed = True
+
+    if not allowed:
+        abort(403)  # forbidden
+
+    # who are we tracking?
+    provider = interaction.assigned_staff
+    if not provider:
+        # no assigned provider = nothing to track
+        return render_template(
+            "track_provider_unavailable.html",
+            interaction=interaction,
+            reason="No service provider has been assigned to this session yet."
+        )
+
+    # must have GPS coordinates to track
+    if provider.live_gps_lat is None or provider.live_gps_long is None:
+        return render_template(
+            "track_provider_unavailable.html",
+            interaction=interaction,
+            reason="Live location is not available yet for this provider."
+        )
+
+    return render_template(
+        "track_provider.html",
+        interaction=interaction,
+        provider=provider,
+        google_maps_api_key=current_app.config.get("GOOGLE_MAPS_API_KEY")
+    )
 
 @app.route("/staff/session/<int:interaction_id>/destination", methods=["POST"])
 def staff_set_destination(interaction_id):
@@ -10817,6 +11137,172 @@ def update_destination_by_member(interaction_id):
 
     flash("You updated the destination address. The service provider will see this.", "success")
     return redirect(url_for('active_session', interaction_id=interaction.id))
+
+CATEGORIES = ["Automotive", "Health", "Retail"]  # etc.
+
+@app.route("/public_profiles")
+def public_profiles_directory():
+    q = request.args.get("q", "", type=str).strip()
+    category = request.args.get("category", "", type=str).strip()
+    lat = request.args.get("lat", type=float)
+    lng = request.args.get("lng", type=float)
+    distance = request.args.get("distance", "", type=str).strip()
+    page = request.args.get("page", 1, type=int)
+    per_page = 20
+
+    # consider it a "search" only if at least one of these is set
+    has_filters = bool(
+        q
+        or category
+        or (distance and distance != "all")
+        or lat is not None
+        or lng is not None
+    )
+
+    businesses = []
+    pagination = None
+
+    if has_filters:
+        base_query = Business.query.filter_by(
+            status="approved",
+            is_suspended=False,
+        )
+
+        if category:
+            base_query = base_query.filter(Business.category == category)
+
+        if q:
+            ilike_pattern = f"%{q}%"
+            base_query = base_query.filter(
+                db.or_(
+                    Business.business_name.ilike(ilike_pattern),
+                    Business.search_keywords.ilike(ilike_pattern),
+                    Business.about_us.ilike(ilike_pattern),
+                )
+            )
+
+        use_location = lat is not None and lng is not None
+
+        if use_location:
+            candidates = (
+                base_query
+                .filter(
+                    (Business.latitude.isnot(None) & Business.longitude.isnot(None)) |
+                    (Business.live_gps_lat.isnot(None) & Business.live_gps_long.isnot(None))
+                )
+                .all()
+            )
+
+            businesses_with_dist = []
+            for biz in candidates:
+                biz_lat, biz_lng = get_business_coords_for_distance(biz)
+                if biz_lat is None or biz_lng is None:
+                    continue
+                try:
+                    d = haversine_py(lat, lng, biz_lat, biz_lng)
+                except ValueError:
+                    continue
+                businesses_with_dist.append((biz, d))
+
+            if distance and distance != "all":
+                try:
+                    dist_num = float(distance)
+                    businesses_with_dist = [
+                        (b, d) for (b, d) in businesses_with_dist if d <= dist_num
+                    ]
+                except ValueError:
+                    pass
+
+            businesses_with_dist.sort(key=lambda x: x[1])
+
+            total = len(businesses_with_dist)
+            start = (page - 1) * per_page
+            end = start + per_page
+            page_items = businesses_with_dist[start:end]
+
+            for biz, d in page_items:
+                biz.distance_mi = round(d, 2)
+            businesses = [b for (b, _) in page_items]
+
+            pagination = SimplePagination(page=page, per_page=per_page, total=total)
+
+        else:
+            pagination = (
+                base_query
+                .order_by(Business.rank.desc(), Business.business_name.asc())
+                .paginate(page=page, per_page=per_page, error_out=False)
+            )
+            businesses = pagination.items
+
+    return render_template(
+        "public_profiles_directory.html",
+        businesses=businesses,
+        pagination=pagination,
+        page=page,
+        q=q,
+        category=category,
+        selected_distance=distance or "all",
+        categories=CATEGORIES,
+    )
+
+@app.route("/public_profiles/<store_slug>")
+def public_profile(store_slug):
+    biz = Business.query.filter_by(store_slug=store_slug, status="approved", is_suspended=False).first_or_404()
+
+    # build meta description / keywords (similar to large listing)
+    base_parts = []
+    if biz.business_name:
+        base_parts.append(biz.business_name)
+    if biz.category:
+        base_parts.append(biz.category)
+    if getattr(biz, "search_keywords", None):
+        kw = " ".join(biz.search_keywords.strip().split())
+        base_parts.append(kw)
+    if getattr(biz, "about_us", None):
+        about_snippet = biz.about_us.strip().replace("\n", " ")
+        about_snippet = about_snippet[:160]
+        base_parts.append(about_snippet)
+
+    description = " - ".join(p for p in base_parts if p) or \
+        "Learn more about this Perk Miner advertiser and their exclusive member perks."
+
+    meta_keywords = None
+    if getattr(biz, "search_keywords", None):
+        meta_keywords = " ".join(biz.search_keywords.strip().split())
+
+    # get photos like you do elsewhere
+    photos = [
+        biz.photo1_url,
+        biz.photo2_url,
+        biz.photo3_url,
+        biz.photo4_url,
+        biz.photo5_url,
+        biz.photo6_url,
+    ]
+    photos = [p for p in photos if p]
+
+    return render_template(
+        "public_profile.html",
+        business=biz,
+        photos=photos,
+        meta_description=description,
+        meta_keywords=meta_keywords,
+        google_maps_api_key=current_app.config.get("GOOGLE_MAPS_API_KEY"),
+    )
+
+@app.route('/robots.txt')
+def serve_robots():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'robots.txt'
+    )
+
+@app.route('/sitemap.xml')
+def serve_sitemap():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'sitemap.xml'
+    )
 
 @app.errorhandler(500)
 def internal_server_error(error):

@@ -1,13 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{{ business.business_name }} - Details</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <style>
+  <meta charset="UTF-8">
+  <title>{{ business.business_name }} - Details</title>
+
+  {% if meta_description %}
+    <meta name="description" content="{{ meta_description }}">
+  {% else %}
+    <meta name="description" content="Connect with businesses through secure, private messaging and earn real cashback and referral commissions on Perk Miner.">
+  {% endif %}
+
+  {% if meta_keywords %}
+    <meta name="keywords" content="{{ meta_keywords }}">
+  {% endif %}
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <style>
     :root {
         --pm-primary: #2a5859;
         --pm-accent: #ffd66b;
@@ -15,6 +27,7 @@
         --pm-card: #ffffff;
     }
     body { background: var(--pm-bg); }
+
     .main-card {
         background: var(--pm-card);
         border-radius: 22px;
@@ -23,6 +36,7 @@
         margin: 2rem auto 2.5rem auto;
         max-width: 630px;
     }
+
     .listing-pic-wrap {
         display: flex;
         flex-direction: column;
@@ -40,23 +54,6 @@
         margin-bottom: 1.1rem;
         margin-top: .35rem;
         display: block;
-    }
-
-    .listing-photo-strip {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 4px;
-        margin-bottom: 12px;
-        justify-content: center;   /* add this */
-    }
-
-    .listing-photo-item img {
-        width: 180px;          /* fixed width */
-        height: 180px;         /* fixed height */
-        object-fit: cover;     /* crop to fill the box */
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
 
     .distance-badge {
@@ -193,6 +190,33 @@
         padding:.42rem 1.1rem;
     }
 
+    /* gallery carousel images: square */
+    .gallery-img {
+      width: 100%;
+      height: 300px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(15,23,42,0.18);
+      background: #f3f4f6;
+    }
+
+    @media (min-width: 768px) {
+      .gallery-img {
+        height: 600px;
+      }
+    }
+
+    /* scroll-in animation */
+    .section {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     @media (max-width: 576px) {
       .listing-btn-row__row .btn,
       .listing-btn-row__row form {
@@ -209,11 +233,11 @@
       .main-card {max-width: 98vw; padding: 1rem 2px; }
       .listing-title {font-size:1.25em; }
     }
-    </style>
+  </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container section js-reveal">
   <div class="main-card">
     <div class="listing-pic-wrap">
       {% if business.profile_photo %}
@@ -232,13 +256,13 @@
       <h2 class="listing-title">{{ business.business_name }}</h2>
       <span class="biz-category-badge mb-2">{{ business.category }}</span>
 
-{% if business.location_varies and business.live_gps_lat and business.live_gps_long %}
-  <div class="mt-1 mb-2 text-center">
-    <span class="badge bg-info text-dark">
-      live location enabled
-    </span>
-  </div>
-{% endif %}
+      {% if business.location_varies and business.live_gps_lat and business.live_gps_long %}
+        <div class="mt-1 mb-2 text-center">
+          <span class="badge bg-info text-dark">
+            live location enabled
+          </span>
+        </div>
+      {% endif %}
 
       <span class="biz-finalization-badge mb-2">
         <b>Finalization: {{ business.finalization }}</b><br>
@@ -299,7 +323,7 @@
         {% endif %}
       </div>
 
-      <!-- row 1.5: favorites (only for normal search / home flows) -->
+      <!-- row 1.5: favorites -->
       {% if current_user.is_authenticated and not request.args.get('from_online_marketplace') and not request.args.get('from_online_featured') %}
         <div class="listing-btn-row__row">
           <form action="{{ url_for('add_favorite', business_id=business.id) }}"
@@ -351,7 +375,7 @@
     </div>
     <!-- END BUTTONS BLOCK -->
 
-    <div class="main-info mt-2">
+    <div class="main-info mt-2 section js-reveal">
       <div class="main-info-row">
         <i class="bi bi-pin-map"></i>
         <span><strong>Address:</strong> {{ business.address or '-' }}</span>
@@ -375,7 +399,7 @@
       </div>
     </div>
 
-    <div class="about-block">
+    <div class="about-block section js-reveal">
       <strong>About Us:</strong><br>
       {% if business.about_us %}
         <span class="about-text"
@@ -390,17 +414,17 @@
       {% endif %}
     </div>
 
-    <div class="perks-block">
+    <div class="perks-block section js-reveal">
       <b>Perks Offered:</b><br>
       {{ business.perks or '—' }}
     </div>
 
-    <div class="hours-block">
+    <div class="hours-block section js-reveal">
       <strong>Hours of Operation:</strong><br>
       {{ business.hours_of_operation or '—' }}
     </div>
 
-    <div>
+    <div class="section js-reveal">
       <div class="service-list-label">Products or Services Offered:</div>
       <ul class="service-list">
         {% set services = [business.service_1, business.service_2, business.service_3,
@@ -419,7 +443,7 @@
       </ul>
     </div>
 
-    <div>
+    <div class="section js-reveal">
       <strong>Location Map:</strong>
 
       {# choose which coordinates to use: live GPS if location_varies and live coords exist, else static business lat/lng #}
@@ -440,7 +464,7 @@
           <a id="directions-link"
              class="btn btn-outline-primary map-link-btn"
              target="_blank"
-             href="https://www.google.com/maps/dir/?api=1&destination={{ map_lat }},{{ map_lng }}">
+             href="https://www.google.com/maps/dir/?api=1&destination={{ map_lat }},{{ map_lng }}&travelmode=driving">
             Driving directions
           </a>
         </div>
@@ -449,40 +473,76 @@
       {% endif %}
     </div>
 
-{% if photos %}
-  <hr class="mt-4 mb-3">
-
-  <div class="text-center mb-2">
-    <h4 style="color: var(--pm-primary); font-weight: 700; margin-bottom: 0.25rem;">
-      Gallery
-    </h4>
-    <div style="font-size: 0.9em; color: #555;">
-      (Click on image to view full size - opens in new window)
-    </div>
-  </div>
-
-  <div class="listing-photo-strip">
-    {% for url in photos %}
-      <div class="listing-photo-item">
-        <a href="{{ url }}" target="_blank" rel="noopener noreferrer">
-          <img src="{{ url }}" alt="Photo of {{ business.business_name }}">
-        </a>
+    {# PHOTOS CAROUSEL #}
+    {% if photos %}
+    <div class="section js-reveal">
+      <div class="text-center mb-2">
+        <h4 style="color: var(--pm-primary); font-weight: 700; margin-bottom: 0.25rem;">
+          Gallery
+        </h4>
+        <div style="font-size: 0.9em; color: #555;">
+          (Click on image to view full size - opens in new window)
+        </div>
       </div>
-    {% endfor %}
-  </div>
-{% endif %}
 
-  <hr class="mt-4 mb-3">
+      <div id="listingGalleryCarousel"
+           class="carousel slide"
+           data-bs-ride="carousel"
+           data-bs-interval="5000"
+           data-bs-pause="hover">
 
-<div class="mt-1 text-center" style="font-size: 0.98em; color:#314655;">
-  <strong>Finalized transactions:</strong>
-  {% set tx_count = finalized_tx_count or 0 %}
-  {% if tx_count == 0 %}
-    New Business
-  {% else %}
-    {{ tx_count }}
-  {% endif %}
-</div>
+        {% if photos|length > 1 %}
+        <div class="carousel-indicators">
+          {% for url in photos %}
+            <button type="button"
+                    data-bs-target="#listingGalleryCarousel"
+                    data-bs-slide-to="{{ loop.index0 }}"
+                    class="{% if loop.first %}active{% endif %}"
+                    aria-current="{% if loop.first %}true{% endif %}"
+                    aria-label="Slide {{ loop.index }}">
+            </button>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="carousel-inner">
+          {% for url in photos %}
+          <div class="carousel-item {% if loop.first %}active{% endif %}">
+            <a href="{{ url }}" target="_blank" rel="noopener noreferrer">
+              <img src="{{ url }}" class="d-block w-100 gallery-img"
+                   alt="Photo of {{ business.business_name }}">
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if photos|length > 1 %}
+          <button class="carousel-control-prev" type="button"
+                  data-bs-target="#listingGalleryCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button"
+                  data-bs-target="#listingGalleryCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <hr class="mt-4 mb-3 section js-reveal">
+
+    <div class="mt-1 text-center section js-reveal" style="font-size: 0.98em; color:#314655;">
+      <strong>Finalized transactions:</strong>
+      {% set tx_count = finalized_tx_count or 0 %}
+      {% if tx_count == 0 %}
+        New Business
+      {% else %}
+        {{ tx_count }}
+      {% endif %}
+    </div>
 
   </div>
 </div>
@@ -497,7 +557,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const limit = 250;
 
   if (fullText.length <= limit) {
-    // short text, no toggle needed
     aboutSpan.textContent = fullText;
     toggleLink.style.display = 'none';
     return;
@@ -522,6 +581,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+</script>
+
+<!-- scroll-in animations -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const sections = document.querySelectorAll('.js-reveal');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    sections.forEach(sec => observer.observe(sec));
+  });
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

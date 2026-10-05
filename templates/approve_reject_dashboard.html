@@ -72,20 +72,32 @@
                       Start Review
                     </button>
                   </form>
-                  <form method="post" action="{{ url_for('approve_listing', listing_id=biz.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    {% if current_user.is_authenticated and current_user.has_role('super_admin') %}
-                      <div class="form-check form-switch my-2">
-                        <input class="form-check-input" type="checkbox" id="manual_feature_{{ biz.id }}" name="manual_feature"
-                           {% if biz.manual_feature %}checked{% endif %}>
-                        <label class="form-check-label" for="manual_feature_{{ biz.id }}">Manually Feature</label>
-                      </div>
-                    {% endif %}
-                    <button type="submit" class="btn btn-success btn-sm"
-                      {% if biz.status != "in_review" %}disabled{% endif %}>
-                      Approve
-                    </button>
-                  </form>
+<form method="post" action="{{ url_for('approve_listing', listing_id=biz.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if current_user.is_authenticated and current_user.has_role('super_admin') %}
+    <div class="form-check form-switch my-2">
+      <input class="form-check-input" type="checkbox"
+             id="manual_feature_{{ biz.id }}" name="manual_feature"
+             {% if biz.manual_feature %}checked{% endif %}>
+      <label class="form-check-label" for="manual_feature_{{ biz.id }}">
+        Manually Feature
+      </label>
+    </div>
+
+    <div class="form-check form-switch my-2">
+      <input class="form-check-input" type="checkbox"
+             id="founding_{{ biz.id }}" name="is_founding_business"
+             {% if biz.is_founding_business %}checked{% endif %}>
+      <label class="form-check-label" for="founding_{{ biz.id }}">
+        Mark as Founding Business
+      </label>
+    </div>
+  {% endif %}
+  <button type="submit" class="btn btn-success btn-sm"
+    {% if biz.status != "in_review" %}disabled{% endif %}>
+    Approve
+  </button>
+</form>
                   <form method="post" action="{{ url_for('reject_listing', listing_id=biz.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger btn-sm"

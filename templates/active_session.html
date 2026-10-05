@@ -190,13 +190,16 @@
         {% endif %}
       </div>
 
-      {% if is_user and interaction.destination_address and interaction.provider_status == 'on_the_way' %}
-        <div class="mb-3">
-          <button class="btn btn-outline-primary btn-sm"
-                  onclick="window.open('{{ url_for('track_provider', interaction_id=interaction.id) }}', '_blank', 'width=420,height=700');">
-            Track service provider
-          </button>
-        </div>
+      {# NEW: tracking button for member AND business when on_the_way #}
+      {% if interaction.provider_status == 'on_the_way' and interaction.destination_address %}
+        {% if is_user or is_biz %}
+          <div class="mb-3">
+            <button class="btn btn-outline-primary btn-sm"
+                    onclick="window.open('{{ url_for('track_provider', interaction_id=interaction.id) }}', '_blank', 'width=420,height=700');">
+              Track service provider
+            </button>
+          </div>
+        {% endif %}
       {% endif %}
     {% endif %}
 
@@ -383,65 +386,6 @@
     const updateForm = document.getElementById('member-destination-form');
     const addressInput = document.getElementById('member-destination-address');
 
-if (showUpdateBtn && updateForm && addressInput) {
-  // store destination text in a data- attribute to avoid JS escaping issues
-  const destText = showUpdateBtn.getAttribute('data-destination') || "";
-
-  showUpdateBtn.addEventListener('click', function () {
-    if (updateForm.style.display === 'none' || updateForm.style.display === '') {
-      updateForm.style.display = 'flex';
-      addressInput.value = destText;
-      addressInput.focus();
-    } else {
-      updateForm.style.display = 'none';
-    }
-  });
-}
-  });
-</script>
-
-<!-- Google Places for member destination autocomplete -->
-{% if is_user and interaction.destination_address and google_maps_api_key %}
-<script
-  src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"
-  async defer>
-</script>
-<script>
-function initMemberDestinationAutocomplete() {
-  const input = document.getElementById('member-destination-address');
-  const latInput = document.getElementById('member-destination-lat');
-  const lngInput = document.getElementById('member-destination-lng');
-  if (!input) return;
-
-  const autocomplete = new google.maps.places.Autocomplete(input, {
-    types: ['geocode']
-  });
-
-  autocomplete.addListener('place_changed', function () {
-    const place = autocomplete.getPlace();
-    if (!place.geometry || !place.geometry.location) {
-      console.warn("Selected place has no geometry");
-      return;
-    }
-    const lat = place.geometry.location.lat();
-    const lng = place.geometry.location.lng();
-
-    latInput.value = lat;
-    lngInput.value = lng;
-
-    if (place.formatted_address) {
-      input.value = place.formatted_address;
-    }
-  });
-}
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // toggle member destination update form
-    const showUpdateBtn = document.getElementById('show-member-update-form-btn');
-    const updateForm = document.getElementById('member-destination-form');
-    const addressInput = document.getElementById('member-destination-address');
-
     if (showUpdateBtn && updateForm && addressInput) {
       const destText = showUpdateBtn.getAttribute('data-destination') || "";
 
@@ -451,7 +395,6 @@ function initMemberDestinationAutocomplete() {
       showUpdateBtn.addEventListener('click', function () {
         if (updateForm.style.display === 'none' || updateForm.style.display === '') {
           updateForm.style.display = 'flex';
-          // prefill with current destination so member can adjust it
           addressInput.value = destText;
           addressInput.focus();
         } else {
@@ -462,21 +405,7 @@ function initMemberDestinationAutocomplete() {
   });
 </script>
 
-document.addEventListener('DOMContentLoaded', function () {
-  let tries = 0;
-  const interval = setInterval(function () {
-    if (window.google && google.maps && google.maps.places) {
-      clearInterval(interval);
-      initMemberDestinationAutocomplete();
-    } else if (tries++ > 20) {
-      clearInterval(interval);
-      console.warn("Google Places API not loaded for member.");
-    }
-  }, 300);
-});
-</script>
-{% endif %}
-
+<!-- Google Places for member destination autocomplete -->
 {% if is_user and interaction.destination_address and google_maps_api_key %}
 <script
   src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"

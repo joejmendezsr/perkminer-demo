@@ -37,16 +37,38 @@
     {{ form.role(class="form-select", id="role-select") }}
   </div>
 
-  <div class="mb-3" id="can-add-providers-wrapper">
-    <div class="form-check">
+  <!-- admin-only permissions + note -->
+  <div class="mb-3" id="admin-permissions-wrapper">
+    <div class="form-check mb-2">
       {{ form.can_add_providers(class="form-check-input", id="can-add-providers") }}
       <label class="form-check-label" for="can-add-providers">
-        Check this box to allow this admin to <b>assign sessions</b> to specific service providers for in-home estimates, service calls, etc.
+        Check this box to allow this admin to <b>assign sessions</b> to specific service providers 
+        for in-home estimates, service calls, etc.
       </label>
     </div>
+
+    <div class="form-check mb-2">
+      {{ form.allow_live_tracking(class="form-check-input", id="allow-live-tracking") }}
+      <label class="form-check-label" for="allow-live-tracking">
+        Check this box to allow this admin to <b>track the live location</b> of service providers
+        when they are "on the way".
+      </label>
+    </div>
+
     <small class="text-muted">
-      <br><b><u>Admins</u></b> can be regular staff members that need access to all active sessions (restaurant, retail store, etc.) so they can finalize any transaction and if applicable, message any member).
-      <br><br><b><u>Service providers</u></b> can only view, finalize transactions and message members specifically assigned to them.  They can also <b>Update Their Status</b> (on the way, etc.), while members have the ability to <b>track their live location</b> and update incorrect address destination.
+      <br><b><u>Admins</u></b> can be regular staff members that need access to all active sessions
+      (restaurant, retail store, etc.) so they can finalize any transaction and, if applicable,
+      message any member.
+    </small>
+  </div>
+
+  <!-- service-provider info note -->
+  <div class="mb-3" id="service-provider-note-wrapper">
+    <small class="text-muted">
+      <b><u>Service providers</u></b> can only view, finalize transactions and message members
+      specifically assigned to them. They can also <b>update their status</b> (On the way, etc.),
+      and you, your admin staff members (with permission given) and members (your clients) have the ability to <b>track their live location while "on the way"</b>.
+      Service providers also <b>enter the destination address</b> (not admin staff) since they are the ones that physically go to the service address.
     </small>
   </div>
 
@@ -54,33 +76,39 @@
     {{ form.submit.label.text }}
   </button>
 </form>
-    </div>
-  </div>
 
 <script>
-  function updateCanAddProvidersVisibility() {
+  function updateRoleSections() {
     var roleSelect = document.getElementById('role-select');
-    var wrapper = document.getElementById('can-add-providers-wrapper');
-    if (!roleSelect || !wrapper) return;
+    var adminWrapper = document.getElementById('admin-permissions-wrapper');
+    var spWrapper = document.getElementById('service-provider-note-wrapper');
+    if (!roleSelect || !adminWrapper || !spWrapper) return;
 
     if (roleSelect.value === 'admin') {
-      wrapper.style.display = '';
+      adminWrapper.style.display = '';
+      spWrapper.style.display = 'none';
+    } else if (roleSelect.value === 'service_provider') {
+      adminWrapper.style.display = 'none';
+      spWrapper.style.display = '';
+      // optional: clear admin-only checkboxes when hidden
+      var canAdd = document.getElementById('can-add-providers');
+      var allowTrack = document.getElementById('allow-live-tracking');
+      if (canAdd) canAdd.checked = false;
+      if (allowTrack) allowTrack.checked = false;
     } else {
-      wrapper.style.display = 'none';
-      // optional: uncheck when hidden
-      var checkbox = document.getElementById('can-add-providers');
-      if (checkbox) checkbox.checked = false;
+      // for any other role, hide both extras
+      adminWrapper.style.display = 'none';
+      spWrapper.style.display = 'none';
     }
   }
 
   document.addEventListener('DOMContentLoaded', function() {
-    updateCanAddProvidersVisibility();
+    updateRoleSections();
     var roleSelect = document.getElementById('role-select');
     if (roleSelect) {
-      roleSelect.addEventListener('change', updateCanAddProvidersVisibility);
+      roleSelect.addEventListener('change', updateRoleSections);
     }
   });
 </script>
-
 </body>
 </html>

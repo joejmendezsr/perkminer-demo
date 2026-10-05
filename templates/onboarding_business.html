@@ -191,7 +191,7 @@
     <!-- video card -->
     <div class="card video-card">
       <div class="video-title">how to complete your payout onboarding</div>
-      <div class="video-subtitle">~3–4 minutes • watch first, then follow the steps</div>
+      <div class="video-subtitle">~2 minutes • watch first, then follow the steps</div>
       <video
         id="user-onboard-video"
         controls
@@ -199,15 +199,15 @@
         oncontextmenu="return false;"
         preload="auto"
         poster="https://via.placeholder.com/800x450/6366f1/ffffff?text=User+Onboarding">
-        <source src="{{ user_onboard_video_url }}" type="video/mp4">
+        <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1791159464/Stripe_Onboarding_je4joj.mp4" type="video/mp4">
         Sorry, your browser doesn't support embedded videos.
       </video>
       <p class="steps-text">
         in this video, we walk you through:
         <ul>
-          <li>what information you need ready (ID, bank account, etc.)</li>
-          <li>how to choose the correct industry and website info</li>
-          <li>how to finish onboarding so payouts can be enabled</li>
+          <li>you will need your business EIN and your business bank account routing/account # or bank account login information</li>
+          <li>IMPORTANT: you must select professional services → other marketing services for industry</li>
+          <li>IMPORTANT: you must use perkminer.com as your website.</li>
         </ul>
       </p>
     </div>
@@ -224,7 +224,7 @@
         <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary">
           set up payouts (bank transfer)<br>
           <b style="font-size:0.85rem;">
-            IMPORTANT: select professional services → other marketing services, and use perkminer.com as your website.
+            (You'll be re-directed to Stripe)
           </b>
         </a>
 
