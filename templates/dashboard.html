@@ -349,14 +349,23 @@
     <form class="modal-content" method="post" action="{{ url_for('invite') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="invitee_type" value="user">
-      <div class="modal-header">
-        <h5 class="modal-title" id="inviteModalLabel">Invite Others to Join by Email</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+      <div class="modal-header align-items-start">
+        <div>
+          <h5 class="modal-title" id="inviteModalLabel">Invite Others to Join by Email</h5>
+          <p class="text-danger small mb-0 mt-2">
+            (Be sure to update your name in your profile so people know you invited them,
+            otherwise, email invite will say "you have been invited by [your email]")
+          </p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+
       <div class="modal-body">
         <label for="invitee-email" class="form-label">Recipient's Email Address:</label>
         {{ invite_form.invitee_email(class="form-control", id="invitee-email", placeholder="Enter email to invite", required=True) }}
       </div>
+
       <div class="modal-footer">
         {{ invite_form.submit(class="btn btn-primary") }}
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -364,19 +373,29 @@
     </form>
   </div>
 </div>
+<!-- Invite Business Modal -->
 <div class="modal fade" id="inviteBusinessModal" tabindex="-1" aria-labelledby="inviteBusinessModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form class="modal-content" method="post" action="{{ url_for('invite') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="invitee_type" value="business">
-      <div class="modal-header">
-        <h5 class="modal-title" id="inviteBusinessModalLabel">Invite a Business to Join by Email</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+      <div class="modal-header align-items-start">
+        <div>
+          <h5 class="modal-title" id="inviteBusinessModalLabel">Invite a Business to Join by Email</h5>
+          <p class="text-danger small mb-0 mt-2">
+            (Be sure to update your name in your profile so businesses know you invited them,
+            otherwise, email invite will say "you have been invited by [your email]")
+          </p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+
       <div class="modal-body">
         <label for="invitee-business-email" class="form-label">Business Email Address:</label>
         {{ invite_form.invitee_email(class="form-control", id="invitee-business-email", placeholder="Enter business email", required=True) }}
       </div>
+
       <div class="modal-footer">
         <button type="submit" class="btn btn-warning">Send Business Invite</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

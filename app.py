@@ -35,7 +35,7 @@ import time
 import os
 import stripe
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 import json
 from sqlalchemy import or_, and_, func, literal
 from flask_migrate import Migrate
@@ -43,6 +43,8 @@ import re
 import random
 import string
 import time
+from urllib.parse import quote
+from xml.sax.saxutils import escape
 import csv
 import uuid
 import hmac
@@ -598,11 +600,11 @@ def build_invite_email(inviter_name, join_url, video_url):
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>You have been invited to join PerkMiner.com!</title>
-        <style type="text/css">
-            body {{ margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }}
-            table, td {{ border-collapse: collapse; }}
-            a {{ color: #0066cc; text-decoration: none; }}
-            .button {{
+    <style type="text/css">
+        body {{ margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }}
+        table, td {{ border-collapse: collapse; }}
+        a {{ color: #0066cc; text-decoration: none; }}
+        .button {{
             display: inline-block;
             padding: 16px 36px;
             background-color: #6366f1;
@@ -613,102 +615,153 @@ def build_invite_email(inviter_name, join_url, video_url):
             text-decoration: none;
             border-radius: 8px;
             line-height: 1;
-            }}
-            .button:hover {{ background-color: #4f46e5 !important; }}
-        </style>
-    </head>
-        <body style="margin:0; padding:0; background-color:#f3f4f6;">
+        }}
+        .button:hover {{ background-color: #4f46e5 !important; }}
+    </style>
+</head>
+<body style="margin:0; padding:0; background-color:#f3f4f6;">
 
-        <!-- Main Wrapper -->
-            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f3f4f6;">
-                <tr>
-                    <td align="center" style="padding: 20px 10px;">
+    <!-- Main Wrapper -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 20px 10px;">
 
-        <!-- Container -->
-            <table role="presentation" width="600" border="0" cellspacing="0" cellpadding="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1); max-width:600px;">
+                <!-- Container -->
+                <table role="presentation" width="600" border="0" cellspacing="0" cellpadding="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1); max-width:600px;">
 
-        <!-- Top Message -->
-                <tr>
-                    <td align="center" style="padding: 40px 30px 20px; font-family: Arial, Helvetica, sans-serif; font-size: 28px; font-weight: bold; color: #1f2937; line-height: 1.2;">
-                        {inviter_name} has invited you to join Perk Miner (https://perkminer.com)!
-                    </td>
-                </tr>
+                    <!-- Top Message -->
+                    <tr>
+                        <td align="center" style="padding: 40px 30px 20px; font-family: Arial, Helvetica, sans-serif; font-size: 28px; font-weight: bold; color: #1f2937; line-height: 1.2;">
+                            {inviter_name} has invited you to join Perk Miner (https://perkminer.com)!
+                        </td>
+                    </tr>
 
-        <!-- Join Button -->
-    <tr>
-        <td align="center" style="padding: 0 40px 50px;">
-            <a href="{join_url}" class="button" target="_blank" style=" font-size:20px; padding:18px 48px;">
-            Join PerkMiner Now
-            </a>
-        </td>
-    </tr>
+                    <!-- Join Button -->
+                    <tr>
+                        <td align="center" style="padding: 0 40px 40px;">
+                            <a href="{join_url}" class="button" target="_blank" style="font-size:20px; padding:18px 48px;">
+                                Join PerkMiner Now
+                            </a>
+                        </td>
+                    </tr>
 
-        <!-- Hero Banner with Logo -->
-                <tr>
-                    <td style="position:relative;">
-                        <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791003112/member_flyer_gncgvf.jpg" width="600"
-                        alt="PerkMiner Hero Banner"
-                        style="display:block; width:100%; height:auto; border:0;" border="0">
-        </td>
-    </tr>
+                    <!-- Hero Banner -->
+                    <tr>
+                        <td>
+                            <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791003112/member_flyer_gncgvf.jpg" width="600"
+                                 alt="PerkMiner Hero Banner"
+                                 style="display:block; width:100%; height:auto; border:0;" border="0">
+                        </td>
+                    </tr>
 
-        <!-- Introduction Text + Watch Video Button -->
-    <tr>
-        <td style="padding: 40px 40px 20px; font-family: Arial, Helvetica, sans-serif; font-size: 28px; color: #374151; line-height: 1.6; text-align:center;">
-            <p style="margin:0 0 24px;">Discover how you earn Cash Back and Referral Commissions with Perk Miner.  <b>Members earn 2% Cashback for up to $2,500 of any purchase from our advertisers and Businesses earn 1% Cashback on up to $2,500 or their sale for offering at least one perk to our members.</b></p>
+                    <!-- Introduction + Video Button -->
+                    <tr>
+                        <td align="center" style="padding: 36px 40px 10px; font-family: Arial, Helvetica, sans-serif; font-size: 20px; color: #374151; line-height: 1.5;">
+                            <p style="margin:0 0 20px;">
+                                <b>Earn Cash Back and Referral Commissions with Perk Miner.</b><br>
+                                Free to join - Always Free for members: no contracts, monthly subscriptions or commitment.<br>
+                                Register in 4 easy steps:  Enter a valid email and password (for future login), click on captcha, click on register and verify your email.  That's it!
+                            </p>
+                            <a href="{video_url}" class="button" target="_blank">
+                                Watch our intro video
+                            </a>
+                        </td>
+                    </tr>
 
-                <a href="{video_url}" class="button" target="_blank" style="margin: 12px 0 32px;">
-                Watch our intro video
-                </a>
+                    <!-- Members Section -->
+                    <tr>
+                        <td style="padding: 30px 40px 10px; font-family: Arial, Helvetica, sans-serif; font-size: 18px; color: #374151; line-height: 1.5; text-align:left;">
+                            <p style="margin:0 0 12px; font-size:22px; font-weight:bold; color:#4f46e5;">For Members</p>
+                            <ul style="margin:0; padding-left:22px;">
+                                <li style="margin-bottom:10px;"><b>Exclusive member perks</b> offered by our advertisers.</li>
+                                <li style="margin-bottom:10px;"><b>2% Cash Back</b> on up to $2,500 of any purchase from our advertisers.</li>
+                                <li style="margin-bottom:10px;"><b>Your privacy is protected:</b> secure messaging, we never sell your contact information as a lead, and we don't track browsing history or listen to your conversations.</li>
+                                <li style="margin-bottom:10px;">Search for businesses, products or services with peace of mind.</li>
+                                <li style="margin-bottom:10px;">We connect <b>One Member</b> to <b>One Business</b> at a time.</li>
+                                <li style="margin-bottom:10px;">Live tracking of your service providers when status is "on the way" with real-time status updates.</li>
+                            </ul>
+                        </td>
+                    </tr>
 
-            <p style="margin:0 0 28px;">Free to join (no contracts, monthly subscriptions or commitment).</p>
-            <p style="margin:0 0 28px;"><b>Members:  Get exclusive member perks offered by our advertisers.</b>  We protect your privacy with secure messaging and never sell your contact information as a lead.  Search for businesses, products or services with peace of mind (we don't track browsing history or listen to your conversations).  We connect <b>One Member</b> to <b>One Business</b> at a time.</p>
-            <p style="margin:0 0 28px;"><b>Business Owners:</b>  YOU GET ZERO WASTED ADVERTISING DOLLARS!  <font color="#FF0000"></br>No Sale or Closed Deal = Zero Fees</font></br><b>(1,000% ROAS or higher - Spend $1 and get $10 in Return).</b>  No cost for exclusive leads, phone calls, website or foot traffic, appointments or meetups.  You only pay after you get paid (10% of the sale, capped at $250).  No hidden fees, no contracts, no membership fees and no commitment.  Only $25 required to get started in pre-funded dollars to cover the advertising (transactions over $250 require more funds).  Funds remain in your account balance until you make a sale).  Perk Miner LLC pays all cash back and referral commissions ... repeat business.</p>
-            <p style="margin:0 0 28px;">MEMBER SELECTS A BUSINESS -> BUSINESS AND MEMBER CONNECT</p>
-        </td>
-    </tr>
+                    <!-- Business Owners Section -->
+                    <tr>
+                        <td style="padding: 20px 40px 10px; font-family: Arial, Helvetica, sans-serif; font-size: 18px; color: #374151; line-height: 1.5; text-align:left;">
+                            <p style="margin:0 0 12px; font-size:22px; font-weight:bold; color:#4f46e5;">For Business Owners</p>
+                            <ul style="margin:0; padding-left:22px;">
+                                <li style="margin-bottom:10px;">
+                                    <b>ZERO wasted advertising dollars.</b>
+                                    <span style="color:#dc2626; font-weight:bold;">No Sale or Closed Deal = Zero Fees</span>
+                                </li>
+                                <li style="margin-bottom:10px;"><b>1,000% Return on Ad Spend or higher:</b> spend $1 and get $10 in return.</li>
+                                <li style="margin-bottom:10px;"><b>No cost</b> for exclusive leads, phone calls, website or foot traffic, appointments or meetups.</li>
+                                <li style="margin-bottom:10px;"><b>You only pay after you get paid:</b> 10% of the sale, capped at $250.</li>
+                                <li style="margin-bottom:10px;"><b>Earn 1% Cash Back</b> on up to $2,500 of your sale for offering at least one perk to our members.</li>
+                                <li style="margin-bottom:10px;">Only <b>$25</b> in pre-funded dollars needed to get started (transactions over $250 require more funds). Funds stay in your account balance until you make a sale.</li>
+                                <li style="margin-bottom:10px;">No hidden fees, contracts, membership fees or commitment.</li>
+                                <li style="margin-bottom:10px;">Live tracking of your service providers in the field when status is "on the way" with live status updates at no cost to your business.</li>
+                            </ul>
+                        </td>
+                    </tr>
 
-        <!-- Secondary Image -->
-    <tr>
-        <td style="padding: 0 40px 30px;">
-            <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791000401/biz-flyer_pfg6os.jpg" width="600" alt="PerkMiner Features"
-            style="display:block; width:100%; max-width:520px; height:auto; border-radius:10px; border:0;" border="0">
-        </td>
-    </tr>
+                    <!-- Flow Statement -->
+                    <tr>
+                        <td align="center" style="padding: 10px 40px 20px; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight:bold; color:#1f2937; line-height: 1.5;">
+                            MEMBER SELECTS A BUSINESS &rarr; BUSINESS AND MEMBER CONNECT
+                        </td>
+                    </tr>
 
-        <!-- Join Button -->
-    <tr>
-        <td align="center" style="padding: 0 40px 50px;">
-            <a href="{join_url}" class="button" target="_blank" style="font-size:20px; padding:18px 48px;">
-            Join PerkMiner Now
-            </a>
-            <p style="margin:0 0 28px;">  </p>
-            <p style="margin:0 0 28px;">  </p>
-            <p style="margin:0 0 28px;"><b>Both Members and Business Owners earn Cash Back and generous Referral Commissions</b> (Paid by Perk Miner).  Up to 6 members and 6 businesses are paid from every finalized transaction (up to 84% of the ad revenue paid by our advertisers is used to pay all cash back and referral commissions from every finalized transaction).  Advertisers pay the ad fee after making a sale ... Perk Miner pays the cash back and commissions.  Real pay that is deposited to your bank account.  Not points or gift cards.</p>
-            <p style="margin:0 0 28px;"><b>EVERYONE WINS!</b></p>
-        </td>
-    </tr>
+                    <!-- Secondary Image -->
+                    <tr>
+                        <td align="center" style="padding: 0 40px 30px;">
+                            <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791000401/biz-flyer_pfg6os.jpg" width="520" alt="PerkMiner Features"
+                                 style="display:block; width:100%; max-width:520px; height:auto; border-radius:10px; border:0;" border="0">
+                        </td>
+                    </tr>
 
-        <!-- Footer -->
-    <tr>
-        <td align="center" style="padding: 30px 40px; background-color:#f8f9fa; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #6b7280; line-height:1.5; border-top:1px solid #e5e7eb;">
-            <p style="margin:0 0 8px;">
-                For questions regarding this email, contact
-                <a href="mailto:fromperkminer@gmail.com" style="color:#4f46e5;">Need help?</a>
-            </p>
-            <p style="margin:0;">
-                Copyright © PerkMiner 2026. All rights reserved.
-            </p>
+                    <!-- Everyone Earns Section -->
+                    <tr>
+                        <td style="padding: 0 40px 20px; font-family: Arial, Helvetica, sans-serif; font-size: 18px; color: #374151; line-height: 1.5; text-align:left;">
+                            <p style="margin:0 0 12px; font-size:22px; font-weight:bold; color:#4f46e5;">Everyone Earns</p>
+                            <ul style="margin:0; padding-left:22px;">
+                                <li style="margin-bottom:10px;"><b>Both Members and Business Owners earn Cash Back and generous Referral Commissions</b>, paid by Perk Miner.</li>
+                                <li style="margin-bottom:10px;">Up to <b>6 members and 6 businesses</b> are paid from every finalized transaction.</li>
+                                <li style="margin-bottom:10px;">Up to <b>84%</b> of the ad revenue paid by our advertisers is used to pay all cash back and referral commissions (re-invested into the ecosystem).</li>
+                                <li style="margin-bottom:10px;">Advertisers pay the ad fee after making a sale. Perk Miner LLC pays the cash back and commissions.</li>
+                                <li style="margin-bottom:10px;"><b>Real pay deposited to your bank account.</b> Not points or gift cards.</li>
+                            </ul>
+                        </td>
+                    </tr>
+
+                    <!-- Join Button -->
+                    <tr>
+                        <td align="center" style="padding: 10px 40px 40px; font-family: Arial, Helvetica, sans-serif;">
+                            <p style="margin:0 0 20px; font-size:22px; font-weight:bold; color:#1f2937;">EVERYONE WINS!</p>
+                            <a href="{join_url}" class="button" target="_blank" style="font-size:20px; padding:18px 48px;">
+                                Join PerkMiner Now
+                            </a>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color:#f8f9fa; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #6b7280; line-height:1.5; border-top:1px solid #e5e7eb;">
+                            <p style="margin:0 0 8px;">
+                                For questions regarding this email, contact
+                                <a href="mailto:fromperkminer@gmail.com" style="color:#4f46e5;">Need help?</a>
+                            </p>
+                            <p style="margin:0;">
+                                Copyright &copy; PerkMiner 2026. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+
             </td>
-                </tr>
+        </tr>
+    </table>
 
-                    </table>
-
-                </td>
-            </tr>
-        </table>
-
-    </body>
+</body>
 </html>
     """
     return html_body
@@ -1458,6 +1511,10 @@ class Business(db.Model):
     live_gps_long = db.Column(db.Float)
     location_varies = db.Column(db.Boolean, default=False)
     is_founding_business = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now(), nullable=False)
+    promo_code_used = db.Column(db.String(50), nullable=True)
+    promo_redeemed_at = db.Column(db.DateTime, nullable=True)
     theme_type = db.Column(db.String(50))
 
 class Favorite(db.Model):
@@ -2585,6 +2642,36 @@ def haversine_miles(lat1, lon1, lat2, lon2):
     a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
+
+def area_from_address(address):
+    """City and state live in the address string, with or without a street."""
+    parts = [p.strip() for p in (address or "").split(",") if p.strip()]
+    city = state = country = ""
+    if len(parts) >= 3:
+        city = parts[-3]
+        state = parts[-2].split()[0]
+        country = parts[-1]
+    elif len(parts) == 2:
+        city = parts[0]
+        state = parts[1].split()[0]
+    elif len(parts) == 1:
+        city = parts[0]
+    return city, state, country
+
+def area_served_ld(city, state, country):
+    if not city and not state:
+        return None
+    area = {"@type": "City" if city else "AdministrativeArea"}
+    if city:
+        area["name"] = city
+    area["address"] = {"@type": "PostalAddress"}
+    if city:
+        area["address"]["addressLocality"] = city
+    if state:
+        area["address"]["addressRegion"] = state
+    if country:
+        area["address"]["addressCountry"] = country
+    return area
 
 def get_featured_businesses(lat, lng):
     RADIUS = 10  # miles
@@ -6678,6 +6765,9 @@ def business_dashboard():
     # remove Nones/empty strings
     preview_photos = [p for p in preview_photos if p]
 
+    # promo field: show only if no promo redeemed yet AND at least one code is still valid
+    show_promo_field = (not biz.promo_code_used) and any_promo_available()
+
     return render_template(
         "business_dashboard.html",
         form=form,
@@ -6718,6 +6808,7 @@ def business_dashboard():
         show_website_status=show_website_status,
         preview_photos=preview_photos,   # NEW
         website_status=website_status,
+        show_promo_field=show_promo_field,
     )
 
 @app.route("/business/logout")
@@ -7652,37 +7743,25 @@ def view_listing(biz_id):
     verified = getattr(biz, "ecommerce_verified", False)
     balance = biz.account_balance or 0.0
 
-    # build a meta description using business fields
     base_parts = []
-
     if biz.business_name:
         base_parts.append(biz.business_name)
-
     if biz.category:
         base_parts.append(biz.category)
-
-    # keywords might be a comma-separated string
     if getattr(biz, "keywords", None):
-        kw = biz.keywords.strip()
-        kw = " ".join(kw.split())
+        kw = " ".join(biz.keywords.strip().split())
         base_parts.append(kw)
-
     if getattr(biz, "about_us", None):
         about_snippet = biz.about_us.strip().replace("\n", " ")
-        about_snippet = about_snippet[:160]
-        base_parts.append(about_snippet)
+        base_parts.append(about_snippet[:160])
 
     description = " - ".join(part for part in base_parts if part)
-
     if not description:
         description = "Learn more about this Perk Miner advertiser and their exclusive member perks."
 
-    # meta keywords from business.keywords
     meta_keywords = None
     if getattr(biz, "keywords", None):
-        kw = biz.keywords.strip()
-        kw = " ".join(kw.split())
-        meta_keywords = kw
+        meta_keywords = " ".join(biz.keywords.strip().split())
 
     core_flags_ok = has_website and is_ecom and allows_web and online_terms and verified
     can_shop_online_listing = core_flags_ok and balance >= 250.0
@@ -7691,14 +7770,11 @@ def view_listing(biz_id):
     finalized_tx_count = get_finalized_tx_count_for_business(biz)
 
     raw_photos = [
-        biz.photo1_url,
-        biz.photo2_url,
-        biz.photo3_url,
-        biz.photo4_url,
-        biz.photo5_url,
-        biz.photo6_url,
+        biz.photo1_url, biz.photo2_url, biz.photo3_url,
+        biz.photo4_url, biz.photo5_url, biz.photo6_url,
     ]
     photos = [url for url in raw_photos if url]
+    area_city, area_state, area_country = area_from_address(biz.address)
 
     return render_template(
         "large_listing.html",
@@ -7709,6 +7785,9 @@ def view_listing(biz_id):
         show_online_warning=show_online_warning,
         finalized_tx_count=finalized_tx_count,
         photos=photos,
+        area_city=area_city,
+        area_state=area_state,
+        area_country=area_country,
     )
 
 @app.route("/finance/combined-detailed-report", methods=["GET"])
@@ -11138,7 +11217,32 @@ def update_destination_by_member(interaction_id):
     flash("You updated the destination address. The service provider will see this.", "success")
     return redirect(url_for('active_session', interaction_id=interaction.id))
 
-CATEGORIES = ["Automotive", "Health", "Retail"]  # etc.
+BASE_URL = "https://www.perkminer.com"   # always the www host, matches your redirect
+
+SITEMAP_TTL_SECONDS = 3600     # rebuild the sitemap at most once per hour per worker
+MAX_SITEMAP_URLS = 50000       # Google's limit for a single sitemap file
+_sitemap_cache = {"xml": None, "built": 0.0}
+
+# Public marketing pages that are always in the sitemap
+STATIC_SITEMAP_PATHS = [
+    "/", "/about", "/how-it-works", "/intro", "/faq", "/news",
+    "/press-release", "/new-featured-businesses", "/business",
+    "/register", "/business/register", "/testimonials", 
+    "/public_profiles", "/privacy", "/terms"
+]
+
+
+def public_businesses_query():
+    """Single definition of 'has a public profile'. The directory, the profile
+    page and the sitemap all use it, so a business that returns 404 can never
+    appear in the sitemap or the directory."""
+    return Business.query.filter_by(status="approved", is_suspended=False)
+
+
+def public_profile_url(slug):
+    return f"{BASE_URL}/public_profiles/{quote(slug, safe='')}"
+
+CATEGORIES = ["All-Rentals", "Auto-Service-Repair-Parts", "Cleaning-Services", "Education-and-Training", "Events-and-Entertainment", "Financial-Services", "Gaming", "Handyman-Contractor", "Health-and-Beauty", "Home-and-Garden", "Industrial-Services", "Legal-Services", "Moving-and-Delivery", "Other", "Pet-Service-and-Supplies", "Professional-Services", "Real-Estate", "Restaurant-Food-and-Drink", "Security-and-Protection", "Shopping-and-Retail", "Sports-and-Recreation", "Transportation-Services", "Travel-Lodging-Tourism", "Wedding-Services"]  # etc.
 
 @app.route("/public_profiles")
 def public_profiles_directory():
@@ -11147,10 +11251,10 @@ def public_profiles_directory():
     lat = request.args.get("lat", type=float)
     lng = request.args.get("lng", type=float)
     distance = request.args.get("distance", "", type=str).strip()
-    page = request.args.get("page", 1, type=int)
+    page = max(request.args.get("page", 1, type=int) or 1, 1)
     per_page = 20
 
-    # consider it a "search" only if at least one of these is set
+    # a "search" is any request with at least one filter set
     has_filters = bool(
         q
         or category
@@ -11159,80 +11263,84 @@ def public_profiles_directory():
         or lng is not None
     )
 
-    businesses = []
-    pagination = None
+    base_query = public_businesses_query()
 
-    if has_filters:
-        base_query = Business.query.filter_by(
-            status="approved",
-            is_suspended=False,
+    if category:
+        base_query = base_query.filter(Business.category == category)
+
+    if q:
+        ilike_pattern = f"%{q}%"
+        base_query = base_query.filter(
+            db.or_(
+                Business.business_name.ilike(ilike_pattern),
+                Business.search_keywords.ilike(ilike_pattern),
+                Business.about_us.ilike(ilike_pattern),
+            )
         )
 
-        if category:
-            base_query = base_query.filter(Business.category == category)
+    use_location = lat is not None and lng is not None
 
-        if q:
-            ilike_pattern = f"%{q}%"
-            base_query = base_query.filter(
-                db.or_(
-                    Business.business_name.ilike(ilike_pattern),
-                    Business.search_keywords.ilike(ilike_pattern),
-                    Business.about_us.ilike(ilike_pattern),
-                )
+    if use_location:
+        candidates = (
+            base_query
+            .filter(
+                (Business.latitude.isnot(None) & Business.longitude.isnot(None)) |
+                (Business.live_gps_lat.isnot(None) & Business.live_gps_long.isnot(None))
             )
+            .all()
+        )
 
-        use_location = lat is not None and lng is not None
+        businesses_with_dist = []
+        for biz in candidates:
+            biz_lat, biz_lng = get_business_coords_for_distance(biz)
+            if biz_lat is None or biz_lng is None:
+                continue
+            try:
+                d = haversine_py(lat, lng, biz_lat, biz_lng)
+            except ValueError:
+                continue
+            businesses_with_dist.append((biz, d))
 
-        if use_location:
-            candidates = (
-                base_query
-                .filter(
-                    (Business.latitude.isnot(None) & Business.longitude.isnot(None)) |
-                    (Business.live_gps_lat.isnot(None) & Business.live_gps_long.isnot(None))
-                )
-                .all()
-            )
+        if distance and distance != "all":
+            try:
+                dist_num = float(distance)
+                businesses_with_dist = [
+                    (b, d) for (b, d) in businesses_with_dist if d <= dist_num
+                ]
+            except ValueError:
+                pass
 
-            businesses_with_dist = []
-            for biz in candidates:
-                biz_lat, biz_lng = get_business_coords_for_distance(biz)
-                if biz_lat is None or biz_lng is None:
-                    continue
-                try:
-                    d = haversine_py(lat, lng, biz_lat, biz_lng)
-                except ValueError:
-                    continue
-                businesses_with_dist.append((biz, d))
+        businesses_with_dist.sort(key=lambda x: x[1])
 
-            if distance and distance != "all":
-                try:
-                    dist_num = float(distance)
-                    businesses_with_dist = [
-                        (b, d) for (b, d) in businesses_with_dist if d <= dist_num
-                    ]
-                except ValueError:
-                    pass
+        total = len(businesses_with_dist)
+        start = (page - 1) * per_page
+        end = start + per_page
+        page_items = businesses_with_dist[start:end]
 
-            businesses_with_dist.sort(key=lambda x: x[1])
+        for biz, d in page_items:
+            biz.distance_mi = round(d, 2)
+        businesses = [b for (b, _) in page_items]
 
-            total = len(businesses_with_dist)
-            start = (page - 1) * per_page
-            end = start + per_page
-            page_items = businesses_with_dist[start:end]
+        pagination = SimplePagination(page=page, per_page=per_page, total=total)
 
-            for biz, d in page_items:
-                biz.distance_mi = round(d, 2)
-            businesses = [b for (b, _) in page_items]
+    else:
+        # Default view (no filters) AND text/category searches.
+        # With no filters this is the browse-all list that crawlers follow.
+        pagination = (
+            base_query
+            .order_by(Business.rank.desc(), Business.business_name.asc())
+            .paginate(page=page, per_page=per_page, error_out=False)
+        )
+        businesses = pagination.items
 
-            pagination = SimplePagination(page=page, per_page=per_page, total=total)
-
-        else:
-            pagination = (
-                base_query
-                .order_by(Business.rank.desc(), Business.business_name.asc())
-                .paginate(page=page, per_page=per_page, error_out=False)
-            )
-            businesses = pagination.items
+    # SEO: only the plain browse pages (/public_profiles, ?page=2, ...) are indexable.
+    # Search/filter results are noindex so crawlers don't index endless variations.
+    if has_filters:
+        robots_meta = "noindex, follow"
+        canonical_url = f"{BASE_URL}/public_profiles"
+    else:
+        robots_meta = "index, follow"
+        canonical_url = f"{BASE_URL}/public_profiles" + (f"?page={page}" if page > 1 else "")
 
     return render_template(
         "public_profiles_directory.html",
@@ -11243,50 +11351,91 @@ def public_profiles_directory():
         category=category,
         selected_distance=distance or "all",
         categories=CATEGORIES,
+        has_filters=has_filters,
+        robots_meta=robots_meta,
+        canonical_url=canonical_url,
     )
 
 @app.route("/public_profiles/<store_slug>")
 def public_profile(store_slug):
-    biz = Business.query.filter_by(store_slug=store_slug, status="approved", is_suspended=False).first_or_404()
+    biz = public_businesses_query().filter_by(store_slug=store_slug).first_or_404()
 
-    # build meta description / keywords (similar to large listing)
-    base_parts = []
-    if biz.business_name:
-        base_parts.append(biz.business_name)
-    if biz.category:
-        base_parts.append(biz.category)
-    if getattr(biz, "search_keywords", None):
-        kw = " ".join(biz.search_keywords.strip().split())
-        base_parts.append(kw)
+    name = (biz.business_name or "Perk Miner advertiser").strip()
+    category = (biz.category or "").strip()
+
+    about = ""
     if getattr(biz, "about_us", None):
-        about_snippet = biz.about_us.strip().replace("\n", " ")
-        about_snippet = about_snippet[:160]
-        base_parts.append(about_snippet)
+        about = " ".join(biz.about_us.split())
 
-    description = " - ".join(p for p in base_parts if p) or \
-        "Learn more about this Perk Miner advertiser and their exclusive member perks."
+    lead = f"{name} - {category}." if category else f"{name}."
+    description = lead
+    if about:
+        room = 155 - len(lead) - 1
+        if room > 20:
+            if len(about) <= room:
+                snippet = about
+            else:
+                snippet = about[:room].rsplit(" ", 1)[0].rstrip(".,;:") + "…"
+            description = f"{lead} {snippet}"
+    if description == lead and not about:
+        description += " See business details and exclusive member perks on Perk Miner."
+
+    page_title = f"{name} - {category} | Perk Miner" if category else f"{name} | Perk Miner"
 
     meta_keywords = None
     if getattr(biz, "search_keywords", None):
         meta_keywords = " ".join(biz.search_keywords.strip().split())
 
-    # get photos like you do elsewhere
     photos = [
-        biz.photo1_url,
-        biz.photo2_url,
-        biz.photo3_url,
-        biz.photo4_url,
-        biz.photo5_url,
-        biz.photo6_url,
+        biz.photo1_url, biz.photo2_url, biz.photo3_url,
+        biz.photo4_url, biz.photo5_url, biz.photo6_url,
     ]
     photos = [p for p in photos if p]
+
+    canonical_url = public_profile_url(biz.store_slug)
+    area_city, area_state, area_country = area_from_address(biz.address)
+
+    ld_json = {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": name,
+        "url": canonical_url,
+    }
+    if about:
+        cut = about[:300]
+        if len(about) > 300:
+            cut = cut.rsplit(" ", 1)[0].rstrip(".,;:") + "…"
+        ld_json["description"] = cut
+    if photos:
+        ld_json["image"] = photos
+    phone = getattr(biz, "phone", None) or getattr(biz, "phone_number", None)
+    if phone:
+        ld_json["telephone"] = phone
+    if biz.latitude is not None and biz.longitude is not None:
+        try:
+            ld_json["geo"] = {
+                "@type": "GeoCoordinates",
+                "latitude": float(biz.latitude),
+                "longitude": float(biz.longitude),
+            }
+        except (TypeError, ValueError):
+            pass
+    area = area_served_ld(area_city, area_state, area_country)
+    if area:
+        ld_json["areaServed"] = area
 
     return render_template(
         "public_profile.html",
         business=biz,
         photos=photos,
+        page_title=page_title,
         meta_description=description,
         meta_keywords=meta_keywords,
+        canonical_url=canonical_url,
+        ld_json=ld_json,
+        area_city=area_city,
+        area_state=area_state,
+        area_country=area_country,
         google_maps_api_key=current_app.config.get("GOOGLE_MAPS_API_KEY"),
     )
 
@@ -11297,12 +11446,140 @@ def serve_robots():
         'robots.txt'
     )
 
+STATIC_SITEMAP_LASTMOD = "2026-10-06"  # change when marketing pages change
+
+def sitemap_lastmod(value):
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.date().isoformat()
+    return str(value)
+
 @app.route('/sitemap.xml')
 def serve_sitemap():
-    return send_from_directory(
-        os.path.join(app.root_path, 'static'),
-        'sitemap.xml'
+    now = time.time()
+    if _sitemap_cache["xml"] is None or now - _sitemap_cache["built"] > SITEMAP_TTL_SECONDS:
+        limit = MAX_SITEMAP_URLS - len(STATIC_SITEMAP_PATHS)
+        rows = (
+            public_businesses_query()
+            .filter(Business.store_slug.isnot(None), Business.store_slug != "")
+            .with_entities(Business.store_slug, Business.updated_at)
+            .order_by(Business.id)
+            .limit(limit)
+            .all()
+        )
+
+        parts = []
+        for path in STATIC_SITEMAP_PATHS:
+            loc = escape(BASE_URL + path)
+            parts.append(
+                f"<url><loc>{loc}</loc><lastmod>{STATIC_SITEMAP_LASTMOD}</lastmod></url>"
+            )
+        for slug, updated_at in rows:
+            loc = escape(public_profile_url(slug))
+            lastmod = sitemap_lastmod(updated_at)
+            if lastmod:
+                parts.append(f"<url><loc>{loc}</loc><lastmod>{lastmod}</lastmod></url>")
+            else:
+                parts.append(f"<url><loc>{loc}</loc></url>")
+
+        xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+            + "".join(parts)
+            + "</urlset>"
+        )
+        _sitemap_cache["xml"] = xml
+        _sitemap_cache["built"] = now
+
+    resp = Response(_sitemap_cache["xml"], mimetype="application/xml")
+    resp.headers["Cache-Control"] = "public, max-age=3600"
+    return resp
+
+from decimal import Decimal
+from datetime import datetime
+from sqlalchemy import text
+
+# "max_redemptions" = how many businesses can use the code in total
+PROMO_CODES = {
+    "foundingbiz500": {
+        "label": "Foundingbiz500",
+        "max_redemptions": 10,
+        "amount": Decimal("50.00"),
+        "sales_covered": 500,
+    },
+    "foundingbiz100": {
+        "label": "Foundingbiz100",
+        "max_redemptions": 50,
+        "amount": Decimal("10.00"),
+        "sales_covered": 100,
+    },
+}
+
+PROMO_LOCK_KEY = 482011  # any fixed number; used to serialize redemptions
+
+
+def promo_redeemed_count(label):
+    return Business.query.filter(Business.promo_code_used == label).count()
+
+
+def any_promo_available():
+    return any(
+        promo_redeemed_count(p["label"]) < p["max_redemptions"]
+        for p in PROMO_CODES.values()
     )
+
+
+@app.route("/business/redeem_promo", methods=["POST"])
+def business_redeem_promo():
+    biz_id = session.get("business_id")
+    if not biz_id:
+        flash("Please log in to apply a promo code.")
+        return redirect(url_for("business_login"))
+
+    # Only one redemption can run at a time, so two businesses
+    # racing for the last spot can't both get it (released on commit/rollback)
+    db.session.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": PROMO_LOCK_KEY})
+
+    biz = Business.query.filter_by(id=biz_id).with_for_update().first()
+    if not biz or not biz.email_confirmed:
+        db.session.rollback()
+        flash("Please log in and confirm your business email to access the dashboard.")
+        return redirect(url_for("business_login"))
+
+    if biz.promo_code_used:
+        db.session.rollback()
+        flash("A promo code has already been applied to your account.")
+        return redirect(url_for("business_dashboard"))
+
+    entered = (request.form.get("promo_code") or "").strip().lower()
+    promo = PROMO_CODES.get(entered)
+
+    if not promo:
+        db.session.rollback()
+        flash("That promo code is not valid.")
+        return redirect(url_for("business_dashboard"))
+
+    if promo_redeemed_count(promo["label"]) >= promo["max_redemptions"]:
+        db.session.rollback()
+        flash(f"Sorry, the promo code {promo['label']} is no longer valid.")
+        return redirect(url_for("business_dashboard"))
+
+    # Valid: deposit funds
+    current_balance = Decimal(str(biz.account_balance or 0))
+    biz.account_balance = current_balance + promo["amount"]
+    biz.promo_code_used = promo["label"]
+    biz.promo_redeemed_at = datetime.utcnow()
+    db.session.commit()
+
+    flash(
+        f"Congratulations, you have received enough funds in your account balance "
+        f"to cover ${promo['sales_covered']} in sales!  You can now submit your listing without having to add funds to your account, unless your smallest sale amount exceeds ${promo['sales_covered']}.",
+        "success",
+    )
+    return redirect(url_for("business_dashboard"))
 
 @app.errorhandler(500)
 def internal_server_error(error):

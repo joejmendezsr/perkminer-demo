@@ -9,15 +9,12 @@ Perk Miner Public Business Profiles Directory – Search our public profiles
   <meta name="description" content="Search our public business profiles directory - no registration or login required. We make it easy for you to obtain enough information before deciding if you want to move forward.">
   <meta name="keywords" content="perk, perks, perk miner, grow your business, pay per sale, pay per close, no risk advertising, best advertising, high roi, roi, return on investment, return on advertising spend, highest roi, no sale no fee">
 
-  {# canonical #}
-  {% if page and page > 1 %}
-    <link rel="canonical" href="{{ url_for('public_profiles_directory', page=page, _external=True) }}">
-  {% else %}
-    <link rel="canonical" href="{{ url_for('public_profiles_directory', _external=True) }}">
-  {% endif %}
+  {# robots_meta and canonical_url come from the public_profiles_directory route #}
+  <meta name="robots" content="{{ robots_meta }}">
+  <link rel="canonical" href="{{ canonical_url }}">
 
-  {# prev/next hints #}
-  {% if pagination %}
+  {# prev/next hints (only for the plain browse pages, not search results) #}
+  {% if pagination and not has_filters %}
     {% if pagination.has_prev %}
       <link rel="prev" href="{{ url_for('public_profiles_directory', page=pagination.prev_num, _external=True) }}">
     {% endif %}
@@ -130,16 +127,7 @@ Perk Miner Public Business Profiles Directory – Search our public profiles
 {% endblock %}
 
 {% block content %}
-  {# consider it a "search" if any of these are present #}
-{% set has_filters =
-  q or
-  category or
-  (selected_distance and selected_distance != 'all') or
-  request.args.get('lat') or
-  request.args.get('lng') or
-  request.args.get('page')
-%}
-{% set show_results = has_filters and businesses %}
+  {# has_filters, robots_meta and canonical_url are provided by the route. #}
 
   <div class="page-shell">
 
@@ -186,7 +174,9 @@ Perk Miner Public Business Profiles Directory – Search our public profiles
                 id="category"
                 name="category"
               >
-                <option value="">All categories</option>
+                <option value="" disabled {% if not category %}selected{% endif %}>
+                  Select one
+                </option>
                 {% for cat in categories %}
                   <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>
                     {{ cat }}
@@ -225,8 +215,8 @@ Perk Miner Public Business Profiles Directory – Search our public profiles
       </div>
     </section>
 
-    {# DIRECTORY LIST – only when there are results + filters #}
-    {% if show_results %}
+    {# DIRECTORY LIST – always shown when there are businesses, so crawlers can follow the links #}
+    {% if businesses %}
       <main class="mb-5">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-column flex-md-row">
           <h2 class="h5 mb-2 mb-md-0">
@@ -289,7 +279,7 @@ Perk Miner Public Business Profiles Directory – Search our public profiles
           {% endfor %}
         </div>
 
-        {# PAGINATION #}
+        {# PAGINATION – real links so crawlers can follow them #}
         {% if pagination and pagination.pages > 1 %}
           <nav aria-label="Public business profiles page navigation" class="mt-4">
             <ul class="pagination justify-content-center">
@@ -298,9 +288,11 @@ Perk Miner Public Business Profiles Directory – Search our public profiles
                   <a class="page-link"
                      href="{{ url_for('public_profiles_directory',
                                       page=pagination.prev_num,
-                                      q=q,
-                                      category=category,
-                                      distance=selected_distance) }}">
+                                      q=q or None,
+                                      category=category or None,
+                                      distance=(selected_distance if selected_distance != 'all' else None),
+                                      lat=request.args.get('lat') or None,
+                                      lng=request.args.get('lng') or None) }}">
                     &laquo; Previous
                   </a>
                 </li>
@@ -321,9 +313,11 @@ Perk Miner Public Business Profiles Directory – Search our public profiles
                   <a class="page-link"
                      href="{{ url_for('public_profiles_directory',
                                       page=pagination.next_num,
-                                      q=q,
-                                      category=category,
-                                      distance=selected_distance) }}">
+                                      q=q or None,
+                                      category=category or None,
+                                      distance=(selected_distance if selected_distance != 'all' else None),
+                                      lat=request.args.get('lat') or None,
+                                      lng=request.args.get('lng') or None) }}">
                     Next &raquo;
                   </a>
                 </li>
@@ -336,6 +330,10 @@ Perk Miner Public Business Profiles Directory – Search our public profiles
           </nav>
         {% endif %}
       </main>
+    {% elif has_filters %}
+      <p class="text-center text-muted my-5">
+        No profiles matched your search. Try a different keyword, category or distance.
+      </p>
     {% endif %}
   </div>
 {% endblock %}

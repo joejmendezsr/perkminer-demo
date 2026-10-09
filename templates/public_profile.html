@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{{ business.business_name }} – Perk Miner Business Profile</title>
+  <title>{{ page_title }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <meta name="description" content="{{ meta_description }}">
@@ -10,10 +10,19 @@
     <meta name="keywords" content="{{ meta_keywords }}">
   {% endif %}
 
+  <link rel="canonical" href="{{ canonical_url }}">
+  <script type="application/ld+json">{{ ld_json|tojson }}</script>
+
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <noscript>
+    <style>
+      .section { opacity: 1; transform: none; }
+    </style>
+  </noscript>
 
   <style>
     :root {
@@ -30,7 +39,6 @@
       color: var(--pm-dark);
     }
 
-    /* hero section */
     .hero-wrapper {
       position: relative;
       overflow: hidden;
@@ -41,8 +49,7 @@
       inset: 0;
       background-image:
         linear-gradient(to bottom, rgba(15,23,42,0.8), rgba(15,23,42,0.7)),
-        url("https://res.cloudinary.com/dmrntlcfd/image/upload/v1790895569/IMG_3746_zq4bws.jpg?fit=crop&w=1600&q=80");
-      /* ↑ replace this URL with your standard branding image */
+        url("https://res.cloudinary.com/dmrntlcfd/image/upload/v1791315382/perkminer-business-profile-backgound-newspaper_npsozu.jpg?fit=crop&w=1600&q=80");
       background-size: cover;
       background-position: center;
       filter: saturate(1.1);
@@ -54,6 +61,19 @@
       margin: 0 auto;
       padding: 3.5rem 1.25rem 2.5rem;
       color: #f9fafb;
+    }
+
+    .hero-back-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      color: rgba(249,250,251,0.85);
+      text-decoration: none;
+    }
+
+    .hero-back-link:hover {
+      color: #ffffff;
+      text-decoration: underline;
     }
 
     .hero-logo {
@@ -71,6 +91,8 @@
       font-size: 2.4rem;
       font-weight: 800;
       letter-spacing: 0.02em;
+      margin: 0;
+      line-height: 1.2;
     }
 
     .hero-sub {
@@ -87,6 +109,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0.75rem;
+      justify-content: center;
     }
 
     .btn-cta {
@@ -112,7 +135,19 @@
       border-width: 1.5px;
     }
 
-    /* sections */
+    .cashback-banner {
+      max-width: 1000px;
+      margin: 0 auto;
+      margin-top: -0.75rem;
+      padding: 1rem 1.25rem;
+      text-align: center;
+      background-color: #fff9d9;
+      color: #7a5a00;
+      font-weight: 600;
+      border-radius: 0 0 18px 18px;
+      box-shadow: 0 6px 16px rgba(15,23,42,0.12);
+    }
+
     .section {
       max-width: 1000px;
       margin: 1.75rem auto;
@@ -148,9 +183,14 @@
       margin-bottom: 0.75rem;
     }
 
+    .gallery-img-wrapper {
+      display: flex;
+      justify-content: center;
+    }
+
     .gallery-img {
       width: 100%;
-      height: 300px;           /* default square height */
+      height: 300px;
       border-radius: 12px;
       object-fit: cover;
       box-shadow: 0 4px 12px rgba(15,23,42,0.18);
@@ -159,7 +199,8 @@
 
     @media (min-width: 768px) {
       .gallery-img {
-        height: 600px;         /* larger square on tablets/desktop */
+        width: 400px;
+        height: 400px;
       }
     }
 
@@ -196,23 +237,32 @@
 </head>
 <body>
 
-<!-- HERO -->
 <div class="hero-wrapper">
   <div class="hero-bg"></div>
   <div class="hero-content">
+    <a href="{{ url_for('public_profiles_directory') }}" class="hero-back-link">
+      ← Browse all advertisers
+    </a>
     <div class="row align-items-center g-3">
-      <div class="col-12 col-md-4 text-center text-md-start">
+      <div class="col-12 col-md-4 text-center">
         {% if business.profile_photo %}
           <img src="{{ business.profile_photo }}" alt="{{ business.business_name }} logo" class="hero-logo">
         {% endif %}
       </div>
-      <div class="col-12 col-md-8 text-center text-md-start">
-        <div class="hero-title">{{ business.business_name }}</div>
+      <div class="col-12 col-md-8 text-center">
+        <h1 class="hero-title">{{ business.business_name }}</h1>
         <div class="hero-sub mt-2">
           <div>{{ business.category }}</div>
-          {% if business.address %}
-            <div><i class="bi bi-geo-alt"></i> {{ business.address }}</div>
-          {% endif %}
+{% if area_city or area_state %}
+  <div>
+    <i class="bi bi-geo-alt"></i>
+    Area served:
+    {{ area_city }}{% if area_city and area_state %}, {% endif %}{{ area_state }}
+    {% if business.location_varies %} · Mobile / On-Location{% endif %}
+  </div>
+{% elif business.address %}
+  <div><i class="bi bi-geo-alt"></i> {{ business.address }}</div>
+{% endif %}
         </div>
         <div class="hero-badges mt-2">
           {% if business.country %}
@@ -227,13 +277,13 @@
           {% endif %}
         </div>
         <div class="hero-actions">
-          <!-- CTA to large listing (requires login) -->
           <a href="{{ url_for('view_listing', biz_id=business.id, distance_mi=0) }}"
+             rel="nofollow"
              class="btn btn-cta">
             View Listing
           </a>
           {% if business.website_url %}
-            <a href="{{ business.website_url }}" target="_blank"
+            <a href="{{ business.website_url }}" target="_blank" rel="noopener"
                class="btn btn-outline-light btn-outline-light-pill">
               Visit Website
             </a>
@@ -244,7 +294,10 @@
   </div>
 </div>
 
-<!-- ABOUT -->
+<div class="cashback-banner">
+  Perk Miner members earn 2% Cashback on up to $2,500 of every purchase from this business.<br>(Paid by Perk Miner LLC and not the business)
+</div>
+
 <div class="section js-reveal">
   <h2><i class="bi bi-info-circle"></i> About</h2>
   {% if business.about_us %}
@@ -264,7 +317,6 @@
   {% endif %}
 </div>
 
-<!-- GALLERY -->
 {% if photos %}
 <div class="section js-reveal">
   <h2><i class="bi bi-images"></i> Gallery</h2>
@@ -275,7 +327,6 @@
        data-bs-interval="5000"
        data-bs-pause="hover">
 
-    {# indicators only if more than one photo #}
     {% if photos|length > 1 %}
     <div class="carousel-indicators">
       {% for photo in photos %}
@@ -293,16 +344,18 @@
     <div class="carousel-inner">
       {% for photo in photos %}
       <div class="carousel-item {% if loop.first %}active{% endif %}">
-        <a href="{{ photo }}" target="_blank" rel="noopener">
-          <img src="{{ photo }}"
-               class="d-block w-100 gallery-img"
-               alt="{{ business.business_name }} photo {{ loop.index }}">
-        </a>
+        <div class="gallery-img-wrapper">
+          <a href="{{ photo }}" target="_blank" rel="noopener">
+            <img src="{{ photo }}"
+                 class="gallery-img"
+                 {% if not loop.first %}loading="lazy"{% endif %}
+                 alt="{{ business.business_name }} photo {{ loop.index }}">
+          </a>
+        </div>
       </div>
       {% endfor %}
     </div>
 
-    {# controls only if more than one photo #}
     {% if photos|length > 1 %}
       <button class="carousel-control-prev" type="button"
               data-bs-target="#bizGalleryCarousel" data-bs-slide="prev">
@@ -323,7 +376,6 @@
 </div>
 {% endif %}
 
-<!-- SERVICES & PERKS -->
 <div class="section js-reveal">
   <div class="row g-4">
     <div class="col-12 col-md-6">
@@ -354,11 +406,19 @@
   </div>
 </div>
 
-<!-- LOCATION & MAP -->
 <div class="section js-reveal">
-  <h2><i class="bi bi-geo-alt-fill"></i> Location & Contact</h2>
+  <h2><i class="bi bi-geo-alt-fill"></i> Location &amp; Contact</h2>
   <div class="row g-4">
     <div class="col-12 col-md-5">
+<p>
+  <strong>Area served:</strong><br>
+  {% if area_city or area_state %}
+    {{ area_city }}{% if area_city and area_state %}, {% endif %}{{ area_state }}{% if area_country %} {{ area_country }}{% endif %}
+    {% if business.location_varies %}<br>Mobile / on-location{% endif %}
+  {% else %}
+    Not set
+  {% endif %}
+</p>
       <p>
         <strong>Address:</strong><br>
         {{ business.address or "N/A" }}
@@ -370,7 +430,7 @@
       <p>
         <strong>Website:</strong><br>
         {% if business.website_url %}
-          <a href="{{ business.website_url }}" target="_blank">{{ business.website_url }}</a>
+          <a href="{{ business.website_url }}" target="_blank" rel="noopener">{{ business.website_url }}</a>
         {% else %}
           N/A
         {% endif %}
@@ -378,7 +438,7 @@
       {% if business.latitude and business.longitude %}
         <a class="btn btn-outline-primary btn-sm"
            href="https://www.google.com/maps/dir/?api=1&destination={{ business.latitude }},{{ business.longitude }}&travelmode=driving"
-           target="_blank">
+           target="_blank" rel="noopener">
           <i class="bi bi-map"></i> Open in Google Maps
         </a>
       {% endif %}
@@ -396,7 +456,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 {% if business.latitude and business.longitude %}
-<!-- Google Maps JS (replace with your API key if you want styling control) -->
 <script
   src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key if google_maps_api_key is defined else '' }}"
   async defer></script>
@@ -425,7 +484,6 @@
     if (window.google && window.google.maps) {
       initMap();
     } else {
-      // wait a little for the script to load
       let tries = 0;
       const intv = setInterval(function() {
         if (window.google && window.google.maps) {
@@ -441,7 +499,6 @@
 </script>
 {% endif %}
 
-<!-- Scroll-in animations -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const sections = document.querySelectorAll('.js-reveal');
@@ -469,13 +526,17 @@ document.addEventListener('DOMContentLoaded', function () {
   const limit = 250;
 
   if (fullText.length <= limit) {
-    // short text, no toggle needed
     aboutSpan.textContent = fullText;
     toggleLink.style.display = 'none';
     return;
   }
 
-  const shortText = fullText.slice(0, limit) + '…';
+  let cut = fullText.slice(0, limit);
+  const lastSpace = cut.lastIndexOf(' ');
+  if (lastSpace > 180) {
+    cut = cut.slice(0, lastSpace);
+  }
+  const shortText = cut.replace(/[.,;:\s]+$/, '') + '…';
   let expanded = false;
 
   aboutSpan.textContent = shortText;

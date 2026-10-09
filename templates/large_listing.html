@@ -14,6 +14,7 @@
     <meta name="keywords" content="{{ meta_keywords }}">
   {% endif %}
 
+  <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
@@ -99,7 +100,6 @@
         transition: box-shadow .17s;
     }
 
-    /* button rows */
     .listing-btn-row {
         margin-top: .8rem;
         margin-bottom: 1.9rem;
@@ -125,12 +125,12 @@
     .main-info-row {
         margin-bottom: .56rem;
         display:flex;
-        align-items:center;
+        align-items:flex-start;
         gap:8px;
         color: #314655;
         font-weight:500;
     }
-    .main-info-row i { color: var(--pm-accent); font-size:1.15em; }
+    .main-info-row i { color: var(--pm-accent); font-size:1.15em; margin-top: 2px; }
 
     .about-block {
         background: #f4f5fb;
@@ -190,7 +190,6 @@
         padding:.42rem 1.1rem;
     }
 
-    /* gallery carousel images: square */
     .gallery-img {
       width: 100%;
       height: 300px;
@@ -206,7 +205,6 @@
       }
     }
 
-    /* scroll-in animation */
     .section {
       opacity: 0;
       transform: translateY(20px);
@@ -274,9 +272,7 @@
       </span>
     </div>
 
-    <!-- BUTTONS BLOCK -->
     <div class="listing-btn-row">
-      <!-- row 1: back button -->
       <div class="listing-btn-row__row">
         {% if request.args.get('from_featured') %}
           <a href="{{ url_for('home') }}#featured"
@@ -323,7 +319,6 @@
         {% endif %}
       </div>
 
-      <!-- row 1.5: favorites -->
       {% if current_user.is_authenticated and not request.args.get('from_online_marketplace') and not request.args.get('from_online_featured') %}
         <div class="listing-btn-row__row">
           <form action="{{ url_for('add_favorite', business_id=business.id) }}"
@@ -344,7 +339,6 @@
         </div>
       {% endif %}
 
-      <!-- row 2: Show QR + Request Service -->
       <div class="listing-btn-row__row">
         <a href="{{ url_for('start_purchase', biz_id=business.id) }}"
            class="btn btn-success btn-action btn-set-top me-2 mb-2">
@@ -357,7 +351,6 @@
         </a>
       </div>
 
-      <!-- row 3: shop online / warning -->
       {% if current_user.is_authenticated %}
         <div class="listing-btn-row__row">
           {% if can_shop_online_listing %}
@@ -373,13 +366,36 @@
         </div>
       {% endif %}
     </div>
-    <!-- END BUTTONS BLOCK -->
 
-    <div class="main-info mt-2 section js-reveal">
-      <div class="main-info-row">
-        <i class="bi bi-pin-map"></i>
-        <span><strong>Address:</strong> {{ business.address or '-' }}</span>
-      </div>
+<div class="main-info mt-2 section js-reveal">
+  <div class="main-info-row">
+    <i class="bi bi-signpost-2"></i>
+    <span>
+      <strong>Area served:</strong>
+      {% if area_city or area_state %}
+        {{ area_city }}{% if area_city and area_state %}, {% endif %}{{ area_state }}{% if area_country %} {{ area_country }}{% endif %}
+        {% if business.location_varies %} · Mobile / on-location{% endif %}
+      {% elif business.location_varies %}
+        Mobile / on-location
+      {% else %}
+        Not set
+      {% endif %}
+    </span>
+  </div>
+  <div class="main-info-row">
+    <i class="bi bi-pin-map"></i>
+    <span>
+      <strong>Address:</strong>
+      {% if business.address %}
+        {{ business.address }}
+      {% elif business.location_varies %}
+        No fixed address · mobile / on-location
+      {% else %}
+        -
+      {% endif %}
+    </span>
+  </div>
+
       <div class="main-info-row">
         <i class="bi bi-telephone"></i>
         <span><strong>Phone:</strong> {{ business.phone_number or '-' }}</span>
@@ -446,7 +462,6 @@
     <div class="section js-reveal">
       <strong>Location Map:</strong>
 
-      {# choose which coordinates to use: live GPS if location_varies and live coords exist, else static business lat/lng #}
       {% set map_lat = business.live_gps_lat if business.location_varies and business.live_gps_lat is not none else business.latitude %}
       {% set map_lng = business.live_gps_long if business.location_varies and business.live_gps_long is not none else business.longitude %}
 
@@ -473,7 +488,6 @@
       {% endif %}
     </div>
 
-    {# PHOTOS CAROUSEL #}
     {% if photos %}
     <div class="section js-reveal">
       <div class="text-center mb-2">
@@ -562,7 +576,12 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
-  const shortText = fullText.slice(0, limit) + '…';
+  let cut = fullText.slice(0, limit);
+  const lastSpace = cut.lastIndexOf(' ');
+  if (lastSpace > 180) {
+    cut = cut.slice(0, lastSpace);
+  }
+  const shortText = cut.replace(/[.,;:\s]+$/, '') + '…';
   let expanded = false;
 
   aboutSpan.textContent = shortText;
@@ -583,7 +602,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<!-- scroll-in animations -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const sections = document.querySelectorAll('.js-reveal');
