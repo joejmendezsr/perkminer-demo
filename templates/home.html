@@ -1,18 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Perk Miner Marketplace – Cashback Rewards for Real Purchases</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Connect with businesses through secure, private messaging through our online marketplace and also earn real cashback and referral commissions. Grow Your Business with Zero Risk - No sale equals zero fees for our advertisers.">
+  <title>Perk Miner Marketplace – Cashback Rewards for Real Purchases</title>
+  <meta name="description" content="Perk Miner connects members and businesses through private, secure messaging. Earn 2% cashback on real purchases; advertisers pay only when a sale closes.">
   <meta name="keywords" content="perk, perks, perk miner, grow your business, pay per sale, pay per close, no risk advertising, best advertising, high roi, roi, return on investment, return on advertising spend, highest roi, no sale no fee">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="theme-color" content="#2a5859">
+  <link rel="canonical" href="https://www.perkminer.com/">
+
+  <!-- Open Graph / social sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Perk Miner">
+  <meta property="og:title" content="Perk Miner Marketplace – Cashback Rewards for Real Purchases">
+  <meta property="og:description" content="Connect with businesses through private, secure messaging and earn 2% cashback on real purchases. Advertisers pay only when a sale closes.">
+  <meta property="og:url" content="https://www.perkminer.com/">
+  <meta property="og:image" content="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Perk Miner Marketplace – Cashback Rewards for Real Purchases">
+  <meta name="twitter:description" content="Connect with businesses through private, secure messaging and earn 2% cashback on real purchases. Advertisers pay only when a sale closes.">
+  <meta name="twitter:image" content="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg">
+
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <!-- Structured data: organization + website -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://www.perkminer.com/#organization",
+        "name": "Perk Miner",
+        "legalName": "Perk Miner LLC",
+        "url": "https://www.perkminer.com/",
+        "logo": "https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg",
+        "description": "Perk Miner is a digital advertising and rewards marketplace that connects members and businesses through private, secure messaging. Members earn cashback and referral commissions on real purchases; advertisers pay only when a sale closes.",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer support",
+          "email": "fromperkminer@gmail.com"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.perkminer.com/#website",
+        "url": "https://www.perkminer.com/",
+        "name": "Perk Miner",
+        "publisher": { "@id": "https://www.perkminer.com/#organization" }
+      }
+    ]
+  }
+  </script>
+
   <style>
-    :root { 
-      --pm-primary: #2a5859; 
-      --pm-accent: #ffd66b; 
-      --pm-bg: #fff; 
-      --pm-text: #222; 
+    :root {
+      --pm-primary: #2a5859;
+      --pm-accent: #ffd66b;
+      --pm-bg: #fff;
+      --pm-text: #222;
       --pm-hover: #e6f6f5;
       --pm-shadow: 0 8px 32px rgba(42,88,89,0.18);
       --pm-transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -26,6 +77,7 @@
     .dashboard-btn-hero { position: absolute; top: 18px; right: 32px; z-index: 5;}
     @media (max-width: 700px) { .dashboard-btn-hero { top: 8px; right: 12px; } }
     .dashboard-btn-hero .btn { font-size: 0.93rem; padding: 0.28rem 0.85rem; border-radius: 15px; box-shadow: 0 2px 10px #e6f4ee; }
+    .trust-note { font-size: 1rem; color: #222; background: #f7f7f7; padding: 6px 14px; border-radius: 7px; display: inline-block; }
     .totals-section { margin-top: 0.5rem; margin-bottom: 0.8rem;}
     .totals-mini { background: #fff; border: 1px solid #e7ebed; border-radius: 10px; box-shadow: 0 1px 5px #e6f4ee; padding: .35rem 0.7rem .25rem 0.7rem; min-width: 106px; min-height: 42px; display: inline-block; margin: 0 3px 6px 3px;}
     .totals-label-mini { font-size: 0.61em; color: #305A5B; font-weight: 600; line-height: 1.07; margin-bottom: -3px;}
@@ -34,16 +86,16 @@
     .totals-value-mini.text-info { color: #1097bb !important; }
     .search-form .input-group { border-radius: 18px; box-shadow: 0 2px 10px #f2f5f5; background: #fff; overflow: hidden;}
     .search-form .form-control, .search-form .btn { border-radius: 18px !important; font-size: 1.1em;}
-    
+
     /* Categories Section */
     .categories-section { padding: 3rem 0 4rem; }
-    .categories-title { 
-      font-size: 2.1rem; 
-      font-weight: 700; 
-      color: var(--pm-primary); 
-      text-align: center; 
-      margin-bottom: 2.2rem; 
-      position: relative; 
+    .categories-title {
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: var(--pm-primary);
+      text-align: center;
+      margin-bottom: 2.2rem;
+      position: relative;
     }
     .categories-title:after {
       content: '';
@@ -56,6 +108,8 @@
       background: var(--pm-accent);
       border-radius: 2px;
     }
+
+    .swipe-hint { color: #555; font-style: italic; font-size: 0.98rem; }
 
     .categories-scroll-wrap {
       overflow-x: auto;
@@ -183,124 +237,141 @@
     }
 
     /* More button */
-    .more-btn-container { 
-      text-align: center; 
-      margin: 2rem 0 1rem; 
+    .more-btn-container {
+      text-align: center;
+      margin: 2rem 0 1rem;
     }
-    .more-btn { 
-      background: var(--pm-primary); 
-      color: white; 
-      border: none; 
-      padding: 0.75rem 2rem; 
-      font-size: 1.1rem; 
-      font-weight: 600; 
-      border-radius: 50px; 
-      box-shadow: 0 6px 20px rgba(42,88,89,0.3); 
-      transition: var(--pm-transition); 
+    .more-btn {
+      background: var(--pm-primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 50px;
+      box-shadow: 0 6px 20px rgba(42,88,89,0.3);
+      transition: var(--pm-transition);
       cursor: pointer;
     }
-    .more-btn:hover { 
-      transform: translateY(-4px) scale(1.05); 
-      box-shadow: 0 12px 30px rgba(42,88,89,0.4); 
+    .more-btn:hover {
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: 0 12px 30px rgba(42,88,89,0.4);
       background: #1f4344;
     }
     .more-btn.expanded {
       background: #d9534f;
     }
 
+    /* Featured listings */
+    .listing-link { text-decoration: none; }
 
+    .small-listing-modern {
+      border: 1px solid #d9ece7;
+      border-radius: 14px;
+      background: #fafefe;
+      box-shadow: 0 1px 5px #e6f9f4;
+      margin-bottom: 1.4rem;
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 0.18s, transform 0.18s, background 0.18s;
+      text-align: center;
+    }
+    .small-listing-modern:hover {
+      background: var(--pm-hover);
+      box-shadow: 0 4px 18px #b4dad9;
+      transform: translateY(-3px);
+    }
 
-      .small-listing-modern {
-        border: 1px solid #d9ece7;
-        border-radius: 14px;
-        background: #fafefe;
-        box-shadow: 0 1px 5px #e6f9f4;
-        margin-bottom: 1.4rem;
-        overflow: hidden;
-        cursor: pointer;
-        transition: box-shadow 0.18s, transform 0.18s, background 0.18s;
-        text-align: center;
-      }
-      .small-listing-modern:hover {
-        background: var(--pm-hover);
-        box-shadow: 0 4px 18px #b4dad9;
-        transform: translateY(-3px);
-      }
+    .listing-image-container {
+      width: 100%;
+      height: 120px;
+      background: #f7f7f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid #e5f0ee;
+    }
 
-      .listing-image-container {
-        width: 100%;
-        height: 120px;
-        background: #f7f7f7;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-bottom: 1px solid #e5f0ee;
-      }
+    .small-listing-modern-img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: #f7f7f7;
+    }
 
-      .small-listing-modern-img {
-        width: 120px;
-        height: 120px;
-        object-fit: cover;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        background: #f7f7f7;
-      }
+    .small-listing-info { padding: 12px 14px 16px; font-size: 0.98em; }
+    .small-listing-title { font-weight: 700; margin-bottom: 8px; font-size: 1.12em; }
 
-      .small-listing-info { padding: 12px 14px 16px; font-size: 0.98em; }
-      .small-listing-title { font-weight: 700; margin-bottom: 8px; font-size: 1.12em; }
+    .small-listing-category-badge {
+      font-size: 0.95em;
+      font-weight: 500;
+      border-radius: 10px;
+      background: #e6f6f5;
+      color: #2a5859;
+      padding: 4px 12px;
+      margin-bottom: 6px;
+      display: inline-block;
+    }
 
-      .small-listing-category-badge {
-        font-size: 0.95em;
-        font-weight: 500;
-        border-radius: 10px;
-        background: #e6f6f5;
-        color: #2a5859;
-        padding: 4px 12px;
-        margin-bottom: 6px;
-        display: inline-block;
-      }
+    .small-listing-mile-badge {
+      font-size: 0.95em;
+      background: #eef8fa;
+      color: #357;
+      border-radius: 9px;
+      padding: 2px 12px 2px 8px;
+      margin-bottom: 6px;
+      margin-left: 6px;
+      display: inline-block;
+      white-space: nowrap;
+      border: 1px solid #e5eef3;
+      opacity: 0.93;
+    }
 
-      .small-listing-mile-badge {
-        font-size: 0.95em;
-        background: #eef8fa;
-        color: #357;
-        border-radius: 9px;
-        padding: 2px 12px 2px 8px;
-        margin-bottom: 6px;
-        margin-left: 6px;
-        display: inline-block;
-        white-space: nowrap;
-        border: 1px solid #e5eef3;
-        opacity: 0.93;
-      }
+    .small-listing-services {
+      color: #345;
+      opacity: 0.93;
+      font-size: 0.96em;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
 
-      .small-listing-services {
-        color: #345;
-        opacity: 0.93;
-        font-size: 0.96em;
-        margin-top: 8px;
-        line-height: 1.4;
-      }
+    .small-listing-perks {
+      background: #feebe7;
+      color: #345;
+      opacity: 0.93;
+      font-size: 0.96em;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
 
-      .small-listing-perks {
-        background: #feebe7;
-        color: #345;
-        opacity: 0.93;
-        font-size: 0.96em;
-        margin-top: 8px;
-        line-height: 1.4;
-      }
+    @media (max-width: 600px) {
+      .listing-image-container { height: 110px; }
+      .small-listing-modern-img { width: 100px; height: 100px; }
+      .small-listing-info { padding: 10px 12px 14px; }
+      .small-listing-title { font-size: 1.05em; }
+    }
 
-      @media (max-width: 600px) {
-        .listing-image-container { height: 110px; }
-        .small-listing-modern-img { width: 100px; height: 100px; }
-        .small-listing-info { padding: 10px 12px 14px; }
-        .small-listing-title { font-size: 1.05em; }
-      }
+    /* Perk info section */
+    .perk-info-section { max-width: 900px; }
+    .perk-banner { width: 100%; margin-bottom: 2em; }
+    .perk-banner img { width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 14px; max-width: 100%; }
+    .perk-list { list-style: square; padding-left: 1.2em; font-size: 1.14em; }
+    .money-flow { padding-left: 1.2em; max-width: 700px; margin: 0 auto; }
+    .money-flow-note { font-size: .97em; color: #888; }
+    .money-summary { font-weight: 500; font-size: 1.1em; }
+    .site-tagline { max-width: 900px; margin: 0 auto 1rem; padding: 0 1rem; text-align: center; font-size: 0.95rem; color: #666; }
 
-
+    /* Footer */
     footer { background: #f8fafb; color: #999; padding: 1.5rem 0; margin-top: 2.3rem; text-align: center; font-size: 1em; border-top: 1px solid #e1e7ea; }
+    footer a.footer-brand { color: var(--pm-primary); font-weight: 600; text-decoration: none; }
+    footer a.footer-support { color: var(--pm-primary); }
+    footer a.footer-legal { color: #3dbbee; margin: 0 6px; text-decoration: none; }
+    footer a.footer-directory { color: var(--pm-primary); text-decoration: none; font-weight: 600; }
+    footer a.footer-directory:hover { text-decoration: underline; }
 
+    /* Marquee */
     .marquee-container {
       --gap: 4rem;
       width: 100%;
@@ -347,6 +418,7 @@
       .marquee-container { padding: 0.7rem 0; }
     }
 
+    /* How It Works */
     .how-it-works-section {
       position: relative;
       margin: 48px 0 0 0;
@@ -381,7 +453,6 @@
       .how-it-works-bg { min-height: 120px; max-height: 150px; }
       .how-it-works-btn-inner { padding: .7rem 1.15rem; font-size: 1.09em; }
     }
-
   </style>
 </head>
 <body>
@@ -401,17 +472,17 @@
       </div>
     {% endif %}
     <div class="container hero-content">
-      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="hero-logo">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="hero-logo" fetchpriority="high">
       <h1>DEMO SITE ONLY!</h1>
-      <h1>Exclusive Member Perks</br>plus 2% Cashback</h1>
-      <h4>No Risk Advertising! (1000% ROAS min)</br>No Sale/Close = No Fee For Advertisers!</h4>
-      <p style="font-size:1rem; color:#222; background:#f7f7f7; padding:6px 14px; border-radius:7px; display:inline-block;">
+      <h1>Exclusive Member Perks<br>plus 2% Cashback</h1>
+      <p class="h4">No Risk Advertising! (1000% ROAS min)<br>No Sale/Close = No Fee For Advertisers!</p>
+      <p class="trust-note">
         Secure ⛨ | Not crypto | Privacy guaranteed
       </p>
-      <form class="search-form mb-3" method="get" action="/search">
+      <form class="search-form mb-3" method="get" action="/search" role="search">
         <div class="input-group mb-2">
           <input type="text" class="form-control" name="q" placeholder="Search for products, services, or businesses..." aria-label="Search">
-          <select class="form-select" name="distance" style="max-width:110px;">
+          <select class="form-select" name="distance" style="max-width:110px;" aria-label="Distance">
             <option value="">Closest</option>
             <option value="5">5 mi</option>
             <option value="10">10 mi</option>
@@ -450,7 +521,7 @@
           <div class="totals-value-mini text-info">${{ "{:,.2f}".format(total_ad_fees|default(0, true)) }}</div>
         </div>
         <div class="totals-mini mx-1">
-          <div class="totals-label-mini">Percent of Ad Revenues<br>Paid To Members & Businesses</div>
+          <div class="totals-label-mini">Percent of Ad Revenue<br>Paid To Members &amp; Businesses</div>
           <div class="totals-value-mini text-warning">
             {{ percent_fees_paid|default(0, true)|round(1) }}%
           </div>
@@ -469,7 +540,7 @@
     </div>
   </div>
 
-  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-0">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-0" aria-label="Main navigation">
     <div class="container">
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
         aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -484,6 +555,7 @@
           <a class="nav-link" href="/news">News</a>
           <a class="nav-link" href="/faq">FAQ</a>
           <a class="nav-link" href="/testimonials">Testimonials</a>
+          <a class="nav-link" href="/public_profiles">Public Profiles</a>
           <a class="nav-link" href="/intro">Videos</a>
         </div>
       </div>
@@ -494,7 +566,7 @@
     <section class="categories-section">
       <h2 class="categories-title">Browse by Popular Categories</h2>
 
-      <div class="d-md-none text-center mb-3" style="color:#555; font-style:italic; font-size:0.98rem;">
+      <div class="d-md-none text-center mb-3 swipe-hint">
         ↔ Swipe to explore all categories
       </div>
 
@@ -504,7 +576,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Handyman-Contractor', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Handyman_ig9cin.jpg?auto=format&fit=crop&w=300&q=40" alt="Handyman-Contractor" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Handyman_ig9cin.jpg?auto=format&fit=crop&w=300&q=40" alt="Handyman-Contractor" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Handyman-Contractor</div>
@@ -515,7 +587,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Restaurant-Food-and-Drink', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Restaurant_d1ioep.jpg?auto=format&fit=crop&w=300&q=40" alt="Restaurant" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Restaurant_d1ioep.jpg?auto=format&fit=crop&w=300&q=40" alt="Restaurant" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Restaurant/Food/Drink</div>
@@ -526,7 +598,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Auto-Service-Repair-Parts', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Auto-Service_iamnu3.jpg?auto=format&fit=crop&w=300&q=40" alt="Auto Parts & Service" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Auto-Service_iamnu3.jpg?auto=format&fit=crop&w=300&q=40" alt="Auto Parts &amp; Service" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Auto Service-Repair-Parts</div>
@@ -537,7 +609,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Home-and-Garden', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Home-Garden_lhssqa.jpg?auto=format&fit=crop&w=300&q=40" alt="Home and Garden" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Home-Garden_lhssqa.jpg?auto=format&fit=crop&w=300&q=40" alt="Home and Garden" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Home and Garden</div>
@@ -548,7 +620,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Shopping-and-Retail', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Retail_h510gq.jpg?auto=format&fit=crop&w=300&q=40" alt="Retail Outlet" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Retail_h510gq.jpg?auto=format&fit=crop&w=300&q=40" alt="Retail Outlet" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Shopping and Retail</div>
@@ -559,7 +631,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Health-and-Beauty', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443067/health-and-beauty_pql4ha.jpg?auto=format&fit=crop&w=300&q=40" alt="Health and Beauty" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443067/health-and-beauty_pql4ha.jpg?auto=format&fit=crop&w=300&q=40" alt="Health and Beauty" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Health and Beauty</div>
@@ -570,7 +642,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Sports-and-Recreation', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447451/sports_paavlw.jpg?auto=format&fit=crop&w=300&q=40" alt="Sports and Recreation" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447451/sports_paavlw.jpg?auto=format&fit=crop&w=300&q=40" alt="Sports and Recreation" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Sports and Recreation</div>
@@ -581,7 +653,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Real-Estate', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/real-estate_g40mrz.jpg?auto=format&fit=crop&w=300&q=40" alt="Real Estate" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/real-estate_g40mrz.jpg?auto=format&fit=crop&w=300&q=40" alt="Real Estate" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Real Estate</div>
@@ -592,7 +664,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Pet-Service-and-Supplies', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/pet-services_j2h4pq.jpg?auto=format&fit=crop&w=300&q=40" alt="Pet Service and Supplies" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/pet-services_j2h4pq.jpg?auto=format&fit=crop&w=300&q=40" alt="Pet Service and Supplies" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Pet Service and Supplies</div>
@@ -603,7 +675,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Travel-Lodging-Tourism', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/travel_m7izuq.jpg?auto=format&fit=crop&w=300&q=40" alt="Travel-Lodging-Tourism" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/travel_m7izuq.jpg?auto=format&fit=crop&w=300&q=40" alt="Travel-Lodging-Tourism" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Travel-Lodging-Tourism</div>
@@ -614,7 +686,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Gaming', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772483687/gaming_ymfsap.jpg?auto=format&fit=crop&w=300&q=40" alt="Gaming" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772483687/gaming_ymfsap.jpg?auto=format&fit=crop&w=300&q=40" alt="Gaming" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Gaming</div>
@@ -625,7 +697,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Professional-Services', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/professional_iouq8n.jpg?auto=format&fit=crop&w=300&q=40" alt="Financial Services" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/professional_iouq8n.jpg?auto=format&fit=crop&w=300&q=40" alt="Professional Services" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Professional Services</div>
@@ -636,7 +708,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Financial-Services', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/financial-services_hwhybm.jpg?auto=format&fit=crop&w=300&q=40" alt="Financial Services" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/financial-services_hwhybm.jpg?auto=format&fit=crop&w=300&q=40" alt="Financial Services" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Financial Services</div>
@@ -647,7 +719,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Events-and-Entertainment', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/entertainment_ubdbpn.jpg?auto=format&fit=crop&w=300&q=40" alt="Events and Entertainment" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/entertainment_ubdbpn.jpg?auto=format&fit=crop&w=300&q=40" alt="Events and Entertainment" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Events and Entertainment</div>
@@ -658,7 +730,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Education-and-Training', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/education_k14lj9.jpg?auto=format&fit=crop&w=300&q=40" alt="Education and Training" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/education_k14lj9.jpg?auto=format&fit=crop&w=300&q=40" alt="Education and Training" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Education and Training</div>
@@ -669,7 +741,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Wedding-Services', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/wedding_otioqm.jpg?auto=format&fit=crop&w=300&q=40" alt="Wedding Services" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/wedding_otioqm.jpg?auto=format&fit=crop&w=300&q=40" alt="Wedding Services" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Wedding Services</div>
@@ -680,7 +752,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Transportation-Services', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/transportation_himjmb.jpg?auto=format&fit=crop&w=300&q=40" alt="Transportation Services" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/transportation_himjmb.jpg?auto=format&fit=crop&w=300&q=40" alt="Transportation Services" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Transportation Services</div>
@@ -691,7 +763,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Legal-Services', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/legal_rqbeqb.jpg?auto=format&fit=crop&w=300&q=40" alt="Legal Services" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/legal_rqbeqb.jpg?auto=format&fit=crop&w=300&q=40" alt="Legal Services" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Legal Services</div>
@@ -702,7 +774,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='All-Rentals', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447452/rentals_mllbe2.jpg?auto=format&fit=crop&w=300&q=40" alt="All Rentals" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447452/rentals_mllbe2.jpg?auto=format&fit=crop&w=300&q=40" alt="All Rentals" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">All Rentals</div>
@@ -713,7 +785,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Cleaning-Services', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/cleaning_qriysn.jpg?auto=format&fit=crop&w=300&q=40" alt="Cleaning" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/cleaning_qriysn.jpg?auto=format&fit=crop&w=300&q=40" alt="Cleaning" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Cleaning Services</div>
@@ -724,7 +796,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Moving-and-Delivery', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438233/moving_hbaqgd.jpg?auto=format&fit=crop&w=300&q=40" alt="Moving" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438233/moving_hbaqgd.jpg?auto=format&fit=crop&w=300&q=40" alt="Moving" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Moving and Delivery</div>
@@ -735,7 +807,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Security-and-Protection', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/security_wuefwm.jpg?auto=format&fit=crop&w=300&q=40" alt="Security" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/security_wuefwm.jpg?auto=format&fit=crop&w=300&q=40" alt="Security" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Security and Protection</div>
@@ -746,7 +818,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Industrial-Services', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/industrial_g8djx5.jpg?auto=format&fit=crop&w=300&q=40" alt="Industrial" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/industrial_g8djx5.jpg?auto=format&fit=crop&w=300&q=40" alt="Industrial" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Industrial Services</div>
@@ -757,7 +829,7 @@
           <div class="category-card-wrapper">
             <a href="{{ url_for('category_browse', name='Other', lat=user_lat, lng=user_lng, distance=10) }}">
               <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/other_tnemn7.jpg?auto=format&fit=crop&w=300&q=40" alt="Financial Services" class="category-image">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/other_tnemn7.jpg?auto=format&fit=crop&w=300&q=40" alt="Other" class="category-image" loading="lazy" decoding="async">
                 <div class="category-overlay"></div>
               </div>
               <div class="category-label">Other</div>
@@ -772,14 +844,14 @@
       </div>
     </section>
 
-    <h3 class="mt-5 mb-3 text-center">Featured Businesses Near You:<br>(within 10 miles):</h3>
-      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <h2 class="h3 mt-5 mb-3 text-center">Featured Businesses Near You:<br>(within 10 miles):</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
       {% for biz in featured_listings %}
       <div class="col">
-        <a href="{{ url_for('view_listing', biz_id=biz.id, distance_mi=biz.distance_mi, from_featured=1) }}" style="text-decoration:none;">
+        <a href="{{ url_for('view_listing', biz_id=biz.id, distance_mi=biz.distance_mi, from_featured=1) }}" class="listing-link" rel="nofollow">
           <div class="small-listing-modern">
             {% if biz.profile_photo %}
-              <img src="{{ biz.profile_photo }}" class="small-listing-modern-img" alt="{{ biz.business_name }} logo">
+              <img src="{{ biz.profile_photo }}" class="small-listing-modern-img" alt="{{ biz.business_name }} logo" width="120" height="120" loading="lazy" decoding="async">
             {% else %}
               <div class="small-listing-modern-img d-flex align-items-center justify-content-center bg-light border">
                 <i class="bi bi-shop" style="font-size:1.6em; color:#2a5859;"></i>
@@ -787,7 +859,7 @@
             {% endif %}
 
             <div class="card-body text-center px-3">
-              <h5 class="card-title mb-2">{{ biz.business_name }}</h5>
+              <h3 class="card-title h5 mb-2">{{ biz.business_name }}</h3>
               <div class="mb-1 small" style="font-weight:500;">
                 <span class="badge bg-success">{{ biz.category }}</span>
               </div>
@@ -829,102 +901,103 @@
       {% endif %}
     </div>
 
-<!-- Featured Info Section with Banner Image -->
-<div class="perk-info-section mx-auto mt-4" style="max-width:900px;">
-  <!-- Replace with your own banner image when ready -->
-  <div style="width:100%;margin-bottom:2em;">
-    <img 
-      src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1782128475/paradigm_shift_xgamzx.jpg?text=Perk+Miner+is+a+Paradigm+Shift+for+Business+and+Members" 
-      alt="Paradigm Shift Banner" 
-      style="width:100%; height:auto; display:block; margin:0 auto; border-radius:14px; max-width:100%;">
-  </div>
+    <!-- Featured Info Section with Banner Image -->
+    <section class="perk-info-section mx-auto mt-4">
+      <div class="perk-banner">
+        <img
+          src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1782128475/paradigm_shift_xgamzx.jpg?text=Perk+Miner+is+a+Paradigm+Shift+for+Business+and+Members"
+          alt="Perk Miner is a paradigm shift for business and members"
+          loading="lazy" decoding="async">
+      </div>
 
-  <div class="row justify-content-center">
-    <div class="col-12 col-md-6 mb-4">
-      <h3 class="text-center mb-3">Member Perks:</h3>
-      <ul style="list-style:square; padding-left:1.2em; font-size: 1.14em;">
-        <li>Free Membership (Join for free) - no hidden fees, contracts or subscriptions.</li>
-        <li>Exclusive Perks offered by all of our advertisers.</li>
-        <li>Earn unlimited 2% Cashback and referral commissions on up to $2,500 of every purchase (paid by Perk Miner LLC).</li>
-        <li>Search -> Pay -> Earn Cashback -> Invite -> (Invite others to become members and invite business owners to advertise!) -> Earn Generous Referral Commissions (from purchases and sales).</li>
-        <li><b><u>How We Protect Our Members:</u></b></br>We never share or sell member contact information as a lead!  (Businesses never have access to member contact information without your permission).</li>
-        <li>Connect with businesses through secure messaging <b>(1 Member to 1 Business at a time while protecting your privacy!)</b></li>
-        <li>Members decide who to share contact information with and when, and even then, to just one business at a time.</li>
-        <li>No more unsolicited phone calls, spam emails or uninvited people showing up at your door and you don't have to worry about us tracking your browsing history or sending you ads based on your searches.</li>
-      </ul>
-    </div>
-    <div class="col-12 col-md-6 mb-4">
-      <h3 class="text-center mb-3">Business Perks:</h3>
-      <ul style="list-style:square; padding-left:1.2em; font-size: 1.14em;">
-        <li>Zero wasted advertising dollars!<br/>(No Sale or Closed Deal = Zero Fees; Min 900% ROI (ROAS - Return on Ad Spend) - pay $1 per $10 sold, $250 max)</li>
-        <li>Earn unlimited 1% Cashback on up to $2,500 of every sale (paid by Perk Miner LLC), <u>which is equal to a 10% return of your advertising fee</u> in exchange for offering at least one perk to our members.</br><b>(All transactions must be finalized)</b></li>
-        <li>Earn referral Business Commissions by inviting other businesses to join</br>(Mutual Commissions Payout - Each business earns from each other's sales)</li>
-        <li>Never pay for leads, traffic, appointments, or meet-ups (Only pay for results).</li>
-        <li>Members pay businesses directly for all purchases and sales.  (Perk Miner LLC does not collect payment on behalf of the advertisers)</li>
-        <li><b><u>Real-Time Analytics</u></b>: See Gross Sales, Ad Fee Paid, Net Gross and ROI instantly</li>
-        <li>No hidden fees, monthly subscriptions, contracts, or commitment</li>
-        <li>Live tracking location of service providers (let's business and members know location of the service provider when "on the way" (confirmed address destination by member - no more wasted fuel, miles and time of going to the wrong address) with zero cost to your business</li>
-        <li>No cost to list your business ... ever!</br>It only takes $25 to fund your account (not a fee and remains in your account balance until you make a sale or close a deal) to cover the advertising fees to get started ($25 covers up to $250 in sales).</br><b>Note:  You must maintain enough funds in your account balance at all times to be able to finalize transactions at all times (10% of the sale capped at $250 per transaction - no hidden or additional fees).</b></li>
-      </ul>
-    </div>
-  </div>
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-6 mb-4">
+          <h2 class="h3 text-center mb-3">Member Perks</h2>
+          <ul class="perk-list">
+            <li><b>Free to Join:</b> no hidden fees, contracts or subscriptions.  You only need a valid email to register (payout setup is completed securely through Stripe).</li>
+            <li><b>Exclusive Perks</b> from every advertiser.</li>
+            <li><b>Earn unlimited 2% Cashback and referral commissions</b> on up to $2,500 of every purchase (paid by Perk Miner LLC).</li>
+            <li><b>Search &rarr; Pay &rarr; Earn Cashback &rarr; Invite &rarr</b> other members and business owners &rarr; <b>Earn referral commisions</b> from their purchases and sales.</li>
+            <li><b>Live provider tracking:</b> see your service provider's location when they're "on the way", and correct a wrong destination address.
+          </ul>
+          <h2 class="h3 text-center mb-3">How We Protect You</h2>
+          <ul class="perk-list">
+            <li><b>Member control of personal information:</b> We never share or sell your contact information as a lead.  You decide who gets your details and when, one business at a time.</li>
+            <li><b>Secure messaging:</b>  One member to one business at a time.</li>
+            <li>No unsolicited calls, spam or uninvited visitors, and no ads based on your searches.</li>
+          </ul>
+        </div>
+        <div class="col-12 col-md-6 mb-4">
+          <h2 class="h3 text-center mb-3">Business Perks</h2>
+          <ul class="perk-list">
+            <li><b>Zero wasted ad dollars!</b><br>(No Sale or Closed Deal = $0 in Fees.  Otherwise pay $1 per $10 sold ($250 max), a 1000% Return on Ad Spend or higher.</li>
+            <li><b>Earn unlimited 1% Cashback</b> on up to $2,500 of every finalized sale (paid by Perk Miner LLC), a 10% return of your ad fee, for offering at least one perk to members.</li>
+            <li><b>Earn referral commissions</b> from the businesses you invite (mutual payout: each business earns from the others' sales).</li>
+            <li><b>Customers pay you directly.</b> Perk Miner LLC does not collect payment for advertisers.</li>
+            <li><b>Only pay for results.</b> Never pay for leads, traffic, appointments, or meet-ups.</li>
+            <li><b>Real-Time Analytics:</b> gross sales, ad fees, net and ROI.</li>
+            <li><b>Live tracking</b> of your service providers in the field when they set their status to "on the way", with member confirmed addresses.  No more wasted fuel or time at the wrong address, at no cost to you.</li>
+            <li><b>Free to list, ever,</b> with no subscriptions, contracts, or commitments.  Fund your account with $25 or more (not a fee; it stays in your balance until a sale or close and covers the ad fee.</li>
+            <li><b>Keep enough balance to finalize transactions</b> (10% of the sale, capped at $250 per transaction, with no other fees).</li>
+          </ul>
+        </div>
+      </div>
 
-  <h3 class="text-center mt-2 mb-3">How Money Flows:</h3>
-  <ol style="padding-left:1.2em; max-width:700px; margin:0 auto;">
-    <li>Member searches for a business/product/service</li>
-    <li>Member is connected to one business at a time</li>
-    <li>Member makes a purchase (pays business directly)</li>
-    <li>Business finalizes the transaction &amp; Perk Miner 10% fee (max $250) is deducted from the business account balance</li>
-    <li>Fee is split into Cashback/Referral Commissions and Perk Miner platform revenue<br>
-      <span style="font-size:.97em;color:#888;">(Up to 84% paid out from each sale)</span>
-    </li>
-  </ol>
-  <div class="text-center mt-3 mb-0" style="font-weight:500; font-size:1.1em;">
-    <b>Members earn cashback and referral commissions for making real purchases.</b><br>(Up to 6 members receive up to 56% of the advertising revenue received by Perk Miner LLC from every transaction)</br></br>
-    <b>Advertisers earn cashback and referral commissions for finalizing transactions</b> <i>(for making sales)</i></br>(Up to 6 Businesses receive up to 28% of the advertising revenue received by Perk Miner LLC from every transaction)</br></br>
-    <b>Everyone can earn referral commissions</b> (not for inviting people or businesses), but from real sales (transactions must be finalized).
-  </div>
-</div>
-<!-- END of Perk-Info Section -->
+      <h2 class="h3 text-center mt-2 mb-3">How Money Flows:</h2>
+      <ol class="money-flow">
+        <li>Member searches for a business/product/service</li>
+        <li>Member is connected to one business at a time</li>
+        <li>Member pays for the purchase or for services rendered (paying the business directly)</li>
+        <li>Business finalizes the transaction &amp; Perk Miner 10% fee (max $250) is deducted from the business account balance</li>
+        <li>Fee is split into Cashback/Referral Commissions and Perk Miner platform revenue<br>
+          <span class="money-flow-note">(Up to 84% paid out to members and advertisers from each finalized transaction)</span>
+        </li>
+      </ol>
+      <div class="text-center mt-3 mb-0 money-summary">
+        <b>Members and advertisers earn referral commissions</b> from real purchases and sales (not from invites).
+      </div>
+    </section>
+    <!-- END of Perk-Info Section -->
 
   </main>
 
-<!-- How It Works section with image and overlay button -->
-<div class="how-it-works-section container mt-5 mb-4 px-0" style="position:relative;">
-  <div style="width:100%; max-width:950px; margin:0 auto; position:relative;">
-    <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1774196020/purchase_ntjk5q.jpg?fit=crop&w=1200&q=80"
-         alt="How It Works"
-         style="width:100%; border-radius:20px; object-fit:cover; max-height:340px;">
-    <div class="how-it-works-btn-outer" style="position:absolute; left:0;top:0;right:0;bottom:0; display:flex; align-items:center; justify-content:center; z-index:2;">
-      <div class="how-it-works-btn-inner">
-        <a href="{{ url_for('how_it_works') }}" class="btn btn-primary btn-xl fs-4 shadow-lg px-4 py-2" style="font-weight:600;">
-          <i class="bi bi-info-circle"></i> How It Works
-        </a>
+  <!-- How It Works section with image and overlay button -->
+  <section class="how-it-works-section container mt-5 mb-4 px-0">
+    <div style="width:100%; max-width:950px; margin:0 auto; position:relative;">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1774196020/purchase_ntjk5q.jpg?fit=crop&w=1200&q=80"
+           alt="How Perk Miner works: members purchase from businesses and earn cashback"
+           style="width:100%; border-radius:20px; object-fit:cover; max-height:340px;"
+           loading="lazy" decoding="async">
+      <div class="how-it-works-btn-outer">
+        <div class="how-it-works-btn-inner">
+          <a href="{{ url_for('how_it_works') }}" class="btn btn-primary btn-xl fs-4 shadow-lg px-4 py-2" style="font-weight:600;">
+            <i class="bi bi-info-circle"></i> How It Works
+          </a>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-<div style="font-size:0.2em;color:#FFFFFF;">
-                "The best advertising platform to grow your business.  We've answered the bigges questions: How can I grow my business?  What advertising gives me this highest ROAS - Return on Ad Spend?"
-            </div>
+  </section>
+
   <footer>
     <div>
       <div class="mb-2">
-        <a href="/" style="color:var(--pm-primary);font-weight:600;text-decoration:none;">
-          <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="hero-logo" style="height:54px;">
-        </a> &copy; 2026</br>Not a crypto mining site
+        <a href="/" class="footer-brand">
+          <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="hero-logo" style="height:54px;" loading="lazy" decoding="async">
+        </a> &copy; 2026<br>Not a crypto mining site
       </div>
       <div>
-        <small>Need help? <a href="mailto:fromperkminer@gmail.com" style="color:var(--pm-primary);">Contact Support</a></small>
+        <small>Need help? <a href="mailto:fromperkminer@gmail.com" class="footer-support">Contact Support</a></small>
       </div>
       <div class="mt-1">
-        <a href="https://www.perkminer.com/privacy" target="_blank" style="color:#3dbbee; margin:0 6px;text-decoration:none;">Privacy</a>
-        <a href="https://www.perkminer.com/terms" target="_blank" style="color:#3dbbee; margin:0 6px;text-decoration:none;">Terms</a>
+        <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener" class="footer-legal">Privacy</a>
+        <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener" class="footer-legal">Terms</a>
       </div>
-        <a href="{{ url_for('public_profiles_directory') }}">
-           Browse all Perk Miner Public Profiles
+      <div class="mt-2">
+        <a href="{{ url_for('public_profiles_directory') }}" class="footer-directory">
+          Browse all Perk Miner Public Profiles
         </a>
       </div>
+    </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -1042,7 +1115,7 @@
         const members = data.members ?? 0;
         const advertisers = data.advertisers ?? 0;
 
-        const text = 
+        const text =
           `*** DEMO SITE ONLY!! *** LIVE STATS *** ` +
           `Members:<span class="highlight">${members.toLocaleString()}</span> ` +
           `Businesses:<span class="highlight">${advertisers.toLocaleString()}</span> ` +
