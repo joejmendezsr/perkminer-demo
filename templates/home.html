@@ -162,6 +162,7 @@
 
 <section class="hero">
   <div class="hero-inner">
+    <h1>DEMO SITE ONLY!</h1>
     <h1>Get 2% Real Cash Back<br>on Everyday Purchases</h1>
     <p class="sub">Free to join. Your data stays private.<br>Real cash paid by Perk Miner — not points or coupons.</p>
     <div class="hero-cta mb-2">
@@ -201,9 +202,9 @@
 <div class="marquee-container">
   <div class="marquee">
     <div class="marquee-content" id="live-marquee">
-      <span>WE ARE LIVE</span>
+      <span>DEMO SITE ONLY!</span>
       <span class="highlight">Free to Join — Earn 2% real cash back on purchases</span>
-      <span>WE ARE LIVE</span>
+      <span>DEMO SITE ONLY!</span>
       <span class="highlight">Free to Join — Earn 2% real cash back on purchases</span>
     </div>
   </div>
@@ -487,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const data = await resp.json();
       const members = data.members ?? 0;
       const advertisers = data.advertisers ?? 0;
-      marqueeEl.innerHTML = `WE ARE LIVE · Members: <span class="highlight">${members.toLocaleString()}</span> · Businesses: <span class="highlight">${advertisers.toLocaleString()}</span> · Free to join & earn real cash back`;
+      marqueeEl.innerHTML = `DEMO SITE ONLY! · Members: <span class="highlight">${members.toLocaleString()}</span> · Businesses: <span class="highlight">${advertisers.toLocaleString()}</span> · Free to join & earn real cash back`;
     } catch (e) {}
   }
   updateMarquee();
