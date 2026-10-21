@@ -1,3 +1,4 @@
+{%- from 'partials/_trust_badges.html' import trust_badges, trust_modals -%}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +16,8 @@
   {% endif %}
 
   <meta name="robots" content="noindex, nofollow">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2a5859">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet"
@@ -23,18 +25,49 @@
   <style>
     :root {
         --pm-primary: #2a5859;
+        --pm-primary-light: #2a5859;
         --pm-accent: #ffd66b;
         --pm-bg: #f3f8fa;
         --pm-card: #ffffff;
     }
     body { background: var(--pm-bg); }
 
+    /* ---------- Scroll animation (same behavior as home page) ---------- */
+    .animate-on-scroll {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .animate-on-scroll.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* ---------- Top bar (Back to results) ---------- */
+    .top-bar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: rgba(255,255,255,0.96);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid #e8eef0;
+        box-shadow: 0 2px 12px rgba(30,74,75,0.08);
+        padding: calc(0.5rem + env(safe-area-inset-top)) 0.75rem 0.5rem;
+        /* keeps the button lined up with the card's left edge on wide screens */
+        padding-left: max(0.75rem, calc((100% - 630px) / 2 + 0.75rem));
+        padding-right: 0.75rem;
+        display: flex;
+        justify-content: flex-start;
+    }
+    .top-bar .btn { margin: 0; }
+
     .main-card {
         background: var(--pm-card);
         border-radius: 22px;
         box-shadow: 0 6px 32px #d8eef2;
         padding: 2.2rem 1.7rem 2rem 1.7rem;
-        margin: 2rem auto 2.5rem auto;
+        margin: 1rem auto 2.5rem auto;
         max-width: 630px;
     }
 
@@ -205,16 +238,6 @@
       }
     }
 
-    .section {
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-    .section.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
     @media (max-width: 576px) {
       .listing-btn-row__row .btn,
       .listing-btn-row__row form {
@@ -231,13 +254,138 @@
       .main-card {max-width: 98vw; padding: 1rem 2px; }
       .listing-title {font-size:1.25em; }
     }
+
+    /* ---------- Sticky bottom action bar (mobile only) ---------- */
+    .sticky-actions {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 1px solid #e8eef0;
+        box-shadow: 0 -4px 16px rgba(30,74,75,0.08);
+        padding: 0.45rem 0.25rem calc(0.45rem + env(safe-area-inset-bottom));
+        z-index: 1000;
+    }
+    .sticky-actions form {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        margin: 0;
+    }
+    .sticky-actions .sa-item {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        background: none;
+        border: 0;
+        padding: 0.3rem 0.15rem;
+        font-family: inherit;
+        font-size: 0.72rem;
+        font-weight: 600;
+        line-height: 1.15;
+        text-align: center;
+        text-decoration: none;
+        color: #6b7c82;
+        cursor: pointer;
+    }
+    .sticky-actions .sa-item i { font-size: 1.35rem; }
+    .sticky-actions .sa-item:hover,
+    .sticky-actions .sa-item:active { color: var(--pm-primary); }
+    .sticky-actions .sa-qr i { color: #198754; }
+    .sticky-actions .sa-service i { color: #0d6efd; }
+    .sticky-actions .sa-fav i { color: #0d6efd; }
+    .sticky-actions .sa-fav-remove i { color: #e0a800; }
+    .sticky-actions .sa-reviews i { color: #e0a800; }
+
+    /* Mobile (phones): show sticky bar, hide inline buttons.
+       Tablet and desktop (768px and up): hide sticky bar, show inline buttons. */
+    @media (max-width: 767.98px) {
+      .sticky-actions { display: flex; justify-content: space-around; align-items: stretch; }
+      .desktop-actions { display: none !important; }
+      body { padding-bottom: 84px; }
+    }
+
+    /* Footer */
+    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+    footer a { color: var(--pm-primary-light); text-decoration: none; }
+
+    .trust-badges { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:6px 0 8px; }
+    .trust-badge {
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:.82rem; font-weight:600; line-height:1.3;
+      border:1px solid; border-radius:999px; padding:3px 10px; background:#fff;
+    }
+    .trust-lic  { color:#0b5ed7; border-color:#b6d4fe; background:#eef5ff; }
+    .trust-bond { color:#146c43; border-color:#a3cfbb; background:#edf8f2; }
+    .trust-ins  { color:#8a5a00; border-color:#ffe08a; background:#fff8e1; }
+    button.trust-badge { cursor:pointer; font-family:inherit; }
+    button.trust-badge:hover { text-decoration:underline; filter:brightness(.97); }
   </style>
+  <noscript>
+    <style>
+      .animate-on-scroll { opacity: 1 !important; transform: none !important; }
+    </style>
+  </noscript>
 </head>
 <body>
 
-<div class="container section js-reveal">
+<!-- ===== TOP BAR: Back button (all devices) ===== -->
+<div class="top-bar">
+  {% if request.args.get('from_featured') %}
+    <a href="{{ url_for('home') }}#featured"
+       class="btn btn-secondary btn-action btn-set-top">
+      &larr; Back to featured
+    </a>
+
+  {% elif request.args.get('from_online_featured') %}
+    <a href="{{ url_for('online_marketplace') }}"
+       class="btn btn-secondary btn-action btn-set-top">
+      &larr; Back to featured
+    </a>
+
+  {% elif request.args.get('from_online_marketplace') %}
+    <a href="{{ url_for('online_marketplace_results', q=request.args.get('q', '')) }}"
+       class="btn btn-secondary btn-action btn-set-top">
+      &larr; Back to online marketplace results
+    </a>
+
+  {% elif request.args.get('from_category') %}
+    <a href="{{ url_for('category_browse',
+            name=request.args.get('category', ''),
+            lat=request.args.get('lat', ''),
+            lng=request.args.get('lng', ''),
+            distance=request.args.get('distance', ''),
+            page=request.args.get('page', 1)
+          ) }}"
+       class="btn btn-secondary btn-action btn-set-top">
+      &larr; Back to results
+    </a>
+
+  {% else %}
+    <a href="{{ url_for('search',
+            q=request.args.get('q', ''),
+            category=request.args.get('category', ''),
+            distance=request.args.get('distance', ''),
+            lat=request.args.get('lat', ''),
+            lng=request.args.get('lng', ''),
+            page=request.args.get('page', 1)
+          ) }}"
+       class="btn btn-secondary btn-action btn-set-top">
+      &larr; Back to results
+    </a>
+  {% endif %}
+</div>
+
+<div class="container">
   <div class="main-card">
-    <div class="listing-pic-wrap">
+
+    <div class="listing-pic-wrap animate-on-scroll">
       {% if business.profile_photo %}
         <img src="{{ business.profile_photo }}" alt="Logo" class="large-profile-pic">
       {% else %}
@@ -270,87 +418,58 @@
           (Has enough to finalize ${{ '%.2f' % (business.account_balance * 10) }} in sales)
         {% endif %}
       </span>
+      {{ trust_badges(business, true) }}
     </div>
 
-    <div class="listing-btn-row">
-      <div class="listing-btn-row__row">
-        {% if request.args.get('from_featured') %}
-          <a href="{{ url_for('home') }}#featured"
-             class="btn btn-secondary btn-action btn-set-top">
-            &larr; Back to featured
-          </a>
+    <div class="listing-btn-row animate-on-scroll">
 
-        {% elif request.args.get('from_online_featured') %}
-          <a href="{{ url_for('online_marketplace') }}"
-             class="btn btn-secondary btn-action btn-set-top">
-            &larr; Back to featured
-          </a>
+      <!-- Inline action buttons: shown on tablet/desktop, hidden on mobile (sticky bar is used instead) -->
+      <div class="desktop-actions">
 
-        {% elif request.args.get('from_online_marketplace') %}
-          <a href="{{ url_for('online_marketplace_results', q=request.args.get('q', '')) }}"
-             class="btn btn-secondary btn-action btn-set-top">
-            &larr; Back to online marketplace results
-          </a>
-
-        {% elif request.args.get('from_category') %}
-          <a href="{{ url_for('category_browse',
-                  name=request.args.get('category', ''),
-                  lat=request.args.get('lat', ''),
-                  lng=request.args.get('lng', ''),
-                  distance=request.args.get('distance', ''),
-                  page=request.args.get('page', 1)
-                ) }}"
-             class="btn btn-secondary btn-action btn-set-top">
-            &larr; Back to results
-          </a>
-
-        {% else %}
-          <a href="{{ url_for('search',
-                  q=request.args.get('q', ''),
-                  category=request.args.get('category', ''),
-                  distance=request.args.get('distance', ''),
-                  lat=request.args.get('lat', ''),
-                  lng=request.args.get('lng', ''),
-                  page=request.args.get('page', 1)
-                ) }}"
-             class="btn btn-secondary btn-action btn-set-top">
-            &larr; Back to results
-          </a>
+        {% if current_user.is_authenticated and not request.args.get('from_online_marketplace') and not request.args.get('from_online_featured') %}
+          <div class="listing-btn-row__row">
+            <form action="{{ url_for('add_favorite', business_id=business.id) }}"
+                  method="post"
+                  style="display:inline-block; margin-bottom:0;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              {% if not business in current_user.favorites|map(attribute='business')|list %}
+                <button class="btn btn-outline-primary">
+                  Add to Favorites
+                </button>
+              {% else %}
+                <button formaction="{{ url_for('remove_favorite', business_id=business.id) }}"
+                        class="btn btn-warning">
+                  Remove from Favorites
+                </button>
+              {% endif %}
+            </form>
+          </div>
         {% endif %}
-      </div>
 
-      {% if current_user.is_authenticated and not request.args.get('from_online_marketplace') and not request.args.get('from_online_featured') %}
         <div class="listing-btn-row__row">
-          <form action="{{ url_for('add_favorite', business_id=business.id) }}"
-                method="post"
-                style="display:inline-block; margin-bottom:0;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            {% if not business in current_user.favorites|map(attribute='business')|list %}
-              <button class="btn btn-outline-primary">
-                Add to Favorites
-              </button>
-            {% else %}
-              <button formaction="{{ url_for('remove_favorite', business_id=business.id) }}"
-                      class="btn btn-warning">
-                Remove from Favorites
-              </button>
-            {% endif %}
-          </form>
+          <a href="{{ url_for('start_purchase', biz_id=business.id) }}"
+             class="btn btn-success btn-action btn-set-top me-2 mb-2">
+            Show My QR
+          </a>
+
+          <a href="{{ url_for('service_request', biz_id=business.id) }}"
+             class="btn btn-primary btn-action btn-set-top mb-2">
+            Request Service
+          </a>
         </div>
-      {% endif %}
 
-      <div class="listing-btn-row__row">
-        <a href="{{ url_for('start_purchase', biz_id=business.id) }}"
-           class="btn btn-success btn-action btn-set-top me-2 mb-2">
-          Show My QR
-        </a>
+        {% if business.google_reviews_url %}
+          <div class="listing-btn-row__row">
+            <a href="{{ business.google_reviews_url }}" target="_blank" rel="noopener noreferrer nofollow"
+               class="btn btn-outline-primary btn-action">
+              <span aria-hidden="true">★</span> See Google reviews
+            </a>
+          </div>
+        {% endif %}
 
-        <a href="{{ url_for('service_request', biz_id=business.id) }}"
-           class="btn btn-primary btn-action btn-set-top mb-2">
-          Request Service
-        </a>
       </div>
 
+      <!-- Shop online button (stays visible on all devices) -->
       {% if current_user.is_authenticated %}
         <div class="listing-btn-row__row">
           {% if can_shop_online_listing %}
@@ -367,34 +486,34 @@
       {% endif %}
     </div>
 
-<div class="main-info mt-2 section js-reveal">
-  <div class="main-info-row">
-    <i class="bi bi-signpost-2"></i>
-    <span>
-      <strong>Area served:</strong>
-      {% if area_city or area_state %}
-        {{ area_city }}{% if area_city and area_state %}, {% endif %}{{ area_state }}{% if area_country %} {{ area_country }}{% endif %}
-        {% if business.location_varies %} · Mobile / on-location{% endif %}
-      {% elif business.location_varies %}
-        Mobile / on-location
-      {% else %}
-        Not set
-      {% endif %}
-    </span>
-  </div>
-  <div class="main-info-row">
-    <i class="bi bi-pin-map"></i>
-    <span>
-      <strong>Address:</strong>
-      {% if business.address %}
-        {{ business.address }}
-      {% elif business.location_varies %}
-        No fixed address · mobile / on-location
-      {% else %}
-        -
-      {% endif %}
-    </span>
-  </div>
+    <div class="main-info mt-2 animate-on-scroll">
+      <div class="main-info-row">
+        <i class="bi bi-signpost-2"></i>
+        <span>
+          <strong>Area served:</strong>
+          {% if area_city or area_state %}
+            {{ area_city }}{% if area_city and area_state %}, {% endif %}{{ area_state }}{% if area_country %} {{ area_country }}{% endif %}
+            {% if business.location_varies %} · Mobile / on-location{% endif %}
+          {% elif business.location_varies %}
+            Mobile / on-location
+          {% else %}
+            Not set
+          {% endif %}
+        </span>
+      </div>
+      <div class="main-info-row">
+        <i class="bi bi-pin-map"></i>
+        <span>
+          <strong>Address:</strong>
+          {% if business.address %}
+            {{ business.address }}
+          {% elif business.location_varies %}
+            No fixed address · mobile / on-location
+          {% else %}
+            -
+          {% endif %}
+        </span>
+      </div>
 
       <div class="main-info-row">
         <i class="bi bi-telephone"></i>
@@ -415,7 +534,7 @@
       </div>
     </div>
 
-    <div class="about-block section js-reveal">
+    <div class="about-block animate-on-scroll">
       <strong>About Us:</strong><br>
       {% if business.about_us %}
         <span class="about-text"
@@ -430,17 +549,17 @@
       {% endif %}
     </div>
 
-    <div class="perks-block section js-reveal">
+    <div class="perks-block animate-on-scroll">
       <b>Perks Offered:</b><br>
       {{ business.perks or '—' }}
     </div>
 
-    <div class="hours-block section js-reveal">
+    <div class="hours-block animate-on-scroll">
       <strong>Hours of Operation:</strong><br>
       {{ business.hours_of_operation or '—' }}
     </div>
 
-    <div class="section js-reveal">
+    <div class="animate-on-scroll">
       <div class="service-list-label">Products or Services Offered:</div>
       <ul class="service-list">
         {% set services = [business.service_1, business.service_2, business.service_3,
@@ -459,7 +578,7 @@
       </ul>
     </div>
 
-    <div class="section js-reveal">
+    <div class="animate-on-scroll">
       <strong>Location Map:</strong>
 
       {% set map_lat = business.live_gps_lat if business.location_varies and business.live_gps_lat is not none else business.latitude %}
@@ -468,11 +587,10 @@
       {% if map_lat and map_lng %}
         <div class="map-wrap">
           <iframe
-                width="100%" height="100%" style="border:0"
-                loading="lazy" allowfullscreen
-                referrerpolicy="no-referrer-when-downgrade"
-                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDo-AojTUQUwwvvywrSiDRcF-oVpw9m_w4
-                &q={{ map_lat }},{{ map_lng }}">
+            width="100%" height="100%" style="border:0"
+            loading="lazy" allowfullscreen
+            referrerpolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDo-AojTUQUwwvvywrSiDRcF-oVpw9m_w4&q={{ map_lat }},{{ map_lng }}">
           </iframe>
         </div>
         <div class="mt-2 mb-3">
@@ -489,7 +607,7 @@
     </div>
 
     {% if photos %}
-    <div class="section js-reveal">
+    <div class="animate-on-scroll">
       <div class="text-center mb-2">
         <h4 style="color: var(--pm-primary); font-weight: 700; margin-bottom: 0.25rem;">
           Gallery
@@ -546,9 +664,9 @@
     </div>
     {% endif %}
 
-    <hr class="mt-4 mb-3 section js-reveal">
+    <hr class="mt-4 mb-3 animate-on-scroll">
 
-    <div class="mt-1 text-center section js-reveal" style="font-size: 0.98em; color:#314655;">
+    <div class="mt-1 text-center animate-on-scroll" style="font-size: 0.98em; color:#314655;">
       <strong>Finalized transactions:</strong>
       {% set tx_count = finalized_tx_count or 0 %}
       {% if tx_count == 0 %}
@@ -560,6 +678,49 @@
 
   </div>
 </div>
+
+<footer class="animate-on-scroll">
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
+</footer>
+
+<!-- ===== STICKY BOTTOM ACTION BAR (mobile only) ===== -->
+<nav class="sticky-actions" aria-label="Listing actions">
+  <a href="{{ url_for('start_purchase', biz_id=business.id) }}" class="sa-item sa-qr">
+    <i class="bi bi-qr-code"></i>Show My QR
+  </a>
+
+  <a href="{{ url_for('service_request', biz_id=business.id) }}" class="sa-item sa-service">
+    <i class="bi bi-tools"></i>Request Service
+  </a>
+
+  {% if current_user.is_authenticated and not request.args.get('from_online_marketplace') and not request.args.get('from_online_featured') %}
+    <form action="{{ url_for('add_favorite', business_id=business.id) }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if not business in current_user.favorites|map(attribute='business')|list %}
+        <button type="submit" class="sa-item sa-fav">
+          <i class="bi bi-heart"></i>Add to Favorites
+        </button>
+      {% else %}
+        <button type="submit"
+                formaction="{{ url_for('remove_favorite', business_id=business.id) }}"
+                class="sa-item sa-fav-remove">
+          <i class="bi bi-heart-fill"></i>Remove Favorite
+        </button>
+      {% endif %}
+    </form>
+  {% endif %}
+
+  {% if business.google_reviews_url %}
+    <a href="{{ business.google_reviews_url }}" target="_blank" rel="noopener noreferrer nofollow" class="sa-item sa-reviews">
+      <i class="bi bi-star-fill"></i>Google Reviews
+    </a>
+  {% endif %}
+</nav>
+
+{{ trust_modals(business) }}
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -603,20 +764,26 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const sections = document.querySelectorAll('.js-reveal');
+// Scroll animations (same behavior as home page)
+document.addEventListener('DOMContentLoaded', function () {
+  const items = document.querySelectorAll('.animate-on-scroll');
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.15 });
+  if (!('IntersectionObserver' in window)) {
+    items.forEach(el => el.classList.add('visible'));
+    return;
+  }
 
-    sections.forEach(sec => observer.observe(sec));
-  });
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  items.forEach(el => observer.observe(el));
+});
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

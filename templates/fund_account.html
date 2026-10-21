@@ -54,9 +54,9 @@
         </form>
         <div id="calc-result" class="alert alert-success mt-3 d-none"></div>
         <div class="small mt-2 text-muted">
-            <b>Note:</b> Only $25 is needed to get started (covers up to $250 in sales per transaction).<br>
-            If your lowest sale is over $250, you must deposit enough to cover 10% of the sale amount.<br>
-            <b>For high-value transactions, the ad fee per sale is capped at $250—so you can deposit <u>$1,250 for 5 sales</u> or <u>$2,500 for 10 sales</u>, if you like.</b>
+            <b>Note:</b> Only $25 is needed to get started (covers up to $250 in sales).<br>
+            <br>If your lowest sale is over $250, you must deposit enough funds to cover 10% of the sale amount.<br>
+            <br><b>For high-value transactions, the ad fee per sale is capped at $250 — so you must deposit at least $250 to be able to finalize 1 transaction</u>.</b>
         </div>
     </div>
 
@@ -107,12 +107,12 @@
             let msg = `Recommended deposit for <b>10 average sales</b>: <b>$${recommendation.toFixed(2)}</b><br>`;
             if (perSaleFee === 250) {
                 msg += `<span class="text-danger">Because your average sale is high, the ad fee per transaction is capped at $250.<br>
-                Maximum deposit needed for 10 sales is <b>$2,500</b>.</span><br>`;
+                <br>Minimum deposit recommended is <b>$250</b>.</span><br>`;
             }
             if (lowest > 250) {
-                msg += `<span class="text-danger">Since your lowest sale is above $250, for your first transaction you must deposit at least <b>$${lowestAdFee.toFixed(2)}</b> (10% of $${lowest.toFixed(2)}, capped at $250).</span><br>`;
+                msg += `<span class="text-danger"><br>Since your lowest sale is above $250, for your first transaction you must deposit at least <b>$${lowestAdFee.toFixed(2)}</b> (10% of $${lowest.toFixed(2)}, capped at $250).</span><br>`;
             } else {
-                msg += 'You only need <b>$25</b> to get started (enough for up to $250 in sales per transaction).';
+                msg += 'You only need <b>$25</b> to get started (enough for up to $250 in sales).';
             }
             $result.innerHTML = msg;
             $result.classList.remove("d-none");

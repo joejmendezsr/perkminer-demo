@@ -48,6 +48,11 @@
                 padding-right: 1rem;
             }
         }
+
+    /* Footer */
+    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+    footer a { color: var(--pm-primary-light); text-decoration: none; }
+
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200 min-h-screen">
@@ -231,11 +236,13 @@
         </main>
 
         <!-- Footer -->
-        <footer class="bg-zinc-900 border-t border-zinc-800 py-8 text-center text-xs text-zinc-500">
-            <div class="max-w-screen-xl mx-auto px-6">
-                This page opens in a new window. Use the Close button above or press ESC to return.
-            </div>
-        </footer>
+<footer>
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
+</footer>
+
     </div>
 
     <script>

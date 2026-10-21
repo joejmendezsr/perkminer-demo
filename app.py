@@ -1,6 +1,6 @@
 from flask import (
     Flask, request, redirect, url_for, render_template, flash, session, abort,
-    jsonify, send_from_directory, Response, send_file
+    jsonify, current_app, send_from_directory, Response, send_file
 )
 
 from flask_sqlalchemy import SQLAlchemy
@@ -32,12 +32,16 @@ from itsdangerous import URLSafeSerializer
 from cloudinary.utils import api_sign_request
 import time
 
+from urllib.parse import urlparse
+
 import os
 import stripe
 import logging
 from datetime import datetime, date, timezone
 import json
 from sqlalchemy import or_, and_, func, literal
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from flask_migrate import Migrate
 import re
 import random
@@ -876,18 +880,18 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     if business.account_balance is None or business.account_balance < ad_fee:
         raise Exception("Insufficient funds to complete this transaction. Please fund your account.")
 
-    user_referral_id = interaction.user.referral_code or "REFjoejmendez"
+    user_referral_id = interaction.user.referral_code or "JoeJMendez"
     user_cash_back_raw = amount * 0.02
     user_cash_back = round(min(user_cash_back_raw, 50), 2)
 
     u2 = User.query.filter_by(id=interaction.user.sponsor_id).first()
-    tier2_user_referral_id = u2.referral_code if u2 else "REFmarjoriepint"
+    tier2_user_referral_id = u2.referral_code if u2 else "MarjorieMendez"
     u3 = User.query.filter_by(id=u2.sponsor_id).first() if u2 and u2.sponsor_id else None
-    tier3_user_referral_id = u3.referral_code if u3 else "REFmarjoriepint"
+    tier3_user_referral_id = u3.referral_code if u3 else "MarjorieMendez"
     u4 = User.query.filter_by(id=u3.sponsor_id).first() if u3 and u3.sponsor_id else None
-    tier4_user_referral_id = u4.referral_code if u4 else "REFmarjoriepint"
+    tier4_user_referral_id = u4.referral_code if u4 else "MarjorieMendez"
     u5 = User.query.filter_by(id=u4.sponsor_id).first() if u4 and u4.sponsor_id else None
-    tier5_user_referral_id = u5.referral_code if u5 else "REFjoejmendez"
+    tier5_user_referral_id = u5.referral_code if u5 else "JoeJMendez"
 
     tier2_commission_raw = amount * 0.002
     tier2_commission = round(min(tier2_commission_raw, 5.00), 2)
@@ -1217,16 +1221,16 @@ def get_member_level_code(user: User) -> str | None:
     """
     total = user.grand_total_earnings or Decimal('0')
 
-    if total >= Decimal('100000'):
-        return 'member_100k'
-    elif total >= Decimal('50000'):
-        return 'member_50k'
-    elif total >= Decimal('10000'):
+    if total >= Decimal('10000'):
         return 'member_10k'
+    elif total >= Decimal('5000'):
+        return 'member_5k'
+    elif total >= Decimal('1000'):
+        return 'member_1k'
     else:
         return None
 
-ALLOWED_MEMBER_LEVELS = ['member_10k', 'member_50k', 'member_100k']
+ALLOWED_MEMBER_LEVELS = ['member_1k', 'member_5k', 'member_10k']
 ALLOWED_BUSINESS_LEVELS = ['biz_25k', 'biz_100k', 'biz_250k', 'biz_founding_5']
 
 def get_business_level_code(biz: Business) -> str | None:
@@ -1513,9 +1517,78 @@ class Business(db.Model):
     is_founding_business = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now(), nullable=False)
+    google_reviews_url = db.Column(db.String(500), nullable=True)
     promo_code_used = db.Column(db.String(50), nullable=True)
     promo_redeemed_at = db.Column(db.DateTime, nullable=True)
+    licensed = db.Column(db.Boolean, nullable=False, default=False)
+    license_number = db.Column(db.String(60))
+    license_state = db.Column(db.String(2))
+    lic_verified = db.Column(db.Boolean, nullable=False, default=False)
+    bonded = db.Column(db.Boolean, nullable=False, default=False)
+    bond_amount = db.Column(db.Integer)
+    bond_number = db.Column(db.String(60))
+    bond_verified = db.Column(db.Boolean, nullable=False, default=False)
+    insured = db.Column(db.Boolean, nullable=False, default=False)
+    ins_amount = db.Column(db.Integer)
+    ins_number = db.Column(db.String(60))
+    ins_verified = db.Column(db.Boolean, nullable=False, default=False)
+    draft_licensed = db.Column(db.Boolean)
+    draft_license_number = db.Column(db.String(60))
+    draft_license_state = db.Column(db.String(2))
+    draft_bonded = db.Column(db.Boolean)
+    draft_bond_amount = db.Column(db.Integer)
+    draft_bond_number = db.Column(db.String(60))
+    draft_insured = db.Column(db.Boolean)
+    draft_ins_amount = db.Column(db.Integer)
+    draft_ins_number = db.Column(db.String(60))
+    bond_company = db.Column(db.String(100))
+    ins_company = db.Column(db.String(100))
+    draft_bond_company = db.Column(db.String(100))
+    draft_ins_company = db.Column(db.String(100))
     theme_type = db.Column(db.String(50))
+    # ---- trust-badge helpers ----
+    def eff(self, field):
+        """Pending draft value if there is one, otherwise the live value."""
+        d = getattr(self, f"draft_{field}", None)
+        return getattr(self, field) if d is None else d
+
+    def group_changed(self, group):
+        """True if a pending draft differs from the live values for 'lic', 'bond' or 'ins'."""
+        for f in TRUST_GROUPS[group]:
+            d = getattr(self, f"draft_{f}", None)
+            if d is not None and (d or None) != (getattr(self, f) or None):
+                return True
+        return False
+
+    @property
+    def trust_changes_pending(self):
+        return any(self.group_changed(g) for g in TRUST_GROUPS)
+
+    @property
+    def is_service_type(self):
+        return (self.listing_type or "") in SERVICE_LISTING_TYPES
+
+    @property
+    def badge_licensed(self):
+        return bool(self.licensed and self.license_number and self.license_state and self.lic_verified)
+
+    @property
+    def badge_bonded(self):
+        return bool(self.is_service_type and self.bonded and self.bond_amount
+                    and self.bond_company and self.bond_number and self.bond_verified)
+
+    @property
+    def badge_insured(self):
+        return bool(self.is_service_type and self.insured and self.ins_amount
+                    and self.ins_company and self.ins_number and self.ins_verified)
+
+class ReferralCodeHistory(db.Model):
+    __tablename__ = "referral_code_history"
+    id = db.Column(db.Integer, primary_key=True)
+    owner_type = db.Column(db.String(10), nullable=False)   # 'user' or 'business'
+    owner_id = db.Column(db.Integer, nullable=False)
+    old_code = db.Column(db.String(50), nullable=False)
+    changed_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Favorite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1595,8 +1668,8 @@ def upload_testimonial():
     if highest_level is None:
         return jsonify({'error': 'You are not yet eligible to upload a testimonial video.'}), 403
 
-    # simple ordering: member_100k > member_50k > member_10k
-    level_order = {'member_10k': 1, 'member_50k': 2, 'member_100k': 3}
+    # simple ordering: member_10k > member_5k > member_1k
+    level_order = {'member_1k': 1, 'member_5k': 2, 'member_10k': 3}
     if level_code not in level_order:
         return jsonify({'error': 'You are not yet eligible for this level.'}), 403
     if level_order[level_code] > level_order[highest_level]:
@@ -1936,7 +2009,7 @@ def member_upload_params():
     if highest_level is None:
         return jsonify({'error': 'You are not yet eligible to upload a testimonial video.'}), 403
 
-    level_order = {'member_10k': 1, 'member_50k': 2, 'member_100k': 3}
+    level_order = {'member_1k': 1, 'member_5k': 2, 'member_10k': 3}
     if level_order[level_code] > level_order[highest_level]:
         return jsonify({'error': 'You are not yet eligible for this level.'}), 403
 
@@ -2485,6 +2558,35 @@ def get_finalized_tx_count_for_business(business: Business) -> int:
     )
     return count or 0
 
+def get_admin_pending_counts():
+    """Pending-item counts for the admin landing page buttons."""
+    counts = {}
+
+    if current_user.has_role("approve_reject_listings"):
+        counts["listings"] = Business.query.filter(
+            Business.status.in_(["pending", "in_review"])
+        ).count()
+
+    if current_user.has_role("approve_reject_testimonials"):
+        counts["testimonials"] = TestimonialVideo.query.filter_by(
+            status="pending"          # <-- change if your testimonials route uses a different status
+        ).count()
+
+    if current_user.has_role("customer_support"):
+        counts["support"] = Interaction.query.filter_by(
+            service_type="Support", status="active"
+        ).count()
+
+    if current_user.has_role("ecommerce"):
+        counts["ecommerce"] = Business.query.filter(
+            Business.is_ecommerce_site.is_(True),
+            Business.allow_website_purchases.is_(True),
+            Business.online_terms_agreed.is_(True),
+            Business.ecommerce_verified.is_(False)
+        ).count()
+
+    return counts
+
 def staff_login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -2673,6 +2775,31 @@ def area_served_ld(city, state, country):
         area["address"]["addressCountry"] = country
     return area
 
+GOOGLE_REVIEW_HOSTS = {
+    "g.page", "maps.app.goo.gl",
+    "google.com", "maps.google.com", "search.google.com",
+}
+
+def valid_google_reviews_url(url):
+    """Only https links on Google domains, so the field can't be used for arbitrary links."""
+    if not url or len(url) > 500:
+        return False
+    try:
+        p = urlparse(url)
+        host = (p.hostname or "").lower()
+    except ValueError:
+        return False
+    if p.scheme != "https" or not host:
+        return False
+    if host.startswith("www."):
+        host = host[4:]
+    if host not in GOOGLE_REVIEW_HOSTS:
+        return False
+    # google.com has redirect paths that can point anywhere; block them
+    if p.path.startswith(("/url", "/amp")):
+        return False
+    return True
+
 def get_featured_businesses(lat, lng):
     RADIUS = 10  # miles
     N_FEATURED = 10
@@ -2761,6 +2888,111 @@ def get_featured_businesses(lat, lng):
 
     # ensure max 10
     return featured[:N_FEATURED]
+
+# ---- trust badges: licensed / bonded / insured ----
+SERVICE_LISTING_TYPES = {"Service Provider", "Seller and Service Provider"}
+
+TRUST_BOOL = ["licensed", "bonded", "insured"]
+TRUST_STR = ["license_number", "license_state", "bond_company", "bond_number", "ins_company", "ins_number"]
+TRUST_INT = ["bond_amount", "ins_amount"]
+TRUST_FIELDS = TRUST_BOOL + TRUST_STR + TRUST_INT
+
+TRUST_GROUPS = {
+    "lic":  ["licensed", "license_number", "license_state"],
+    "bond": ["bonded", "bond_amount", "bond_company", "bond_number"],
+    "ins":  ["insured", "ins_amount", "ins_company", "ins_number"],
+}
+TRUST_VERIFIED_FIELD = {"lic": "lic_verified", "bond": "bond_verified", "ins": "ins_verified"}
+
+BOND_AMOUNT_LABELS = {
+    5000: "$5,000", 10000: "$10,000", 15000: "$15,000", 25000: "$25,000",
+    50000: "$50,000", 100000: "$100,000", 250000: "$250,000", 500000: "$500,000+",
+}
+INS_AMOUNT_LABELS = {
+    100000: "$100,000", 300000: "$300,000", 500000: "$500,000",
+    1000000: "$1,000,000", 2000000: "$2,000,000", 5000000: "$5,000,000+",
+}
+US_STATES = [
+    "AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN","IA","KS","KY",
+    "LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH",
+    "OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY",
+]
+TRUST_NUMBER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 \-./#]{1,58}$")
+
+# make these available in every template
+app.jinja_env.globals.update(
+    BOND_AMOUNT_LABELS=BOND_AMOUNT_LABELS,
+    INS_AMOUNT_LABELS=INS_AMOUNT_LABELS,
+    US_STATES=US_STATES,
+    SERVICE_LISTING_TYPES=list(SERVICE_LISTING_TYPES),
+)
+
+
+def _to_int(x):
+    try:
+        return int(x)
+    except (TypeError, ValueError):
+        return 0
+
+
+def parse_trust_form(form, listing_type):
+    """Returns (values, error). Cleared values are False / '' / 0."""
+    is_service = (listing_type or "") in SERVICE_LISTING_TYPES
+    v = {f: ("" if f in TRUST_STR else 0 if f in TRUST_INT else False) for f in TRUST_FIELDS}
+
+    if form.get("licensed") == "1":
+        number = (form.get("license_number") or "").strip()
+        state = (form.get("license_state") or "").strip().upper()
+        if not TRUST_NUMBER_RE.match(number) or state not in US_STATES:
+            return None, "Please enter your license number and select the state that issued it."
+        v.update(licensed=True, license_number=number, license_state=state)
+
+    if is_service and form.get("bonded") == "1":
+        company = (form.get("bond_company") or "").strip()
+        number = (form.get("bond_number") or "").strip()
+        amount = _to_int(form.get("bond_amount"))
+        if not (2 <= len(company) <= 100) or not TRUST_NUMBER_RE.match(number) or amount not in BOND_AMOUNT_LABELS:
+            return None, "Please enter your bonding company, select your bond amount and enter your bond number."
+        v.update(bonded=True, bond_company=company, bond_number=number, bond_amount=amount)
+
+    if is_service and form.get("insured") == "1":
+        company = (form.get("ins_company") or "").strip()
+        number = (form.get("ins_number") or "").strip()
+        amount = _to_int(form.get("ins_amount"))
+        if not (2 <= len(company) <= 100) or not TRUST_NUMBER_RE.match(number) or amount not in INS_AMOUNT_LABELS:
+            return None, "Please enter your insurance company, select your coverage amount and enter your policy number."
+        v.update(insured=True, ins_company=company, ins_number=number, ins_amount=amount)
+
+    return v, None
+
+def apply_trust_fields(biz, vals):
+    """Approved listing: save into drafts (admin re-verifies when the listing is resubmitted).
+    Any other status: save live, and clear the verified flag of any group that changed.
+    Returns True if anything changed."""
+    changed = False
+
+    if biz.status == "approved":
+        for f, val in vals.items():
+            if getattr(biz, f"draft_{f}") != val:
+                setattr(biz, f"draft_{f}", val)
+                changed = True
+        return changed
+
+    for g, fields in TRUST_GROUPS.items():
+        before = [getattr(biz, f) or None for f in fields]
+        for f in fields:
+            new = bool(vals[f]) if f in TRUST_BOOL else (vals[f] or None)
+            if (getattr(biz, f) or None) != (new or None):
+                setattr(biz, f, new)
+                changed = True
+        after = [getattr(biz, f) or None for f in fields]
+        if after != before:
+            setattr(biz, TRUST_VERIFIED_FIELD[g], False)
+    return changed
+
+
+
+
 
 def add_monthly_investor_earnings(user, year, month, investment_amount, rate):
     # Calculate this month’s earnings
@@ -2860,6 +3092,108 @@ def biz_tier_commission(t, tier_field, ref_field):
     if ref_id and str(ref_id).strip() and ref_id != "BIZPerkMiner":
         return getattr(t, tier_field) or 0
     return 0
+
+# ---- referral code settings ----
+REFERRAL_CODE_RE = re.compile(r"^[A-Za-z0-9\-]{4,32}$")   # DB column is String(32)
+RESERVED_REFERRAL_CODES = {
+    "perkminer", "admin", "support", "staff", "official", "help",
+    "foundingbiz500", "foundingbiz100", "perk-miner", "fromperkminer",
+    "from-perkminer", "from-perk-miner", "perkmineradmin", "official-perkminer",
+}
+REFERRAL_LOCK_KEY = 482012  # fixed number, serializes code changes
+
+
+# ---- helpers ----
+def referral_code_available(code, owner_type=None, owner_id=None):
+    """True if no member, business, or retired code (belonging to someone else) uses it."""
+    lowered = code.lower()
+
+    users = User.query.filter(db.func.lower(User.referral_code) == lowered)
+    if owner_type == "user":
+        users = users.filter(User.id != owner_id)
+
+    bizs = Business.query.filter(db.func.lower(Business.referral_code) == lowered)
+    if owner_type == "business":
+        bizs = bizs.filter(Business.id != owner_id)
+
+    hist = ReferralCodeHistory.query.filter(db.func.lower(ReferralCodeHistory.old_code) == lowered)
+    if owner_type:
+        hist = hist.filter(
+            db.not_(db.and_(ReferralCodeHistory.owner_type == owner_type,
+                            ReferralCodeHistory.owner_id == owner_id))
+        )
+
+    return not (users.first() or bizs.first() or hist.first())
+
+
+def make_unique_referral_code(base_code):
+    """Takes an auto-generated code; adds 3 random digits only if it collides
+    with any current or retired code."""
+    code = base_code
+    for _ in range(20):
+        if referral_code_available(code):
+            return code
+        suffix = "".join(secrets.choice(string.digits) for _ in range(3))
+        code = base_code[:29] + suffix
+    raise RuntimeError("Could not generate a unique referral code")
+
+
+def resolve_referral_code(code, include_businesses=False):
+    """Finds who owns a referral code. Returns ("user", User), ("business", Business),
+    or (None, None). Order: current codes (exact, then case-insensitive), then retired codes."""
+    code = (code or "").strip()
+    if not code:
+        return None, None
+
+    models = [("business", Business), ("user", User)] if include_businesses else [("user", User)]
+
+    # 1) current codes, exact match
+    for kind, model in models:
+        owner = model.query.filter_by(referral_code=code).first()
+        if owner:
+            return kind, owner
+
+    # 2) current codes, ignoring case
+    for kind, model in models:
+        owner = model.query.filter(db.func.lower(model.referral_code) == code.lower()).first()
+        if owner:
+            return kind, owner
+
+    # 3) retired codes, so old links keep crediting the right sponsor
+    for kind, model in models:
+        old = (ReferralCodeHistory.query
+               .filter(ReferralCodeHistory.owner_type == kind,
+                       db.func.lower(ReferralCodeHistory.old_code) == code.lower())
+               .order_by(ReferralCodeHistory.changed_at.desc())
+               .first())
+        if old:
+            owner = model.query.get(old.owner_id)
+            if owner:
+                return kind, owner
+
+    return None, None
+
+def apply_referral_code_change(owner_type, owner, raw_code):
+    """Validates and applies the change (does NOT commit). Returns (ok, message)."""
+    new_code = (raw_code or "").strip()   # case is preserved as typed
+
+    if not REFERRAL_CODE_RE.match(new_code):
+        return False, "Referral codes must be 4-32 characters: letters, numbers, and dashes only."
+    if new_code.lower() in RESERVED_REFERRAL_CODES:
+        return False, "That referral code is not available. Please try another."
+    if (owner.referral_code or "") == new_code:
+        return False, "That is already your referral code."
+    if new_code.startswith(("REF", "BIZ")):
+        return False, "Custom referral codes can't start with REF or BIZ. Please try another."
+    if not referral_code_available(new_code, owner_type, owner.id):
+        return False, "That referral code is already taken. Please try another."
+
+    if owner.referral_code:
+        db.session.add(ReferralCodeHistory(
+            owner_type=owner_type, owner_id=owner.id, old_code=owner.referral_code
+        ))
+    owner.referral_code = new_code
+    return True, f"Your referral code has been changed to {new_code}."
 
 # Add others (interaction, message, etc.) as needed here
 
@@ -4191,14 +4525,14 @@ def register():
             return redirect(url_for("register"))
         sponsor_id = None
         if referral_code:
-            sponsor = User.query.filter_by(referral_code=referral_code).first()
+            kind, sponsor = resolve_referral_code(referral_code)
             if sponsor:
                 sponsor_id = sponsor.id
             else:
                 flash("Invalid referral code.")
                 return redirect(url_for("register"))
         hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
-        user_ref_code = random_referral_code(email)
+        user_ref_code = make_unique_referral_code(random_referral_code(email))
         email_code = random_email_code()
         new_user = User(
             email=email,
@@ -4700,6 +5034,8 @@ def dashboard():
 
     stripe_status = get_stripe_payout_status(current_user)
 
+    admin_pending_total = sum(get_admin_pending_counts().values())
+
     return render_template(
         "dashboard.html",
         form=form,
@@ -4741,6 +5077,7 @@ def dashboard():
         share_url=share_url,
         business_share_url=business_share_url,
         stripe_status=stripe_status,
+        admin_pending_total=admin_pending_total,
         member_level_code=member_level_code,
         member_testimonials=member_testimonials,
     )
@@ -5824,6 +6161,54 @@ def export_business_receipts_csv():
         headers={"Content-Disposition": f"attachment;filename=business_receipts_{business.referral_code}.csv"}
     )
 
+@app.route("/business/invoice/<int:interaction_id>")
+@business_login_required
+def show_business_receipt(interaction_id):
+    biz_id = session.get('business_id')
+    business = Business.query.get_or_404(biz_id)
+
+    # Same filter as the invoice list, so a business can only open its own invoices
+    transaction = (
+        BusinessTransaction.query
+        .filter_by(
+            interaction_id=interaction_id,
+            business_referral_id=business.referral_code
+        )
+        .filter(
+            (BusinessTransaction.sponsoree_mutual_referral_id == None) |
+            (BusinessTransaction.sponsoree_mutual_referral_id == "")
+        )
+        .order_by(BusinessTransaction.date_time.desc())
+        .first_or_404()
+    )
+
+    # date/time to display: local time if saved, otherwise UTC
+    if transaction.local_date_time:
+        display_datetime = transaction.local_date_time
+    else:
+        display_datetime = transaction.date_time.strftime('%Y-%m-%d %I:%M %p UTC')
+
+    # same math as the invoice list and CSV export
+    sale_amount = transaction.amount or 0
+    ad_fee = transaction.ad_fee or 0
+    net_gross = sale_amount - ad_fee
+    roi = (net_gross / ad_fee) * 100 if ad_fee else 0
+    ratio = (net_gross + ad_fee) / ad_fee if ad_fee else 0
+    cash_back = transaction.cash_back or 0
+
+    return render_template(
+        "business_receipt_single.html",
+        business=business,
+        transaction=transaction,
+        display_datetime=display_datetime,
+        sale_amount=sale_amount,
+        ad_fee=ad_fee,
+        net_gross=net_gross,
+        roi=roi,
+        ratio=ratio,
+        cash_back=cash_back
+    )
+
 @app.route("/business/earnings", methods=["GET"])
 @business_login_required
 def business_earnings():
@@ -6080,18 +6465,16 @@ def business_register():
         sponsor_id = None
         user_sponsor_id = None
         if referral_code:
-            sponsor = Business.query.filter_by(referral_code=referral_code).first()
-            if sponsor:
-                sponsor_id = sponsor.id
+            kind, owner = resolve_referral_code(referral_code, include_businesses=True)
+            if kind == "business":
+                sponsor_id = owner.id
+            elif kind == "user":
+                user_sponsor_id = owner.id
             else:
-                user_sponsor = User.query.filter_by(referral_code=referral_code).first()
-                if user_sponsor:
-                    user_sponsor_id = user_sponsor.id
-                else:
-                    flash("Invalid referral code.")
-                    return redirect(url_for("business_register"))
+                flash("Invalid referral code.")
+                return redirect(url_for("business_register"))
         hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
-        biz_ref_code = random_business_code(business_name)
+        biz_ref_code = make_unique_referral_code(random_business_code(business_name))
         email_code = random_email_code()
         new_biz = Business(
             business_name=business_name,
@@ -6634,6 +7017,29 @@ def business_dashboard():
             biz.store_slug = slug
             updated = True
 
+        # --- Google reviews link: live field (no re-submission), editable but not removable ---
+        if "google_reviews_url" in request.form:
+            new_url = (request.form.get("google_reviews_url") or "").strip()
+            current_url = biz.google_reviews_url or ""
+            if new_url != current_url:
+                if not new_url:
+                    flash("Your Google reviews link can be updated, but it can't be removed once added.", "danger")
+                    return redirect(url_for("business_dashboard"))
+                if not valid_google_reviews_url(new_url):
+                    flash("Please enter a valid Google reviews link (use the share link from your Google Business Profile).", "danger")
+                    return redirect(url_for("business_dashboard"))
+                biz.google_reviews_url = new_url
+                updated = True
+
+        # --- Trust fields (licensed / bonded / insured) ---
+        if request.form.get("trust_form") == "1":
+            trust_vals, trust_err = parse_trust_form(request.form, request.form.get("listing_type"))
+            if trust_err:
+                flash(trust_err, "danger")
+                return redirect(url_for("business_dashboard"))
+            if apply_trust_fields(biz, trust_vals):
+                updated = True
+
         if updated:
             db.session.commit()
             flash("Business profile updated!")
@@ -6820,7 +7226,11 @@ def business_logout():
 @app.route('/admin/roles-landing')
 @admin_required  # or @role_required('super_admin')
 def admin_roles_landing():
-    return render_template('admin_roles_landing.html')  # create this template if needed
+    pending_counts = get_admin_pending_counts()
+    return render_template(
+        'admin_roles_landing.html',
+        pending_counts=pending_counts
+    )
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
@@ -7526,6 +7936,24 @@ def approve_listing(listing_id):
             if draft_value not in [None, ""]:
                 setattr(biz, field, draft_value)
                 setattr(biz, draft_attr, None)
+
+        # ---- NEW: trust fields ----
+        # 1) promote drafts (a cleared draft becomes an empty live value)
+        for f in TRUST_FIELDS:
+            d = getattr(biz, f"draft_{f}")
+            if d is not None:
+                setattr(biz, f, bool(d) if f in TRUST_BOOL else (d or None))
+                setattr(biz, f"draft_{f}", None)
+
+        # 2) admin verification checkboxes (only possible when the details exist)
+        service = (biz.listing_type or "") in SERVICE_LISTING_TYPES
+        biz.lic_verified = bool(request.form.get("lic_verified")) and bool(
+            biz.licensed and biz.license_number and biz.license_state)
+        biz.bond_verified = bool(request.form.get("bond_verified")) and service and bool(
+            biz.bonded and biz.bond_amount and biz.bond_company and biz.bond_number)
+        biz.ins_verified = bool(request.form.get("ins_verified")) and service and bool(
+            biz.insured and biz.ins_amount and biz.ins_company and biz.ins_number)
+        # ---- end NEW ----
 
         # Status update
         biz.status = "approved"
@@ -9111,81 +9539,6 @@ def finalized_report():
     logs = FinalizedTransaction.query.filter_by(business_id=biz_id).order_by(FinalizedTransaction.timestamp.desc()).all()
     staff_lookup = {s.id: s for s in Staff.query.filter_by(business_id=biz_id)}
     return render_template("finalized_report.html", logs=logs, staff_lookup=staff_lookup)
-
-@app.route("/seed_admins_once")
-def seed_admins_once():
-    from app import db, User, Role, bcrypt
-    response = []
-
-    # Roles to create
-    role_names = [
-        "approve_reject_listings",
-        "finance",
-        "feedback_moderation",
-        "approve_reject_testimonials",
-        "customer_support"
-    ]
-    roles = {}
-    for name in role_names:
-        role = Role.query.filter_by(name=name).first()
-        if not role:
-            role = Role(name=name)
-            db.session.add(role)
-            response.append(f"Added role: {name}")
-        roles[name] = role
-    db.session.commit()
-
-    # Create demo admin users if needed
-    admins = [
-        {
-            "email": "admin1@perkminer.com",
-            "password": "49pi25yt!@3#",
-            "role_names": [
-                "approve_reject_listings", "finance", "feedback_moderation", "customer_support"
-            ]
-        },
-        {
-            "email": "finance1@perkminer.com",
-            "password": "84kf68oe^2&%",
-            "role_names": ["finance"]
-        }
-    ]
-    for admin in admins:
-        user = User.query.filter_by(email=admin["email"]).first()
-        if not user:
-            hashed_pw = bcrypt.generate_password_hash(admin["password"]).decode("utf-8")
-            user = User(
-                email=admin["email"],
-                password=hashed_pw,
-                email_confirmed=True
-            )
-            db.session.add(user)
-            db.session.commit()
-            response.append(f"Created user: {admin['email']}")
-        # Assign roles
-        for role_name in admin["role_names"]:
-            role = Role.query.filter_by(name=role_name).first()
-            if role and role not in user.roles:
-                user.roles.append(role)
-                response.append(f"Granted {role_name} to {admin['email']}")
-        db.session.commit()
-
-    # Assign roles to your own account if needed
-    target_email = "joejmendez@gmail.com"
-    target_roles = ["finance"]  # Change or add as needed
-    user = User.query.filter_by(email=target_email).first()
-    if user:
-        for role_name in target_roles:
-            role = Role.query.filter_by(name=role_name).first()
-            if role and role not in user.roles:
-                user.roles.append(role)
-                response.append(f"Granted {role_name} to {target_email}")
-        db.session.commit()
-    else:
-        response.append(f"User {target_email} not found; cannot assign roles.")
-
-    response.append("Seeding complete!")
-    return "<br>".join(response)
 
 @app.route("/how-it-works")
 def how_it_works():
@@ -10815,7 +11168,7 @@ def user_onboarding():
     )
 
 @app.route("/business/onboarding")
-@login_required
+@business_login_required
 def business_onboarding():
     biz_id = session.get("business_id")
     biz = Business.query.get_or_404(biz_id)
@@ -11227,8 +11580,8 @@ _sitemap_cache = {"xml": None, "built": 0.0}
 STATIC_SITEMAP_PATHS = [
     "/", "/about", "/how-it-works", "/intro", "/faq", "/news",
     "/press-release", "/new-featured-businesses", "/business",
-    "/register", "/business/register", "/testimonials", 
-    "/public_profiles", "/privacy", "/terms"
+    "/register", "/business/register", "/testimonials", "/earn_more_than_sponsor",
+    "/public_profiles", "/privacy", "/full_payout_sample", "/how_much_can_i_earn", "/terms"
 ]
 
 
@@ -11531,7 +11884,6 @@ def any_promo_available():
         for p in PROMO_CODES.values()
     )
 
-
 @app.route("/business/redeem_promo", methods=["POST"])
 def business_redeem_promo():
     biz_id = session.get("business_id")
@@ -11580,6 +11932,76 @@ def business_redeem_promo():
         "success",
     )
     return redirect(url_for("business_dashboard"))
+
+# ---- change-code routes ----
+@app.route("/business/change_referral_code", methods=["POST"])
+def business_change_referral_code():
+    biz_id = session.get("business_id")
+    if not biz_id:
+        flash("Please log in to change your referral code.")
+        return redirect(url_for("business_login"))
+
+    # one change at a time, so two people can't grab the same code
+    db.session.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": REFERRAL_LOCK_KEY})
+    biz = Business.query.filter_by(id=biz_id).with_for_update().first()
+    if not biz or not biz.email_confirmed:
+        db.session.rollback()
+        flash("Please log in and confirm your business email to access the dashboard.")
+        return redirect(url_for("business_login"))
+
+    ok, msg = apply_referral_code_change("business", biz, request.form.get("referral_code"))
+    if ok:
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            msg = "That referral code is already taken. Please try another."
+    else:
+        db.session.rollback()
+
+    flash(msg)
+    return redirect(url_for("business_dashboard"))
+
+@app.route("/member/change_referral_code", methods=["POST"])
+@login_required
+def member_change_referral_code():
+    db.session.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": REFERRAL_LOCK_KEY})
+    user = User.query.filter_by(id=current_user.id).with_for_update().first()
+    if not user:
+        db.session.rollback()
+        return redirect(url_for("dashboard"))
+
+    ok, msg = apply_referral_code_change("user", user, request.form.get("referral_code"))
+    if ok:
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            msg = "That referral code is already taken. Please try another."
+    else:
+        db.session.rollback()
+
+    flash(msg)
+    return redirect(url_for("dashboard"))
+
+@app.route("/llms.txt")
+def llms_txt():
+    return send_from_directory(
+        current_app.static_folder, "llms.txt",
+        mimetype="text/plain"
+    )
+
+@app.route("/full_payout_sample")
+def full_payout_sample():
+    return render_template("full_payout_sample.html")
+
+@app.route("/earn_more_than_sponsor")
+def earn_more_than_sponsor():
+    return render_template("earn_more_than_sponsor.html")
+
+@app.route("/how_much_can_i_earn")
+def how_much_can_i_earn():
+    return render_template("how_much_can_i_earn.html")
 
 @app.errorhandler(500)
 def internal_server_error(error):

@@ -1,0 +1,390 @@
+{# ---------------------------------------------------------------
+   Sample payout page. Every dollar figure below is stored in CENTS
+   and the totals are calculated here, so the page can never disagree
+   with itself. To change the example, edit the data in this block.
+   --------------------------------------------------------------- #}
+{% set purchase = 10000 %}
+{% set fee = 1000 %}
+
+{% set member_tree = [
+  {"name": "James", "tier": "Tier 1 Member - 2% Commission"},
+  {"name": "Ana",   "tier": "Tier 2 Member - 0.2% Commision", "by": "James"},
+  {"name": "Bob",   "tier": "Tier 3 Member - 0.2% Commision", "by": "Ana"},
+  {"name": "Jill",  "tier": "Tier 4 Member - 0.2% Commision", "by": "Bob"},
+  {"name": "Alex",  "tier": "Tier 5 Member - 2% Cash Back", "by": "Jill", "tag": "Makes the $100 purchase"}
+] %}
+
+{% set m2b_tree = [
+  {"name": "Bob's Grocer",     "tier": "Tier 1 Business", "by": "James"},
+  {"name": "Phil's Hardware",  "tier": "Tier 2 Business", "by": "Bob's Grocer"},
+  {"name": "Jan's Jellybeans", "tier": "Tier 3 Business", "by": "Phil's Hardware"},
+  {"name": "Alex's Auto",      "tier": "Tier 4 Business", "by": "Jan's Jellybeans"},
+  {"name": "Sally's Salon",    "tier": "Tier 5 Business - 1% Commission", "by": "Alex's Auto", "tag": "Makes the $100 sale"}
+] %}
+
+{% set b2b_tree = [
+  {"name": "Bob's Grocer",     "tier": "Tier 1 Business - 1% Commission", "by": "James"},
+  {"name": "Phil's Hardware",  "tier": "Tier 2 Business - 0.2% Commission", "by": "Bob's Grocer"},
+  {"name": "Jan's Jellybeans", "tier": "Tier 3 Business - 0.2% Commission", "by": "Phil's Hardware"},
+  {"name": "Alex's Auto",      "tier": "Tier 4 Business - 0.2% Commission", "by": "Jan's Jellybeans"},
+  {"name": "Sally's Salon",    "tier": "Tier 5 Business - 1% Cash Back", "by": "Alex's Auto", "tag": "Makes the $100 sale"},
+  {"name": "Dave's Donuts",    "tier": "Tier 6 Business - 0.2% Mutual Commission", "by": "Sally's Salon", "outside": true,
+   "tag": "Outside the tree, still earns a mutual commission"}
+] %}
+
+{% set member_payouts = [
+  {"name": "James", "role": "Tier 1 Member - Commission", "lines": [
+      {"label": "Member to Member - 2% Commission", "cents": 200},
+      {"label": "Member to Business - 1% Commission", "cents": 100}]},
+  {"name": "Ana",   "role": "Tier 2 Member", "lines": [{"label": "Member to Member 0.2% Commission", "cents": 20}]},
+  {"name": "Bob",   "role": "Tier 3 Member", "lines": [{"label": "Member to Member 0.2% Commission", "cents": 20}]},
+  {"name": "Jill",  "role": "Tier 4 Member", "lines": [{"label": "Member to Member 0.2% Commission", "cents": 20}]},
+  {"name": "Alex",  "role": "Tier 5 Member", "lines": [{"label": "2% Cash back as the purchaser", "cents": 200}]}
+] %}
+
+{% set business_payouts = [
+  {"name": "Bob's Grocer",     "role": "Tier 1 Business - 1% Commission", "lines": [{"label": "Business to Business commission", "cents": 100}]},
+  {"name": "Phil's Hardware",  "role": "Tier 2 Business - 0.2% Commission", "lines": [{"label": "Business to Business commission", "cents": 20}]},
+  {"name": "Jan's Jellybeans", "role": "Tier 3 Business - 0.2% Commission", "lines": [{"label": "Business to Business commission", "cents": 20}]},
+  {"name": "Alex's Auto",      "role": "Tier 4 Business - 0.2% Commission", "lines": [{"label": "Business to Business commission", "cents": 20}]},
+  {"name": "Sally's Salon",    "role": "Tier 5 Business - 1% Cash Back", "lines": [{"label": "Cash Back as the business that made the sale", "cents": 100}]},
+  {"name": "Dave's Donuts",    "role": "Tier 6 Business - 0.2% Commission", "lines": [{"label": "Mutual commission earned from Sally's Salon's sale who referred them", "cents": 20}]}
+] %}
+
+{% set mt = namespace(v=0) %}
+{% for p in member_payouts %}{% set mt.v = mt.v + (p.lines | map(attribute="cents") | sum) %}{% endfor %}
+{% set bt = namespace(v=0) %}
+{% for p in business_payouts %}{% set bt.v = bt.v + (p.lines | map(attribute="cents") | sum) %}{% endfor %}
+
+{% set member_total = mt.v %}
+{% set business_total = bt.v %}
+{% set combined = member_total + business_total %}
+{% set remaining = fee - combined %}
+{% set pct_members = member_total * 100 / fee %}
+{% set pct_business = business_total * 100 / fee %}
+{% set pct_perk = remaining * 100 / fee %}
+{% set pct_paid = combined * 100 / fee %}
+
+{% macro money(c) %}${{ '%.2f' | format(c / 100) }}{% endmacro %}
+{% macro dollars(c) %}${{ c // 100 }}{% endmacro %}
+
+{% macro tree(title, note, nodes) %}
+  <section class="tree" aria-labelledby="t-{{ title | replace(' ', '-') | lower }}">
+    <h3 id="t-{{ title | replace(' ', '-') | lower }}">{{ title }}</h3>
+    <p class="tree-note">{{ note }}</p>
+    <ol class="chain">
+      {% for n in nodes %}
+        <li{% if n.outside %} class="outside"{% endif %}>
+          <span class="tier">{{ n.tier }}</span>
+          <strong class="nm">{{ n.name }}</strong>
+          <span class="by">{% if n.by %}Referred directly by {{ n.by }}{% else %}Starts the tree{% endif %}</span>
+          {% if n.tag %}<span class="flag{% if n.outside %} flag-out{% endif %}">{{ n.tag }}</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+{% endmacro %}
+
+{% macro ledger(payouts) %}
+  <ul class="ledger">
+    {% for p in payouts %}
+      {% set sub = p.lines | map(attribute="cents") | sum %}
+      <li class="payee">
+        <div class="line">
+          <span class="who"><strong>{{ p.name }}</strong><small>{{ p.role }}</small></span>
+          <span class="leader" aria-hidden="true"></span>
+          <span class="amt">{{ money(sub) }}</span>
+        </div>
+        {% if p.lines | length > 1 %}
+          <ul class="parts">
+            {% for l in p.lines %}
+              <li><span>{{ l.label }}</span><span>{{ money(l.cents) }}</span></li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="why">{{ p.lines[0].label }}</p>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endmacro %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Full Payout Sample - Perk Miner</title>
+  <meta name="description" content="See exactly how a $10 advertising fee on a $100 purchase is paid out to members and advertisers on Perk Miner, with every referral payout active.">
+  <meta name="theme-color" content="#2a5859">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://www.perkminer.com/full_payout_sample">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Perk Miner">
+  <meta property="og:title" content="Sample payout with all payouts active on a $100 purchase/sale">
+  <meta property="og:description" content="Where every cent of a $10 advertising fee goes: members, advertisers and Perk Miner.">
+  <meta property="og:url" content="https://www.perkminer.com/full_payout_sample">
+  <meta property="og:image" content="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg">
+  <style>
+    :root {
+      --ink: #14302f;
+      --teal: #2a5859;
+      --muted: #4b6463;
+      --paper: #fafcfb;
+      --wash: #edf3f2;
+      --rule: #c3d2cf;
+      --amber: #d9a441;
+      --amber-ink: #3b2a05;
+      --sage: #b4c6c2;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 1.0625rem;
+      line-height: 1.55;
+    }
+    a { color: var(--teal); text-underline-offset: 3px; }
+    a:focus-visible, .btn:focus-visible {
+      outline: 3px solid var(--amber);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+    .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 1.25rem; }
+
+    /* top bar */
+    .topbar { border-bottom: 1px solid var(--rule); }
+    .topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: .75rem; padding-bottom: .75rem; }
+    .topbar img { display: block; height: 44px; width: auto; }
+    .topbar nav { display: flex; gap: 1.25rem; font-size: .975rem; }
+    .topbar nav a { text-decoration: none; font-weight: 600; }
+    .topbar nav a:hover { text-decoration: underline; }
+
+    /* hero */
+    .hero { padding: 3rem 0 2.5rem; }
+    .hero h1 {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: clamp(1.9rem, 4.6vw + .4rem, 3.4rem);
+      line-height: 1.1;
+      letter-spacing: -.01em;
+      margin: 0 0 1rem;
+      max-width: 20ch;
+      text-wrap: balance;
+    }
+    .hero .scenario { max-width: 60ch; color: var(--muted); margin: 0 0 2rem; font-size: 1.125rem; }
+
+    .split-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; align-items: baseline; margin-bottom: .6rem; }
+    .split-head strong { font-family: var(--serif); font-size: 1.25rem; }
+    .split-head span { color: var(--muted); font-size: .95rem; }
+    .split { display: flex; height: 3.25rem; border-radius: 6px; overflow: hidden; border: 1px solid var(--ink); }
+    .split > span { display: block; height: 100%; }
+    .seg-members { background: var(--teal); }
+    .seg-business { background: var(--amber); }
+    .seg-perk { background: var(--sage); }
+    .legend { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .legend li { display: grid; grid-template-columns: auto 1fr; column-gap: .6rem; align-items: start; }
+    .legend .sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--ink); margin-top: .45rem; }
+    .legend .l-name { color: var(--muted); font-size: .95rem; line-height: 1.3; }
+    .legend .l-amt { grid-column: 2; font-family: var(--serif); font-weight: 700; font-size: 1.6rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .legend .l-pct { grid-column: 2; color: var(--muted); font-size: .9rem; }
+
+    /* sections */
+    .block { padding: 2.75rem 0; border-top: 1px solid var(--rule); }
+    .block > .wrap > h2 { font-family: var(--serif); font-size: clamp(1.5rem, 2.2vw + 1rem, 2.1rem); line-height: 1.2; margin: 0 0 .5rem; }
+    .block > .wrap > .lede { color: var(--muted); max-width: 62ch; margin: 0 0 2rem; }
+
+    /* trees */
+    .trees { display: grid; grid-template-columns: 1fr; gap: 2.25rem; }
+    .tree h3 { font-family: var(--serif); font-size: 1.2rem; margin: 0 0 .25rem; }
+    .tree-note { margin: 0 0 1rem; color: var(--muted); font-size: .95rem; }
+    .chain { list-style: none; margin: 0; padding: 0 0 0 1.6rem; position: relative; }
+    .chain::before { content: ""; position: absolute; left: .45rem; top: 1.2rem; bottom: 1.2rem; width: 2px; background: var(--rule); }
+    .chain li { position: relative; padding: .5rem 0 .6rem; display: flex; flex-direction: column; align-items: flex-start; }
+    .chain li::before {
+      content: ""; position: absolute; left: calc(-1.6rem + .45rem - 5px); top: 1.05rem;
+      width: 12px; height: 12px; border-radius: 50%; background: var(--teal); border: 2px solid var(--paper); box-shadow: 0 0 0 1px var(--teal);
+    }
+    .chain .tier { font-size: .85rem; color: var(--muted); }
+    .chain .nm { font-family: var(--serif); font-size: 1.2rem; line-height: 1.25; }
+    .chain .by { font-size: .92rem; color: var(--muted); }
+    .chain .flag { margin-top: .4rem; padding: .1rem .6rem; border-radius: 999px; background: var(--amber); color: var(--amber-ink); font-size: .85rem; font-weight: 600; }
+    .chain .flag-out { background: transparent; border: 1px dashed var(--muted); color: var(--ink); font-weight: 500; }
+    .chain li.outside::before { background: var(--paper); box-shadow: 0 0 0 1px var(--muted); border-style: dashed; }
+    .chain li.outside .nm { color: var(--muted); }
+
+    /* payout ledgers */
+    .payouts { display: grid; grid-template-columns: 1fr; gap: 3rem; }
+    .group h3 { font-family: var(--serif); font-size: 1.4rem; margin: 0 0 1rem; }
+    .ledger { list-style: none; margin: 0; padding: 0; }
+    .payee { padding: .8rem 0; border-bottom: 1px solid var(--rule); }
+    .line { display: flex; align-items: baseline; gap: .6rem; }
+    .who { display: flex; flex-direction: column; min-width: 0; }
+    .who strong { font-size: 1.1rem; line-height: 1.3; }
+    .who small { color: var(--muted); font-size: .88rem; }
+    .leader { flex: 1; min-width: 1rem; border-bottom: 2px dotted var(--rule); transform: translateY(-.35em); }
+    .amt { font-family: var(--serif); font-weight: 700; font-size: 1.3rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .why { margin: .2rem 0 0; color: var(--muted); font-size: .93rem; }
+    .parts { list-style: none; margin: .45rem 0 0; padding: 0 0 0 1rem; border-left: 2px solid var(--wash); }
+    .parts li { display: flex; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: .93rem; padding: .1rem 0; font-variant-numeric: tabular-nums; }
+    .group-total { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 1rem 0 0; margin-top: .25rem; border-top: 4px double var(--ink); }
+    .group-total span:first-child { font-weight: 700; }
+    .group-total .amt { font-size: 1.8rem; }
+
+    /* summary */
+    .summary { background: var(--wash); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+    .recon { list-style: none; margin: 0 0 2rem; padding: 0; max-width: 560px; }
+    .recon li { display: flex; align-items: baseline; gap: .6rem; padding: .6rem 0; border-bottom: 1px solid var(--rule); }
+    .recon li.sum { border-top: 4px double var(--ink); border-bottom: 0; font-weight: 700; margin-top: .4rem; padding-top: .9rem; }
+    .recon .amt { font-size: 1.25rem; }
+    .recon li.sum .amt { font-size: 1.7rem; }
+    .recon .leader { border-bottom-color: #9fb3af; }
+    .conclusion { font-family: var(--serif); font-size: clamp(1.25rem, 1.6vw + .9rem, 1.7rem); line-height: 1.3; margin: 0 0 2rem; max-width: 30ch; }
+    .actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+    .btn { display: inline-block; padding: .8rem 1.4rem; border-radius: 6px; font-weight: 700; text-decoration: none; border: 2px solid var(--teal); min-height: 48px; }
+    .btn-solid { background: var(--teal); color: #fff; }
+    .btn-solid:hover { background: var(--ink); border-color: var(--ink); }
+    .btn-line { background: transparent; color: var(--teal); }
+    .btn-line:hover { background: #fff; }
+
+    .fineprint { padding: 1.75rem 0 2.25rem; color: var(--muted); font-size: .9rem; }
+    .fineprint p { margin: 0; max-width: 78ch; }
+
+    /* Footer */
+    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+    footer a { color: var(--pm-primary-light); text-decoration: none; }
+
+    /* tablet and up */
+    @media (min-width: 820px) {
+      .trees { grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+      .payouts { grid-template-columns: 1fr 1fr; gap: 3.5rem; }
+    }
+    @media (min-width: 1000px) {
+      .hero { padding: 4.25rem 0 3.5rem; }
+      .block { padding: 3.5rem 0; }
+    }
+
+    /* phones */
+    @media (max-width: 560px) {
+      body { font-size: 1rem; }
+      .topbar nav { gap: .9rem; font-size: .9rem; }
+      .legend { grid-template-columns: 1fr; gap: .9rem; }
+      .legend li { grid-template-columns: auto 1fr; }
+      .legend .l-amt { grid-column: 2; }
+      .split { height: 2.5rem; }
+      .btn { width: 100%; text-align: center; }
+    }
+    @media print {
+      .topbar nav, .actions { display: none; }
+      .summary { background: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="wrap">
+      <a href="/" aria-label="Perk Miner home">
+        <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" height="44">
+      </a>
+      <nav aria-label="Primary">
+        <a href="/">Home</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <h1>Sample payout with all payouts active on a $100 purchase/sale</h1>
+        <p class="scenario"><b>Alex buys $100 of services</b> from Sally's Salon. <b>Sally's Salon finalizes the sale</b> and pays a {{ dollars(fee) }} advertising fee.<br><br>Here is where every cent of that fee goes.</p>
+
+        <div class="split-head">
+          <strong>Advertising fee: {{ dollars(fee) }}</strong>
+          <span>{{ '%.0f' | format(pct_paid) }}% of the fee is paid out</span>
+        </div>
+        <div class="split" role="img" aria-label="The {{ dollars(fee) }} fee splits into {{ money(member_total) }} to members, {{ money(business_total) }} to advertisers and {{ money(remaining) }} to Perk Miner.">
+          <span class="seg-members" style="width: {{ '%.2f' | format(pct_members) }}%"></span>
+          <span class="seg-business" style="width: {{ '%.2f' | format(pct_business) }}%"></span>
+          <span class="seg-perk" style="width: {{ '%.2f' | format(pct_perk) }}%"></span>
+        </div>
+        <ul class="legend">
+          <li><span class="sw seg-members"></span><span class="l-name">Paid to members</span><span class="l-amt">{{ money(member_total) }}</span><span class="l-pct">{{ '%.0f' | format(pct_members) }}% of the fee</span></li>
+          <li><span class="sw seg-business"></span><span class="l-name">Paid to advertisers</span><span class="l-amt">{{ money(business_total) }}</span><span class="l-pct">{{ '%.0f' | format(pct_business) }}% of the fee</span></li>
+          <li><span class="sw seg-perk"></span><span class="l-name">Remaining for Perk Miner</span><span class="l-amt">{{ money(remaining) }}</span><span class="l-pct">{{ '%.0f' | format(pct_perk) }}% of the fee</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="h-trees">
+      <div class="wrap">
+        <h2 id="h-trees">Who referred whom</h2>
+        <p class="lede">Each payout follows <b>one of three referral trees</b>. Every person or business is paid for the tier they sit in.</p>
+        <div class="trees">
+          {{ tree("Member to Member Tree", "Members who referred other members.", member_tree) }}
+          {{ tree("Member to Business Tree (only one applies)", "James referred the first business, and each business referred the next.", m2b_tree) }}
+          {{ tree("Business to Business Tree", "Businesses that referred other businesses.", b2b_tree) }}
+        </div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="h-payouts">
+      <div class="wrap">
+        <h2 id="h-payouts">Who gets paid what</h2>
+        <p class="lede">When Alex buys {{ dollars(purchase) }} from Sally's Salon, the {{ dollars(fee) }} fee is split like this.</p>
+        <div class="payouts">
+          <section class="group" aria-labelledby="g-members">
+            <h3 id="g-members">Member to Member and Member to Business</h3>
+            {{ ledger(member_payouts) }}
+            <div class="group-total"><span>Grand total paid to members</span><span class="amt">{{ money(member_total) }}</span></div>
+          </section>
+
+          <section class="group" aria-labelledby="g-business">
+            <h3 id="g-business">Business to Business and mutual commissions</h3>
+            {{ ledger(business_payouts) }}
+            <div class="group-total"><span>Grand total paid to advertisers</span><span class="amt">{{ money(business_total) }}</span></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="block summary" aria-labelledby="h-sum">
+      <div class="wrap">
+        <h2 id="h-sum">Adding it up</h2>
+        <p class="lede">Every payout comes out of the same {{ dollars(fee) }} advertising fee.</p>
+        <ul class="recon">
+          <li><span>Paid to members</span><span class="leader" aria-hidden="true"></span><span class="amt">{{ money(member_total) }}</span></li>
+          <li><span>Paid to advertisers</span><span class="leader" aria-hidden="true"></span><span class="amt">{{ money(business_total) }}</span></li>
+          <li class="sum"><span>Combined grand total paid out</span><span class="leader" aria-hidden="true"></span><span class="amt">{{ money(combined) }}</span></li>
+          <li><span>Remaining for Perk Miner from the {{ dollars(fee) }} fee</span><span class="leader" aria-hidden="true"></span><span class="amt">{{ money(remaining) }}</span></li>
+        </ul>
+        <p class="conclusion">When all payouts are active, Perk Miner LLC pays out {{ '%.0f' | format(pct_paid) }}% of the advertising revenue (re-investing into the ecosystem).</p>
+        <div class="actions">
+          <a class="btn btn-solid" href="/register">Members - Join For Free</a>
+          <a class="btn btn-line" href="/businesss">Advertise With Us</a>
+          <a class="btn btn-solid" href="/earn_more_than_sponsor">Earning More Than Your Sponsor</a>
+          <a class="btn btn-line" href="/how_much_can_i_earn">How Much Can You Earn?</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="fineprint">
+    <div class="wrap">
+      <p>This is an illustration only. It assumes every referral tier is filled and every payout is active on a single {{ dollars(purchase) }} sale. Actual earnings depend on real purchases and your own referral network, and are not guaranteed.</p>
+    </div>
+  </div>
+
+<footer>
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
+</footer>
+
+</body>
+</html>

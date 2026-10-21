@@ -1,130 +1,244 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Your Business Invoices - PerkMiner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <style>
-      @media (max-width: 600px) {
-        .card, .table { font-size: 0.98em; }
-        .btn { width: 100%; margin-bottom: 10px; }
-      }
-      .print-btn { float: right; }
+        :root {
+          --pm-primary: #2a5859;
+          --pm-primary-dark: #1e4a4b;
+          --pm-primary-light: #2a5859;
+          --pm-accent: #ffd66b;
+          --pm-bg: #f4f8f9;
+          --pm-text: #222;
+          --pm-focus: #fadd92;
+          --pm-muted: #5c6b73;
+          --pm-shadow: 0 2px 16px #e3eee9;
+        }
+        body { background: var(--pm-bg); color: var(--pm-text); }
+        body > nav { margin-bottom: 1.5rem !important; }
+        .navbar { box-shadow: 0 2px 8px #f0f2f3; }
+        .card { background: #fff; border-radius: 16px; border: 1px solid #e8f0f2; box-shadow: var(--pm-shadow); margin-bottom: 1.5rem; }
+        .btn-primary, .btn-success { background: var(--pm-primary); border: none; color: #fff !important; }
+        .btn-primary:hover, .btn-success:hover { background: var(--pm-accent); color: var(--pm-text) !important; }
+        a:focus, button:focus, input:focus, select:focus { outline: 2px solid var(--pm-focus); outline-offset: 2px; }
+        .form-control, .form-select, .btn { border-radius: 10px !important; }
+
+        .page-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .page-head h1 { font-size: 1.6rem; font-weight: 800; color: var(--pm-primary-dark); margin: 0; line-height: 1.2; }
+        .icon-badge { width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0; background: var(--pm-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+
+        .filter-card { padding: 1.1rem 1.1rem .7rem; }
+        .search-box { position: relative; }
+        .search-box i { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: var(--pm-muted); }
+        .search-box input { padding-left: 2.6rem; height: 3rem; font-size: 1.02rem; }
+        .results-meta { color: var(--pm-muted); font-size: .9rem; }
+
+        .table-card { padding: .5rem; overflow: hidden; }
+        .table-modern { margin-bottom: 0; }
+        .table-modern thead th { background: #eef6f6; color: var(--pm-primary-dark); font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; border-bottom: 0; white-space: nowrap; }
+        .table-modern td { vertical-align: middle; }
+        .table-modern tbody tr:hover { background: #f6fafa; }
+        .empty-state { display: none; text-align: center; padding: 2.2rem 1rem; color: var(--pm-muted); }
+        .empty-state i { font-size: 2rem; display: block; margin-bottom: .4rem; color: #9fc3c4; }
+
+        @media (max-width: 767.98px) {
+          .table-stack thead { display: none; }
+          .table-stack, .table-stack tbody, .table-stack tr, .table-stack td { display: block; width: 100%; }
+          .table-stack tr { background: #fff; border: 1px solid #e1eeee; border-radius: 14px; margin-bottom: .8rem; padding: .35rem .9rem; box-shadow: var(--pm-shadow); }
+          .table-stack td { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .45rem 0; border: 0; border-bottom: 1px dashed #e3eceb; text-align: right; }
+          .table-stack td:last-child { border-bottom: 0; }
+          .table-stack td::before { content: attr(data-label); font-weight: 600; color: var(--pm-muted); text-align: left; flex: 0 0 46%; }
+          .table-stack td.cell-empty { display: none; }
+          .page-head .btn { flex: 1 1 auto; }
+        }
+
+        footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+        footer a { color: var(--pm-primary-light); text-decoration: none; }
+
+        @page { size: landscape; margin: 12mm; }
+        @media print {
+          body { background: #fff; }
+          .card { box-shadow: none; border: 0; }
+          .d-print-none, nav, footer { display: none !important; }
+          .table-modern { font-size: 11px; }
+        }
     </style>
 </head>
 <body>
-<div class="container py-4">
 
-  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
-    <h3 class="mb-2">Business Invoices</h3>
-    <div class="d-flex gap-2">
+<nav class="navbar navbar-expand-lg navbar-light bg-light d-print-none">
+    <div class="container">
+      <a class="navbar-brand" href="/">PerkMiner</a>
+    </div>
+</nav>
+
+<div class="container pb-4">
+
+  <div class="page-head">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icon-badge"><i class="bi bi-receipt"></i></div>
+      <div>
+        <h1>Business Invoices</h1>
+        <div class="text-muted small">Every finalized transaction for your business.</div>
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap d-print-none">
       <a href="{{ url_for('export_business_receipts_csv') }}" class="btn btn-outline-success">
         <i class="bi bi-cloud-arrow-down"></i> Export CSV/Excel
       </a>
-      <button onclick="window.print()" class="btn btn-outline-secondary">
+      <button onclick="window.print()" class="btn btn-outline-secondary" type="button">
         <i class="bi bi-printer"></i> Print / Save as PDF
       </button>
+      <a href="{{ url_for('business_dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
     </div>
   </div>
 
-  <a href="{{ url_for('business_dashboard') }}" class="btn btn-primary mt-3 w-100">Back to Dashboard</a>
+  <!-- Search + filters -->
+  <div class="card filter-card d-print-none">
+    <form class="row gy-2 gx-2 mb-2" id="filter-form" onsubmit="return false;">
+      <div class="col-12">
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" id="searchInput" class="form-control" placeholder="Search invoices (ID, amount, status, date...)" aria-label="Search invoices">
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <label class="form-label small text-muted mb-1" for="min-date">Start date</label>
+        <input type="date" id="min-date" class="form-control">
+      </div>
+      <div class="col-6 col-md-4">
+        <label class="form-label small text-muted mb-1" for="max-date">End date</label>
+        <input type="date" id="max-date" class="form-control">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label small text-muted mb-1" for="amount">Min sale amount</label>
+        <input type="number" step="0.01" id="amount" class="form-control" placeholder="Min Amount">
+      </div>
+    </form>
+    <div class="results-meta mb-2" id="results-count"></div>
+  </div>
 
-  <!-- Filter Controls -->
-  <form class="row gy-2 gx-2 mb-3" id="filter-form" onsubmit="return false;">
-    <div class="col-sm-3">
-      <input type="date" id="min-date" class="form-control" placeholder="Start Date">
+  <!-- Detailed transactions -->
+  <div class="card table-card">
+    <div class="table-responsive">
+      <table class="table table-modern table-stack align-middle" id="receipts-table">
+        <thead>
+          <tr>
+            <th>Date/Time</th>
+            <th>Interaction ID</th>
+            <th>Sale Amount</th>
+            <th>Ad Fee (10%, capped $250)</th>
+            <th>Net Gross</th>
+            <th>Marketing ROI</th>
+            <th>Marketing ROI Ratio</th>
+            <th>Cash Back</th>
+            <th>Status</th>
+            <th class="d-print-none">Invoice</th>
+          </tr>
+        </thead>
+        <tbody>
+          {# Route that shows one invoice. Change this one name if your route is called something else. #}
+          {% set invoice_endpoint = 'show_business_receipt' %}
+          {% for t in transactions %}
+          <tr>
+            <td data-label="Date/Time">
+              {{ t.local_date_time if t.local_date_time else t.date_time.strftime('%Y-%m-%d %I:%M %p') }}
+            </td>
+            <td data-label="Interaction ID">{{ t.interaction_id }}</td>
+            <td data-label="Sale Amount">${{ "{:,.2f}".format(t.amount) }}</td>
+            <td data-label="Ad Fee">${{ "{:,.2f}".format(t.ad_fee or 0) }}</td>
+            <td data-label="Net Gross">
+              {% set net_gross = t.amount - (t.ad_fee or 0) %}
+              ${{ "{:,.2f}".format(net_gross) }}
+            </td>
+            <td data-label="Marketing ROI">
+              {% set roi = (net_gross / (t.ad_fee or 1)) * 100 if t.ad_fee else 0 %}
+              {{ roi | round(0) }}%
+            </td>
+            <td data-label="ROI Ratio">
+              {% set ratio = (net_gross + (t.ad_fee or 0)) / (t.ad_fee or 1) if t.ad_fee else 0 %}
+              {{ ratio|round(1) }}:1
+            </td>
+            <td data-label="Cash Back">${{ "{:,.2f}".format(t.cash_back or 0) }}</td>
+            <td data-label="Status">
+              {% if t.status == "available" %}
+                <span class="badge bg-success">Available</span>
+              {% elif t.status == "pending" %}
+                <span class="badge bg-warning text-dark">Pending</span>
+              {% elif t.status == "reversed" %}
+                <span class="badge bg-danger">Reversed</span>
+              {% else %}
+                {{ t.status }}
+              {% endif %}
+            </td>
+            <td data-label="Invoice" class="d-print-none">
+              <a href="{{ url_for('show_business_receipt', interaction_id=t.interaction_id) }}" class="btn btn-info btn-sm">
+                <i class="bi bi-eye"></i> View
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div class="col-sm-3">
-      <input type="date" id="max-date" class="form-control" placeholder="End Date">
+    <div class="empty-state" id="no-results">
+      <i class="bi bi-inbox"></i>
+      <div id="no-results-text">No invoices match your search.</div>
     </div>
-    <div class="col-sm-2">
-      <input type="number" step="0.01" id="amount" class="form-control" placeholder="Min Amount">
-    </div>
-    <div class="col-sm-4">
-      <input type="text" id="searchInput" class="form-control" placeholder="Search invoices...">
-    </div>
-  </form>
-
-  <div class="table-responsive">
-    <table class="table table-bordered align-middle" id="receipts-table">
-      <thead class="table-light">
-        <tr>
-          <th>Date/Time</th>
-          <th>Interaction ID</th>
-          <th>Sale Amount</th>
-          <th>Ad Fee (10%, capped $250)</th>
-          <th>Net Gross</th>
-          <th>Marketing ROI</th>
-          <th>Marketing ROI Ratio</th>
-          <th>Cash Back</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for t in transactions %}
-        <tr>
-          <td>
-            {{ t.local_date_time if t.local_date_time else t.date_time.strftime('%Y-%m-%d %I:%M %p') }}
-          </td>
-          <td>{{ t.interaction_id }}</td>
-          <td>${{ "{:,.2f}".format(t.amount) }}</td>
-          <td>${{ "{:,.2f}".format(t.ad_fee or 0) }}</td>
-          <td>
-            {% set net_gross = t.amount - (t.ad_fee or 0) %}
-            ${{ "{:,.2f}".format(net_gross) }}
-          </td>
-          <td>
-            {% set roi = (net_gross / (t.ad_fee or 1)) * 100 if t.ad_fee else 0 %}
-            {{ roi | round(0) }}%
-          </td>
-          <td>
-            {% set ratio = (net_gross + (t.ad_fee or 0)) / (t.ad_fee or 1) if t.ad_fee else 0 %}
-            {{ ratio|round(1) }}:1
-          </td>
-          <td>${{ "{:,.2f}".format(t.cash_back or 0) }}</td>
-          <td>
-            {% if t.status == "available" %}
-              <span class="badge bg-success">Available</span>
-            {% elif t.status == "pending" %}
-              <span class="badge bg-warning text-dark">Pending</span>
-            {% elif t.status == "reversed" %}
-              <span class="badge bg-danger">Reversed</span>
-            {% else %}
-              {{ t.status }}
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
   </div>
 
 </div>
+
+<footer>
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
+</footer>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.getElementById('filter-form').addEventListener('input', function() {
-    const minDate = document.getElementById('min-date').value;
-    const maxDate = document.getElementById('max-date').value;
-    const amount = parseFloat(document.getElementById('amount').value) || 0;
-    const filter = document.getElementById('searchInput').value.toLowerCase();
+(function () {
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#receipts-table tbody tr'));
+  var num = function (t) { return parseFloat(String(t).replace(/[^0-9.\-]+/g, '')) || 0; };
 
-    document.querySelectorAll('#receipts-table tbody tr').forEach(function(row) {
-        const cells = row.querySelectorAll('td');
-        const rowDate = cells[0].textContent;
-        const rowAmount = parseFloat(cells[2].textContent.replace(/[^0-9.-]+/g,"")) || 0;
-        const rowText = row.textContent.toLowerCase();
+  function applyFilters() {
+    var minDate = document.getElementById('min-date').value;
+    var maxDate = document.getElementById('max-date').value;
+    var amount = parseFloat(document.getElementById('amount').value) || 0;
+    var filter = document.getElementById('searchInput').value.toLowerCase();
+    var shown = 0;
 
-        let show = true;
+    rows.forEach(function (row) {
+      var cells = row.querySelectorAll('td');
+      var rowDate = cells[0].textContent.trim();
+      var rowAmount = num(cells[2].textContent);
+      var rowText = row.textContent.toLowerCase();
 
-        if (minDate && new Date(rowDate) < new Date(minDate)) show = false;
-        if (maxDate && new Date(rowDate) > new Date(maxDate + ' 23:59:59')) show = false;
-        if (amount && rowAmount < amount) show = false;
-        if (filter && rowText.indexOf(filter) === -1) show = false;
+      var show = true;
+      if (minDate && new Date(rowDate) < new Date(minDate)) show = false;
+      if (maxDate && new Date(rowDate) > new Date(maxDate + ' 23:59:59')) show = false;
+      if (amount && rowAmount < amount) show = false;
+      if (filter && rowText.indexOf(filter) === -1) show = false;
 
-        row.style.display = show ? "" : "none";
+      row.style.display = show ? '' : 'none';
+      if (show) shown++;
     });
-});
+
+    document.getElementById('results-count').textContent = 'Showing ' + shown.toLocaleString() + ' of ' + rows.length.toLocaleString() + ' invoices';
+    var empty = document.getElementById('no-results');
+    document.getElementById('no-results-text').textContent = rows.length === 0 ? 'No invoices yet. Finalized transactions will show up here.' : 'No invoices match your search.';
+    empty.style.display = shown === 0 ? 'block' : 'none';
+  }
+
+  document.getElementById('filter-form').addEventListener('input', applyFilters);
+  applyFilters();
+})();
 </script>
 </body>
 </html>

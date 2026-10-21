@@ -2,487 +2,182 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Perk Miner Marketplace – Cashback Rewards for Real Purchases</title>
-  <meta name="description" content="Perk Miner connects members and businesses through private, secure messaging. Earn 2% cashback on real purchases; advertisers pay only when a sale closes.">
-  <meta name="keywords" content="perk, perks, perk miner, grow your business, pay per sale, pay per close, no risk advertising, best advertising, high roi, roi, return on investment, return on advertising spend, highest roi, no sale no fee">
-  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Perk Miner – Free Membership + 2% Real Cash Back</title>
+  <meta name="description" content="Join free and earn 2% real cash back on everyday purchases. Search local businesses with total privacy. Secure messaging, no spam, real cash paid by Perk Miner.">
   <meta name="theme-color" content="#2a5859">
   <link rel="canonical" href="https://www.perkminer.com/">
 
-  <!-- Open Graph / social sharing -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Perk Miner">
-  <meta property="og:title" content="Perk Miner Marketplace – Cashback Rewards for Real Purchases">
-  <meta property="og:description" content="Connect with businesses through private, secure messaging and earn 2% cashback on real purchases. Advertisers pay only when a sale closes.">
+  <meta property="og:title" content="Perk Miner – Free Membership + 2% Real Cash Back">
+  <meta property="og:description" content="Join free. Earn 2% real cash back on real purchases. Your data stays private.">
   <meta property="og:url" content="https://www.perkminer.com/">
   <meta property="og:image" content="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Perk Miner Marketplace – Cashback Rewards for Real Purchases">
-  <meta name="twitter:description" content="Connect with businesses through private, secure messaging and earn 2% cashback on real purchases. Advertisers pay only when a sale closes.">
-  <meta name="twitter:image" content="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg">
 
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-
-  <!-- Structured data: organization + website -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": "https://www.perkminer.com/#organization",
-        "name": "Perk Miner",
-        "legalName": "Perk Miner LLC",
-        "url": "https://www.perkminer.com/",
-        "logo": "https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg",
-        "description": "Perk Miner is a digital advertising and rewards marketplace that connects members and businesses through private, secure messaging. Members earn cashback and referral commissions on real purchases; advertisers pay only when a sale closes.",
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "contactType": "customer support",
-          "email": "fromperkminer@gmail.com"
-        }
-      },
-      {
-        "@type": "WebSite",
-        "@id": "https://www.perkminer.com/#website",
-        "url": "https://www.perkminer.com/",
-        "name": "Perk Miner",
-        "publisher": { "@id": "https://www.perkminer.com/#organization" }
-      }
-    ]
-  }
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
   <style>
     :root {
-      --pm-primary: #2a5859;
+      --pm-primary: #1e4a4b;
+      --pm-primary-light: #2a5859;
       --pm-accent: #ffd66b;
-      --pm-bg: #fff;
-      --pm-text: #222;
-      --pm-hover: #e6f6f5;
-      --pm-shadow: 0 8px 32px rgba(42,88,89,0.18);
-      --pm-transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+      --pm-bg: #f8fafb;
+      --pm-card: #ffffff;
+      --pm-text: #1a1a1a;
+      --pm-muted: #5c6b73;
+      --pm-radius: 16px;
+      --pm-shadow: 0 4px 20px rgba(30,74,75,0.08);
     }
-    body { background: var(--pm-bg); color: var(--pm-text);}
-    .navbar-brand img.nav-logo { height: 90px; width: auto; max-width: 140px;}
-    .hero-logo { height: 90px; max-width: 280px; width: auto; display: block; margin: 0 auto 18px auto; object-fit: contain;}
-    .hero-section { min-height: 45vh; background: url('https://res.cloudinary.com/dmrntlcfd/image/upload/v1782601402/Cash-Back_rignwa.jpg?auto=format&fit=crop&w=1200&q=60') center/cover no-repeat; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 0;}
-    .hero-section .overlay { position: absolute; inset: 0; background: rgba(42,88,89,.23); z-index: 1; }
-    .hero-content { position: relative; z-index: 2; width: 100%; max-width: 620px; margin: 0 auto; color: #fff; padding-top: 1.5rem; padding-bottom: 1rem; text-align: center;}
-    .dashboard-btn-hero { position: absolute; top: 18px; right: 32px; z-index: 5;}
-    @media (max-width: 700px) { .dashboard-btn-hero { top: 8px; right: 12px; } }
-    .dashboard-btn-hero .btn { font-size: 0.93rem; padding: 0.28rem 0.85rem; border-radius: 15px; box-shadow: 0 2px 10px #e6f4ee; }
-    .trust-note { font-size: 1rem; color: #222; background: #f7f7f7; padding: 6px 14px; border-radius: 7px; display: inline-block; }
-    .totals-section { margin-top: 0.5rem; margin-bottom: 0.8rem;}
-    .totals-mini { background: #fff; border: 1px solid #e7ebed; border-radius: 10px; box-shadow: 0 1px 5px #e6f4ee; padding: .35rem 0.7rem .25rem 0.7rem; min-width: 106px; min-height: 42px; display: inline-block; margin: 0 3px 6px 3px;}
-    .totals-label-mini { font-size: 0.61em; color: #305A5B; font-weight: 600; line-height: 1.07; margin-bottom: -3px;}
-    .totals-value-mini { font-size: 0.95em; font-weight: 700;}
-    .totals-value-mini.text-warning { color: #d8a608 !important; }
-    .totals-value-mini.text-info { color: #1097bb !important; }
-    .search-form .input-group { border-radius: 18px; box-shadow: 0 2px 10px #f2f5f5; background: #fff; overflow: hidden;}
-    .search-form .form-control, .search-form .btn { border-radius: 18px !important; font-size: 1.1em;}
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--pm-bg); color: var(--pm-text); padding-bottom: 80px; margin: 0; }
+    .app-header { position: sticky; top: 0; z-index: 1000; background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid #e8eef0; padding: 0.6rem 1rem; }
+    .app-header .logo { height: 54px; width: auto; }
+    .header-cta .btn { border-radius: 50px; font-weight: 600; font-size: 0.9rem; padding: 0.4rem 1rem; }
 
-    /* Categories Section */
-    .categories-section { padding: 3rem 0 4rem; }
-    .categories-title {
-      font-size: 2.1rem;
-      font-weight: 700;
-      color: var(--pm-primary);
-      text-align: center;
-      margin-bottom: 2.2rem;
-      position: relative;
-    }
-    .categories-title:after {
-      content: '';
-      position: absolute;
-      bottom: -12px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80px;
-      height: 4px;
-      background: var(--pm-accent);
-      border-radius: 2px;
-    }
+    .hero { background: linear-gradient(145deg, #1e4a4b 0%, #2a5859 60%, #3a6d6e 100%); color: white; padding: 2.5rem 1.25rem 2rem; text-align: center; position: relative; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: url('https://res.cloudinary.com/dmrntlcfd/image/upload/v1782601402/Cash-Back_rignwa.jpg?auto=format&fit=crop&w=1200&q=40') center/cover; opacity: 0.12; }
+    .hero-inner { position: relative; z-index: 2; max-width: 640px; margin: 0 auto; }
+    .hero h1 { font-weight: 800; font-size: 2.1rem; line-height: 1.15; margin-bottom: 0.6rem; }
+    .hero .sub { font-size: 1.05rem; opacity: 0.95; margin-bottom: 1.2rem; }
+    .hero-cta .btn-primary { background: var(--pm-accent); border: none; color: #1e4a4b; font-weight: 700; border-radius: 50px; padding: 0.85rem 1.8rem; font-size: 1.05rem; }
+    .trust-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 1rem; }
+    .trust-pill { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 50px; padding: 0.3rem 0.8rem; font-size: 0.8rem; }
 
-    .swipe-hint { color: #555; font-style: italic; font-size: 0.98rem; }
+    .search-wrap { margin: 1.4rem auto 0; max-width: 560px; }
+    .search-wrap .input-group { border-radius: 50px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.15); background: white; }
+    .search-wrap .form-control, .search-wrap .form-select { border: none; padding: 0.85rem 1rem; }
+    .search-wrap .btn { border-radius: 0 50px 50px 0; font-weight: 600; }
 
+    .benefit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.9rem; margin: 1.5rem 0; }
+    @media (min-width: 768px) { .benefit-grid { grid-template-columns: repeat(4, 1fr); } }
+    .benefit-card { background: var(--pm-card); border-radius: var(--pm-radius); padding: 1.1rem 0.9rem; text-align: center; box-shadow: var(--pm-shadow); }
+    .benefit-card i { font-size: 1.6rem; color: var(--pm-primary-light); margin-bottom: 0.4rem; }
+    .benefit-card h3 { font-size: 0.95rem; font-weight: 700; margin: 0 0 0.25rem; }
+    .benefit-card p { font-size: 0.8rem; color: var(--pm-muted); margin: 0; }
+
+    .section-title { font-weight: 700; font-size: 1.45rem; text-align: center; margin: 2.2rem 0 1.2rem; color: var(--pm-primary); }
+
+    /* Categories – swipe + toggle */
     .categories-scroll-wrap {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scroll-snap-type: x mandatory;
       scrollbar-width: none;
-      -ms-overflow-style: none;
-      padding: 0 5vw;
-      margin: 0 -5vw;
+      padding: 0 1rem 1rem;
     }
     .categories-scroll-wrap::-webkit-scrollbar { display: none; }
-
-    .categories-row {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 1.1rem;
-      padding: 1rem 0;
-    }
-
+    .categories-row { display: flex; flex-wrap: nowrap; gap: 0.85rem; }
     .category-card-wrapper {
       scroll-snap-align: start;
-      flex: 0 0 72vw;
-      max-width: 240px;
-      transition: var(--pm-transition);
+      flex: 0 0 38vw;
+      max-width: 160px;
     }
+    .category-card { border-radius: 14px; overflow: hidden; background: white; box-shadow: var(--pm-shadow); display: block; text-decoration: none; color: inherit; height: 100%; }
+    .category-image-wrap { height: 100px; overflow: hidden; position: relative; }
+    .category-image { width: 100%; height: 100%; object-fit: cover; }
+    .category-label { padding: 0.55rem 0.4rem; font-size: 0.82rem; font-weight: 600; color: var(--pm-primary); text-align: center; line-height: 1.2; }
 
-    .category-card {
-      border-radius: 16px;
-      overflow: hidden;
-      background: white;
-      box-shadow: var(--pm-shadow);
-      transition: var(--pm-transition);
-      height: 100%;
-      position: relative;
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-    }
-
-    .category-card:hover {
-      transform: translateY(-12px) scale(1.04) rotate(1.2deg);
-      box-shadow: 0 22px 48px rgba(42,88,89,0.26);
-    }
-
-    .category-image-wrap {
-      position: relative;
-      height: 140px;
-      overflow: hidden;
-    }
-
-    .category-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.6s ease;
-    }
-
-    .category-card:hover .category-image {
-      transform: scale(1.14);
-    }
-
-    .category-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to top, rgba(42,88,89,0.38) 0%, transparent 60%);
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
-
-    .category-card:hover .category-overlay {
-      opacity: 1;
-    }
-
-    .category-label {
-      padding: 1.1rem 0.9rem 1.3rem;
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--pm-primary);
-      text-align: center;
-      line-height: 1.28;
-      background: linear-gradient(145deg, #ffffff, #f8fbfc);
-    }
-
-    /* Desktop grid */
     @media (min-width: 992px) {
-      .categories-scroll-wrap, .categories-row {
-        overflow-x: hidden !important;
-        padding: 0;
-        margin: 0;
-      }
-      .categories-row {
-        display: grid !important;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        gap: 1.6rem 1.8rem;
-      }
-      .category-card-wrapper {
-        flex: 1 1 auto;
-        max-width: none;
-        scroll-snap-align: none;
-      }
-      .category-card {
-        border-radius: 20px;
-      }
-      .category-image-wrap {
-        height: 160px;
-      }
-      .category-label {
-        font-size: 1.12rem;
-        padding: 1.3rem 1.1rem 1.5rem;
-      }
-    }
-
-    @media (max-width: 600px) {
-      .category-card-wrapper { flex: 0 0 78vw; max-width: 260px; }
+      .categories-scroll-wrap { overflow-x: hidden; padding: 0; }
+      .categories-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.2rem; }
+      .category-card-wrapper { flex: 1 1 auto; max-width: none; scroll-snap-align: none; }
       .category-image-wrap { height: 130px; }
-      .categories-title { font-size: 1.75rem; }
+      .category-label { font-size: 0.95rem; padding: 0.7rem 0.5rem; }
+      .category-card-wrapper:nth-child(n+5) { display: none; } /* show first 4 initially */
     }
-
-    /* Mobile & tablet: force single row + hide button */
     @media (max-width: 991.98px) {
-      .more-btn-container {
-        display: none !important;
-      }
+      .more-btn-container { display: none !important; }
     }
+    .more-btn-container { text-align: center; margin: 1.2rem 0; }
+    .more-btn { background: var(--pm-primary); color: white; border: none; padding: 0.6rem 1.6rem; border-radius: 50px; font-weight: 600; }
 
-    /* More button */
-    .more-btn-container {
-      text-align: center;
-      margin: 2rem 0 1rem;
-    }
-    .more-btn {
-      background: var(--pm-primary);
-      color: white;
-      border: none;
-      padding: 0.75rem 2rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-      border-radius: 50px;
-      box-shadow: 0 6px 20px rgba(42,88,89,0.3);
-      transition: var(--pm-transition);
-      cursor: pointer;
-    }
-    .more-btn:hover {
-      transform: translateY(-4px) scale(1.05);
-      box-shadow: 0 12px 30px rgba(42,88,89,0.4);
-      background: #1f4344;
-    }
-    .more-btn.expanded {
-      background: #d9534f;
-    }
+    .small-listing-modern { border-radius: 18px; box-shadow: var(--pm-shadow); border: 1px solid #e8f0f2; }
+    .detail-card { background: white; border-radius: 20px; padding: 1.4rem 1.2rem; margin-bottom: 1rem; box-shadow: var(--pm-shadow); }
+    .steps { display: flex; flex-direction: column; gap: 0.8rem; max-width: 500px; margin: 0 auto; }
+    .step { display: flex; align-items: flex-start; gap: 0.8rem; background: white; padding: 0.9rem 1rem; border-radius: 14px; box-shadow: var(--pm-shadow); }
+    .step-num { background: var(--pm-primary-light); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
 
-    /* Featured listings */
-    .listing-link { text-decoration: none; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e8eef0; display: flex; justify-content: space-around; padding: 0.55rem 0 calc(0.55rem + env(safe-area-inset-bottom)); z-index: 1000; }
+    .bottom-nav a { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #6b7c82; font-size: 0.7rem; font-weight: 500; }
+    .bottom-nav a i { font-size: 1.35rem; }
+    .bottom-nav a.active, .bottom-nav a:hover { color: var(--pm-primary-light); }
 
-    .small-listing-modern {
-      border: 1px solid #d9ece7;
-      border-radius: 14px;
-      background: #fafefe;
-      box-shadow: 0 1px 5px #e6f9f4;
-      margin-bottom: 1.4rem;
-      overflow: hidden;
-      cursor: pointer;
-      transition: box-shadow 0.18s, transform 0.18s, background 0.18s;
-      text-align: center;
-    }
-    .small-listing-modern:hover {
-      background: var(--pm-hover);
-      box-shadow: 0 4px 18px #b4dad9;
-      transform: translateY(-3px);
-    }
+    .marquee-container { background: #111; color: #eee; padding: 0.65rem 0; overflow: hidden; }
+    .marquee { display: flex; white-space: nowrap; animation: scroll 18s linear infinite; }
+    .marquee-content { display: inline-flex; gap: 3rem; font-weight: 600; font-size: 0.95rem; padding: 0 1rem; }
+    .marquee-content .highlight { color: var(--pm-accent); }
+    @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-    .listing-image-container {
-      width: 100%;
-      height: 120px;
-      background: #f7f7f7;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-bottom: 1px solid #e5f0ee;
-    }
+    /* Stats + Charts */
+    .stats-section { background: white; border-radius: 20px; padding: 1.5rem; margin: 2rem 0; box-shadow: var(--pm-shadow); }
+    .stat-card { text-align: center; padding: 0.8rem; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--pm-primary); }
+    .stat-label { font-size: 0.8rem; color: var(--pm-muted); }
+    .chart-container { position: relative; height: 220px; max-width: 320px; margin: 1rem auto; }
 
-    .small-listing-modern-img {
-      width: 120px;
-      height: 120px;
-      object-fit: cover;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      background: #f7f7f7;
-    }
+    /* Scroll animations */
+    .animate-on-scroll { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .animate-on-scroll.visible { opacity: 1; transform: translateY(0); }
 
-    .small-listing-info { padding: 12px 14px 16px; font-size: 0.98em; }
-    .small-listing-title { font-weight: 700; margin-bottom: 8px; font-size: 1.12em; }
+    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+    footer a { color: var(--pm-primary-light); text-decoration: none; }
 
-    .small-listing-category-badge {
-      font-size: 0.95em;
-      font-weight: 500;
-      border-radius: 10px;
-      background: #e6f6f5;
-      color: #2a5859;
-      padding: 4px 12px;
-      margin-bottom: 6px;
-      display: inline-block;
-    }
-
-    .small-listing-mile-badge {
-      font-size: 0.95em;
-      background: #eef8fa;
-      color: #357;
-      border-radius: 9px;
-      padding: 2px 12px 2px 8px;
-      margin-bottom: 6px;
-      margin-left: 6px;
-      display: inline-block;
-      white-space: nowrap;
-      border: 1px solid #e5eef3;
-      opacity: 0.93;
-    }
-
-    .small-listing-services {
-      color: #345;
-      opacity: 0.93;
-      font-size: 0.96em;
-      margin-top: 8px;
-      line-height: 1.4;
-    }
-
-    .small-listing-perks {
-      background: #feebe7;
-      color: #345;
-      opacity: 0.93;
-      font-size: 0.96em;
-      margin-top: 8px;
-      line-height: 1.4;
-    }
-
-    @media (max-width: 600px) {
-      .listing-image-container { height: 110px; }
-      .small-listing-modern-img { width: 100px; height: 100px; }
-      .small-listing-info { padding: 10px 12px 14px; }
-      .small-listing-title { font-size: 1.05em; }
-    }
-
-    /* Perk info section */
-    .perk-info-section { max-width: 900px; }
-    .perk-banner { width: 100%; margin-bottom: 2em; }
-    .perk-banner img { width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 14px; max-width: 100%; }
-    .perk-list { list-style: square; padding-left: 1.2em; font-size: 1.14em; }
-    .money-flow { padding-left: 1.2em; max-width: 700px; margin: 0 auto; }
-    .money-flow-note { font-size: .97em; color: #888; }
-    .money-summary { font-weight: 500; font-size: 1.1em; }
-    .site-tagline { max-width: 900px; margin: 0 auto 1rem; padding: 0 1rem; text-align: center; font-size: 0.95rem; color: #666; }
-
-    /* Footer */
-    footer { background: #f8fafb; color: #999; padding: 1.5rem 0; margin-top: 2.3rem; text-align: center; font-size: 1em; border-top: 1px solid #e1e7ea; }
-    footer a.footer-brand { color: var(--pm-primary); font-weight: 600; text-decoration: none; }
-    footer a.footer-support { color: var(--pm-primary); }
-    footer a.footer-legal { color: #3dbbee; margin: 0 6px; text-decoration: none; }
-    footer a.footer-directory { color: var(--pm-primary); text-decoration: none; font-weight: 600; }
-    footer a.footer-directory:hover { text-decoration: underline; }
-
-    /* Marquee */
-    .marquee-container {
-      --gap: 4rem;
-      width: 100%;
-      overflow: hidden;
-      background: #000;           /* Black */
-      color: #f2f2f2;             /* Light grey/white */
-      padding: 0.9rem 0;
-      margin: 0;
-      border-top: 2px solid var(--pm-accent);
-      border-bottom: 2px solid var(--pm-accent);
-      box-shadow: 0 2px 12px rgba(42,88,89,0.25);
-    }
-
-    .marquee {
-      display: flex;
-      white-space: nowrap;
-      animation: scroll 15s linear infinite; /* fallback if JS breaks */
-    }
-
-    .marquee:hover { animation-play-state: paused; cursor: default; }
-    .marquee-content {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--gap);
-      font-size: 1.35rem;
-      font-weight: 600;
-      padding: 0 2rem;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    .marquee-content span.highlight {
-      color: var(--pm-accent); /* Or change to #fff for plain white */
-      font-weight: 700;
-    }
-
-    @keyframes scroll {
-      from { transform: translateX(0); }
-      to   { transform: translateX(calc(-100% - var(--gap))); }
-    }
-
-    @media (max-width: 576px) {
-      .marquee-content { font-size: 1.1rem; }
-      .marquee-container { padding: 0.7rem 0; }
-    }
-
-    /* How It Works */
-    .how-it-works-section {
-      position: relative;
-      margin: 48px 0 0 0;
-      padding: 0;
-    }
-    .how-it-works-bg {
-      width: 100%;
-      min-height: 220px;
-      max-height: 360px;
-      object-fit: cover;
-      filter: brightness(0.74);
-      border-radius: 15px;
-      display: block;
-    }
-    .how-it-works-btn-outer {
-      position: absolute;
-      left: 0; top: 0; right: 0; bottom: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2;
-      pointer-events: none;
-    }
-    .how-it-works-btn-inner {
-      background: rgba(255,255,255,0.92);
-      border-radius: 2rem;
-      padding: 1.17rem 2.7rem;
-      box-shadow: 0 3px 24px rgba(40,40,40,0.12);
-      pointer-events: all;
-    }
-    @media (max-width: 575px) {
-      .how-it-works-bg { min-height: 120px; max-height: 150px; }
-      .how-it-works-btn-inner { padding: .7rem 1.15rem; font-size: 1.09em; }
+    @media (min-width: 992px) {
+      body { padding-bottom: 0; }
+      .bottom-nav { display: none; }
+      .hero h1 { font-size: 2.6rem; }
     }
   </style>
 </head>
 <body>
-  <section class="hero-section">
-    <div class="overlay"></div>
-    {% if current_user.is_authenticated %}
-      <div class="dashboard-btn-hero">
+
+<header class="app-header">
+  <div class="container d-flex align-items-center justify-content-between">
+    <a href="/" class="d-flex align-items-center text-decoration-none">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="logo">
+    </a>
+    <div class="header-cta d-flex gap-2">
+      {% if current_user.is_authenticated %}
         {% if current_user.business_email %}
-          <a href="{{ url_for('business_dashboard') }}" class="btn btn-warning shadow">Return to Dashboard</a>
+          <a href="{{ url_for('business_dashboard') }}" class="btn btn-warning btn-sm">Dashboard</a>
         {% else %}
-          <a href="{{ url_for('dashboard') }}" class="btn btn-warning shadow">Return to Dashboard</a>
+          <a href="{{ url_for('dashboard') }}" class="btn btn-warning btn-sm">Dashboard</a>
         {% endif %}
-      </div>
-    {% elif session.get('business_id') %}
-      <div class="dashboard-btn-hero">
-        <a href="{{ url_for('business_dashboard') }}" class="btn btn-warning shadow">Return to Dashboard</a>
-      </div>
-    {% endif %}
-    <div class="container hero-content">
-      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="hero-logo" fetchpriority="high">
-      <h1>DEMO SITE ONLY!</h1>
-      <h1>Exclusive Member Perks<br>plus 2% Cashback</h1>
-      <p class="h4">No Risk Advertising! (1000% ROAS min)<br>No Sale/Close = No Fee For Advertisers!</p>
-      <p class="trust-note">
-        Secure ⛨ | Not crypto | Privacy guaranteed
-      </p>
-      <form class="search-form mb-3" method="get" action="/search" role="search">
-        <div class="input-group mb-2">
-          <input type="text" class="form-control" name="q" placeholder="Search for products, services, or businesses..." aria-label="Search">
-          <select class="form-select" name="distance" style="max-width:110px;" aria-label="Distance">
+      {% elif session.get('business_id') %}
+        <a href="{{ url_for('business_dashboard') }}" class="btn btn-warning btn-sm">Dashboard</a>
+      {% else %}
+        <a href="/login" class="btn btn-outline-secondary btn-sm">Login</a>
+        <a href="/register" class="btn btn-warning btn-sm">Join Free</a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <h1>Get 2% Real Cash Back<br>on Everyday Purchases</h1>
+    <p class="sub">Free to join. Your data stays private.<br>Real cash paid by Perk Miner — not points or coupons.</p>
+    <div class="hero-cta mb-2">
+      <a href="/register" class="btn btn-primary btn-lg">Join Free — Start Earning</a>
+    </div>
+    <div class="trust-pills">
+      <span class="trust-pill">🔒 Privacy guaranteed</span>
+      <span class="trust-pill">💰 Real cash via Stripe</span>
+      <span class="trust-pill">🚫 Not crypto</span>
+      <span class="trust-pill">✅ No fees ever</span>
+    </div>
+    <div class="search-wrap">
+      <form class="search-form" method="get" action="/search" role="search">
+        <div class="input-group">
+          <input type="text" class="form-control" name="q" placeholder="Search businesses, services, products..." aria-label="Search">
+          <select class="form-select" name="distance" style="max-width:100px;" aria-label="Distance">
             <option value="">Closest</option>
             <option value="5">5 mi</option>
             <option value="10">10 mi</option>
@@ -494,51 +189,25 @@
         <input type="hidden" name="lat" id="search-lat">
         <input type="hidden" name="lng" id="search-lng">
       </form>
-
-      {% if current_user.is_authenticated %}
-
-      <div class="mt-3">
-        <a href="{{ url_for('online_marketplace') }}" class="btn btn-outline-light btn-sm">
-          Online Marketplace
-        </a>
-      </div>
-
-      <div class="container-fluid d-flex flex-wrap justify-content-center totals-section px-0">
-        <div class="totals-mini mx-1">
-          <div class="totals-label-mini">Member Cash Back<br>and Commissions Paid</div>
-          <div class="totals-value-mini text-success">${{ "{:,.2f}".format(total_member_paid|default(0, true)) }}</div>
-        </div>
-        <div class="totals-mini mx-1">
-          <div class="totals-label-mini">Business Cash Back<br>and Commissions Paid</div>
-          <div class="totals-value-mini text-primary">${{ "{:,.2f}".format(total_biz_paid|default(0, true)) }}</div>
-        </div>
-        <div class="totals-mini mx-1">
-          <div class="totals-label-mini">Gross Sales Generated<br>By Our Advertisers</div>
-          <div class="totals-value-mini text-dark">${{ "{:,.2f}".format(total_gross_sales|default(0, true)) }}</div>
-        </div>
-        <div class="totals-mini mx-1">
-          <div class="totals-label-mini">Advertising Fees<br>Paid By Advertisers</div>
-          <div class="totals-value-mini text-info">${{ "{:,.2f}".format(total_ad_fees|default(0, true)) }}</div>
-        </div>
-        <div class="totals-mini mx-1">
-          <div class="totals-label-mini">Percent of Ad Revenue<br>Paid To Members &amp; Businesses</div>
-          <div class="totals-value-mini text-warning">
-            {{ percent_fees_paid|default(0, true)|round(1) }}%
-          </div>
-        </div>
-      </div>
-      {% endif %}
-
     </div>
-  </section>
+    {% if current_user.is_authenticated %}
+    <div class="mt-3">
+      <a href="{{ url_for('online_marketplace') }}" class="btn btn-outline-light btn-sm">Online Marketplace</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
 
-  <div class="marquee-container">
-    <div class="marquee">
-      <div class="marquee-content" id="live-marquee">
-        *** DEMO SITE ONLY!! ***<span class="highlight">Free to Join - start earning cashback on real purchases (Paid By Perk Miner)</span>
-      </div>
+<div class="marquee-container">
+  <div class="marquee">
+    <div class="marquee-content" id="live-marquee">
+      <span>WE ARE LIVE</span>
+      <span class="highlight">Free to Join — Earn 2% real cash back on purchases</span>
+      <span>WE ARE LIVE</span>
+      <span class="highlight">Free to Join — Earn 2% real cash back on purchases</span>
     </div>
   </div>
+</div>
 
   <nav class="navbar navbar-expand-lg navbar-light bg-light mb-0" aria-label="Main navigation">
     <div class="container">
@@ -550,611 +219,293 @@
         <div class="navbar-nav ms-auto">
           <a class="nav-link" href="/login">Login</a>
           <a class="nav-link" href="/register">Register</a>
-          <a class="nav-link" href="/business">Advertise with Us</a>
           <a class="nav-link" href="/about">About Us</a>
           <a class="nav-link" href="/news">News</a>
           <a class="nav-link" href="/faq">FAQ</a>
           <a class="nav-link" href="/testimonials">Testimonials</a>
           <a class="nav-link" href="/public_profiles">Public Profiles</a>
-          <a class="nav-link" href="/intro">Videos</a>
+          <a class="nav-link" href="/business">Advertise With Us</a>
         </div>
       </div>
     </div>
   </nav>
 
-  <main class="container my-5">
-    <section class="categories-section">
-      <h2 class="categories-title">Browse by Popular Categories</h2>
+<section class="container">
+  <h2 class="section-title animate-on-scroll">Why Members Join</h2>
+  <div class="benefit-grid">
+    <div class="benefit-card animate-on-scroll"><i class="bi bi-cash-coin"></i><h3>2% Real Cash Back</h3><p>Up to $50 per purchase. Paid by Perk Miner to your bank.</p></div>
+    <div class="benefit-card animate-on-scroll"><i class="bi bi-shield-check"></i><h3>Total Privacy</h3><p>You control your data. One business at a time. No spam.</p></div>
+    <div class="benefit-card animate-on-scroll"><i class="bi bi-gift"></i><h3>Exclusive Perks</h3><p>Special offers from local businesses just for members.</p></div>
+    <div class="benefit-card animate-on-scroll"><i class="bi bi-people"></i><h3>Referral Earnings</h3><p>Earn when people & businesses you invite make real sales.</p></div>
+  </div>
+</section>
 
-      <div class="d-md-none text-center mb-3 swipe-hint">
-        ↔ Swipe to explore all categories
-      </div>
+<section class="container categories-section">
+  <h2 class="section-title animate-on-scroll">Browse by Category</h2>
+  <div class="d-md-none text-center mb-2 text-muted" style="font-size:0.85rem;">↔ Swipe to explore</div>
+  <div class="categories-scroll-wrap">
+    <div class="categories-row">
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Restaurant-Food-and-Drink', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Restaurant_d1ioep.jpg?auto=format&fit=crop&w=300&q=40" alt="Restaurant" class="category-image" loading="lazy"></div><div class="category-label">Restaurant / Food / Drink</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Shopping-and-Retail', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Retail_h510gq.jpg?auto=format&fit=crop&w=300&q=40" alt="Retail" class="category-image" loading="lazy"></div><div class="category-label">Shopping and Retail</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Home-and-Garden', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Home-Garden_lhssqa.jpg?auto=format&fit=crop&w=300&q=40" alt="Home" class="category-image" loading="lazy"></div><div class="category-label">Home and Garden</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Handyman-Contractor', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Handyman_ig9cin.jpg?auto=format&fit=crop&w=300&q=40" alt="Handyman" class="category-image" loading="lazy"></div><div class="category-label">Handyman / Contractor</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Auto-Service-Repair-Parts', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Auto-Service_iamnu3.jpg?auto=format&fit=crop&w=300&q=40" alt="Auto" class="category-image" loading="lazy"></div><div class="category-label">Auto Service / Parts</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Health-and-Beauty', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443067/health-and-beauty_pql4ha.jpg?auto=format&fit=crop&w=300&q=40" alt="Health" class="category-image" loading="lazy"></div><div class="category-label">Health and Beauty</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Sports-and-Recreation', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447451/sports_paavlw.jpg?auto=format&fit=crop&w=300&q=40" alt="Sports" class="category-image" loading="lazy"></div><div class="category-label">Sports and Recreation</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Real-Estate', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/real-estate_g40mrz.jpg?auto=format&fit=crop&w=300&q=40" alt="Real Estate" class="category-image" loading="lazy"></div><div class="category-label">Real Estate</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Pet-Service-and-Supplies', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/pet-services_j2h4pq.jpg?auto=format&fit=crop&w=300&q=40" alt="Pets" class="category-image" loading="lazy"></div><div class="category-label">Pet Services</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Travel-Lodging-Tourism', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/travel_m7izuq.jpg?auto=format&fit=crop&w=300&q=40" alt="Travel" class="category-image" loading="lazy"></div><div class="category-label">Travel / Lodging</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Gaming', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772483687/gaming_ymfsap.jpg?auto=format&fit=crop&w=300&q=40" alt="Gaming" class="category-image" loading="lazy"></div><div class="category-label">Gaming</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Professional-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/professional_iouq8n.jpg?auto=format&fit=crop&w=300&q=40" alt="Professional" class="category-image" loading="lazy"></div><div class="category-label">Professional Services</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Financial-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/financial-services_hwhybm.jpg?auto=format&fit=crop&w=300&q=40" alt="Financial" class="category-image" loading="lazy"></div><div class="category-label">Financial Services</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Events-and-Entertainment', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/entertainment_ubdbpn.jpg?auto=format&fit=crop&w=300&q=40" alt="Events" class="category-image" loading="lazy"></div><div class="category-label">Events & Entertainment</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Education-and-Training', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/education_k14lj9.jpg?auto=format&fit=crop&w=300&q=40" alt="Education" class="category-image" loading="lazy"></div><div class="category-label">Education & Training</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Wedding-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/wedding_otioqm.jpg?auto=format&fit=crop&w=300&q=40" alt="Wedding" class="category-image" loading="lazy"></div><div class="category-label">Wedding Services</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Transportation-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/transportation_himjmb.jpg?auto=format&fit=crop&w=300&q=40" alt="Transportation" class="category-image" loading="lazy"></div><div class="category-label">Transportation</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Legal-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/legal_rqbeqb.jpg?auto=format&fit=crop&w=300&q=40" alt="Legal" class="category-image" loading="lazy"></div><div class="category-label">Legal Services</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='All-Rentals', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447452/rentals_mllbe2.jpg?auto=format&fit=crop&w=300&q=40" alt="Rentals" class="category-image" loading="lazy"></div><div class="category-label">All Rentals</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Cleaning-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/cleaning_qriysn.jpg?auto=format&fit=crop&w=300&q=40" alt="Cleaning" class="category-image" loading="lazy"></div><div class="category-label">Cleaning Services</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Moving-and-Delivery', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438233/moving_hbaqgd.jpg?auto=format&fit=crop&w=300&q=40" alt="Moving" class="category-image" loading="lazy"></div><div class="category-label">Moving & Delivery</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Security-and-Protection', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/security_wuefwm.jpg?auto=format&fit=crop&w=300&q=40" alt="Security" class="category-image" loading="lazy"></div><div class="category-label">Security</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Industrial-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/industrial_g8djx5.jpg?auto=format&fit=crop&w=300&q=40" alt="Industrial" class="category-image" loading="lazy"></div><div class="category-label">Industrial Services</div></a></div>
+      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Other', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/other_tnemn7.jpg?auto=format&fit=crop&w=300&q=40" alt="Other" class="category-image" loading="lazy"></div><div class="category-label">Other</div></a></div>
+    </div>
+  </div>
+  <div class="more-btn-container">
+    <button class="more-btn" id="toggle-more">More Categories</button>
+  </div>
+</section>
 
-      <div class="categories-scroll-wrap">
-        <div class="categories-row">
-          <!-- 1 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Handyman-Contractor', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Handyman_ig9cin.jpg?auto=format&fit=crop&w=300&q=40" alt="Handyman-Contractor" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Handyman-Contractor</div>
-            </a>
-          </div>
-
-          <!-- 2 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Restaurant-Food-and-Drink', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Restaurant_d1ioep.jpg?auto=format&fit=crop&w=300&q=40" alt="Restaurant" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Restaurant/Food/Drink</div>
-            </a>
-          </div>
-
-          <!-- 3 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Auto-Service-Repair-Parts', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Auto-Service_iamnu3.jpg?auto=format&fit=crop&w=300&q=40" alt="Auto Parts &amp; Service" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Auto Service-Repair-Parts</div>
-            </a>
-          </div>
-
-          <!-- 4 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Home-and-Garden', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Home-Garden_lhssqa.jpg?auto=format&fit=crop&w=300&q=40" alt="Home and Garden" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Home and Garden</div>
-            </a>
-          </div>
-
-          <!-- 5 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Shopping-and-Retail', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Retail_h510gq.jpg?auto=format&fit=crop&w=300&q=40" alt="Retail Outlet" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Shopping and Retail</div>
-            </a>
-          </div>
-
-          <!-- 6 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Health-and-Beauty', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443067/health-and-beauty_pql4ha.jpg?auto=format&fit=crop&w=300&q=40" alt="Health and Beauty" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Health and Beauty</div>
-            </a>
-          </div>
-
-          <!-- 7 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Sports-and-Recreation', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447451/sports_paavlw.jpg?auto=format&fit=crop&w=300&q=40" alt="Sports and Recreation" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Sports and Recreation</div>
-            </a>
-          </div>
-
-          <!-- 8 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Real-Estate', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/real-estate_g40mrz.jpg?auto=format&fit=crop&w=300&q=40" alt="Real Estate" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Real Estate</div>
-            </a>
-          </div>
-
-          <!-- 9 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Pet-Service-and-Supplies', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/pet-services_j2h4pq.jpg?auto=format&fit=crop&w=300&q=40" alt="Pet Service and Supplies" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Pet Service and Supplies</div>
-            </a>
-          </div>
-
-          <!-- 10 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Travel-Lodging-Tourism', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/travel_m7izuq.jpg?auto=format&fit=crop&w=300&q=40" alt="Travel-Lodging-Tourism" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Travel-Lodging-Tourism</div>
-            </a>
-          </div>
-
-          <!-- 11 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Gaming', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772483687/gaming_ymfsap.jpg?auto=format&fit=crop&w=300&q=40" alt="Gaming" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Gaming</div>
-            </a>
-          </div>
-
-          <!-- 12 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Professional-Services', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/professional_iouq8n.jpg?auto=format&fit=crop&w=300&q=40" alt="Professional Services" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Professional Services</div>
-            </a>
-          </div>
-
-          <!-- 13 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Financial-Services', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/financial-services_hwhybm.jpg?auto=format&fit=crop&w=300&q=40" alt="Financial Services" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Financial Services</div>
-            </a>
-          </div>
-
-          <!-- 14 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Events-and-Entertainment', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/entertainment_ubdbpn.jpg?auto=format&fit=crop&w=300&q=40" alt="Events and Entertainment" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Events and Entertainment</div>
-            </a>
-          </div>
-
-          <!-- 15 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Education-and-Training', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/education_k14lj9.jpg?auto=format&fit=crop&w=300&q=40" alt="Education and Training" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Education and Training</div>
-            </a>
-          </div>
-
-          <!-- 16 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Wedding-Services', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/wedding_otioqm.jpg?auto=format&fit=crop&w=300&q=40" alt="Wedding Services" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Wedding Services</div>
-            </a>
-          </div>
-
-          <!-- 17 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Transportation-Services', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/transportation_himjmb.jpg?auto=format&fit=crop&w=300&q=40" alt="Transportation Services" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Transportation Services</div>
-            </a>
-          </div>
-
-          <!-- 18 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Legal-Services', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/legal_rqbeqb.jpg?auto=format&fit=crop&w=300&q=40" alt="Legal Services" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Legal Services</div>
-            </a>
-          </div>
-
-          <!-- 19 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='All-Rentals', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447452/rentals_mllbe2.jpg?auto=format&fit=crop&w=300&q=40" alt="All Rentals" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">All Rentals</div>
-            </a>
-          </div>
-
-          <!-- 20 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Cleaning-Services', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/cleaning_qriysn.jpg?auto=format&fit=crop&w=300&q=40" alt="Cleaning" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Cleaning Services</div>
-            </a>
-          </div>
-
-          <!-- 21 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Moving-and-Delivery', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438233/moving_hbaqgd.jpg?auto=format&fit=crop&w=300&q=40" alt="Moving" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Moving and Delivery</div>
-            </a>
-          </div>
-
-          <!-- 22 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Security-and-Protection', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/security_wuefwm.jpg?auto=format&fit=crop&w=300&q=40" alt="Security" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Security and Protection</div>
-            </a>
-          </div>
-
-          <!-- 23 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Industrial-Services', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/industrial_g8djx5.jpg?auto=format&fit=crop&w=300&q=40" alt="Industrial" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Industrial Services</div>
-            </a>
-          </div>
-
-          <!-- 24 -->
-          <div class="category-card-wrapper">
-            <a href="{{ url_for('category_browse', name='Other', lat=user_lat, lng=user_lng, distance=10) }}">
-              <div class="category-image-wrap">
-                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/other_tnemn7.jpg?auto=format&fit=crop&w=300&q=40" alt="Other" class="category-image" loading="lazy" decoding="async">
-                <div class="category-overlay"></div>
-              </div>
-              <div class="category-label">Other</div>
-            </a>
-          </div>
-
-          <div class="more-btn-container">
-            <button class="more-btn" id="toggle-more">More Categories</button>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <h2 class="h3 mt-5 mb-3 text-center">Featured Businesses Near You:<br>(within 10 miles):</h2>
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-      {% for biz in featured_listings %}
-      <div class="col">
-        <a href="{{ url_for('view_listing', biz_id=biz.id, distance_mi=biz.distance_mi, from_featured=1) }}" class="listing-link" rel="nofollow">
-          <div class="small-listing-modern">
-            {% if biz.profile_photo %}
-              <img src="{{ biz.profile_photo }}" class="small-listing-modern-img" alt="{{ biz.business_name }} logo" width="120" height="120" loading="lazy" decoding="async">
-            {% else %}
-              <div class="small-listing-modern-img d-flex align-items-center justify-content-center bg-light border">
-                <i class="bi bi-shop" style="font-size:1.6em; color:#2a5859;"></i>
-              </div>
+<section class="container">
+  <h2 class="section-title animate-on-scroll">Featured Near You</h2>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+    {% for biz in featured_listings %}
+    <div class="col animate-on-scroll">
+      <a href="{{ url_for('view_listing', biz_id=biz.id, distance_mi=biz.distance_mi, from_featured=1) }}" class="listing-link text-decoration-none">
+        <div class="small-listing-modern">
+          {% if biz.profile_photo %}
+            <img src="{{ biz.profile_photo }}" class="small-listing-modern-img d-block mx-auto mt-3" alt="{{ biz.business_name }}" width="100" height="100" loading="lazy" style="object-fit:cover; border-radius:12px;">
+          {% else %}
+            <div class="d-flex align-items-center justify-content-center bg-light mx-auto mt-3" style="width:100px; height:100px; border-radius:12px;"><i class="bi bi-shop" style="font-size:1.8rem; color:#2a5859;"></i></div>
+          {% endif %}
+          <div class="p-3 text-center">
+            <h3 class="h6 mb-1">{{ biz.business_name }}</h3>
+            <span class="badge bg-success mb-2">{{ biz.category }}</span>
+            {% if biz.distance_mi is defined and biz.distance_mi is not none %}
+              <div class="small text-muted"><i class="bi bi-geo-alt-fill"></i> {{ biz.distance_mi|round(2) }} mi</div>
             {% endif %}
-
-            <div class="card-body text-center px-3">
-              <h3 class="card-title h5 mb-2">{{ biz.business_name }}</h3>
-              <div class="mb-1 small" style="font-weight:500;">
-                <span class="badge bg-success">{{ biz.category }}</span>
-              </div>
-
-              {% if biz.distance_mi is defined and biz.distance_mi is not none %}
-                <span class="small-listing-mile-badge">
-                  <i class="bi bi-geo-alt-fill"></i>
-                  {{ biz.distance_mi|round(2) }} mi away
-                </span>
-                {% if biz.location_varies and biz.live_gps_lat and biz.live_gps_long %}
-                  <span class="badge bg-info text-dark ms-1" style="font-size:0.75rem;">
-                    live location
-                  </span>
-                {% endif %}
-              {% endif %}
-
-              <div class="mb-1">
-                {{ biz.address or "N/A" }}
-              </div>
-              <div class="mb-1 biz-services" title="{{ [biz.service_1, biz.service_2, biz.service_3, biz.service_4, biz.service_5, biz.service_6, biz.service_7, biz.service_8, biz.service_9, biz.service_10]|select|reject('equalto','')|join(', ') }}">
-                <strong>Services:</strong>
-                {% set services = [biz.service_1, biz.service_2, biz.service_3, biz.service_4, biz.service_5, biz.service_6, biz.service_7, biz.service_8, biz.service_9, biz.service_10] %}
-                {{ services|select|reject('equalto','')|join(', ') if services|select|reject('equalto','')|list else 'N/A' }}
-              </div>
-              <div class="small-listing-perks">
-                <strong>Perks:</strong> {{ biz.perks or "N/A" }}
-              </div>
-            </div>
+            <div class="small mt-2"><strong>Perks:</strong> {{ biz.perks or "Member perks available" }}</div>
           </div>
-        </a>
-      </div>
-      {% endfor %}
-      {% if featured_listings|length == 0 %}
-      <div class="col-12">
-        <div class="alert alert-warning text-center mt-2">
-          No featured businesses at this time.
         </div>
-      </div>
-      {% endif %}
+      </a>
     </div>
+    {% endfor %}
+    {% if featured_listings|length == 0 %}
+    <div class="col-12"><div class="alert alert-light text-center">No featured businesses yet.</div></div>
+    {% endif %}
+  </div>
+</section>
 
-    <!-- Featured Info Section with Banner Image -->
-    <section class="perk-info-section mx-auto mt-4">
-      <div class="perk-banner">
-        <img
-          src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1782128475/paradigm_shift_xgamzx.jpg?text=Perk+Miner+is+a+Paradigm+Shift+for+Business+and+Members"
-          alt="Perk Miner is a paradigm shift for business and members"
-          loading="lazy" decoding="async">
+{% if current_user.is_authenticated %}
+<section class="container">
+  <div class="stats-section animate-on-scroll">
+    <h2 class="section-title">Live Platform Stats</h2>
+    <div class="row text-center mb-3">
+      <div class="col-6 col-md-3 stat-card"><div class="stat-value" id="stat-member">${{ "{:,.2f}".format(total_member_paid|default(0, true)) }}</div><div class="stat-label">Paid to Members</div></div>
+      <div class="col-6 col-md-3 stat-card"><div class="stat-value" id="stat-biz">${{ "{:,.2f}".format(total_biz_paid|default(0, true)) }}</div><div class="stat-label">Paid to Businesses</div></div>
+      <div class="col-6 col-md-3 stat-card"><div class="stat-value" id="stat-gross">${{ "{:,.2f}".format(total_gross_sales|default(0, true)) }}</div><div class="stat-label">Gross Sales</div></div>
+      <div class="col-6 col-md-3 stat-card"><div class="stat-value" id="stat-percent">{{ percent_fees_paid|default(0, true)|round(1) }}%</div><div class="stat-label">Ad Revenue Paid Out</div></div>
+    </div>
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <div class="chart-container"><canvas id="payoutChart"></canvas></div>
       </div>
-
-      <div class="row justify-content-center">
-        <div class="col-12 col-md-6 mb-4">
-          <h2 class="h3 text-center mb-3">Member Perks</h2>
-          <ul class="perk-list">
-            <li><b>Free to Join:</b> no hidden fees, contracts or subscriptions.  You only need a valid email to register (payout setup is completed securely through Stripe).</li>
-            <li><b>Exclusive Perks</b> from every advertiser.</li>
-            <li><b>Earn unlimited 2% Cashback and referral commissions</b> on up to $2,500 of every purchase (paid by Perk Miner LLC).</li>
-            <li><b>Search &rarr; Pay &rarr; Earn Cashback &rarr; Invite &rarr</b> other members and business owners &rarr; <b>Earn referral commisions</b> from their purchases and sales.</li>
-            <li><b>Live provider tracking:</b> see your service provider's location when they're "on the way", and correct a wrong destination address.
-          </ul>
-          <h2 class="h3 text-center mb-3">How We Protect You</h2>
-          <ul class="perk-list">
-            <li><b>Member control of personal information:</b> We never share or sell your contact information as a lead.  You decide who gets your details and when, one business at a time.</li>
-            <li><b>Secure messaging:</b>  One member to one business at a time.</li>
-            <li>No unsolicited calls, spam or uninvited visitors, and no ads based on your searches.</li>
-          </ul>
-        </div>
-        <div class="col-12 col-md-6 mb-4">
-          <h2 class="h3 text-center mb-3">Business Perks</h2>
-          <ul class="perk-list">
-            <li><b>Zero wasted ad dollars!</b><br>(No Sale or Closed Deal = $0 in Fees.  Otherwise pay $1 per $10 sold ($250 max), a 1000% Return on Ad Spend or higher.</li>
-            <li><b>Earn unlimited 1% Cashback</b> on up to $2,500 of every finalized sale (paid by Perk Miner LLC), a 10% return of your ad fee, for offering at least one perk to members.</li>
-            <li><b>Earn referral commissions</b> from the businesses you invite (mutual payout: each business earns from the others' sales).</li>
-            <li><b>Customers pay you directly.</b> Perk Miner LLC does not collect payment for advertisers.</li>
-            <li><b>Only pay for results.</b> Never pay for leads, traffic, appointments, or meet-ups.</li>
-            <li><b>Real-Time Analytics:</b> gross sales, ad fees, net and ROI.</li>
-            <li><b>Live tracking</b> of your service providers in the field when they set their status to "on the way", with member confirmed addresses.  No more wasted fuel or time at the wrong address, at no cost to you.</li>
-            <li><b>Free to list, ever,</b> with no subscriptions, contracts, or commitments.  Fund your account with $25 or more (not a fee; it stays in your balance until a sale or close and covers the ad fee.</li>
-            <li><b>Keep enough balance to finalize transactions</b> (10% of the sale, capped at $250 per transaction, with no other fees).</li>
-          </ul>
-        </div>
-      </div>
-
-      <h2 class="h3 text-center mt-2 mb-3">How Money Flows:</h2>
-      <ol class="money-flow">
-        <li>Member searches for a business/product/service</li>
-        <li>Member is connected to one business at a time</li>
-        <li>Member pays for the purchase or for services rendered (paying the business directly)</li>
-        <li>Business finalizes the transaction &amp; Perk Miner 10% fee (max $250) is deducted from the business account balance</li>
-        <li>Fee is split into Cashback/Referral Commissions and Perk Miner platform revenue<br>
-          <span class="money-flow-note">(Up to 84% paid out to members and advertisers from each finalized transaction)</span>
-        </li>
-      </ol>
-      <div class="text-center mt-3 mb-0 money-summary">
-        <b>Members and advertisers earn referral commissions</b> from real purchases and sales (not from invites).
-      </div>
-    </section>
-    <!-- END of Perk-Info Section -->
-
-  </main>
-
-  <!-- How It Works section with image and overlay button -->
-  <section class="how-it-works-section container mt-5 mb-4 px-0">
-    <div style="width:100%; max-width:950px; margin:0 auto; position:relative;">
-      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1774196020/purchase_ntjk5q.jpg?fit=crop&w=1200&q=80"
-           alt="How Perk Miner works: members purchase from businesses and earn cashback"
-           style="width:100%; border-radius:20px; object-fit:cover; max-height:340px;"
-           loading="lazy" decoding="async">
-      <div class="how-it-works-btn-outer">
-        <div class="how-it-works-btn-inner">
-          <a href="{{ url_for('how_it_works') }}" class="btn btn-primary btn-xl fs-4 shadow-lg px-4 py-2" style="font-weight:600;">
-            <i class="bi bi-info-circle"></i> How It Works
-          </a>
-        </div>
+      <div class="col-md-6">
+        <div class="chart-container"><canvas id="salesChart"></canvas></div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
+{% endif %}
 
-  <footer>
-    <div>
-      <div class="mb-2">
-        <a href="/" class="footer-brand">
-          <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="hero-logo" style="height:54px;" loading="lazy" decoding="async">
-        </a> &copy; 2026<br>Not a crypto mining site
-      </div>
-      <div>
-        <small>Need help? <a href="mailto:fromperkminer@gmail.com" class="footer-support">Contact Support</a></small>
-      </div>
-      <div class="mt-1">
-        <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener" class="footer-legal">Privacy</a>
-        <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener" class="footer-legal">Terms</a>
-      </div>
-      <div class="mt-2">
-        <a href="{{ url_for('public_profiles_directory') }}" class="footer-directory">
-          Browse all Perk Miner Public Profiles
-        </a>
-      </div>
-    </div>
-  </footer>
+<section class="container mt-4">
+  <h2 class="section-title animate-on-scroll">Member Benefits</h2>
+  <div class="detail-card animate-on-scroll"><h3><i class="bi bi-cash-stack me-2"></i>2% Real Cash Back</h3><ul><li>Earn 2% on up to $2,500 of every purchase (max $50).</li><li>Example: $100 → $2 back. $500 → $10 back.</li><li>Real cash paid by Perk Miner via Stripe.</li></ul></div>
+  <div class="detail-card animate-on-scroll"><h3><i class="bi bi-shield-lock me-2"></i>Your Privacy Is Protected</h3><ul><li>We never sell or share your contact info.</li><li>Secure 1-to-1 messaging. You control what you share.</li><li>No spam, no unsolicited calls.</li></ul></div>
+  <div class="detail-card animate-on-scroll"><h3><i class="bi bi-geo-alt me-2"></i>Live Tracking + Exclusive Perks</h3><ul><li>See provider location and ETA when “on the way.”</li><li>Correct destination address if needed.</li><li>Member-only perks from businesses.</li></ul></div>
+  <div class="detail-card animate-on-scroll"><h3><i class="bi bi-share me-2"></i>Referral Commissions</h3><ul><li>Earn when people and businesses you invite generate real sales.</li><li>Only on finalized transactions — never for mere invites.</li></ul></div>
+</section>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<section class="container">
+  <h2 class="section-title animate-on-scroll">How It Works</h2>
+  <div class="steps">
+    <div class="step animate-on-scroll"><div class="step-num">1</div><div>Search and choose a business.</div></div>
+    <div class="step animate-on-scroll"><div class="step-num">2</div><div>Connect privately and pay the business directly.</div></div>
+    <div class="step animate-on-scroll"><div class="step-num">3</div><div>Business finalizes. Your 2% appears instantly.</div></div>
+    <div class="step animate-on-scroll"><div class="step-num">4</div><div>Withdraw real cash once you reach $10.</div></div>
+  </div>
+  <div class="text-center mt-3 animate-on-scroll"><a href="{{ url_for('how_it_works') }}" class="btn btn-outline-primary rounded-pill">See Full Details</a></div>
+</section>
+
+<section class="container mt-4 mb-5">
+  <div class="detail-card text-center animate-on-scroll" style="background:#f0f7f7;">
+    <h3 class="h5">For Business Owners</h3>
+    <p class="mb-2">Zero risk advertising. Pay only when a sale closes (minimum 1000% ROAS). Free to list.</p>
+    <a href="/business" class="btn btn-outline-success btn-sm rounded-pill">Learn More</a>
+  </div>
+</section>
+
+<nav class="bottom-nav">
+  <a href="/" class="active"><i class="bi bi-house-fill"></i>Home</a>
+  {% if current_user.is_authenticated %}
+    <a href="{{ url_for('dashboard') }}"><i class="bi bi-bar-chart-line-fill"></i>Dashboard</a>
+  {% else %}
+    <a href="/login"><i class="bi bi-person-circle"></i>Sign In</a>
+  {% endif %}
+  <a href="/intro"><i class="bi bi-camera-reels"></i>Videos</a>
+  <a href="/business"><i class="bi bi-building"></i>Advertise</a>
+
+</nav>
+
+<footer>
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-  // Desktop collapse logic (always available)
-  const toggleBtn = document.getElementById('toggle-more');
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', () => {
-      const cards = document.querySelectorAll('.category-card-wrapper');
-      const isExpanded = toggleBtn.classList.contains('expanded');
-
-      if (isExpanded) {
-        // Collapse - hide cards 5 and beyond
-        Array.from(cards).slice(4).forEach(card => {
-          card.style.display = 'none';
-        });
-        toggleBtn.textContent = 'More Categories';
-        toggleBtn.classList.remove('expanded');
-      } else {
-        // Expand - show all cards
-        Array.from(cards).slice(4).forEach(card => {
-          card.style.display = 'block';
-        });
-        toggleBtn.textContent = 'Show Fewer Categories';
-        toggleBtn.classList.add('expanded');
+// Scroll animations
+document.addEventListener('DOMContentLoaded', () => {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
       }
     });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+});
 
-    // Initial state on desktop: hide cards after the first 4
-    if (window.innerWidth >= 992) {
-      const cards = document.querySelectorAll('.category-card-wrapper');
-      Array.from(cards).slice(4).forEach(card => {
-        card.style.display = 'none';
-      });
+// Categories toggle (desktop)
+const toggleBtn = document.getElementById('toggle-more');
+if (toggleBtn) {
+  toggleBtn.addEventListener('click', () => {
+    const cards = document.querySelectorAll('.category-card-wrapper');
+    const isExpanded = toggleBtn.classList.contains('expanded');
+    if (isExpanded) {
+      cards.forEach((card, i) => { if (i >= 4) card.style.display = 'none'; });
+      toggleBtn.textContent = 'More Categories';
+      toggleBtn.classList.remove('expanded');
+    } else {
+      cards.forEach(card => card.style.display = 'block');
+      toggleBtn.textContent = 'Show Fewer';
+      toggleBtn.classList.add('expanded');
     }
-  }
-</script>
-
-<script>
-  // marquee speed logic (always available)
-  document.addEventListener("DOMContentLoaded", function() {
-    const marquee = document.querySelector('.marquee');
-    const content = document.querySelector('.marquee-content');
-    if (!marquee || !content) return;
-
-    function setMarqueeSpeed() {
-      const gap = parseFloat(
-        getComputedStyle(document.documentElement).getPropertyValue('--gap')
-      ) || 64;
-      const distance = content.offsetWidth + gap;
-      const pxPerSec = 80;
-      const duration = distance / pxPerSec;
-      marquee.style.animationDuration = duration + 's';
-    }
-
-    setMarqueeSpeed();
-    window.addEventListener('resize', setMarqueeSpeed);
   });
+  if (window.innerWidth >= 992) {
+    document.querySelectorAll('.category-card-wrapper').forEach((card, i) => {
+      if (i >= 4) card.style.display = 'none';
+    });
+  }
+}
+
+// Marquee
+document.addEventListener("DOMContentLoaded", function() {
+  const marquee = document.querySelector('.marquee');
+  const content = document.querySelector('.marquee-content');
+  if (marquee && content) {
+    function setSpeed() {
+      const distance = content.offsetWidth / 2;
+      marquee.style.animationDuration = (distance / 60) + 's';
+    }
+    setSpeed();
+    window.addEventListener('resize', setSpeed);
+  }
+});
 </script>
 
 {% if current_user.is_authenticated %}
 <script>
-  // Geolocation scripts for logged-in members only (search lat/lng)
-  window.addEventListener('DOMContentLoaded', function() {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(function(position) {
-        const latInput = document.getElementById('search-lat');
-        const lngInput = document.getElementById('search-lng');
-        if (!latInput || !lngInput) return;
-
+// Geolocation
+window.addEventListener('DOMContentLoaded', function() {
+  if ('geolocation' in navigator) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const latInput = document.getElementById('search-lat');
+      const lngInput = document.getElementById('search-lng');
+      if (latInput && lngInput) {
         latInput.value = position.coords.latitude;
         lngInput.value = position.coords.longitude;
-      });
-    }
-  });
-
-  window.addEventListener('DOMContentLoaded', function() {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(function(position) {
-        var lat = position.coords.latitude;
-        var lng = position.coords.longitude;
-        var url = new URL(window.location.href);
-        var hasLatLng = url.searchParams.has('lat') && url.searchParams.has('lng');
-
-        if (!hasLatLng) {
-          url.searchParams.set('lat', lat);
-          url.searchParams.set('lng', lng);
-          window.location.replace(url);
-        } else {
-          const latInput = document.getElementById('search-lat');
-          const lngInput = document.getElementById('search-lng');
-          if (latInput && lngInput) {
-            latInput.value = lat;
-            lngInput.value = lng;
-          }
-        }
-      });
-    }
-  });
-</script>
-
-<script>
-  // live stats for marquee (logged-in members only)
-  document.addEventListener('DOMContentLoaded', function () {
-    const marqueeEl = document.getElementById('live-marquee');
-    if (!marqueeEl) return;
-
-    async function updateMarqueeOnce() {
-      try {
-        const resp = await fetch('/stats', { cache: 'no-store' });
-        if (!resp.ok) return;
-
-        const data = await resp.json();
-        const members = data.members ?? 0;
-        const advertisers = data.advertisers ?? 0;
-
-        const text =
-          `*** DEMO SITE ONLY!! *** LIVE STATS *** ` +
-          `Members:<span class="highlight">${members.toLocaleString()}</span> ` +
-          `Businesses:<span class="highlight">${advertisers.toLocaleString()}</span> ` +
-          `|    Free to join - always free.  Start earning cashback and referral commissions on real purchases (Paid by Perk Miner)`;
-
-        marqueeEl.innerHTML = text;
-      } catch (err) {
-        console.error('Failed to update marquee stats:', err);
       }
-    }
+      var url = new URL(window.location.href);
+      if (!url.searchParams.has('lat')) {
+        url.searchParams.set('lat', position.coords.latitude);
+        url.searchParams.set('lng', position.coords.longitude);
+        window.location.replace(url);
+      }
+    });
+  }
+});
 
-    updateMarqueeOnce();
-    const POLL_MS = 45000;
-    setInterval(updateMarqueeOnce, POLL_MS);
+// Charts
+document.addEventListener('DOMContentLoaded', function() {
+  const memberPaid = {{ total_member_paid|default(0, true) }};
+  const bizPaid = {{ total_biz_paid|default(0, true) }};
+  const adFees = {{ total_ad_fees|default(0, true) }};
+  const gross = {{ total_gross_sales|default(0, true) }};
+  const remaining = Math.max(0, adFees - memberPaid - bizPaid);
+
+  new Chart(document.getElementById('payoutChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Paid to Members', 'Paid to Businesses', 'Platform'],
+      datasets: [{ data: [memberPaid, bizPaid, remaining], backgroundColor: ['#2a5859', '#ffd66b', '#e0e0e0'], borderWidth: 0 }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Ad Fee Distribution' } } }
   });
-</script>
 
-<script>
-  // push member location to /api/me/location (logged-in members only)
-  document.addEventListener('DOMContentLoaded', function() {
-    if (!navigator.geolocation) {
-      return;
-    }
+  new Chart(document.getElementById('salesChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Gross Sales', 'Ad Fees Collected'],
+      datasets: [{ label: 'Amount', data: [gross, adFees], backgroundColor: ['#2a5859', '#ffd66b'], borderRadius: 8 }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false }, title: { display: true, text: 'Sales vs Fees' } }, scales: { y: { beginAtZero: true } } }
+  });
+});
 
+// Live marquee stats
+document.addEventListener('DOMContentLoaded', function () {
+  const marqueeEl = document.getElementById('live-marquee');
+  if (!marqueeEl) return;
+  async function updateMarquee() {
+    try {
+      const resp = await fetch('/stats', { cache: 'no-store' });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const members = data.members ?? 0;
+      const advertisers = data.advertisers ?? 0;
+      marqueeEl.innerHTML = `WE ARE LIVE · Members: <span class="highlight">${members.toLocaleString()}</span> · Businesses: <span class="highlight">${advertisers.toLocaleString()}</span> · Free to join & earn real cash back`;
+    } catch (e) {}
+  }
+  updateMarquee();
+  setInterval(updateMarquee, 45000);
+});
+
+// Location update
+document.addEventListener('DOMContentLoaded', function() {
+  if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function(pos) {
-      var lat = pos.coords.latitude;
-      var lng = pos.coords.longitude;
-
       fetch("/api/me/location", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lat: lat, lng: lng })
-      }).catch(function(err) {
-        console.error("home: location update failed", err);
-      });
-    }, function(error) {
-      // user denied or error; ignore
+        body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+      }).catch(() => {});
     });
-  });
+  }
+});
 </script>
 {% endif %}
 

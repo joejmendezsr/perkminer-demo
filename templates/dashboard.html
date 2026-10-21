@@ -1,20 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>User Dashboard - PerkMiner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
         :root {
           --pm-primary: #2a5859;
+          --pm-primary-dark: #1e4a4b;
+          --pm-primary-light: #2a5859;
           --pm-accent: #ffd66b;
-          --pm-bg: #fff;
+          --pm-bg: #f4f8f9;
           --pm-text: #222;
           --pm-hover: #e6f6f5;
           --pm-focus: #fadd92;
+          --pm-muted: #5c6b73;
+          --pm-shadow: 0 2px 16px #e3eee9;
         }
+        html { scroll-behavior: smooth; }
         body {
           background: var(--pm-bg);
           color: var(--pm-text);
@@ -26,9 +33,10 @@
           box-shadow: 0 2px 8px #f0f2f3;
         }
         .card, .dashboard-section {
-          background: #f8fafb;
+          background: #ffffff;
           border-radius: 16px;
-          box-shadow: 0 2px 16px #e3eee9;
+          border: 1px solid #e8f0f2;
+          box-shadow: var(--pm-shadow);
           margin-bottom: 1.5rem;
           transition: box-shadow 0.2s;
         }
@@ -50,6 +58,7 @@
           display: flex; align-items: center; justify-content: center;
           font-size: 2.4em;
           border: 2px solid var(--pm-primary);
+          margin: 0 auto;
         }
         .btn-primary, .btn-success {
           background: var(--pm-primary);
@@ -87,17 +96,199 @@
             font-size: 1.5em;
           }
         }
-        footer {
-          background: #f8fafb;
-          color: #999;
-          padding: 1.5rem 0;
-          margin-top: 3rem;
-          text-align: center;
-          font-size: 1em;
-          border-top: 1px solid #e1e7ea;
+
+        /* Footer */
+        footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+        footer a { color: var(--pm-primary-light); text-decoration: none; }
+
+        /* ---------- Dashboard structure ---------- */
+        .dash-hero { padding: 1.4rem 1.4rem 1.2rem; }
+        .dash-hero .welcome-title { font-weight: 800; color: var(--pm-primary-dark); line-height: 1.2; }
+        .balance-tile {
+          background: linear-gradient(145deg, #1e4a4b 0%, #2a5859 70%, #3a6d6e 100%);
+          color: #fff;
+          border-radius: 14px;
+          padding: .9rem 1.1rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+        .balance-tile .balance-label { font-size: .8rem; opacity: .85; text-transform: uppercase; letter-spacing: .04em; }
+        .balance-tile .balance-amt { font-size: 1.7rem; font-weight: 800; color: var(--pm-accent); line-height: 1.1; }
+
+        .dash-nav {
+          display: flex; gap: .5rem; overflow-x: auto; white-space: nowrap;
+          padding: .2rem .1rem .7rem; margin-bottom: .6rem;
+          scrollbar-width: none;
+        }
+        .dash-nav::-webkit-scrollbar { display: none; }
+        .dash-nav a {
+          flex: 0 0 auto;
+          text-decoration: none; font-weight: 600; font-size: .9rem;
+          color: var(--pm-primary); background: #fff;
+          border: 1px solid #d9ece7; border-radius: 999px;
+          padding: .4rem .95rem;
+        }
+        .dash-nav a:hover { background: var(--pm-hover); }
+
+        .dash-section-head {
+          display: flex; align-items: center; gap: .6rem;
+          margin: 1.8rem 0 .9rem;
+          scroll-margin-top: 12px;
+        }
+        .dash-section-head .icon-badge {
+          width: 38px; height: 38px; border-radius: 12px;
+          background: var(--pm-primary); color: #fff;
+          display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+        }
+        .dash-section-head h3 { font-size: 1.3rem; font-weight: 800; color: var(--pm-primary-dark); margin: 0; }
+
+        .kpi-tile { padding: 1.1rem 1.1rem; height: 100%; margin-bottom: 0; }
+        .kpi-tile .kpi-icon {
+          width: 40px; height: 40px; border-radius: 12px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 1.2rem; margin-bottom: .6rem;
+        }
+        .kpi-tile .kpi-label { font-size: .8rem; color: var(--pm-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+        .kpi-tile .kpi-value { font-size: 1.55rem; font-weight: 800; color: var(--pm-primary-dark); line-height: 1.15; word-break: break-word; }
+        .kpi-green { background: #e3f4ea; color: #146c43; }
+        .kpi-gold { background: #fff3cf; color: #8a5a00; }
+        .kpi-teal { background: #e0f1f1; color: #2a5859; }
+        .kpi-blue { background: #e4eefc; color: #0b5ed7; }
+
+        .chart-card { padding: 1.1rem 1.1rem 1rem; height: 100%; margin-bottom: 0; }
+        .chart-card h5 { font-size: 1rem; font-weight: 700; color: var(--pm-primary-dark); margin-bottom: .6rem; }
+        .chart-box { position: relative; height: 230px; }
+        .chart-empty {
+          position: absolute; inset: 0; display: none;
+          align-items: center; justify-content: center; text-align: center;
+          color: var(--pm-muted); font-size: .92rem; padding: 1rem;
+        }
+
+        .summary-row {
+          display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+          padding: .6rem 0; border-bottom: 1px dashed #e3eceb;
+        }
+        .summary-row:last-child { border-bottom: 0; }
+        .summary-row .s-label { color: var(--pm-muted); font-weight: 500; }
+        .summary-row .s-value { font-weight: 700; color: var(--pm-primary-dark); }
+
+        .card-title-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .8rem; }
+        .card-title-row h4, .card-title-row h5 { margin: 0; font-weight: 800; color: var(--pm-primary-dark); }
+        .card-title-row i { color: var(--pm-primary); font-size: 1.25rem; }
+
+        .referral-code-pill {
+          display: inline-block; background: #fff8e1; border: 1px dashed #e0b84a;
+          color: #7a5a00; font-weight: 800; font-size: 1.25rem;
+          border-radius: 12px; padding: .45rem 1rem; letter-spacing: .04em;
+          word-break: break-all;
+        }
+
+        .network-tier {
+          display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+          background: #f6fafa; border: 1px solid #e1eeee; border-radius: 12px;
+          padding: .7rem 1rem; margin-bottom: .5rem;
+          text-decoration: none; color: var(--pm-primary-dark); font-weight: 700;
+        }
+        .network-tier:hover { background: var(--pm-hover); }
+
+        /* ---------- Calculators ---------- */
+        .calc-card { padding: 0; overflow: hidden; height: 100%; margin-bottom: 0; }
+        .calc-head {
+          background: linear-gradient(145deg, #1e4a4b 0%, #2a5859 70%, #3a6d6e 100%);
+          color: #fff; padding: 1rem 1.25rem;
+          display: flex; align-items: center; gap: .75rem;
+        }
+        .calc-head .calc-icon {
+          width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,.16);
+          display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+        }
+        .calc-head h4 { font-size: 1.05rem; font-weight: 700; margin: 0; line-height: 1.3; }
+        .calc-head small { opacity: .85; }
+        .calc-body { padding: 1.25rem; }
+        .calc-result {
+          background: linear-gradient(145deg, #e9f7ef 0%, #f3fbf6 100%);
+          border: 1px solid #bfe3cf; border-radius: 14px;
+          padding: 1rem 1.1rem; margin-top: 1rem; text-align: center;
+        }
+        .calc-result .calc-result-desc { color: var(--pm-muted); font-weight: 600; margin-bottom: .2rem; }
+        .calc-result .calc-result-amt { font-size: 2rem; font-weight: 800; color: #146c43; line-height: 1.1; }
+        .calc-result .calc-result-note { color: #374759; font-size: .95rem; margin-top: .2rem; }
+        .tier-table { width: 100%; font-size: .95rem; }
+        .tier-table td { padding: .45rem .25rem; border-bottom: 1px solid #edf2f2; }
+        .tier-table td:last-child { text-align: right; font-weight: 700; color: var(--pm-primary-dark); white-space: nowrap; }
+        .tier-total {
+          display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+          background: #e9f7ef; border: 1px solid #bfe3cf; border-radius: 12px;
+          padding: .75rem 1rem; margin-top: .8rem; font-weight: 700; color: #146c43;
+        }
+        .tier-total .tier-total-amt { font-size: 1.4rem; font-weight: 800; }
+
+        /* ---------- Profile wizard (2 steps) ---------- */
+        .wizard-card { padding: 0; overflow: hidden; border-radius: 20px; margin-bottom: 1.5rem; }
+        .wizard-head {
+          background: linear-gradient(145deg, #1e4a4b 0%, #2a5859 60%, #3a6d6e 100%);
+          color: #fff; padding: 1.1rem 1.25rem 1rem;
+        }
+        .wizard-step-label { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
+        .wizard-step-sub { opacity: .9; font-size: .95rem; }
+        .wizard-progress { height: 8px; background: rgba(255,255,255,.25); border-radius: 999px; overflow: hidden; margin-top: .8rem; }
+        .wizard-progress-bar { height: 100%; width: 0; background: var(--pm-accent); border-radius: 999px; transition: width .3s ease; }
+        .wizard-body { padding: 1.5rem 1.25rem 1.4rem; background: #fff; }
+        .wizard-step { display: none; }
+        .wizard-step.active { display: block; animation: wizFade .25s ease; }
+        @keyframes wizFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .wizard-title { font-size: 1.3rem; font-weight: 800; color: var(--pm-primary-dark); margin-bottom: .35rem; display: flex; align-items: center; gap: .5rem; }
+        .wizard-title i { color: var(--pm-primary); }
+        .wizard-help { color: var(--pm-muted); margin-bottom: 1.1rem; }
+        .wizard-nav { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1.5rem; }
+        .wizard-nav .btn { flex: 1 1 140px; padding: .65rem 1rem; font-weight: 600; border-radius: 12px; }
+        .step-error {
+          display: none; background: #fdecec; color: #a12828; border: 1px solid #f4c4c4;
+          border-radius: 10px; padding: .55rem .85rem; margin-top: 1rem; font-weight: 500; font-size: .95rem;
+        }
+        .step-error.show { display: block; }
+        .photo-preview-wrap { text-align: center; margin-bottom: 1rem; }
+        .photo-preview-wrap img.photo-preview {
+          width: 150px; height: 150px; object-fit: cover; border-radius: 50%;
+          border: 3px solid var(--pm-primary); background: var(--pm-hover);
         }
     </style>
     <script>
+      let memberNetChart = null;
+      let bizNetChart = null;
+
+      function buildTierChart(existing, canvasId, values, colors) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas || !window.Chart) return existing;
+        var vals = values.map(function (v) { return Number(v.toFixed(2)); });
+        if (existing) {
+          existing.data.datasets[0].data = vals;
+          existing.update();
+          return existing;
+        }
+        return new Chart(canvas, {
+          type: 'bar',
+          data: {
+            labels: ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5'],
+            datasets: [{
+              label: 'Earnings ($)',
+              data: vals,
+              backgroundColor: colors,
+              borderRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+          }
+        });
+      }
+
       function calculateNetworkEarnings() {
         let numPeople = parseInt(document.getElementById('network_people').value, 10) || 0;
         let amount = parseFloat(document.getElementById('network_amount').value) || 0;
@@ -116,6 +307,9 @@
         document.getElementById('network_t5').innerText = t5.toFixed(2);
         document.getElementById('network_total').innerText = total.toFixed(2);
         document.getElementById('network_results').style.display = 'block';
+
+        memberNetChart = buildTierChart(memberNetChart, 'network_chart', [t1, t2, t3, t4, t5],
+          ['#2a5859', '#3a6d6e', '#5b9a9b', '#ffd66b', '#f0b429']);
       }
 
       function calculateSingleReward() {
@@ -141,8 +335,11 @@
         }
         let out = '';
         if (amount > 0) {
-          out += `<h5 class='mt-4 mb-2'>${desc} of $${amount.toFixed(2)}:</h5>`;
-          out += `<div class='alert alert-success'>You earn <strong>$${reward.toFixed(2)}</strong> as cashback or commission${cap?` (capped at $${cap.toFixed(2)}).`:"."}</div>`;
+          out += `<div class="calc-result">`;
+          out += `<div class="calc-result-desc">${desc} of $${amount.toFixed(2)}:</div>`;
+          out += `<div class="calc-result-amt">$${reward.toFixed(2)}</div>`;
+          out += `<div class="calc-result-note">You earn <strong>$${reward.toFixed(2)}</strong> as cashback or commission${cap?` (capped at $${cap.toFixed(2)}).`:"."}</div>`;
+          out += `</div>`;
         }
         document.getElementById('rewards_output').innerHTML = out;
       }
@@ -185,10 +382,14 @@
         document.getElementById('biz_total').innerText = total.toFixed(2);
 
         document.getElementById('biz_results').style.display = 'block';
+
+        bizNetChart = buildTierChart(bizNetChart, 'biz_chart', earnings,
+          ['#1e4a4b', '#2a5859', '#5b9a9b', '#ffd66b', '#f0b429']);
       }
     </script>
 </head>
 <body>
+
 <!-- Persistent navbar with home link -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
     <div class="container">
@@ -197,77 +398,199 @@
         <span class="nav-link disabled">{{ email }}</span>
       </div>
     </div>
-</nav>  
+</nav>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="container">
+      <div class="alert alert-warning">
+        {% for message in messages %}
+          {{ message }}<br>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+{% endwith %}
+
+{# ---- network tier counts (used for tier badges and the network charts) ---- #}
+{% set ns = namespace(m2=0, m3=0, m4=0, m5=0, b1=0, b2=0, b3=0, b4=0, b5=0) %}
+{% for u in (level2 or []) %}{% set ns.m2 = ns.m2 + 1 %}{% endfor %}
+{% for u in (level3 or []) %}{% set ns.m3 = ns.m3 + 1 %}{% endfor %}
+{% for u in (level4 or []) %}{% set ns.m4 = ns.m4 + 1 %}{% endfor %}
+{% for u in (level5 or []) %}{% set ns.m5 = ns.m5 + 1 %}{% endfor %}
+{% for b in (biz_level1 or []) %}{% set ns.b1 = ns.b1 + 1 %}{% endfor %}
+{% for b in (biz_level2 or []) %}{% set ns.b2 = ns.b2 + 1 %}{% endfor %}
+{% for b in (biz_level3 or []) %}{% set ns.b3 = ns.b3 + 1 %}{% endfor %}
+{% for b in (biz_level4 or []) %}{% set ns.b4 = ns.b4 + 1 %}{% endfor %}
+{% for b in (biz_level5 or []) %}{% set ns.b5 = ns.b5 + 1 %}{% endfor %}
+
 <!-- ==== Admin Area Button (only for admin users) ==== -->
-{% if current_user.has_role('finance') 
+{% if current_user.has_role('finance')
    or current_user.has_role('approve_reject_listings')
+   or current_user.has_role('approve_reject_testimonials')
    or current_user.has_role('feedback_moderation')
    or current_user.has_role('customer_support')
+   or current_user.has_role('ecommerce')
    or current_user.has_role('super_admin') %}
   <div class="container mb-3">
     <a href="{{ url_for('admin_roles_landing') }}" class="btn btn-warning btn-lg w-100 mb-3">
       <i class="bi bi-shield-lock-fill me-1"></i> Go to Admin Dashboard
+      {% if admin_pending_total and admin_pending_total > 0 %}
+        <span class="badge bg-danger ms-2">{{ admin_pending_total }}</span>
+      {% endif %}
     </a>
   </div>
 {% endif %}
 
-<div class="container">
-<div class="card mb-4 p-4">
-  <div class="d-flex align-items-center flex-wrap mb-3">
-    {% if profile_img_url %}
-      <img src="{{ profile_img_url }}" alt="Profile Photo" class="profile-pic me-3">
-    {% else %}
-      <div class="placeholder-pic me-3"><i class="bi bi-person"></i></div>
-    {% endif %}
-    <div>
-      <h2 class="mb-0">Welcome, {{ user_name if user_name else email }}!</h2>
-    </div>
-    <div class="ms-auto d-flex gap-2 flex-wrap">
-      <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
-    </div>
-  </div>
-<div class="d-flex justify-content-end mb-3">
-  <a href="{{ url_for('home') }}" class="btn btn-outline-primary">
-    <i class="bi bi-house-door"></i> Search for Businesses
-  </a>
-<a href="{{ url_for('favorites') }}" class="btn btn-outline-primary">My Favorites</a>
-<a href="{{ url_for('member_tutorials') }}" class="btn btn-outline-primary">
-  Tutorial Videos
-</a>
-</div>
+<div class="container pb-4">
 
-<!-- User Profile Section -->
-<div class="card p-4 mb-4">
-  <h4>Your Profile</h4>
-  <div class="mb-3">
-    <div class="row g-2">
-      <div class="col-12 col-md-8">
-        <button class="btn btn-primary w-100" type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#profileCollapse"
-                aria-expanded="false"
-                aria-controls="profileCollapse">
-          View/Edit Profile
-        </button>
+  <!-- ===================== HEADER / ACCOUNT ===================== -->
+  <div class="card dash-hero">
+    <div class="d-flex align-items-center flex-wrap gap-3 mb-3">
+      {% if profile_img_url %}
+        <img src="{{ profile_img_url }}" alt="Profile Photo" class="profile-pic">
+      {% else %}
+        <div class="placeholder-pic" style="margin:0;"><i class="bi bi-person"></i></div>
+      {% endif %}
+      <div class="flex-grow-1">
+        <h2 class="h3 welcome-title mb-0">Welcome, {{ user_name if user_name else email }}!</h2>
+        <div class="text-muted small">{{ email }}</div>
       </div>
-      <div class="col-12 col-md-4">
-        <a href="{{ url_for('change_password') }}" class="btn btn-outline-dark w-100">
-          Change Password
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+      </div>
+    </div>
+
+    <!-- Withdrawable earnings tile -->
+    <div class="balance-tile mb-3">
+      <div>
+        <div class="balance-label">Withdrawable Earnings</div>
+        <div class="balance-amt">${{ "{:,.2f}".format(current_user.earnings_balance or 0) }}</div>
+      </div>
+      <a href="{{ url_for('user_earnings') }}" class="btn btn-warning flex-shrink-0">
+        <i class="bi bi-graph-up me-1"></i>View My Earnings
+      </a>
+    </div>
+
+    <!-- Action toolbar -->
+    <div class="d-flex gap-2 flex-wrap">
+      <button id="profileToggleBtn"
+              class="btn btn-primary"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#profileCollapse"
+              aria-expanded="false"
+              aria-controls="profileCollapse">
+        View/Edit Profile
+      </button>
+      <a href="{{ url_for('change_password') }}" class="btn btn-outline-dark">
+        Change Password
+      </a>
+      <a href="{{ url_for('home') }}" class="btn btn-outline-primary">
+        <i class="bi bi-house-door"></i> Search for Businesses
+      </a>
+      <a href="{{ url_for('favorites') }}" class="btn btn-outline-primary">My Favorites</a>
+      <a href="{{ url_for('member_tutorials') }}" class="btn btn-outline-primary">
+        Tutorial Videos
+      </a>
+    </div>
+
+    {% if has_active_sessions %}
+      <div class="mt-3">
+        <a href="{{ url_for('user_biz_interactions') }}" class="btn btn-outline-primary w-100">
+          <i class="bi bi-chat-dots me-1"></i>
+          My Active Sessions
+          {% if active_sessions_count and active_sessions_count > 0 %}
+            <span class="badge bg-danger ms-1">{{ active_sessions_count }}</span>
+          {% endif %}
         </a>
       </div>
-    </div>
+    {% endif %}
   </div>
 
+  <!-- ===================== PROFILE WIZARD (2 steps) ===================== -->
+  <div class="collapse" id="profileCollapse">
+    <div class="card wizard-card" id="profile-wizard">
+
+      <div class="wizard-head">
+        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+          <div>
+            <div class="wizard-step-label" id="wizard-step-label">Step 1 of 2</div>
+            <div class="wizard-step-sub" id="wizard-step-sub">Profile Photo</div>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-light"
+                  data-bs-toggle="collapse" data-bs-target="#profileCollapse">
+            Exit
+          </button>
+        </div>
+        <div class="wizard-progress" role="progressbar" aria-valuemin="0" aria-valuemax="2" aria-valuenow="1" id="wizard-progress">
+          <div class="wizard-progress-bar" id="wizard-progress-bar"></div>
+        </div>
+      </div>
+
+      <div class="wizard-body">
+        <form method="post" enctype="multipart/form-data" id="profile-form" novalidate>
+          {{ profile_form.hidden_tag() }}
+
+          <!-- STEP 1: Profile photo -->
+          <div class="wizard-step active" data-step="1">
+            <div class="wizard-title"><i class="bi bi-person-bounding-box"></i> Profile Photo</div>
+            <p class="wizard-help">Add a photo so it's easy to recognize your account. A square image works best.</p>
+
+            <div class="photo-preview-wrap">
+              {% if profile_img_url %}
+                <img src="{{ profile_img_url }}" alt="Profile Photo" class="photo-preview" id="profile-photo-preview">
+              {% else %}
+                <img src="" alt="Profile Photo preview" class="photo-preview" id="profile-photo-preview" style="display:none;">
+                <div class="placeholder-pic" id="profile-photo-placeholder" style="width:150px;height:150px;font-size:3rem;">
+                  <i class="bi bi-camera"></i>
+                </div>
+              {% endif %}
+            </div>
+
+            <input type="file" name="profile_photo" id="profile_photo_input" accept="image/*" class="form-control">
+            {% if profile_img_url %}
+              <div class="form-text">You already have a photo. Choose a new file only if you want to replace it.</div>
+            {% endif %}
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 2: Name (final step) -->
+          <div class="wizard-step" data-step="2">
+            <div class="wizard-title"><i class="bi bi-person-vcard"></i> Your Name</div>
+            <p class="wizard-help">Your name is shown on invites you send, so people know who invited them. Otherwise invites will show your email address.</p>
+
+            <div class="mb-3">
+              <label class="form-label" for="name">Name</label>
+              {{ profile_form.name(class="form-control", value=user_name, placeholder="Enter your name") }}
+            </div>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              {{ profile_form.submit(class="btn btn-success", value="Save Profile") }}
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- ===================== /PROFILE WIZARD ===================== -->
+
   {% if member_level_code %}
-    <hr class="my-3">
+  <div class="card p-4 mb-4">
+    <h5>Congratulations!  Share your story.</h5><br><h6>(60 second testimonial video)</h6>
+    <p class="mb-2">
+      You currently qualify for level:
+      <strong>{{ member_level_code }}</strong>.
+    </p>
 
-    <section class="mt-2">
-      <h5>Testimonial videos</h5>
-      <p class="mb-2">
-        You currently qualify for level:
-        <strong>{{ member_level_code }}</strong>.
-      </p>
-
+    <div>
       <button
         class="btn btn-primary mb-3"
         id="upload-testimonial-btn"
@@ -276,8 +599,8 @@
       >
         Upload / Replace testimonial video
       </button>
+    </div>
 
-    <!-- existing list can stay if you like; or you can simplify -->
     <ul class="list-unstyled mb-3">
       {% for tv in member_testimonials %}
         <li class="mb-1">
@@ -293,17 +616,19 @@
       {% endfor %}
     </ul>
 
-    <!-- NEW: collapsible list of *approved* videos with links -->
-    <button
-      class="btn btn-outline-secondary btn-sm mb-2"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#memberApprovedVideos"
-      aria-expanded="false"
-      aria-controls="memberApprovedVideos"
-    >
-      My approved testimonial videos
-    </button>
+    <!-- collapsible list of *approved* videos with links -->
+    <div>
+      <button
+        class="btn btn-outline-secondary btn-sm mb-2"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#memberApprovedVideos"
+        aria-expanded="false"
+        aria-controls="memberApprovedVideos"
+      >
+        My approved testimonial videos
+      </button>
+    </div>
 
     <div class="collapse mt-2" id="memberApprovedVideos">
       {% set approved = member_testimonials | selectattr("status", "equalto", "approved") | list %}
@@ -321,27 +646,881 @@
         <p class="text-muted mb-0">No approved videos yet.</p>
       {% endif %}
     </div>
-    </section>
-  {% endif %}
-</div>
-
-  <div class="collapse" id="profileCollapse">
-    <!-- existing profile form content here -->
   </div>
-</div>
+  {% endif %}
 
-  {% if has_active_sessions %}
-    <div>
-      <a href="{{ url_for('user_biz_interactions') }}" class="btn btn-outline-primary w-100">
-        <i class="bi bi-chat-dots me-1"></i>
-        My Active Sessions
-        {% if active_sessions_count and active_sessions_count > 0 %}
-          <span class="badge bg-danger ms-1">{{ active_sessions_count }}</span>
+  <!-- Section jump nav -->
+  <div class="dash-nav">
+    <a href="#overview"><i class="bi bi-graph-up"></i> Overview</a>
+    <a href="#earnings"><i class="bi bi-cash-coin"></i> Earnings &amp; Payouts</a>
+    <a href="#referrals"><i class="bi bi-people"></i> Referrals</a>
+    <a href="#calculators"><i class="bi bi-calculator"></i> Calculators</a>
+    <a href="#network"><i class="bi bi-diagram-3"></i> My Network</a>
+  </div>
+
+  <!-- ===================== OVERVIEW: KPIs + CHARTS ===================== -->
+  <div class="dash-section-head" id="overview">
+    <div class="icon-badge"><i class="bi bi-graph-up-arrow"></i></div>
+    <h3>Your Activity</h3>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+      <div class="card kpi-tile">
+        <div class="kpi-icon kpi-green"><i class="bi bi-trophy"></i></div>
+        <div class="kpi-label">Lifetime Total Earnings</div>
+        <div class="kpi-value">${{ "{:,.2f}".format(total_earnings or 0) }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card kpi-tile">
+        <div class="kpi-icon kpi-gold"><i class="bi bi-hourglass-split"></i></div>
+        <div class="kpi-label">Pending Earnings</div>
+        <div class="kpi-value">${{ "{:,.2f}".format(pending_earnings or 0) }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card kpi-tile">
+        <div class="kpi-icon kpi-teal"><i class="bi bi-piggy-bank"></i></div>
+        <div class="kpi-label">Available for Withdrawal</div>
+        <div class="kpi-value">${{ "{:,.2f}".format(net_available_earnings or 0) }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card kpi-tile">
+        <div class="kpi-icon kpi-blue"><i class="bi bi-bank"></i></div>
+        <div class="kpi-label">Total Withdrawn</div>
+        <div class="kpi-value">${{ "{:,.2f}".format(withdrawn_total or 0) }}</div>
+      </div>
+    </div>
+  </div>
+
+  {% set chart_col = 'col-12 col-md-6 col-xl-3' if has_invited_business else 'col-12 col-lg-4' %}
+  <div class="row g-3 mb-3">
+    <div class="{{ chart_col }}">
+      <div class="card chart-card">
+        <h5>Earnings Overview</h5>
+        <div class="chart-box">
+          <canvas id="earningsChart"></canvas>
+          <div class="chart-empty" id="earningsEmpty">No earnings yet. Your cashback and commissions will show here.</div>
+        </div>
+      </div>
+    </div>
+    <div class="{{ chart_col }}">
+      <div class="card chart-card">
+        <h5>Where Your Earnings Stand</h5>
+        <div class="chart-box">
+          <canvas id="earningsSplitChart"></canvas>
+          <div class="chart-empty" id="earningsSplitEmpty">No earnings yet.</div>
+        </div>
+      </div>
+    </div>
+    <div class="{{ chart_col }}">
+      <div class="card chart-card">
+        <h5>My Member Network by Tier</h5>
+        <div class="chart-box">
+          <canvas id="memberNetworkChart"></canvas>
+          <div class="chart-empty" id="memberNetworkEmpty">No one in your network yet. Invite people to start building it.</div>
+        </div>
+      </div>
+    </div>
+    {% if has_invited_business %}
+    <div class="{{ chart_col }}">
+      <div class="card chart-card">
+        <h5>My Business Network by Tier</h5>
+        <div class="chart-box">
+          <canvas id="businessNetworkChart"></canvas>
+          <div class="chart-empty" id="businessNetworkEmpty">No businesses in your network yet.</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card p-4">
+    <div class="card-title-row"><i class="bi bi-shop"></i><h4>Businesses You Interacted With <small class="text-muted fw-normal">(last 60 days)</small></h4></div>
+    {% if businesses %}
+      <ul>
+        {% for biz in businesses %}
+          <li>
+            <a href="{{ url_for('view_listing', biz_id=biz.id) }}">
+              {{ biz.business_name }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+      {% if businesses|length == 5 %}
+        <div class="text-muted" style="font-size: 0.95em;">Only showing 5 most recent. View your receipts for more.</div>
+      {% endif %}
+    {% else %}
+      <p class="mb-0">You haven't interacted with any businesses in the last 60 days.</p>
+    {% endif %}
+  </div>
+
+  <!-- ===================== EARNINGS & PAYOUTS ===================== -->
+  <div class="dash-section-head" id="earnings">
+    <div class="icon-badge"><i class="bi bi-cash-coin"></i></div>
+    <h3>Earnings &amp; Payouts</h3>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-5">
+      <div class="card p-4 h-100 mb-0">
+        <div class="card-title-row"><i class="bi bi-wallet2"></i><h5>Earnings Summary</h5></div>
+        <div class="summary-row"><span class="s-label">Lifetime Total Earnings</span><span class="s-value">${{ "{:,.2f}".format(total_earnings or 0) }}</span></div>
+        <div class="summary-row"><span class="s-label">Pending Earnings</span><span class="s-value">${{ "{:,.2f}".format(pending_earnings or 0) }}</span></div>
+        <div class="summary-row"><span class="s-label">Available for Withdrawal</span><span class="s-value text-success">${{ "{:,.2f}".format(net_available_earnings or 0) }}</span></div>
+        <div class="summary-row"><span class="s-label">Total Withdrawn (All Time)</span><span class="s-value">${{ "{:,.2f}".format(withdrawn_total or 0) }}</span></div>
+        <small class="text-muted mt-2 d-block">
+          <a href="#" data-bs-toggle="modal" data-bs-target="#memberEarningsInfo">
+            <i class="bi bi-info-circle"></i> Payout Info
+          </a>
+        </small>
+
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <a href="{{ url_for('user_receipts') }}" class="btn btn-outline-secondary">View Receipts</a>
+          <a href="{{ url_for('user_earnings') }}" class="btn btn-outline-success">
+            <i class="bi bi-graph-up"></i> View My Earnings
+          </a>
+          {% if current_user.has_role('silent_investor') %}
+            <a href="{{ url_for('investor_report') }}" class="btn btn-info">
+              <i class="bi bi-bar-chart"></i> Investor Earnings Report
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-7">
+      <div class="card p-4 h-100 mb-0">
+        <div class="card-title-row"><i class="bi bi-bank"></i><h5>Payouts</h5></div>
+
+        <!-- REGULAR earnings (commissions + cashback) -->
+        <div class="fs-5 fw-semibold text-primary mb-3">
+          Withdrawable Earnings: ${{ "{:,.2f}".format(current_user.earnings_balance or 0) }}
+        </div>
+
+        {% if current_user.stripe_account_id %}
+          <div class="mb-3">
+            <div class="btn-group" role="group" aria-label="Payout actions">
+              <a href="{{ url_for('stripe_update_info') }}"
+                 class="btn btn-outline-primary">
+                Bank Details
+              </a>
+
+              <a href="{{ url_for('member_stripe_dashboard') }}"
+                 class="btn btn-secondary"
+                 target="_blank"
+                 rel="noopener noreferrer">
+                Stripe Dashboard
+              </a>
+            </div>
+          </div>
         {% endif %}
-      </a>
+
+        <div>
+          {% if not current_user.stripe_account_id %}
+            <!-- No Stripe account yet -->
+            <a href="{{ url_for('user_onboarding') }}" class="btn btn-primary w-100">
+              Set Up Payouts (Bank Transfer)
+            </a>
+
+          {% else %}
+            <!-- Stripe account exists: show payout status -->
+            <div class="mb-2">
+              {% if not stripe_status.connected %}
+                <span class="badge bg-secondary">Stripe not connected</span>
+
+              {% elif stripe_status.payouts_status == 'active' %}
+                <span class="badge bg-success">Stripe payouts active</span>
+
+              {% elif stripe_status.payouts_status == 'pending_requirements' %}
+                <span class="badge bg-warning text-dark">Stripe action required</span>
+                <div class="text-muted small mt-1">
+                  Stripe needs more information before enabling payouts.
+                </div>
+                <div class="mt-1">
+                  <a href="{{ url_for('user_onboarding') }}" class="btn btn-sm btn-warning w-100">
+                    Finish Stripe setup
+                  </a>
+                </div>
+
+              {% else %}
+                <span class="badge bg-danger">Stripe payouts disabled</span>
+                <div class="text-muted small mt-1">
+                  Your Stripe account is not ready for payouts. Please review your details in Stripe.
+                </div>
+                <div class="mt-1">
+                  <a href="{{ url_for('user_onboarding') }}" class="btn btn-sm btn-danger w-100">
+                    Update Stripe account
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+
+            {# only show withdrawal options if payouts are actually active #}
+            {% if stripe_status.payouts_status == 'active' %}
+              {% set earnings = current_user.earnings_balance|float %}
+              {% if earnings >= 10 %}
+                <!-- Standard Payout (Regular Earnings) -->
+                {% set std_fee = earnings * 0.005 + 0.35 %}
+                {% set std_net = earnings - std_fee %}
+                <div class="mb-3 border rounded p-3">
+                  <div class="fw-bold mb-1">
+                    <i class="bi bi-bank"></i> Standard Payout (1-3 business days)
+                  </div>
+                  <div class="text-muted mb-1" style="font-size:0.97em;">
+                        Perk Miner transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee) }} (0.5% + $0.35)<br>
+                        If you withdraw full balance to your Stripe balance, you will receive: <b>${{ '{:,.2f}'.format(std_net) }}<br>
+                        Stripe may charge an additional fee to send funds to your bank account.</b>
+                  </div>
+                  <form action="{{ url_for('withdraw') }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="input-group mb-2">
+                      <span class="input-group-text">$</span>
+                      <input
+                        type="number"
+                        name="amount"
+                        class="form-control"
+                        step="0.01"
+                        min="10"
+                        max="{{ '{:.2f}'.format(current_user.earnings_balance or 0) }}"
+                        placeholder="Amount (leave blank for full)"
+                      >
+                    </div>
+                      <button type="submit" class="btn btn-success w-100"
+                              onclick="this.disabled=true; this.form.submit();">
+                        Withdraw (Standard)
+                      </button>
+                  </form>
+                </div>
+              {% else %}
+                <small class="text-muted">
+                  You need at least $10 in available earnings to withdraw.
+                </small>
+              {% endif %}
+            {% else %}
+              {# payouts not active: show info instead of withdraw forms #}
+              <small class="text-muted">
+                Once your Stripe payouts are active, you’ll be able to withdraw your earnings here.
+              </small>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Silent investor block: visible only for silent investors -->
+  {% if current_user.has_role('silent_investor') %}
+    <div class="card p-4 mt-3">
+      <div class="card-title-row"><i class="bi bi-graph-up-arrow"></i><h5>Silent Investor Earnings</h5></div>
+      <div class="row g-4">
+        <div class="col-12 col-lg-5">
+          <div class="summary-row"><span class="s-label">Lifetime Total Investor Earnings</span><span class="s-value">${{ "{:,.2f}".format(investor_total or 0) }}</span></div>
+          <div class="summary-row"><span class="s-label">Pending Investor Earnings</span><span class="s-value">${{ "{:,.2f}".format(investor_pending or 0) }}</span></div>
+          <div class="summary-row"><span class="s-label">Available for Withdrawal</span><span class="s-value text-success">${{ "{:,.2f}".format(investor_net_available or 0) }}</span></div>
+          <div class="summary-row"><span class="s-label">Total Withdrawn (All Time)</span><span class="s-value">${{ "{:,.2f}".format(investor_withdrawn_total or 0) }}</span></div>
+          <small class="text-muted d-block mt-2">
+            Investor earnings become available 7 days after they are recorded.
+          </small>
+          <div class="chart-box mt-3" style="height:200px;">
+            <canvas id="investorChart"></canvas>
+            <div class="chart-empty" id="investorEmpty">No investor earnings yet.</div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+          {% if current_user.stripe_account_id %}
+            {% set inv_net = current_user.investor_earnings_balance|float %}
+            {% if inv_net >= 10 %}
+              <!-- standard investor payout -->
+              {% set std_fee_inv = inv_net * 0.005 + 0.35 %}
+              {% set std_net_inv = inv_net - std_fee_inv %}
+              <div class="mb-3 border rounded p-3">
+                <div class="fw-bold mb-1">
+                  <i class="bi bi-bank"></i> Investor Standard Payout (1-3 business days) - Note: If you withdraw regular earnings, you must wait for regular earnings to clear in order to withdraw silent investor earnings.
+                </div>
+                <div class="text-muted mb-1" style="font-size:0.95em;">
+                  Perk Miner transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee_inv) }} (0.5% + $0.35)<br>
+                  If you withdraw full balance to your Stripe balance, you will receive: <b>${{ '{:,.2f}'.format(std_net_inv) }}<br>
+                  Stripe may charge an additional fee to send funds to your bank account.</b>
+                </div>
+                <form action="{{ url_for('withdraw_investor') }}" method="POST" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div class="input-group mb-2">
+                    <span class="input-group-text">$</span>
+                    <input
+                      type="number"
+                      name="amount"
+                      class="form-control"
+                      step="0.01"
+                      min="10"
+                      max="{{ '{:.2f}'.format(inv_net) }}"
+                      placeholder="Amount (leave blank for full)"
+                    >
+                  </div>
+                    <button type="submit" class="btn btn-success w-100"
+                            onclick="this.disabled=true; this.form.submit();">
+                      Withdraw (Standard)
+                    </button>
+                </form>
+              </div>
+            {% else %}
+              <small class="text-muted">
+                You need at least $10 in available investor earnings to withdraw.
+              </small>
+            {% endif %}
+          {% else %}
+            <small class="text-muted">
+              To withdraw investor earnings, first set up payouts in Stripe.
+            </small>
+          {% endif %}
+        </div>
+      </div>
     </div>
   {% endif %}
+
+  <!-- ===================== REFERRALS ===================== -->
+  <div class="dash-section-head" id="referrals">
+    <div class="icon-badge"><i class="bi bi-people"></i></div>
+    <h3>Referrals &amp; Invites</h3>
+  </div>
+
+  <div class="row g-3">
+    <!-- Member referrals -->
+    <div class="col-12 col-lg-6">
+      <div class="card p-4 h-100 mb-0">
+        <div class="card-title-row"><i class="bi bi-qr-code"></i><h4>Referral Code Section</h4></div>
+
+        <div class="mb-3"><span class="referral-code-pill">{{ referral_code }}</span></div>
+
+        <div>
+          <button class="btn btn-sm btn-outline-secondary mb-2" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#changeRefCode">
+            Change my referral code
+          </button>
+        </div>
+
+        <div class="collapse mb-2" id="changeRefCode">
+          <form method="post" action="{{ url_for('member_change_referral_code') }}"
+                onsubmit="return confirm('Invites, QR codes on flyers and social media posts that use your old referral code may stop working. If you have generated any earnings, they may be affected (recommended to do this before you start earning cash back or referral commissions).  Continue?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="input-group">
+              <input type="text" class="form-control" name="referral_code"
+                     minlength="4" maxlength="32" pattern="[A-Za-z0-9\-]{4,32}"
+                     placeholder="New referral code" autocomplete="off" required>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+            <div class="form-text">4-32 characters: letters, numbers and dashes only. Can't start with REF or BIZ.</div>
+          </form>
+        </div>
+
+        {% if sponsor %}
+          <div class="mb-3">
+            <small class="text-muted">
+              Sponsored by:
+              <span class="text-success">{{ sponsor.name or sponsor.email }}</span>
+            </small>
+          </div>
+        {% endif %}
+
+        <!-- invite + flyer buttons -->
+        <div class="d-grid gap-2 mb-3">
+          <button class="btn btn-success w-100" type="button"
+                  data-bs-toggle="modal" data-bs-target="#inviteModal">
+            <i class="bi bi-person-plus me-1"></i>Invite others to join by Email
+          </button>
+          <a href="{{ url_for('member_flyer') }}" class="btn w-100 btn-outline-secondary">
+            Member Referral Flyer
+          </a>
+        </div>
+
+        <!-- share on social: header + collapse trigger -->
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Invite Others on Social Media or via Text</h5>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#memberShareCollapse"
+            aria-expanded="false"
+            aria-controls="memberShareCollapse"
+          >
+            Show / Hide
+          </button>
+        </div>
+
+        <!-- collapsed share content -->
+        <div class="collapse mt-3" id="memberShareCollapse">
+          <label for="share-link" class="form-label">Your member invite link</label>
+          <input
+            id="share-link"
+            type="text"
+            class="form-control mb-2"
+            readonly
+            value="{{ share_url }}"
+          >
+
+          <a href="{{ url_for('download_member_flyer') }}" class="btn btn-outline-primary w-100 mb-2">
+            Download Member Flyer Image (for social posts - no QR code)
+          </a>
+
+          <p class="mt-1 mb-1" style="font-size:0.9rem;">
+            Suggested caption (this is what will be copied):
+          </p>
+
+          <textarea
+            id="member-caption"
+            readonly
+            rows="3"
+            class="form-control mb-2"
+            style="max-width:520px; font-size:0.9rem;"
+          >Hey friends —
+          I’m a member of PerkMiner and wanted to share why I joined.
+
+          •  Completely free to join and always free
+
+          •  Earn 2% real cash back on everyday purchases and services (up to $2,500 per transaction) — real money you can withdraw, not points or coupons
+
+          •  Strong privacy: one-to-one secure messaging, your contact info is never sold as a lead (no spam, unsolicited phone calls or uninvited salespeople)
+
+          •  Live tracking when a service provider is “on the way” to keep you in the loop
+
+          •  Invite others and earn referral commissions on real purchases and sales (zero cost, zero risk)
+
+          Join free through my link:
+          {{ share_url }}</textarea>
+
+          <button
+            type="button"
+            class="btn btn-primary w-100"
+            onclick="copyCaptionAndLink('member-caption')"
+          >
+            Copy caption + link
+          </button>
+
+          <p class="mt-2 mb-0" style="font-size:0.85rem; color:#6b7280;">
+            Tip: Take a screen shot of your own <strong>Member Referral Flyer with QR code (on mobile device)</strong> or use a standardized downloadable flyer without QR code, upload it to your post,
+            then paste this copied caption.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Business referrals -->
+    <div class="col-12 col-lg-6">
+      <div class="card p-4 h-100 mb-0">
+        <div class="card-title-row"><i class="bi bi-building-add"></i><h4>Business referrals</h4></div>
+
+        <!-- invite + flyer buttons -->
+        <div class="d-grid gap-2 mb-3">
+          <button class="btn btn-warning w-100" type="button"
+                  data-bs-toggle="modal" data-bs-target="#inviteBusinessModal">
+            <i class="bi bi-building-add me-1"></i>Invite a Business to Join by Email
+          </button>
+          <a href="{{ url_for('member_business_flyer') }}" class="btn w-100 btn-outline-secondary">
+            Business Referral Flyer
+          </a>
+        </div>
+
+        <!-- share on social: header + collapse trigger -->
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Invite Businesses on Social Media or via Text</h5>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#bizShareCollapse"
+            aria-expanded="false"
+            aria-controls="bizShareCollapse"
+          >
+            Show / Hide
+          </button>
+        </div>
+
+        <!-- collapsed share content -->
+        <div class="collapse mt-3" id="bizShareCollapse">
+          <label for="biz-share-link" class="form-label">Your business invite link</label>
+          <input
+            id="biz-share-link"
+            type="text"
+            class="form-control mb-2"
+            readonly
+            value="{{ business_share_url }}"
+          >
+
+          <a href="{{ url_for('download_member_business_flyer') }}" class="btn btn-outline-primary w-100 mb-2">
+            Download Business Flyer Image (for social posts - no QR code)
+          </a>
+
+          <p class="mt-1 mb-1" style="font-size:0.9rem;">
+            Suggested caption (this is what will be copied):
+          </p>
+
+          <textarea
+            id="biz-caption"
+            readonly
+            rows="3"
+            class="form-control mb-2"
+            style="max-width:520px; font-size:0.9rem;"
+        >Attention Business Owners:
+
+        I’m a member of PerkMiner and thought this could be a strong fit for your business.
+
+        •  You only pay when you make a sale (10% of the sale, capped at $250). No sale = $0
+
+        •  No contracts, no monthly fees, no subscriptions
+
+        •  Exclusive leads at no cost (one member connected to one business at a time)
+
+        •  Free live tracking for service techs when status is set to “on the way”
+
+        •  Wrong destination address?  Members can update the address, which cuts down on wasted trips
+
+        •  Earn 1% cash back on finalized sales (paid by Perk Miner) for offering a perk
+
+        •  Invite other businesses and earn mutual commissions from each other’s sales
+
+        •  Only $25 minimum to fund your account to get started (covers up to $250 in sales)
+
+        It’s low risk and focused on real results. Happy to answer any questions.
+
+        Join as an advertiser through my link:
+        {{ business_share_url }}
+        </textarea>
+
+          <button
+            type="button"
+            class="btn btn-primary w-100"
+            onclick="copyCaptionAndLink('biz-caption')"
+          >
+            Copy caption + link
+          </button>
+
+          <p class="mt-2 mb-0" style="font-size:0.85rem; color:#6b7280;">
+            Tip: Take a screen shot of your own <strong>Business Referral Flyer with QR code (on mobile device)</strong> use our standardized downloadable flyer without QR code, upload it to your post,
+            then paste this copied caption.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CALCULATORS ===================== -->
+  <div class="dash-section-head" id="calculators">
+    <div class="icon-badge"><i class="bi bi-calculator"></i></div>
+    <h3>Rewards Calculators</h3>
+  </div>
+
+  <div class="row g-3">
+    <!-- Single purchase calculator -->
+    <div class="col-12 col-lg-6">
+      <div class="card calc-card">
+        <div class="calc-head">
+          <div class="calc-icon"><i class="bi bi-receipt-cutoff"></i></div>
+          <div>
+            <h4>Estimate Your Rewards From One Single Purchase</h4>
+            <small>Pick a tier and a purchase amount.</small>
+          </div>
+        </div>
+        <div class="calc-body">
+          <div class="mb-3">
+            <label class="form-label" for="reward_amount">Purchase amount</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input id="reward_amount" type="number" class="form-control" placeholder="Amount (e.g. 500)" max="2500" required>
+            </div>
+            <div class="form-text">Maximum purchase amount allowed is $2,500.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="reward_tier">Whose purchase is it?</label>
+            <select id="reward_tier" class="form-select" required>
+              <option value="1" selected>Tier 1 (your purchases)</option>
+              <option value="2">Tier 2 (direct referral purchases)</option>
+              <option value="3">Tier 3 (Tier 2 referral purchases)</option>
+              <option value="4">Tier 4 (Tier 3 referral purchases)</option>
+              <option value="5">Tier 5 (Tier 4 referral purchases)</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary w-100" onclick="calculateSingleReward()">
+            <i class="bi bi-calculator me-1"></i> Calculate My Reward
+          </button>
+          <div id="rewards_output">
+            {{ rewards_table | safe }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Member network calculator -->
+    <div class="col-12 col-lg-6">
+      <div class="card calc-card">
+        <div class="calc-head">
+          <div class="calc-icon"><i class="bi bi-diagram-3"></i></div>
+          <div>
+            <h4>Member Referral Network Cashback/Commissions Calculator</h4>
+            <small>One single purchase from everyone in your network.</small>
+          </div>
+        </div>
+        <div class="calc-body">
+          <p class="text-muted mb-3" style="font-size:.95rem;">
+            If you and everyone in your network refers a number of people and you each make <b><u>one single purchase</u></b> from any advertiser in the same amount, this is how much you would earn in Cashback and Commission.
+          </p>
+          <div class="row g-3 mb-2">
+            <div class="col-12 col-sm-6">
+              <label class="form-label" for="network_people">People referred by each</label>
+              <input id="network_people" type="number" class="form-control" min="1" value="3" />
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label" for="network_amount">Purchase amount</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input id="network_amount" type="number" class="form-control" min="0" max="2500" step="0.01" value="100" />
+              </div>
+            </div>
+          </div>
+          <small class="text-muted d-block mb-3">*Maximum purchase amount allowed is $2,500</small>
+          <button class="btn btn-primary w-100" type="button" onclick="calculateNetworkEarnings()">
+            <i class="bi bi-calculator me-1"></i> Calculate
+          </button>
+
+          <div id="network_results" style="display:none;" class="mt-3">
+            <table class="tier-table">
+              <tbody>
+                <tr><td>Tier One: (Your purchases)</td><td>$<span id="network_t1"></span></td></tr>
+                <tr><td>Tier Two: (Purchases from your direct referrals)</td><td>$<span id="network_t2"></span></td></tr>
+                <tr><td>Tier Three: (Purchases from 2nd Tier referrals)</td><td>$<span id="network_t3"></span></td></tr>
+                <tr><td>Tier Four: (Purchases from 3rd Tier referrals)</td><td>$<span id="network_t4"></span></td></tr>
+                <tr><td>Tier Five: (Purchases from 4th Tier referrals)</td><td>$<span id="network_t5"></span></td></tr>
+              </tbody>
+            </table>
+
+            <div class="tier-total">
+              <span>Your total earnings from everyone making one single purchase would be</span>
+              <span class="tier-total-amt">$<span id="network_total"></span></span>
+            </div>
+
+            <div class="chart-box mt-3" style="height:210px;">
+              <canvas id="network_chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Business referral network calculator -->
+    <div class="col-12">
+      <div class="card calc-card">
+        <div class="calc-head">
+          <div class="calc-icon"><i class="bi bi-building-up"></i></div>
+          <div>
+            <h4>Business Referral Network Commissions Calculator</h4>
+            <small>Estimate commissions from businesses you invite.</small>
+          </div>
+        </div>
+        <div class="calc-body">
+          <p class="text-muted mb-3" style="font-size:.95rem;">
+            If you invite a number of businesses to join, and each business you invited also invited the same number of new businesses (same as you) to become advertisers, AND each business generates one paid invoice in the same amount (max $2,500), you would earn <b><u>(even if you don't make any purchases from any of these businesses)</u></b>:
+          </p>
+          <div class="row g-3 mb-2">
+            <div class="col-12 col-sm-6 col-lg-4">
+              <label class="form-label" for="biz_referrals">Businesses you invite</label>
+              <input id="biz_referrals" type="number" class="form-control" min="1" value="3" />
+            </div>
+            <div class="col-12 col-sm-6 col-lg-4">
+              <label class="form-label" for="biz_invoice_amount">Paid invoice amount</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input id="biz_invoice_amount" type="number" class="form-control" min="0" max="2500" step="0.01" value="250" />
+              </div>
+            </div>
+            <div class="col-12 col-lg-4 d-flex align-items-end">
+              <button class="btn btn-primary w-100" type="button" onclick="calculateBusinessReferralEarnings()">
+                <i class="bi bi-calculator me-1"></i> Calculate Commissions
+              </button>
+            </div>
+          </div>
+          <small class="text-muted d-block">This shows your estimated commissions earnings from your business network (purchases are from any member, including those not in your network).</small>
+          <small class="text-muted d-block mb-2"><b>Note:</b> If you make a purchase from any business in your network, you would earn cash back for your purchases, plus the regular business commissions earnings.</small>
+
+          <div id="biz_results" style="display:none;" class="mt-3">
+            <div class="row g-3 align-items-center">
+              <div class="col-12 col-lg-6">
+                <table class="tier-table">
+                  <tbody>
+                    <tr><td><strong>Tier 1</strong> (businesses you invited)</td><td>$<span id="biz_t1"></span></td></tr>
+                    <tr><td><strong>Tier 2</strong> (businesses invited by your Tier 1 businesses)</td><td>$<span id="biz_t2"></span></td></tr>
+                    <tr><td><strong>Tier 3</strong> (businesses invited by your Tier 2 businesses)</td><td>$<span id="biz_t3"></span></td></tr>
+                    <tr><td><strong>Tier 4</strong> (businesses invited by your Tier 3 businesses)</td><td>$<span id="biz_t4"></span></td></tr>
+                    <tr><td><strong>Tier 5</strong> (businesses invited by your Tier 4 businesses)</td><td>$<span id="biz_t5"></span></td></tr>
+                  </tbody>
+                </table>
+                <div class="tier-total">
+                  <span>Grand Total business commissions earned</span>
+                  <span class="tier-total-amt">$<span id="biz_total"></span></span>
+                </div>
+              </div>
+              <div class="col-12 col-lg-6">
+                <div class="chart-box" style="height:230px;">
+                  <canvas id="biz_chart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MY NETWORK ===================== -->
+  <div class="dash-section-head" id="network">
+    <div class="icon-badge"><i class="bi bi-diagram-3-fill"></i></div>
+    <h3>My Network</h3>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 {% if has_invited_business %}col-lg-6{% endif %}">
+      <div class="card p-4 h-100 mb-0">
+        <div class="card-title-row"><i class="bi bi-people-fill"></i><h5>My Member Network</h5></div>
+
+        <div>
+          <a role="button" class="network-tier" data-bs-toggle="collapse" href="#tier2" aria-expanded="false" aria-controls="tier2">
+            <span>Tier 2 (direct referrals)</span>
+            <span><span class="badge bg-secondary me-2">{{ ns.m2 }}</span><i class="bi bi-chevron-down"></i></span>
+          </a>
+          <div class="collapse mb-2 ps-2" id="tier2">
+            {% if level2 %}
+              <ul class="mb-2">{% for user in level2 %}<li>{{ user.name if user.name else user.email }}</li>{% endfor %}</ul>
+            {% else %}
+              <span>None</span>
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          <a role="button" class="network-tier" data-bs-toggle="collapse" href="#tier3" aria-expanded="false" aria-controls="tier3">
+            <span>Tier 3 (referred by Tier 2 people)</span>
+            <span><span class="badge bg-secondary me-2">{{ ns.m3 }}</span><i class="bi bi-chevron-down"></i></span>
+          </a>
+          <div class="collapse mb-2 ps-2" id="tier3">
+            {% if level3 %}
+              <ul class="mb-2">{% for user in level3 %}<li>{{ user.name if user.name else user.email }}</li>{% endfor %}</ul>
+            {% else %}
+              <span>None</span>
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          <a role="button" class="network-tier" data-bs-toggle="collapse" href="#tier4" aria-expanded="false" aria-controls="tier4">
+            <span>Tier 4 (referred by Tier 3 people)</span>
+            <span><span class="badge bg-secondary me-2">{{ ns.m4 }}</span><i class="bi bi-chevron-down"></i></span>
+          </a>
+          <div class="collapse mb-2 ps-2" id="tier4">
+            {% if level4 %}
+              <ul class="mb-2">{% for user in level4 %}<li>{{ user.name if user.name else user.email }}</li>{% endfor %}</ul>
+            {% else %}
+              <span>None</span>
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          <a role="button" class="network-tier" data-bs-toggle="collapse" href="#tier5" aria-expanded="false" aria-controls="tier5">
+            <span>Tier 5 (referred by Tier 4 people)</span>
+            <span><span class="badge bg-secondary me-2">{{ ns.m5 }}</span><i class="bi bi-chevron-down"></i></span>
+          </a>
+          <div class="collapse mb-2 ps-2" id="tier5">
+            {% if level5 %}
+              <ul class="mb-2">{% for user in level5 %}<li>{{ user.name if user.name else user.email }}</li>{% endfor %}</ul>
+            {% else %}
+              <span>None</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if has_invited_business %}
+    <div class="col-12 col-lg-6">
+      <div class="card p-4 h-100 mb-0">
+        <div class="card-title-row"><i class="bi bi-building"></i><h5>My Business Network</h5></div>
+
+        <div>
+          <a role="button" class="network-tier" data-bs-toggle="collapse" href="#biztier1" aria-expanded="false" aria-controls="biztier1">
+            <span>Tier 1 (businesses you invited)</span>
+            <span><span class="badge bg-secondary me-2">{{ ns.b1 }}</span><i class="bi bi-chevron-down"></i></span>
+          </a>
+          <div class="collapse mb-2 ps-2" id="biztier1">
+            {% if biz_level1 %}
+              <ul class="mb-2">{% for biz in biz_level1 %}<li>{{ biz.business_name if biz.business_name else biz.business_email }}</li>{% endfor %}</ul>
+            {% else %}
+              <span>None</span>
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          <a role="button" class="network-tier" data-bs-toggle="collapse" href="#biztier2" aria-expanded="false" aria-controls="biztier2">
+            <span>Tier 2 (referred by Tier 1 businesses)</span>
+            <span><span class="badge bg-secondary me-2">{{ ns.b2 }}</span><i class="bi bi-chevron-down"></i></span>
+          </a>
+          <div class="collapse mb-2 ps-2" id="biztier2">
+            {% if biz_level2 %}
+              <ul class="mb-2">{% for biz in biz_level2 %}<li>{{ biz.business_name if biz.business_name else biz.business_email }}</li>{% endfor %}</ul>
+            {% else %}
+              <span>None</span>
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          <a role="button" class="network-tier" data-bs-toggle="collapse" href="#biztier3" aria-expanded="false" aria-controls="biztier3">
+            <span>Tier 3 (referred by Tier 2 businesses)</span>
+            <span><span class="badge bg-secondary me-2">{{ ns.b3 }}</span><i class="bi bi-chevron-down"></i></span>
+          </a>
+          <div class="collapse mb-2 ps-2" id="biztier3">
+            {% if biz_level3 %}
+              <ul class="mb-2">{% for biz in biz_level3 %}<li>{{ biz.business_name if biz.business_name else biz.business_email }}</li>{% endfor %}</ul>
+            {% else %}
+              <span>None</span>
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          <a role="button" class="network-tier" data-bs-toggle="collapse" href="#biztier4" aria-expanded="false" aria-controls="biztier4">
+            <span>Tier 4 (referred by Tier 3 businesses)</span>
+            <span><span class="badge bg-secondary me-2">{{ ns.b4 }}</span><i class="bi bi-chevron-down"></i></span>
+          </a>
+          <div class="collapse mb-2 ps-2" id="biztier4">
+            {% if biz_level4 %}
+              <ul class="mb-2">{% for biz in biz_level4 %}<li>{{ biz.business_name if biz.business_name else biz.business_email }}</li>{% endfor %}</ul>
+            {% else %}
+              <span>None</span>
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          <a role="button" class="network-tier" data-bs-toggle="collapse" href="#biztier5" aria-expanded="false" aria-controls="biztier5">
+            <span>Tier 5 (referred by Tier 4 businesses)</span>
+            <span><span class="badge bg-secondary me-2">{{ ns.b5 }}</span><i class="bi bi-chevron-down"></i></span>
+          </a>
+          <div class="collapse mb-2 ps-2" id="biztier5">
+            {% if biz_level5 %}
+              <ul class="mb-2">{% for biz in biz_level5 %}<li>{{ biz.business_name if biz.business_name else biz.business_email }}</li>{% endfor %}</ul>
+            {% else %}
+              <span>None</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card p-4 text-center mt-4">
+    <h4>This is your dashboard.</h4>
+    <p class="mb-0">Enjoy your member benefits with Perk Miner!</p>
+  </div>
+
 </div>
+<!-- /container -->
 
 <!-- Invite Modal -->
 <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
@@ -373,6 +1552,7 @@
     </form>
   </div>
 </div>
+
 <!-- Invite Business Modal -->
 <div class="modal fade" id="inviteBusinessModal" tabindex="-1" aria-labelledby="inviteBusinessModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -404,689 +1584,6 @@
   </div>
 </div>
 
-<!-- Profile Edit Section -->
-<div class="collapse mb-4" id="profileCollapse">
-  <div class="card p-4">
-    <h4>Your Profile</h4>
-    <form method="post" enctype="multipart/form-data" class="row g-3 align-items-center">
-      {{ profile_form.hidden_tag() }}
-      <div class="col-12 mb-3 text-center">
-        {% if profile_img_url %}
-          <img src="{{ profile_img_url }}" alt="Profile Photo" class="rounded-circle profile-pic">
-        {% else %}
-          <div class="placeholder-pic">No Image</div>
-        {% endif %}
-        <input type="file" name="profile_photo" accept="image/*" class="form-control mt-2">
-      </div>
-      <div class="col-12 mb-3">
-        <label class="form-label">Name</label>
-        {{ profile_form.name(class="form-control", value=user_name, placeholder="Enter your name") }}
-      </div>
-      <div class="col-12 col-md-auto">
-        {{ profile_form.submit(class="btn btn-success") }}
-      </div>
-    </form>
-  </div>
-</div>
-
-  <!-- Referral Code Section -->
-<div class="card p-4 mb-4">
-  <!-- header: title -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">Referral Code Section</h4>
-  </div>
-
-  <!-- referral code + sponsor -->
-  <div class="mb-3">
-    <div><strong>{{ referral_code }}</strong></div>
-
-    {% if sponsor %}
-      <small class="text-muted">
-        Sponsored by:
-        <span class="text-success">{{ sponsor.name or sponsor.email }}</span>
-      </small>
-    {% endif %}
-  </div>
-
-  <!-- invite + flyer buttons -->
-  <div class="mb-3">
-    <button class="btn btn-success w-100" type="button"
-            data-bs-toggle="modal" data-bs-target="#inviteModal">
-      <i class="bi bi-person-plus me-1"></i>Invite others to join by Email
-    </button>
-    <br><br>
-    <a href="{{ url_for('member_flyer') }}" class="btn w-100 btn-outline-secondary">
-      Member Referral Flyer
-    </a>
-  </div>
-
-  <!-- share on social: header + collapse trigger -->
-  <div class="d-flex justify-content-between align-items-center">
-    <h5 class="mb-0">Invite Others on Social Media</h5>
-    <button
-      class="btn btn-sm btn-outline-secondary"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#memberShareCollapse"
-      aria-expanded="false"
-      aria-controls="memberShareCollapse"
-    >
-      Show / Hide
-    </button>
-  </div>
-
-  <!-- collapsed share content -->
-  <div class="collapse mt-3" id="memberShareCollapse">
-    <label for="share-link" class="form-label">Your member invite link</label>
-    <input
-      id="share-link"
-      type="text"
-      class="form-control mb-2"
-      readonly
-      value="{{ share_url }}"
-    >
-
-    <a href="{{ url_for('download_member_flyer') }}" class="btn btn-outline-primary w-100 mb-2">
-      Download Member Flyer Image (for social posts - no QR code)
-    </a>
-
-    <p class="mt-1 mb-1" style="font-size:0.9rem;">
-      Suggested caption (this is what will be copied):
-    </p>
-
-    <textarea
-      id="member-caption"
-      readonly
-      rows="3"
-      class="form-control mb-2"
-      style="max-width:520px; font-size:0.9rem;"
-    >Free to join and always free for members.  Earn 2% cash back on everyday purchases or for paid services rendered (on up to $2,500 of every transaction).
-    Perk Miner LLC re-invests up to 84% of its advertising revenue from every finalized transaction back in the ecosystem with its rewars program in the form of withdrawable earnings deposited to bank accounts; not points, coupons or gift cards.
-    PEACE OF MIND:  Search for businesses, product or services with peace of mind through secure messaging and without ever worry about your information being sold as a lead.  No unsolicited phone calls, spam emails or uninvited sales people.  We connect one member to one business at a time and businesses never have access to member contact information.
-    LIVE TRACKING:  Have a scheduled appointment for service with one of our advertisers?  With PerkMiner.com, you receive real-time status updates and can track your service provider in real-time when the status is "on the way" with an ETA.  Wrong address?  You can update the correct destination address to make sure they're going to the correct address.
-    FREE BUSINESS OPPORTUNITY:  Our members have the opportunity to own their own business with zero cost, zero investment and zero risk.  This is your opportunity to own your own advertising agency and grow a real business with real results.  No set hours or office needed.  Just invite people to become members and business owners to advertise and you earn from every finalized transaction (from real sales).
-    Join PerkMiner through my link today!:
-    {{ share_url }}</textarea>
-
-    <button
-      type="button"
-      class="btn btn-primary w-100"
-      onclick="copyCaptionAndLink('member-caption')"
-    >
-      Copy caption + link
-    </button>
-
-    <p class="mt-2 mb-0" style="font-size:0.85rem; color:#6b7280;">
-      Tip: Take a screen shot of your own <strong>Member Referral Flyer with QR code (on mobile device)</strong> or use a standardized downloadable flyer without QR code, upload it to your post,
-      then paste this copied caption.
-    </p>
-  </div>
-</div>
-
-
-<div class="card p-4 mb-4">
-  <!-- header: title -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">Business referrals</h4>
-  </div>
-
-  <!-- (optional) business-specific code section -->
-  <!-- if you don't have a separate business referral code, you can skip this block or adapt it -->
-
-  <!-- invite + flyer buttons -->
-  <div class="mb-3">
-    <button class="btn btn-warning w-100 mt-2" type="button"
-            data-bs-toggle="modal" data-bs-target="#inviteBusinessModal">
-      <i class="bi bi-building-add me-1"></i>Invite a Business to Join by Email
-    </button>
-    <br><br>
-    <a href="{{ url_for('member_business_flyer') }}" class="btn w-100 btn-outline-secondary">
-      Business Referral Flyer
-    </a>
-  </div>
-
-  <!-- share on social: header + collapse trigger -->
-  <div class="d-flex justify-content-between align-items-center">
-    <h5 class="mb-0">Invite Businesses on Social Media</h5>
-    <button
-      class="btn btn-sm btn-outline-secondary"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#bizShareCollapse"
-      aria-expanded="false"
-      aria-controls="bizShareCollapse"
-    >
-      Show / Hide
-    </button>
-  </div>
-
-  <!-- collapsed share content -->
-  <div class="collapse mt-3" id="bizShareCollapse">
-    <label for="biz-share-link" class="form-label">Your business invite link</label>
-    <input
-      id="biz-share-link"
-      type="text"
-      class="form-control mb-2"
-      readonly
-      value="{{ business_share_url }}"
-    >
-
-    <a href="{{ url_for('download_member_business_flyer') }}" class="btn btn-outline-primary w-100 mb-2">
-      Download Business Flyer Image (for social posts - no QR code)
-    </a>
-
-    <p class="mt-1 mb-1" style="font-size:0.9rem;">
-      Suggested caption (this is what will be copied):
-    </p>
-
-    <textarea
-      id="biz-caption"
-      readonly
-      rows="3"
-      class="form-control mb-2"
-      style="max-width:520px; font-size:0.9rem;"
-  >Business owners: Want advertising where you only pay when a sale actually closes with 1000% ROAS (Return on Advertising Spend) or higher (spend $1 = $10 sale)?  What about getting exclusive leads at no cost to your business (one member connected to one business at a time and not oversold to your competitors), plus zero cost for website and foot traffic, phone calls, appointments and meetups?
-   LIVE TRACKING:  Have service techs in the field?  We give you the ability to see every service provider's location in real-time when the status is set to "on the way" and with zero cost to your business.  You receive status updates for every service call and if the destination address is incorrect, members can update the destination address for you (reduced fuel waste, time and unnecessary vehicle wear and tear).
-   WHAT'S THE COST?  You simply pay 10% of the sale (capped at $250) after you get paid.  No hidden fees, no contracts, no monthly membership fees, subscriptions.  All you have to do is finalize the transaction once you've received payment and make sure that you have enough in your account balance to cover the advertising fee prior to getting paid.
-   REWARDS PROGRAM:  Perk Miner also rewards it's members for making purchases from it's advertisers and it's advertisers for finalizing transactions (all cash back and commissions are paid by Perk Miner from the advertising revenue paid - up to 84% of the advertising revenue is paid out to members and businesses from every finalized transaction).
-   MUTUAL GROWTH MODEL:  By joining and inviting other business owners to join, you each earn a commission from each other's sales (finalized transactions) through Perk Miner and at the same time, I am also rewarded.  It's a mutual growth model designed to help businesses prosper and it's all paid by Perk Miner ... not by your business.
-   NEEDED TO GET STARTED:  It only takes $25 to fund your account (this is not a fee, but is used to cover the advertising fee when you make a sale) to get started.  $25 covers $250 in sales.  If your lowest sale is over $2,500, you must deposit $250 or more to cover the advertising fee.
-   No special equipment required to finalize transactions and you or your staff can finalize transactions in seconds.  Upon successful finalization of every transaction, you also get real-time analytics and you also see your cash back earned.  That's right!  You earn cash back for finalizing transactions in return for offering a perk to Perk Miner members (you earn 10% of the advertising fee paid).
-   There is zero risk to your business.  Join PerkMiner as an advertiser through my business invite link today:
-{{ business_share_url }}</textarea>
-
-    <button
-      type="button"
-      class="btn btn-primary w-100"
-      onclick="copyCaptionAndLink('biz-caption')"
-    >
-      Copy caption + link
-    </button>
-
-    <p class="mt-2 mb-0" style="font-size:0.85rem; color:#6b7280;">
-      Tip: Take a screen shot of your own <strong>Business Referral Flyer with QR code (on mobile device)</strong> use our standardized downloadable flyer without QR code, upload it to your post,
-      then paste this copied caption.
-    </p>
-  </div>
-</div>
-
-
-
-    <div class="card p-4 mb-4">
-
-<h4>Your Activity</h4>
-
-<!-- Earnings summary with 7-day delay explanation -->
-<div class="mb-3">
-  <div class="card mb-3">
-    <div class="card-header">
-      Earnings Summary
-    </div>
-    <div class="card-body">
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th>Field</th>
-            <th>Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Lifetime Total Earnings</td>
-            <td>${{ "{:,.2f}".format(total_earnings or 0) }}</td>
-          </tr>
-          <tr>
-            <td>Pending Earnings</td>
-            <td>${{ "{:,.2f}".format(pending_earnings or 0) }}</td>
-          </tr>
-          <tr>
-            <td>Available for Withdrawal</td>
-            <td>${{ "{:,.2f}".format(net_available_earnings or 0) }}</td>
-          </tr>
-          <tr>
-            <td>Total Withdrawn (All Time)</td>
-            <td>${{ "{:,.2f}".format(withdrawn_total or 0) }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <small class="text-muted">
-        <a href="#" data-bs-toggle="modal" data-bs-target="#memberEarningsInfo">
-          <i class="bi bi-info-circle"></i> Payout Info
-        </a>
-      </small>
-    </div>
-  </div>
-
-  <!-- top row: receipts, earnings views, investor report, payout info -->
-  <div class="row align-items-center mb-3">
-    <div class="col-12 col-md-auto d-flex flex-wrap gap-2 mb-2 mb-md-0">
-      <a href="{{ url_for('user_receipts') }}" class="btn btn-outline-secondary">View Receipts</a>
-      <a href="{{ url_for('user_earnings') }}" class="btn btn-outline-success">
-        <i class="bi bi-graph-up"></i> View My Earnings
-      </a>
-      {% if current_user.has_role('silent_investor') %}
-        <a href="{{ url_for('investor_report') }}" class="btn btn-info">
-          <i class="bi bi-bar-chart"></i> Investor Earnings Report
-        </a>
-      {% endif %}
-    </div>
-
-{% if current_user.stripe_account_id %}
-  <div class="col-12 col-md text-md-end">
-    <div class="btn-group" role="group" aria-label="Payout actions">
-      <a href="{{ url_for('stripe_update_info') }}"
-         class="btn btn-outline-primary">
-        Bank Details
-      </a>
-
-      <a href="{{ url_for('member_stripe_dashboard') }}"
-         class="btn btn-secondary"
-         target="_blank"
-         rel="noopener noreferrer">
-        Stripe Dashboard
-      </a>
-    </div>
-  </div>
-{% endif %}
-</br></br>
-
-<!-- REGULAR earnings (commissions + cashback) -->
-<div class="fs-5 fw-semibold text-primary mb-2">
-  Withdrawable Earnings: ${{ "{:,.2f}".format(current_user.earnings_balance or 0) }}
-</div>
-
-<div>
-  {% if not current_user.stripe_account_id %}
-    <!-- No Stripe account yet -->
-    <a href="{{ url_for('user_onboarding') }}" class="btn btn-primary w-100">
-      Set Up Payouts (Bank Transfer)
-    </a>
-
-  {% else %}
-    <!-- Stripe account exists: show payout status -->
-    <div class="mb-2">
-      {% if not stripe_status.connected %}
-        <span class="badge bg-secondary">Stripe not connected</span>
-
-      {% elif stripe_status.payouts_status == 'active' %}
-        <span class="badge bg-success">Stripe payouts active</span>
-
-      {% elif stripe_status.payouts_status == 'pending_requirements' %}
-        <span class="badge bg-warning text-dark">Stripe action required</span>
-        <div class="text-muted small mt-1">
-          Stripe needs more information before enabling payouts.
-        </div>
-        <div class="mt-1">
-          <a href="{{ url_for('user_onboarding') }}" class="btn btn-sm btn-warning w-100">
-            Finish Stripe setup
-          </a>
-        </div>
-
-      {% else %}
-        <span class="badge bg-danger">Stripe payouts disabled</span>
-        <div class="text-muted small mt-1">
-          Your Stripe account is not ready for payouts. Please review your details in Stripe.
-        </div>
-        <div class="mt-1">
-          <a href="{{ url_for('user_onboarding') }}" class="btn btn-sm btn-danger w-100">
-            Update Stripe account
-          </a>
-        </div>
-      {% endif %}
-    </div>
-
-    {# only show withdrawal options if payouts are actually active #}
-    {% if stripe_status.payouts_status == 'active' %}
-      {% set earnings = current_user.earnings_balance|float %}
-      {% if earnings >= 10 %}
-        <!-- Standard Payout (Regular Earnings) -->
-        {% set std_fee = earnings * 0.005 + 0.35 %}
-        {% set std_net = earnings - std_fee %}
-        <div class="mb-3 border rounded p-3">
-          <div class="fw-bold mb-1">
-            <i class="bi bi-bank"></i> Standard Payout (1-3 business days)
-          </div>
-          <div class="text-muted mb-1" style="font-size:0.97em;">
-                Perk Miner transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee) }} (0.5% + $0.35)<br>
-                If you withdraw full balance to your Stripe balance, you will receive: <b>${{ '{:,.2f}'.format(std_net) }}<br>
-                Stripe may charge an additional fee to send funds to your bank account.</b>
-          </div>
-          <form action="{{ url_for('withdraw') }}" method="POST" class="d-inline">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="input-group mb-2">
-              <span class="input-group-text">$</span>
-              <input
-                type="number"
-                name="amount"
-                class="form-control"
-                step="0.01"
-                min="10"
-                max="{{ '{:.2f}'.format(current_user.earnings_balance or 0) }}"
-                placeholder="Amount (leave blank for full)"
-              >
-            </div>
-              <button type="submit" class="btn btn-success w-100"
-                      onclick="this.disabled=true; this.form.submit();">
-                Withdraw (Standard)
-              </button>
-          </form>
-        </div>
-      {% else %}
-        <small class="text-muted">
-          You need at least $10 in available earnings to withdraw.
-        </small>
-      {% endif %}
-    {% else %}
-      {# payouts not active: show info instead of withdraw forms #}
-      <small class="text-muted">
-        Once your Stripe payouts are active, you’ll be able to withdraw your earnings here.
-      </small>
-    {% endif %}
-  {% endif %}
-</div>
-
-  <!-- Silent investor block: visible only for silent investors -->
-  {% if current_user.has_role('silent_investor') %}
-    <div class="card mt-4">
-      <div class="card-header">
-        Silent investor Earnings
-      </div>
-      <div class="card-body">
-        <table class="table table-sm">
-          <thead>
-            <tr>
-              <th>Field</th>
-              <th>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Lifetime Total Investor Earnings</td>
-              <td>${{ "{:,.2f}".format(investor_total or 0) }}</td>
-            </tr>
-            <tr>
-              <td>Pending Investor Earnings</td>
-              <td>${{ "{:,.2f}".format(investor_pending or 0) }}</td>
-            </tr>
-            <tr>
-              <td>Available for Withdrawal</td>
-              <td>${{ "{:,.2f}".format(investor_net_available or 0) }}</td>
-            </tr>
-            <tr>
-              <td>Total Withdrawn (All Time)</td>
-              <td>${{ "{:,.2f}".format(investor_withdrawn_total or 0) }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <small class="text-muted d-block mb-3">
-          Investor earnings become available 7 days after they are recorded.
-        </small>
-
-        {% if current_user.stripe_account_id %}
-          {% set inv_net = current_user.investor_earnings_balance|float %}
-          {% if inv_net >= 10 %}
-            <!-- standard investor payout -->
-            {% set std_fee_inv = inv_net * 0.005 + 0.35 %}
-            {% set std_net_inv = inv_net - std_fee_inv %}
-            <div class="mb-3 border rounded p-3">
-              <div class="fw-bold mb-1">
-                <i class="bi bi-bank"></i> Investor Standard Payout (1-3 business days) - Note: If you withdraw regular earnings, you must wait for regular earnings to clear in order to withdraw silent investor earnings.
-              </div>
-              <div class="text-muted mb-1" style="font-size:0.95em;">
-                Perk Miner transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee) }} (0.5% + $0.35)<br>
-                If you withdraw full balance to your Stripe balance, you will receive: <b>${{ '{:,.2f}'.format(std_net) }}<br>
-                Stripe may charge an additional fee to send funds to your bank account.</b>
-              </div>
-              <form action="{{ url_for('withdraw_investor') }}" method="POST" class="d-inline">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="input-group mb-2">
-                  <span class="input-group-text">$</span>
-                  <input
-                    type="number"
-                    name="amount"
-                    class="form-control"
-                    step="0.01"
-                    min="10"
-                    max="{{ '{:.2f}'.format(inv_net) }}"
-                    placeholder="Amount (leave blank for full)"
-                  >
-                </div>
-                  <button type="submit" class="btn btn-success w-100"
-                          onclick="this.disabled=true; this.form.submit();">
-                    Withdraw (Standard)
-                  </button>
-              </form>
-            </div>
-          {% else %}
-            <small class="text-muted">
-              You need at least $10 in available investor earnings to withdraw.
-            </small>
-          {% endif %}
-        {% else %}
-          <small class="text-muted">
-            To withdraw investor earnings, first set up payouts in Stripe.
-          </small>
-        {% endif %}
-      </div>
-    </div>
-  {% endif %}
-</div>
-
-<div class="card p-4 mb-4">
-  <h4>Businesses You Interacted With (last 60 days)</h4>
-  {% if businesses %}
-    <ul>
-      {% for biz in businesses %}
-        <li>
-          <a href="{{ url_for('view_listing', biz_id=biz.id) }}">
-            {{ biz.business_name }}
-          </a>
-        </li>
-      {% endfor %}
-    </ul>
-    {% if businesses|length == 5 %}
-      <div class="text-muted" style="font-size: 0.95em;">Only showing 5 most recent. View your receipts for more.</div>
-    {% endif %}
-  {% else %}
-    <p>You haven't interacted with any businesses in the last 60 days.</p>
-  {% endif %}
-</div>
-
-<div class="card p-4 mb-4">
-  <h4>Estimate Your Rewards From One Single Purchase</h4>
-  <div class="row g-3 mb-3">
-    <div class="col-12 col-md-auto">
-      <input id="reward_amount" type="number" class="form-control" placeholder="Amount (e.g. 500)" max="2500" required>
-    </div>
-    <div class="col-12 col-md-auto">
-      <select id="reward_tier" class="form-select" required>
-          <option value="1" selected>Tier 1 (your purchases)</option>
-          <option value="2">Tier 2 (direct referral purchases)</option>
-          <option value="3">Tier 3 (Tier 2 referral purchases)</option>
-          <option value="4">Tier 4 (Tier 3 referral purchases)</option>
-          <option value="5">Tier 5 (Tier 4 referral purchases)</option>
-      </select>
-    </div>
-    <div class="col-12 col-md-auto">
-      <button type="button" class="btn btn-primary" onclick="calculateSingleReward()">Calculate My Reward</button>
-    </div>
-  </div>
-  <div id="rewards_output">
-    {{ rewards_table | safe }}
-  </div>
-</div>
-
-<div class="card p-4 mb-4">
-  <h4>Member Referral Network Cashback/Commissions Calculator (one single purchase from everyone in your network)</h4>
-  <div class="mb-2">
-    <label>If you and everyone in your network refers 
-      <input id="network_people" type="number" class="form-control d-inline-block w-auto" min="1" value="3" style="width:80px;" />
-      people and you each make <b><u>one single purchase</u></b> from any advertiser in the same amount of $ 
-      <input id="network_amount" type="number" class="form-control d-inline-block w-auto" min="0" max="2500" step="0.01" value="100" style="width:110px;" />
-      , this is how much you would earn in Cashback and Commission:
-    </label>
-    <small class="text-muted d-block">*Maximum purchase amount allowed is $2,500</small>
-  </div>
-  <button class="btn btn-info mb-2" type="button" onclick="calculateNetworkEarnings()">Calculate</button>
-  <div id="network_results" style="display:none;">
-    <ul class="mb-1">
-      <li>Tier One: (Your purchases) = <span id="network_t1"></span></li>
-      <li>Tier Two: (Purchases from your direct referrals) = <span id="network_t2"></span></li>
-      <li>Tier Three: (Purchases from 2nd Tier referrals) = <span id="network_t3"></span></li>
-      <li>Tier Four: (Purchases from 3rd Tier referrals) = <span id="network_t4"></span></li>
-      <li>Tier Five: (Purchases from 4th Tier referrals) = <span id="network_t5"></span></li>
-    </ul>
-    <strong>Your total earnings from everyone making one single purchase would be $<span id="network_total"></span></strong>
-  </div>
-</div>
-
-<div class="card p-4 mb-4">
-  <h4>Business Referral Network Commissions Calculator</h4>
-  <div class="mb-3">
-    <label class="form-label d-block">
-      If you invite 
-      <input id="biz_referrals" type="number" class="form-control d-inline-block w-auto" min="1" value="3" style="width:80px;" />
-      businesses to join, and each business you invited also invited the same number of new businesses (same as you) to become advertisers, AND each business generates one paid invoice in the same amount of $ 
-      <input id="biz_invoice_amount" type="number" class="form-control d-inline-block w-auto" min="0" max="2500" step="0.01" value="250" style="width:110px;" /> (max $2,500),
-      you would earn <b><u>(even if you don't make any purchases from any of these businesses)</u></b>:
-    </label>
-    <small class="text-muted d-block">This shows your estimated commissions earnings from your business network (purchases are from any member, including those not in your network).</small>
-    <small class="text-muted d-block"><b>Note:</b> If you make a purchase from any business in your network, you would earn cash back for your purchases, plus the regular business commissions earnings.</small>
-  </div>
-  <button class="btn btn-info mb-3" type="button" onclick="calculateBusinessReferralEarnings()">Calculate Commissions</button>
-
-  <div id="biz_results" style="display:none;">
-    <ul class="mb-2 list-unstyled">
-      <li><strong>Tier 1</strong> (businesses you invited): <span id="biz_t1"></span></li>
-      <li><strong>Tier 2</strong> (businesses invited by your Tier 1 businesses): <span id="biz_t2"></span></li>
-      <li><strong>Tier 3</strong> (businesses invited by your Tier 2 businesses): <span id="biz_t3"></span></li>
-      <li><strong>Tier 4</strong> (businesses invited by your Tier 3 businesses): <span id="biz_t4"></span></li>
-      <li><strong>Tier 5</strong> (businesses invited by your Tier 4 businesses): <span id="biz_t5"></span></li>
-    </ul>
-    <div class="alert alert-success mt-3">
-      <strong>Grand Total business commissions earned: $<span id="biz_total"></span></strong>
-    </div>
-  </div>
-</div>
-
-<div class="card p-4 mb-4">
-  <h4>My Network</h4>
-  <div>
-    <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#tier2" aria-expanded="false" aria-controls="tier2">
-      Tier 2 (direct referrals)
-    </a>
-    <div class="collapse mt-2" id="tier2">
-      {% if level2 %}
-        <ul class="mb-2">{% for user in level2 %}<li>{{ user.name if user.name else user.email }}</li>{% endfor %}</ul>
-      {% else %}
-        <span>None</span>
-      {% endif %}
-    </div>
-  </div>
-  <div>
-    <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#tier3" aria-expanded="false" aria-controls="tier3">
-      Tier 3 (referred by Tier 2 people)
-    </a>
-    <div class="collapse mt-2" id="tier3">
-      {% if level3 %}
-        <ul class="mb-2">{% for user in level3 %}<li>{{ user.name if user.name else user.email }}</li>{% endfor %}</ul>
-      {% else %}
-        <span>None</span>
-      {% endif %}
-    </div>
-  </div>
-  <div>
-    <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#tier4" aria-expanded="false" aria-controls="tier4">
-      Tier 4 (referred by Tier 3 people)
-    </a>
-    <div class="collapse mt-2" id="tier4">
-      {% if level4 %}
-        <ul class="mb-2">{% for user in level4 %}<li>{{ user.name if user.name else user.email }}</li>{% endfor %}</ul>
-      {% else %}
-        <span>None</span>
-      {% endif %}
-    </div>
-  </div>
-  <div>
-    <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#tier5" aria-expanded="false" aria-controls="tier5">
-      Tier 5 (referred by Tier 4 people)
-    </a>
-    <div class="collapse mt-2" id="tier5">
-      {% if level5 %}
-        <ul class="mb-2">{% for user in level5 %}<li>{{ user.name if user.name else user.email }}</li>{% endfor %}</ul>
-      {% else %}
-        <span>None</span>
-      {% endif %}
-    </div>
-  </div>
-</div>
-
-{% if has_invited_business %}
-<div class="card p-4 mb-4">
-  <h4>My Business Network</h4>
-  <div>
-    <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#biztier1" aria-expanded="false" aria-controls="biztier1">
-      Tier 1 (businesses you invited)
-    </a>
-    <div class="collapse mt-2" id="biztier1">
-      {% if biz_level1 %}
-        <ul class="mb-2">{% for biz in biz_level1 %}<li>{{ biz.business_name if biz.business_name else biz.business_email }}</li>{% endfor %}</ul>
-      {% else %}
-        <span>None</span>
-      {% endif %}
-    </div>
-  </div>
-  <div>
-    <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#biztier2" aria-expanded="false" aria-controls="biztier2">
-      Tier 2 (referred by Tier 1 businesses)
-    </a>
-    <div class="collapse mt-2" id="biztier2">
-      {% if biz_level2 %}
-        <ul class="mb-2">{% for biz in biz_level2 %}<li>{{ biz.business_name if biz.business_name else biz.business_email }}</li>{% endfor %}</ul>
-      {% else %}
-        <span>None</span>
-      {% endif %}
-    </div>
-  </div>
-  <div>
-    <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#biztier3" aria-expanded="false" aria-controls="biztier3">
-      Tier 3 (referred by Tier 2 businesses)
-    </a>
-    <div class="collapse mt-2" id="biztier3">
-      {% if biz_level3 %}
-        <ul class="mb-2">{% for biz in biz_level3 %}<li>{{ biz.business_name if biz.business_name else biz.business_email }}</li>{% endfor %}</ul>
-      {% else %}
-        <span>None</span>
-      {% endif %}
-    </div>
-  </div>
-  <div>
-    <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#biztier4" aria-expanded="false" aria-controls="biztier4">
-      Tier 4 (referred by Tier 3 businesses)
-    </a>
-    <div class="collapse mt-2" id="biztier4">
-      {% if biz_level4 %}
-        <ul class="mb-2">{% for biz in biz_level4 %}<li>{{ biz.business_name if biz.business_name else biz.business_email }}</li>{% endfor %}</ul>
-      {% else %}
-        <span>None</span>
-      {% endif %}
-    </div>
-  </div>
-  <div>
-    <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#biztier5" aria-expanded="false" aria-controls="biztier5">
-      Tier 5 (referred by Tier 4 businesses)
-    </a>
-    <div class="collapse mt-2" id="biztier5">
-      {% if biz_level5 %}
-        <ul class="mb-2">{% for biz in biz_level5 %}<li>{{ biz.business_name if biz.business_name else biz.business_email }}</li>{% endfor %}</ul>
-      {% else %}
-        <span>None</span>
-      {% endif %}
-    </div>
-  </div>
-</div>
-{% endif %}
-
 <div class="modal fade" id="memberEarningsInfo" tabindex="-1" aria-labelledby="memberEarningsInfoLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -1104,35 +1601,14 @@
   </div>
 </div>
 
-<div class="card p-4 text-center">
-  <h4>This is your dashboard.</h4>
-  <p class="mb-0">Enjoy your member benefits with Perk Miner!</p>
-</div>
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <div class="alert alert-warning mt-3">
-      {% for message in messages %}
-        {{ message }}<br>
-      {% endfor %}
-    </div>
-  {% endif %}
-{% endwith %}
-
-</div>
 <footer>
-  <div>
-    <div class="mb-2">
-      <a href="/" style="color:var(--pm-primary);font-weight:600;text-decoration:none;">PerkMiner</a> © 2026
-    </div>
-    <div>
-      <small>Need help? <a href="mailto:support@perkminer.com" style="color:var(--pm-primary);">Contact Support</a></small>
-    </div>
-    <div class="mt-1">
-      <a href="#" style="color:#3dbbee; margin:0 6px;text-decoration:none;">Privacy</a>
-      <a href="#" style="color:#3dbbee; margin:0 6px;text-decoration:none;">Terms</a>
-    </div>
-  </div>
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
 </footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
   function copyCaptionAndLink(textareaId) {
@@ -1159,6 +1635,321 @@
       }
     }
   }
+</script>
+
+<!-- ===================== PROFILE WIZARD (2 STEPS) ===================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const TOTAL = 2;
+  const TITLES = { 1: 'Profile Photo', 2: 'Your Name' };
+
+  const panel = document.getElementById('profileCollapse');
+  const wizard = document.getElementById('profile-wizard');
+  const form = document.getElementById('profile-form');
+  const label = document.getElementById('wizard-step-label');
+  const sub = document.getElementById('wizard-step-sub');
+  const bar = document.getElementById('wizard-progress-bar');
+  const progress = document.getElementById('wizard-progress');
+  const toggleBtn = document.getElementById('profileToggleBtn');
+  if (!panel || !wizard || !form) return;
+
+  const steps = Array.prototype.slice.call(wizard.querySelectorAll('.wizard-step'));
+  let current = 1;
+
+  function showStep(n, opts) {
+    opts = opts || {};
+    current = Math.max(1, Math.min(TOTAL, n));
+    steps.forEach(function (s) {
+      s.classList.toggle('active', parseInt(s.getAttribute('data-step'), 10) === current);
+    });
+    label.textContent = (current === TOTAL) ? 'Final Step' : 'Step ' + current + ' of ' + TOTAL;
+    sub.textContent = TITLES[current];
+    bar.style.width = ((current / TOTAL) * 100) + '%';
+    if (progress) progress.setAttribute('aria-valuenow', current);
+    if (!opts.noScroll) {
+      wizard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function stepEl(n) {
+    return steps.find(function (s) { return parseInt(s.getAttribute('data-step'), 10) === n; });
+  }
+
+  function showError(el, msg) {
+    const box = el.querySelector('.step-error');
+    if (!box) return;
+    box.textContent = msg || '';
+    box.classList.toggle('show', !!msg);
+  }
+
+  function friendlyName(f) {
+    const explicit = f.getAttribute('data-label');
+    if (explicit) return explicit;
+    if (f.id) {
+      const lab = form.querySelector('label[for="' + f.id + '"]');
+      if (lab) return lab.textContent.replace('*', '').trim();
+    }
+    return 'This field';
+  }
+
+  // returns an error message string, or '' if the step is OK
+  function validateStep(n) {
+    const el = stepEl(n);
+    if (!el) return '';
+    let msg = '';
+    el.querySelectorAll('.is-invalid').forEach(function (x) { x.classList.remove('is-invalid'); });
+
+    const fields = el.querySelectorAll('input, select, textarea');
+    for (let i = 0; i < fields.length; i++) {
+      const f = fields[i];
+      if (f.type === 'hidden' || f.type === 'checkbox' || f.type === 'radio' || f.type === 'submit' || f.type === 'button') continue;
+      const needs = f.required || f.hasAttribute('data-required');
+
+      if (f.type === 'file') {
+        if (needs && !(f.files && f.files.length) && !f.hasAttribute('data-has-existing')) {
+          msg = friendlyName(f) + ' is required. Please choose an image to continue.';
+          f.classList.add('is-invalid');
+          break;
+        }
+        continue;
+      }
+
+      const val = (f.value || '').trim();
+      if (needs && !val) {
+        msg = friendlyName(f) + ' is required.';
+        f.classList.add('is-invalid');
+        break;
+      }
+      if (val && typeof f.checkValidity === 'function' && !f.checkValidity()) {
+        msg = f.getAttribute('data-error-msg') || f.validationMessage || 'Please check this field.';
+        f.classList.add('is-invalid');
+        break;
+      }
+    }
+    showError(el, msg);
+    return msg;
+  }
+
+  // Next / Back buttons
+  wizard.addEventListener('click', function (e) {
+    const next = e.target.closest('.wizard-next');
+    const back = e.target.closest('.wizard-back');
+    if (next) {
+      if (validateStep(current)) return;
+      showStep(current + 1);
+    } else if (back) {
+      showStep(current - 1);
+    }
+  });
+
+  // Enter key: move forward on step 1 (never submit early); on the final step Enter saves
+  form.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    const t = e.target;
+    if (!t || t.tagName === 'TEXTAREA' || t.type === 'submit' || t.type === 'button') return;
+    if (current < TOTAL) {
+      e.preventDefault();
+      if (!validateStep(current)) showStep(current + 1);
+    }
+  });
+
+  // Final save: only from the last step, after validating every step
+  form.addEventListener('submit', function (e) {
+    if (current !== TOTAL) { e.preventDefault(); return; }
+    for (let n = 1; n <= TOTAL; n++) {
+      const msg = validateStep(n);
+      if (msg) {
+        e.preventDefault();
+        showStep(n);
+        return;
+      }
+    }
+  });
+
+  // Profile photo preview
+  const photoInput = document.getElementById('profile_photo_input');
+  const photoPreview = document.getElementById('profile-photo-preview');
+  const photoPlaceholder = document.getElementById('profile-photo-placeholder');
+  if (photoInput && photoPreview) {
+    photoInput.addEventListener('change', function () {
+      const f = photoInput.files && photoInput.files[0];
+      if (!f) return;
+      photoPreview.src = URL.createObjectURL(f);
+      photoPreview.style.display = '';
+      if (photoPlaceholder) photoPlaceholder.style.display = 'none';
+    });
+  }
+
+  // Toggle button label + reset behavior
+  panel.addEventListener('shown.bs.collapse', function () {
+    if (toggleBtn) toggleBtn.textContent = 'Close Profile Steps';
+  });
+  panel.addEventListener('hidden.bs.collapse', function () {
+    if (toggleBtn) toggleBtn.textContent = 'View/Edit Profile';
+    showStep(1, { noScroll: true });
+  });
+
+  showStep(1, { noScroll: true });
+});
+</script>
+
+<!-- ===================== DASHBOARD CHARTS ===================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (!window.Chart) return;
+
+  const totalEarn = {{ (total_earnings or 0)|float }};
+  const pendingEarn = {{ (pending_earnings or 0)|float }};
+  const availEarn = {{ (net_available_earnings or 0)|float }};
+  const withdrawn = {{ (withdrawn_total or 0)|float }};
+
+  const memberTiers = [{{ ns.m2 }}, {{ ns.m3 }}, {{ ns.m4 }}, {{ ns.m5 }}];
+
+  const money = function (v) { return '$' + Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  const moneyTick = function (v) { return '$' + Number(v).toLocaleString(); };
+  const intTick = function (v) { return Number.isInteger(v) ? v : null; };
+
+  function showEmpty(canvasId, emptyId) {
+    const c = document.getElementById(canvasId);
+    const e = document.getElementById(emptyId);
+    if (c) c.style.display = 'none';
+    if (e) e.style.display = 'flex';
+  }
+
+  // 1) Earnings overview (bar)
+  if (totalEarn > 0 || pendingEarn > 0 || availEarn > 0 || withdrawn > 0) {
+    new Chart(document.getElementById('earningsChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Total Earned', 'Pending', 'Available', 'Withdrawn'],
+        datasets: [{
+          data: [totalEarn, pendingEarn, availEarn, withdrawn],
+          backgroundColor: ['#2a5859', '#ffd66b', '#3a9d6e', '#9aa9ae'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function (ctx) { return money(ctx.parsed.y); } } }
+        },
+        scales: { y: { beginAtZero: true, ticks: { callback: moneyTick } } }
+      }
+    });
+  } else {
+    showEmpty('earningsChart', 'earningsEmpty');
+  }
+
+  // 2) Where your earnings stand (doughnut)
+  if (pendingEarn > 0 || availEarn > 0 || withdrawn > 0) {
+    new Chart(document.getElementById('earningsSplitChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Available', 'Pending', 'Withdrawn'],
+        datasets: [{
+          data: [availEarn, pendingEarn, withdrawn],
+          backgroundColor: ['#3a9d6e', '#ffd66b', '#9aa9ae'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { callbacks: { label: function (ctx) { return ctx.label + ': ' + money(ctx.parsed); } } }
+        }
+      }
+    });
+  } else {
+    showEmpty('earningsSplitChart', 'earningsSplitEmpty');
+  }
+
+  // 3) Member network by tier (bar)
+  if (memberTiers.some(function (v) { return v > 0; })) {
+    new Chart(document.getElementById('memberNetworkChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Tier 2', 'Tier 3', 'Tier 4', 'Tier 5'],
+        datasets: [{
+          label: 'Members',
+          data: memberTiers,
+          backgroundColor: ['#2a5859', '#3a6d6e', '#5b9a9b', '#ffd66b'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: intTick } } }
+      }
+    });
+  } else {
+    showEmpty('memberNetworkChart', 'memberNetworkEmpty');
+  }
+
+  {% if has_invited_business %}
+  // 4) Business network by tier (bar)
+  const bizTiers = [{{ ns.b1 }}, {{ ns.b2 }}, {{ ns.b3 }}, {{ ns.b4 }}, {{ ns.b5 }}];
+  if (bizTiers.some(function (v) { return v > 0; })) {
+    new Chart(document.getElementById('businessNetworkChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5'],
+        datasets: [{
+          label: 'Businesses',
+          data: bizTiers,
+          backgroundColor: ['#1e4a4b', '#2a5859', '#5b9a9b', '#ffd66b', '#f0b429'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: intTick } } }
+      }
+    });
+  } else {
+    showEmpty('businessNetworkChart', 'businessNetworkEmpty');
+  }
+  {% endif %}
+
+  {% if current_user.has_role('silent_investor') %}
+  // 5) Silent investor earnings (bar)
+  const invTotal = {{ (investor_total or 0)|float }};
+  const invPending = {{ (investor_pending or 0)|float }};
+  const invAvail = {{ (investor_net_available or 0)|float }};
+  const invWithdrawn = {{ (investor_withdrawn_total or 0)|float }};
+  if (invTotal > 0 || invPending > 0 || invAvail > 0 || invWithdrawn > 0) {
+    new Chart(document.getElementById('investorChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Total', 'Pending', 'Available', 'Withdrawn'],
+        datasets: [{
+          data: [invTotal, invPending, invAvail, invWithdrawn],
+          backgroundColor: ['#2a5859', '#ffd66b', '#3a9d6e', '#9aa9ae'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function (ctx) { return money(ctx.parsed.y); } } }
+        },
+        scales: { y: { beginAtZero: true, ticks: { callback: moneyTick } } }
+      }
+    });
+  } else {
+    showEmpty('investorChart', 'investorEmpty');
+  }
+  {% endif %}
+});
 </script>
 
 {% if member_level_code %}
@@ -1275,6 +2066,5 @@
 </script>
 {% endif %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

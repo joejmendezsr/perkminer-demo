@@ -41,6 +41,11 @@
             background-color: #18181b;
             border-left: 4px solid #0ea5e9;
         }
+
+    /* Footer */
+    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+    footer a { color: var(--pm-primary-light); text-decoration: none; }
+
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200 min-h-screen">
@@ -57,7 +62,7 @@
 
                 <div class="flex items-center gap-4">
                     <div class="text-sm text-zinc-400 hidden sm:block">
-                        Last Updated: May 16, 2026
+                        Last Updated: October 10, 2026
                     </div>
                     <button onclick="window.close()"
                             class="flex items-center gap-2 px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-2xl text-sm font-medium border border-zinc-700 hover:border-zinc-600">
@@ -121,12 +126,13 @@
 
                     <!-- Section 3 -->
                     <div class="mb-16">
-                        <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">3. ADVERTISER PREPAID WALLET &amp; THE 10% ADVERTISING FEE</h2>
+                        <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">3. ADVERTISER PREPAID ACCOUNT &amp; THE 10% ADVERTISING FEE</h2>
                         <ul class="space-y-6">
                             <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>The Advertising Fee:</strong> 10% of the total gross transaction amount (capped at $250.00 per transaction).</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Prepaid Account Funding:</strong> Business Advertisers must fund an in-app prepaid advertising wallet via Stripe.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Hard Wallet Restrictions:</strong> Transactions are blocked if wallet balance is insufficient.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Refundability and Escheatment:</strong> Governed by Nevada unclaimed property laws.</li>
+                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Prepaid Account Funding:</strong> Business Advertisers must fund an in-app prepaid advertising account via Stripe.</li>
+                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Hard Account Balance Restrictions:</strong> Transactions are blocked if account balance is insufficient.</li>
+                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Refundability and Escheatment:</strong> The 10% ad fees are final and cannot be refunded or modified due to multiple payouts from each finalized transaction.  Escheatment is governed by Nevada unclaimed property laws.</li>
+                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Discontinued Business Account:</strong> A $25 fee applies.  Any remaining funds in the advertiser's account balance over $25 will be refunded to the advertiser.  Advertiser is responsible for the $25 fee if account balance is below $25.</li>
                         </ul>
                     </div>
 
@@ -137,13 +143,13 @@
                             <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> Mandatory in-app finalization by Business Advertisers.</li>
                             <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> In-Person QR Code Verification for fraud protection or manual finalization by the business as needed.</li>
                             <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> Delayed finalization option with mandatory disclosure.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> Instant withdrawals via Stripe (minimum $10).</li>
+                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> Standard withdrawals via Stripe (minimum $10) - A Perk Miner transfer fees applies (2.9% of the withdrawal amount + $0.50).</li>
                         </ul>
                     </div>
 
                     <!-- Section 5 -->
                     <div class="mb-16">
-                        <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">5. COMPENSATION PLAN &amp; MULTI-TIER REWARD STRUCTURES</h2>
+                        <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">5. COMPENSATION PLAN &amp; MULTI-TIER REWARD STRUCTURES (THE TREE OF OPPORTUNITY)</h2>
                         <p class="mb-6 text-zinc-400">All calculations based on gross transaction volume up to $2,500 per transaction.</p>
 
                         <div class="grid md:grid-cols-2 gap-8">
@@ -151,19 +157,19 @@
                             <div class="subsection p-7 rounded-3xl">
                                 <h3 class="font-semibold mb-4 text-white">A. Member and Member-Referred Purchases</h3>
                                 <ul class="space-y-3 text-sm">
-                                    <li><strong>Tier 1 (Your purchases):</strong> 2.00% Cashback</li>
-                                    <li><strong>Tier 2 (Purchases by directly Sponsored Member):</strong> 0.25% Commission</li>
-                                    <li><strong>Tier 3 (Purchases by Member Sponsored by Tier 2 Member):</strong> 0.25% Commission</li>
-                                    <li><strong>Tier 4 (Purchases by Member Sponsored by Tier 3 Member):</strong> 0.25% Commission</li>
-                                    <li><strong>Tier 5 (Purchases by Member Sponsored by Tier 4 Member):</strong> 2.00% Commission</li>
+                                    <li><strong>Tier 1 - Tree Trunk - (Your purchases):</strong> 2.00% Cashback (max $50)</li>
+                                    <li><strong>Tier 2 - 1st Set of Branches - (Purchases by directly Sponsored Member):</strong> 0.2% Commission (max $5)</li>
+                                    <li><strong>Tier 3 - 2nd Set of Branches - (Purchases by Member Sponsored by Tier 2 Member):</strong> 0.2% Commission (max $5)</li>
+                                    <li><strong>Tier 4 - 3rd Set of Branches - (Purchases by Member Sponsored by Tier 3 Member):</strong> 0.2% Commission (max $5)</li>
+                                    <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Purchases by Member Sponsored by Tier 4 Member):</strong> 2.00% Commission (max $50)</li>
                                 </ul></br></br>
-                                <h3 class="font-semibold mb-4 text-white">Sample Payout ($2,500 Purchase by Tier 5 Member):</h3>
+                                <h3 class="font-semibold mb-4 text-white">Sample Payout ($3,000 Purchase by Tier 5 Member):</h3>
                                 <ul class="space-y-3 text-sm">
                                     <li><strong>Tier 1 (Your Commission):</strong> 2.00% Commission ($50)</li>
-                                    <li><strong>Tier 2 Member Commission:</strong> 0.25% Commission ($6.25)</li>
-                                    <li><strong>Tier 3 Member Commission):</strong> 0.25% Commission ($6.25)</li>
-                                    <li><strong>Tier 4 Member Commission):</strong> 0.25% Commission ($6.25)</li>
-                                    <li><strong>Tier 5 Member Cash Back (Member who made the purchase):</strong> 0.25% Cash Back ($50)</li>
+                                    <li><strong>Tier 2 Member Commission:</strong> 0.2% Commission ($5)</li>
+                                    <li><strong>Tier 3 Member Commission):</strong> 0.2% Commission ($5)</li>
+                                    <li><strong>Tier 4 Member Commission):</strong> 0.2% Commission ($5)</li>
+                                    <li><strong>Tier 5 Member Cash Back <b>(Member who made the purchase)</b>:</strong> 2.00% Cash Back ($50)</li>
                                 </ul>
                             </div>
                             <!-- B & C -->
@@ -171,27 +177,39 @@
                                 <div class="subsection p-7 rounded-3xl">
                                     <h3 class="font-semibold mb-4 text-white">B. Member-Referred Businesses</h3>
                                     <ul class="space-y-3 text-sm">
-                                        <li><strong>Tier 1 (Sales by business you directly sponsor):</strong> 1.00% Commission</li>
-                                        <li><strong>Tier 2 (Sales by businesses referred by Tier 1 business):</strong> 0.25% Commission</li>
-                                        <li><strong>Tier 3 (Sales by businesses referred by Tier 2 business):</strong> 0.25% Commission</li>
-                                        <li><strong>Tier 4 (Sales by businesses referred by Tier 3 business):</strong> 0.25% Commission</li>
-                                        <li><strong>Tier 5 (Sales by business referred by Tier 4 business):</strong> 1.00% Commission</li>
+                                        <li><strong>Tier 1 - Tree Trunk - (Sales by business you directly sponsor):</strong> 1.00% Commission (max $25)</li>
+                                        <li><strong>Tier 2 - 1st Set of Branches - (Sales by businesses referred by Tier 1 business):</strong> 0.2% Commission (max $5)</li>
+                                        <li><strong>Tier 3 - 2nd Set of Branches - (Sales by businesses referred by Tier 2 business):</strong> 0.2% Commission (max $5)</li>
+                                        <li><strong>Tier 4 - 3rd Set of Branches - (Sales by businesses referred by Tier 3 business):</strong> 0.2% Commission (max $5)</li>
+                                        <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Sales by business referred by Tier 4 business):</strong> 1.00% Commission (max $25)</li>
                                     </ul>
                                 </div>
                                 <div class="subsection p-7 rounded-3xl">
                                     <h3 class="font-semibold mb-4 text-white">C. Business-to-Business Referrals</h3>
                                     <ul class="space-y-3 text-sm">
-                                        <li><strong>Tier 1 (Sales by your business):</strong> 1.00%</li>
-                                        <li><strong>Tier 2 (Sales by directly Sponsored Business):</strong> 0.25%</li>
-                                        <li><strong>Tier 3 (Sales by Business Sponsored by Tier 2 Business):</strong> 0.25%</li>
-                                        <li><strong>Tier 4 (Sales by Business Sponsored by Tier 3 Business):</strong> 0.25%</li>
-                                        <li><strong>Tier 5 (Sales by Business Sponsored by Tier 4 Business):</strong> 1.00%</li>
+                                        <li><strong>Tier 1 - Tree Trunk - (Sales by your business):</strong> 1.00% (max $25)</li>
+                                        <li><strong>Tier 2 - 1st Set of Branches - (Sales by directly Sponsored Business):</strong> 0.2% (max $5)</li>
+                                        <li><strong>Tier 3 - 2nd Set of Branches - (Sales by Business Sponsored by Tier 2 Business):</strong> 0.2% (max $5)</li>
+                                        <li><strong>Tier 4 - 3rd Set of Branches - (Sales by Business Sponsored by Tier 3 Business):</strong> 0.2% (max $5)</li>
+                                        <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Sales by Business Sponsored by Tier 4 Business):</strong> 1.00% (max $25)</li>
                                     </ul>
                                 </div>
                                 <div class="subsection p-7 rounded-3xl">
                                     <h3 class="font-semibold mb-4 text-white">D. Split Mutual Commission (Amount businesses you directly sponsor earn from your sales)</h3>
                                     <ul class="space-y-3 text-sm">
-                                        <li><strong>Tier 2 Businesses sponsored by Your Business:</strong> 0.25% of your sales divided by number of Total Number of Businesses directly sponsored by Your Business</li>
+                                        <li><strong>Tier 2 Businesses sponsored by Your Business:</strong> 0.2% of your sales (max $5) divided by number of Total Number of Businesses directly sponsored by Your Business</li>
+                                    </ul>
+                                </div>
+                                <div class="subsection p-7 rounded-3xl">
+                                    <h3 class="font-semibold mb-4 text-white">E. Maximum Payout by Perk Miner LLC On Finalized Transactions (when all payouts are active with 6 members and 6 advertisers)</h3>
+                                    <ul class="space-y-3 text-sm">
+                                        <li><strong>84% of the advertising revenue re-invested back into the ecosystem:</strong> If Perk Miner LLC receives $100 in advertising fees from one finalized transaction, with every payout active, Perk Miner LLC pays out $84, keeping $16 of the advertising fee paid.<br><br>One member can earn from multiple payouts.<br><br>Member refers their own business, member also refers other members, and their business refers another business.<br><br>If a purchase is made from a Tier 5 business by a Tier 5 Member:<br><br>Member earns Tier 5 Member Referral Commissions for the purchase and Tier 5 Member to Business Commissions for the sale.<br><br>Their business earns Tier 5 Business to Business Commissions for the sale.</li>
+                                    </ul>
+                                </div>
+                                <div class="subsection p-7 rounded-3xl">
+                                    <h3 class="font-semibold mb-4 text-white">F. Earnings are withdrawable earnings to a bank account (upon successful onboarding with Stripe through the platform)</h3>
+                                    <ul class="space-y-3 text-sm">
+                                        <li><strong>All payouts are real money deposited to bank account:</strong> Once members and advertisers have earned a minimum of $10, they are able to complete a standard withdrawal for their earnings (minum applicable Perk Miner transfer fees) deposited into the bank account setup through Stripe.  All earnings are real cash and not coupons, gift cards or points.</li>
                                     </ul>
                                 </div>
                             </div>
@@ -202,7 +220,7 @@
                     <div class="space-y-16">
                         <div>
                             <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">6. DISPUTE RESOLUTION, MEDIATION, &amp; SECURE CHAT</h2>
-                            <p class="text-zinc-400">In-app dispute system with secure three-way messaging and good-faith resolution.</p>
+                            <p class="text-zinc-400">In-app dispute system with secure three-way messaging (between the member, the advertiser and Perk Miner LLC) and good-faith resolution.</p>
                         </div>
 
                         <div>
@@ -221,7 +239,7 @@
                         <h2 class="heading-font text-3xl font-semibold text-emerald-400 mb-8 text-center">THE PERKMINER MERCHANT GUARANTEE</h2>
                         <ul class="space-y-6 text-emerald-100">
                             <li class="flex gap-4"><span class="text-emerald-400">•</span> 100% Free Listing • No monthly fees • $25 minimum account balance deposit required to start</li>
-                            <li class="flex gap-4"><span class="text-emerald-400">•</span> Pay-Per-Sale Model (10% capped at $250) • Minimum 10:1 ROI</li>
+                            <li class="flex gap-4"><span class="text-emerald-400">•</span> Pay-Per-Sale Model (10% capped at $250) • Minimum 1000% Return on Ad Spend (10:1 Marketing ROI Ratio)</li>
                             <li class="flex gap-4"><span class="text-emerald-400">•</span> Lead Exclusivity &amp; Strict Privacy Mandates</li>
                         </ul>
                     </div>
@@ -234,9 +252,13 @@
             </div>
         </main>
 
-        <footer class="bg-zinc-900 border-t border-zinc-800 py-8 text-center text-xs text-zinc-500">
-            This page opens in a new window. Use the Close button above or press ESC to return.
-        </footer>
+<footer>
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
+</footer>
+
     </div>
 
     <script>

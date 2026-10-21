@@ -33,18 +33,22 @@
         {% endif %}
 
         {% if current_user.has_role('approve_reject_listings') %}
-            <a href="{{ url_for('approve_reject_dashboard') }}" class="list-group-item list-group-item-action">
-                <i class="bi bi-check2-square"></i> Approve/Reject Listings
+            {% set n = pending_counts.get('listings', 0) %}
+            <a href="{{ url_for('approve_reject_dashboard') }}"
+               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-check2-square"></i> Approve/Reject Listings</span>
+                {% if n > 0 %}<span class="badge bg-danger rounded-pill">{{ n }}</span>{% endif %}
             </a>
         {% endif %}
-
 
         {% if current_user.has_role('approve_reject_testimonials') %}
-            <a href="{{ url_for('video_testimonials_dashboard') }}" class="list-group-item list-group-item-action">
-                <i class="bi bi-check2-square"></i> Approve/Reject Testimonials
+            {% set n = pending_counts.get('testimonials', 0) %}
+            <a href="{{ url_for('video_testimonials_dashboard') }}"
+               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-check2-square"></i> Approve/Reject Testimonials</span>
+                {% if n > 0 %}<span class="badge bg-danger rounded-pill">{{ n }}</span>{% endif %}
             </a>
         {% endif %}
-
 
         {% if current_user.has_role('feedback_moderation') %}
             <a href="{{ url_for('feedback_dashboard') }}" class="list-group-item list-group-item-action">
@@ -53,16 +57,21 @@
         {% endif %}
 
         {% if current_user.has_role('customer_support') %}
-            <a href="{{ url_for('support_dashboard') }}" class="list-group-item list-group-item-action">
-                <i class="bi bi-headset"></i> Customer Support
+            {% set n = pending_counts.get('support', 0) %}
+            <a href="{{ url_for('support_dashboard') }}"
+               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-headset"></i> Customer Support</span>
+                {% if n > 0 %}<span class="badge bg-danger rounded-pill">{{ n }}</span>{% endif %}
             </a>
         {% endif %}
 
         {% if current_user.has_role('ecommerce') %}
-          <a href="{{ url_for('admin_ecommerce_verifications') }}"
-             class="list-group-item list-group-item-action">
-            <i class="bi bi-chat-left-text"></i> E‑commerce verifications
-          </a>
+            {% set n = pending_counts.get('ecommerce', 0) %}
+            <a href="{{ url_for('admin_ecommerce_verifications') }}"
+               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-bag-check"></i> E‑commerce verifications</span>
+                {% if n > 0 %}<span class="badge bg-danger rounded-pill">{{ n }}</span>{% endif %}
+            </a>
         {% endif %}
 
         {% if current_user.has_role('super_admin') %}
@@ -78,8 +87,10 @@
     {% if not (
         current_user.has_role('finance') or
         current_user.has_role('approve_reject_listings') or
+        current_user.has_role('approve_reject_testimonials') or
         current_user.has_role('feedback_moderation') or
         current_user.has_role('customer_support') or
+        current_user.has_role('ecommerce') or
         current_user.has_role('super_admin')
     ) %}
         <div class="alert alert-warning mt-4 text-center">

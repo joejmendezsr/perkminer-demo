@@ -20,6 +20,11 @@
     @media (max-width:700px) {main{margin:1rem 0.5rem; padding:0.7rem;} }
     @media (max-width:480px) {h1{font-size:1.3rem;} main{padding:0.4rem;} }
     a.nav {display:inline-block; margin-bottom:1.2em; color:#1769aa; text-decoration:none; font-weight:500;}
+
+    /* Footer */
+    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+    footer a { color: var(--pm-primary-light); text-decoration: none; }
+
   </style>
 </head>
 <body>
@@ -29,9 +34,17 @@
   <main>
     <a href="/news" class="nav">&larr; Back to News</a>
     <div class="date">October 4, 2026</div>
-    <a href="/public_profiles/motorcitocarwash" target="_blank" rel="noopener noreferrer">
-        Motorcito Car Wash
+    <a href="#" target="_blank" rel="noopener noreferrer">
+        Coming Soon!
     </a>
   </main>
 </body>
+
+<footer>
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
+</footer>
+
 </html>

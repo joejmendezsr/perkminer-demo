@@ -1,20 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Business Dashboard - PerkMiner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
         :root {
           --pm-primary: #2a5859;
+          --pm-primary-dark: #1e4a4b;
+          --pm-primary-light: #2a5859;
           --pm-accent: #ffd66b;
-          --pm-bg: #fff;
+          --pm-bg: #f4f8f9;
           --pm-text: #222;
           --pm-hover: #e6f6f5;
           --pm-focus: #fadd92;
+          --pm-muted: #5c6b73;
+          --pm-shadow: 0 2px 16px #e3eee9;
         }
+        html { scroll-behavior: smooth; }
         body {
           background: var(--pm-bg);
           color: var(--pm-text);
@@ -26,9 +33,10 @@
           box-shadow: 0 2px 8px #f0f2f3;
         }
         .card, .dashboard-section {
-          background: #f8fafb;
+          background: #ffffff;
           border-radius: 16px;
-          box-shadow: 0 2px 16px #e3eee9;
+          border: 1px solid #e8f0f2;
+          box-shadow: var(--pm-shadow);
           margin-bottom: 1.5rem;
           transition: box-shadow 0.2s;
         }
@@ -50,6 +58,7 @@
           display: flex; align-items: center; justify-content: center;
           font-size: 2.4em;
           border: 2px solid var(--pm-primary);
+          margin: 0 auto;
         }
         .btn-primary, .btn-success {
           background: var(--pm-primary);
@@ -87,46 +96,212 @@
             font-size: 1.5em;
           }
         }
-        footer {
-          background: #f8fafb;
-          color: #999;
-          padding: 1.5rem 0;
-          margin-top: 3rem;
-          text-align: center;
-          font-size: 1em;
-          border-top: 1px solid #e1e7ea;
+
+        /* Footer */
+        footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+        footer a { color: var(--pm-primary-light); text-decoration: none; }
+
+        /* ---------- Dashboard structure ---------- */
+        .dash-hero { padding: 1.4rem 1.4rem 1.2rem; }
+        .dash-hero .welcome-title { font-weight: 800; color: var(--pm-primary-dark); line-height: 1.2; }
+        .balance-tile {
+          background: linear-gradient(145deg, #1e4a4b 0%, #2a5859 70%, #3a6d6e 100%);
+          color: #fff;
+          border-radius: 14px;
+          padding: .9rem 1.1rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+        .balance-tile .balance-label { font-size: .8rem; opacity: .85; text-transform: uppercase; letter-spacing: .04em; }
+        .balance-tile .balance-amt { font-size: 1.7rem; font-weight: 800; color: var(--pm-accent); line-height: 1.1; }
+        .status-chip {
+          display: inline-flex; align-items: center; gap: .4rem;
+          border-radius: 999px; padding: .3rem .85rem;
+          font-size: .88rem; font-weight: 600;
+          background: #eef5ff; color: #0b5ed7; border: 1px solid #cfe0fb;
+        }
+        .status-chip.ok { background: #edf8f2; color: #146c43; border-color: #bfe3cf; }
+        .status-chip.warn { background: #fff8e1; color: #8a5a00; border-color: #ffe08a; }
+        .status-chip.bad { background: #fdecec; color: #a12828; border-color: #f4c4c4; }
+
+        .dash-nav {
+          display: flex; gap: .5rem; overflow-x: auto; white-space: nowrap;
+          padding: .2rem .1rem .7rem; margin-bottom: .6rem;
+          scrollbar-width: none;
+        }
+        .dash-nav::-webkit-scrollbar { display: none; }
+        .dash-nav a {
+          flex: 0 0 auto;
+          text-decoration: none; font-weight: 600; font-size: .9rem;
+          color: var(--pm-primary); background: #fff;
+          border: 1px solid #d9ece7; border-radius: 999px;
+          padding: .4rem .95rem;
+        }
+        .dash-nav a:hover { background: var(--pm-hover); }
+
+        .dash-section-head {
+          display: flex; align-items: center; gap: .6rem;
+          margin: 1.8rem 0 .9rem;
+          scroll-margin-top: 12px;
+        }
+        .dash-section-head .icon-badge {
+          width: 38px; height: 38px; border-radius: 12px;
+          background: var(--pm-primary); color: #fff;
+          display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+        }
+        .dash-section-head h3 { font-size: 1.3rem; font-weight: 800; color: var(--pm-primary-dark); margin: 0; }
+
+        .kpi-tile { padding: 1.1rem 1.1rem; height: 100%; margin-bottom: 0; }
+        .kpi-tile .kpi-icon {
+          width: 40px; height: 40px; border-radius: 12px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 1.2rem; margin-bottom: .6rem;
+        }
+        .kpi-tile .kpi-label { font-size: .8rem; color: var(--pm-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+        .kpi-tile .kpi-value { font-size: 1.55rem; font-weight: 800; color: var(--pm-primary-dark); line-height: 1.15; word-break: break-word; }
+        .kpi-green { background: #e3f4ea; color: #146c43; }
+        .kpi-gold { background: #fff3cf; color: #8a5a00; }
+        .kpi-teal { background: #e0f1f1; color: #2a5859; }
+        .kpi-blue { background: #e4eefc; color: #0b5ed7; }
+
+        .chart-card { padding: 1.1rem 1.1rem 1rem; height: 100%; margin-bottom: 0; }
+        .chart-card h5 { font-size: 1rem; font-weight: 700; color: var(--pm-primary-dark); margin-bottom: .6rem; }
+        .chart-box { position: relative; height: 230px; }
+        .chart-empty {
+          position: absolute; inset: 0; display: none;
+          align-items: center; justify-content: center; text-align: center;
+          color: var(--pm-muted); font-size: .92rem; padding: 1rem;
         }
 
+        .summary-row {
+          display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+          padding: .6rem 0; border-bottom: 1px dashed #e3eceb;
+        }
+        .summary-row:last-child { border-bottom: 0; }
+        .summary-row .s-label { color: var(--pm-muted); font-weight: 500; }
+        .summary-row .s-value { font-weight: 700; color: var(--pm-primary-dark); }
+
+        .card-title-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .8rem; }
+        .card-title-row h4, .card-title-row h5 { margin: 0; font-weight: 800; color: var(--pm-primary-dark); }
+        .card-title-row i { color: var(--pm-primary); font-size: 1.25rem; }
+
+        .referral-code-pill {
+          display: inline-block; background: #fff8e1; border: 1px dashed #e0b84a;
+          color: #7a5a00; font-weight: 800; font-size: 1.25rem;
+          border-radius: 12px; padding: .45rem 1rem; letter-spacing: .04em;
+          word-break: break-all;
+        }
+
+        .network-tier {
+          display: flex; align-items: center; justify-content: space-between;
+          background: #f6fafa; border: 1px solid #e1eeee; border-radius: 12px;
+          padding: .7rem 1rem; margin-bottom: .5rem;
+          text-decoration: none; color: var(--pm-primary-dark); font-weight: 700;
+        }
+        .network-tier:hover { background: var(--pm-hover); }
+
+        /* ---------- Calculators ---------- */
+        .calc-card { padding: 0; overflow: hidden; height: 100%; margin-bottom: 0; }
+        .calc-head {
+          background: linear-gradient(145deg, #1e4a4b 0%, #2a5859 70%, #3a6d6e 100%);
+          color: #fff; padding: 1rem 1.25rem;
+          display: flex; align-items: center; gap: .75rem;
+        }
+        .calc-head .calc-icon {
+          width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,.16);
+          display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+        }
+        .calc-head h4 { font-size: 1.05rem; font-weight: 700; margin: 0; line-height: 1.3; }
+        .calc-head small { opacity: .85; }
+        .calc-body { padding: 1.25rem; }
+        .calc-result {
+          background: linear-gradient(145deg, #e9f7ef 0%, #f3fbf6 100%);
+          border: 1px solid #bfe3cf; border-radius: 14px;
+          padding: 1rem 1.1rem; margin-top: 1rem; text-align: center;
+        }
+        .calc-result .calc-result-desc { color: var(--pm-muted); font-weight: 600; margin-bottom: .2rem; }
+        .calc-result .calc-result-amt { font-size: 2rem; font-weight: 800; color: #146c43; line-height: 1.1; }
+        .calc-result .calc-result-note { color: #374759; font-size: .95rem; margin-top: .2rem; }
+        .tier-table { width: 100%; font-size: .95rem; }
+        .tier-table td { padding: .45rem .25rem; border-bottom: 1px solid #edf2f2; }
+        .tier-table td:last-child { text-align: right; font-weight: 700; color: var(--pm-primary-dark); white-space: nowrap; }
+        .tier-total {
+          display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+          background: #e9f7ef; border: 1px solid #bfe3cf; border-radius: 12px;
+          padding: .75rem 1rem; margin-top: .8rem; font-weight: 700; color: #146c43;
+        }
+        .tier-total .tier-total-amt { font-size: 1.4rem; font-weight: 800; }
+
+        /* ---------- Profile wizard ---------- */
+        .wizard-card { padding: 0; overflow: hidden; border-radius: 20px; margin-bottom: 1.5rem; }
+        .wizard-head {
+          background: linear-gradient(145deg, #1e4a4b 0%, #2a5859 60%, #3a6d6e 100%);
+          color: #fff; padding: 1.1rem 1.25rem 1rem;
+        }
+        .wizard-step-label { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
+        .wizard-step-sub { opacity: .9; font-size: .95rem; }
+        .wizard-progress { height: 8px; background: rgba(255,255,255,.25); border-radius: 999px; overflow: hidden; margin-top: .8rem; }
+        .wizard-progress-bar { height: 100%; width: 0; background: var(--pm-accent); border-radius: 999px; transition: width .3s ease; }
+        .wizard-jump { max-width: 230px; font-size: .85rem; }
+        .wizard-body { padding: 1.5rem 1.25rem 1.4rem; background: #fff; }
+        .wizard-step { display: none; }
+        .wizard-step.active { display: block; animation: wizFade .25s ease; }
+        @keyframes wizFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .wizard-title { font-size: 1.3rem; font-weight: 800; color: var(--pm-primary-dark); margin-bottom: .35rem; display: flex; align-items: center; gap: .5rem; }
+        .wizard-title i { color: var(--pm-primary); }
+        .wizard-help { color: var(--pm-muted); margin-bottom: 1.1rem; }
+        .wizard-nav { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1.5rem; }
+        .wizard-nav .btn { flex: 1 1 140px; padding: .65rem 1rem; font-weight: 600; border-radius: 12px; }
+        .step-error {
+          display: none; background: #fdecec; color: #a12828; border: 1px solid #f4c4c4;
+          border-radius: 10px; padding: .55rem .85rem; margin-top: 1rem; font-weight: 500; font-size: .95rem;
+        }
+        .step-error.show { display: block; }
+        .photo-preview-wrap { text-align: center; margin-bottom: 1rem; }
+        .photo-preview-wrap img.photo-preview {
+          width: 150px; height: 150px; object-fit: cover; border-radius: 50%;
+          border: 3px solid var(--pm-primary); background: var(--pm-hover);
+        }
+        #profile-map { width: 100%; height: 300px; border-radius: 12px; margin-bottom: 12px; }
+
         /* Modern small preview card */
-          .small-listing-modern {
-            border: 1px solid #d9ece7;
-            border-radius: 14px;
-            background: #fafefe;
-            box-shadow: 0 1px 5px #e6f9f4;
-            margin-bottom: 1.2rem;
-            padding: 10px 12px;
-            display: flex;
-            flex-direction: column;   /* stack logo on top, text below */
-            align-items: center;      /* center the logo + text */
-            gap: 0.6rem;
-            max-width: 380px;
-          }
+        .small-listing-modern {
+          border: 1px solid #d9ece7;
+          border-radius: 14px;
+          background: #fafefe;
+          box-shadow: 0 1px 5px #e6f9f4;
+          margin-bottom: 1.2rem;
+          padding: 10px 12px;
+          display: flex;
+          flex-direction: column;   /* stack logo on top, text below */
+          align-items: center;      /* center the logo + text */
+          gap: 0.6rem;
+          max-width: 380px;
+        }
 
-          .small-listing-modern-img {
-            width: 120px;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px #ddebe8;
-            background: #f7f7f7;
-            margin: 0 auto;
-          }
+        .small-listing-modern-img {
+          width: 120px;
+          height: 120px;
+          object-fit: cover;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px #ddebe8;
+          background: #f7f7f7;
+          margin: 0 auto;
+        }
 
-          .small-listing-info {
-            font-size: 0.98em;
-            text-align: center;       /* center text under logo */
-            width: 100%;
-          }
+        .small-listing-info {
+          font-size: 0.98em;
+          text-align: center;       /* center text under logo */
+          width: 100%;
+        }
+        .small-listing-title { font-weight: 700; font-size: 1.1em; color: #2a5859; }
+        .small-listing-category-badge {
+          display: inline-block; background: #e6f6f5; color: #2a5859;
+          border-radius: 12px; padding: 2px 10px; font-size: .9em; margin: 4px 0;
+        }
 
         /* Large listing preview */
         .listing-pic-wrap {
@@ -150,12 +325,23 @@
         @media (max-width: 700px) {
           .large-profile-pic { width: 170px; height: 170px;}
         }
+        .listing-title { font-size: 1.8em; font-weight: 800; text-align: center; color: #2a5859; }
         .biz-category-badge {
           font-size:1em;
           font-weight:500;
           border-radius:16px;
           padding:6px 16px;
           background: #e6f6f5;
+          color: #2a5859;
+          display:inline-block;
+          margin-bottom: 9px;
+        }
+        .biz-finalization-badge {
+          font-size:1em;
+          font-weight:500;
+          border-radius:16px;
+          padding:6px 16px;
+          background: #F5DEB3;
           color: #2a5859;
           display:inline-block;
           margin-bottom: 9px;
@@ -192,6 +378,7 @@
           margin-bottom:4px;
           font-size:1em;
         }
+        .map-wrap { width:100%; height:242px; border-radius:14px; overflow:hidden; margin-bottom: 1rem; background:#fafcff; box-shadow: 0 2px 8px #e7eceb; }
 
         .listing-photo-strip {
           display: flex;
@@ -220,9 +407,10 @@
           box-shadow:0 1px 2px #eee;
         }
         .service-list li { margin-bottom: 3px; }
-
     </style>
     <script>
+      let networkChart = null;
+
       function calculateNetworkEarnings() {
         let numPeople = parseInt(document.getElementById('network_people').value, 10) || 0;
         let amount = parseFloat(document.getElementById('network_amount').value) || 0;
@@ -241,6 +429,35 @@
         document.getElementById('network_t5').innerText = t5.toFixed(2);
         document.getElementById('network_total').innerText = total.toFixed(2);
         document.getElementById('network_results').style.display = 'block';
+
+        // Tier earnings chart
+        var canvas = document.getElementById('network_chart');
+        if (canvas && window.Chart) {
+          var vals = [t1, t2, t3, t4, t5].map(function (v) { return Number(v.toFixed(2)); });
+          if (networkChart) {
+            networkChart.data.datasets[0].data = vals;
+            networkChart.update();
+          } else {
+            networkChart = new Chart(canvas, {
+              type: 'bar',
+              data: {
+                labels: ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5'],
+                datasets: [{
+                  label: 'Earnings ($)',
+                  data: vals,
+                  backgroundColor: ['#2a5859', '#3a6d6e', '#5b9a9b', '#ffd66b', '#f0b429'],
+                  borderRadius: 8
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+              }
+            });
+          }
+        }
       }
       function calculateSingleReward() {
         let amount = parseFloat(document.getElementById('reward_amount').value) || 0;
@@ -265,8 +482,11 @@
         }
         let out = '';
         if (amount > 0) {
-          out += `<h5 class='mt-4 mb-2'>${desc} of $${amount.toFixed(2)}:</h5>`;
-          out += `<div class='alert alert-success'>You earn <strong>$${reward.toFixed(2)}</strong> as cashback${cap?` (capped at $${cap.toFixed(2)}).`:"."}</div>`;
+          out += `<div class="calc-result">`;
+          out += `<div class="calc-result-desc">${desc} of $${amount.toFixed(2)}:</div>`;
+          out += `<div class="calc-result-amt">$${reward.toFixed(2)}</div>`;
+          out += `<div class="calc-result-note">You earn <strong>$${reward.toFixed(2)}</strong> as cashback${cap?` (capped at $${cap.toFixed(2)}).`:"."}</div>`;
+          out += `</div>`;
         }
         document.getElementById('rewards_output').innerHTML = out;
       }
@@ -292,146 +512,718 @@
   {% endif %}
 {% endwith %}
 
-<div class="container py-4">
-  <div class="card mb-4 p-4">
-    <div class="d-flex align-items-center flex-wrap mb-3">
+<div class="container pb-4">
+
+  <!-- ===================== HEADER / ACCOUNT ===================== -->
+  <div class="card dash-hero">
+    <div class="d-flex align-items-center flex-wrap gap-3 mb-3">
       {% if profile_img_url %}
-        <img src="{{ profile_img_url }}" alt="Profile Photo" class="profile-pic me-3">
+        <img src="{{ profile_img_url }}" alt="Profile Photo" class="profile-pic">
       {% else %}
-        <div class="placeholder-pic me-3"><i class="bi bi-person"></i></div>
+        <div class="placeholder-pic" style="margin:0;"><i class="bi bi-person"></i></div>
       {% endif %}
-      <div>
-        <h2 class="mb-0">
+      <div class="flex-grow-1">
+        <h2 class="h3 welcome-title mb-0">
           Welcome, {{ business.business_name if business.business_name else (user_name if user_name else email) }}!
         </h2>
+        <div class="text-muted small">{{ email }}</div>
       </div>
-      <div class="ms-auto d-flex gap-2 flex-wrap">
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('home') }}" class="btn btn-outline-primary">
+          <i class="bi bi-house-door"></i> Search for Businesses
+        </a>
         <a href="{{ url_for('business_logout') }}" class="btn btn-outline-danger">Logout</a>
       </div>
     </div>
-<div class="d-flex justify-content-end mb-3">
-  <a href="{{ url_for('home') }}" class="btn btn-outline-primary">
-    <i class="bi bi-house-door"></i> Search for Businesses
-  </a>
-</div>
 
-{% if business.location_varies %}
-  <div class="alert alert-info d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3">
-    <div class="mb-2 mb-md-0">
-      <strong>live location enabled:</strong>
-      when you move, click the button to update your map position.
+    <!-- Account Balance and Fund/Add Funds Button -->
+    <div class="balance-tile mb-3">
+      <div>
+        <div class="balance-label">Account Balance</div>
+        <div class="balance-amt">${{ "{:,.2f}".format(business.account_balance or 0.0) }}</div>
+      </div>
+      <a href="{{ url_for('fund_account') }}" class="btn btn-warning flex-shrink-0">
+        <i class="bi bi-wallet2 me-1"></i>Add Funds
+      </a>
     </div>
-    <button
-      type="button"
-      class="btn btn-sm btn-primary"
-      id="updateLiveLocationBtn">
-      use live location (update now)
-    </button>
-  </div>
-{% endif %}
 
-    <!-- Business Profile Section -->
-    <div class="card p-4 mb-4">
-      <div class="mb-3 d-flex gap-2 flex-wrap">
-        <button class="btn btn-secondary" type="button" id="previewListingBtn">
-          Preview Listing
-        </button>
-
-<button id="profileToggleBtn"
-        class="btn btn-primary"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#profileCollapse"
-        aria-expanded="false"
-        aria-controls="profileCollapse">
-  View/Edit Profile
-</button>
-
-        <a href="{{ url_for('business_change_password') }}" class="btn btn-outline-dark">
-          Change Password
-        </a>
-        <a href="{{ url_for('business_tutorials') }}" class="btn btn-outline-primary">
-          Tutorials
-        </a>
-
-{% if business.status == "approved" and not business.is_suspended %}
-  <a href="{{ url_for('public_profile', store_slug=business.store_slug) }}"
-     target="_blank"
-     rel="noopener noreferrer"
-     class="btn btn-outline-primary">
-    View public profile page
-  </a>
-{% endif %}
-
-      </div>
-
-      <!-- Account Balance and Fund/Add Funds Button -->
-      <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap">
-        <div class="fw-bold" style="font-size:1.15em;">
-          Account Balance: <span class="text-success">
-            ${{ "{:,.2f}".format(business.account_balance or 0.0) }}
-          </span>
-        </div>
-        <a href="{{ url_for('fund_account') }}" class="btn btn-warning ms-2 flex-shrink-0">
-          <i class="bi bi-wallet2 me-1"></i>Add Funds
-        </a>
-      </div>
+    <!-- Status chips -->
+    <div class="d-flex flex-wrap gap-2 mb-3">
       {% if business.status %}
-        <div class="alert alert-info p-2 mb-3" style="font-size:1.09em; text-align:center;">
-          Listing Status: <strong>
-            {% if business.status == "not_submitted" %}
-              Not Submitted
-            {% elif business.status == "pending" %}
-              Pending Review
-            {% elif business.status == "in_review" %}
-              In Review
-            {% elif business.status == "rejected" %}
-              Rejected
-            {% elif business.status == "approved" %}
-              Approved
-            {% else %}
-              {{ business.status }}
-            {% endif %}
-          </strong>
-        </div>
+        {% if business.status == "approved" %}
+          <span class="status-chip ok"><i class="bi bi-patch-check-fill"></i> Listing Status: Approved</span>
+        {% elif business.status == "rejected" %}
+          <span class="status-chip bad"><i class="bi bi-x-octagon-fill"></i> Listing Status: Rejected</span>
+        {% elif business.status == "pending" %}
+          <span class="status-chip warn"><i class="bi bi-hourglass-split"></i> Listing Status: Pending Review</span>
+        {% elif business.status == "in_review" %}
+          <span class="status-chip warn"><i class="bi bi-search"></i> Listing Status: In Review</span>
+        {% elif business.status == "not_submitted" %}
+          <span class="status-chip"><i class="bi bi-pencil-square"></i> Listing Status: Not Submitted</span>
+        {% else %}
+          <span class="status-chip">Listing Status: {{ business.status }}</span>
         {% endif %}
-
-{% if show_website_status %}
-  <div class="alert alert-info p-2 mb-2" style="font-size:1.09em; text-align:center;">
-    E-Commerce Website Status:
-    <strong>
-      {% if website_status == "Verified" %}
-        <span class="text-success">Verified</span>
-      {% else %}
-        <span class="text-warning">Pending Verification</span>
       {% endif %}
-    </strong>
-  </div>
-{% endif %}
 
-{% if biz_level_code %}
+      {% if show_website_status %}
+        {% if website_status == "Verified" %}
+          <span class="status-chip ok"><i class="bi bi-globe2"></i> E-Commerce Website: Verified</span>
+        {% else %}
+          <span class="status-chip warn"><i class="bi bi-globe2"></i> E-Commerce Website: Pending Verification</span>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    {% if business.location_varies %}
+      <div class="alert alert-info d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3">
+        <div class="mb-2 mb-md-0">
+          <strong>live location enabled:</strong>
+          when you move, click the button to update your map position.
+        </div>
+        <button
+          type="button"
+          class="btn btn-sm btn-primary"
+          id="updateLiveLocationBtn">
+          use live location (update now)
+        </button>
+      </div>
+    {% endif %}
+
+    <!-- Action toolbar -->
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-secondary" type="button" id="previewListingBtn">
+        <i class="bi bi-eye"></i> Preview Listing
+      </button>
+
+      <button id="profileToggleBtn"
+              class="btn btn-primary"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#profileCollapse"
+              aria-expanded="false"
+              aria-controls="profileCollapse">
+        View/Edit Profile
+      </button>
+
+      <a href="{{ url_for('business_change_password') }}" class="btn btn-outline-dark">
+        Change Password
+      </a>
+      <a href="{{ url_for('business_tutorials') }}" class="btn btn-outline-primary">
+        Tutorials
+      </a>
+
+      {% if business.status == "approved" and not business.is_suspended %}
+        <a href="{{ url_for('public_profile', store_slug=business.store_slug) }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="btn btn-outline-primary">
+          View public profile page
+        </a>
+      {% endif %}
+    </div>
+
+    {% if business.status == "not_submitted" %}
+      <div class="alert alert-light border mt-3 mb-0" style="font-size:.95rem;">
+        <i class="bi bi-lightbulb-fill text-warning me-1"></i>
+        <strong>Getting started:</strong> click <strong>View/Edit Profile</strong> and we'll walk you through building your listing one step at a time.
+      </div>
+    {% endif %}
+  </div>
+
+  {% if payment_alerts %}
+    <div class="alert alert-warning text-center p-3 mb-4">
+      <b>New Scan:</b> A customer is awaiting for you to scan their QR code!
+      {% for ia in payment_alerts %}
+        <div class="mt-2">
+          <a class="btn btn-success btn-sm w-100"
+             href="{{ url_for('scan_qr', interaction_id=ia.id) }}">
+             Scan Payment QR for {{ ia.user.name or ia.user.email }}
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- ===================== PROFILE WIZARD (14 steps) ===================== -->
+  <div class="collapse" id="profileCollapse">
+    <div class="card wizard-card" id="profile-wizard">
+
+      <div class="wizard-head">
+        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+          <div>
+            <div class="wizard-step-label" id="wizard-step-label">Step 1 of 14</div>
+            <div class="wizard-step-sub" id="wizard-step-sub">Promo Code</div>
+          </div>
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <select id="wizard-jump" class="form-select form-select-sm wizard-jump" aria-label="Jump to step"></select>
+            <button type="button" class="btn btn-sm btn-outline-light"
+                    data-bs-toggle="collapse" data-bs-target="#profileCollapse">
+              Exit
+            </button>
+          </div>
+        </div>
+        <div class="wizard-progress" role="progressbar" aria-valuemin="0" aria-valuemax="14" aria-valuenow="1" id="wizard-progress">
+          <div class="wizard-progress-bar" id="wizard-progress-bar"></div>
+        </div>
+      </div>
+
+      <div class="wizard-body">
+
+        <!-- ---------- STEP 1: Promo code (separate form) ---------- -->
+        <div class="wizard-step active" data-step="1">
+          <div class="wizard-title"><i class="bi bi-ticket-perforated"></i> Enter Promo Code</div>
+          <p class="wizard-help">Have a promo code? Enter it to have free pre-advertising dollars added to your account balance. No code? No problem, just continue to the next step.</p>
+
+          {% if show_promo_field %}
+          <form method="post" action="{{ url_for('business_redeem_promo') }}" id="promo-form" class="p-3 border rounded bg-light">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="promo_code" class="form-label fw-bold">Promo Code</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="promo_code" name="promo_code"
+                     placeholder="Enter promo code" maxlength="50" autocomplete="off" required>
+              <button type="submit" class="btn btn-warning">Apply</button>
+            </div>
+            <div class="form-text">After applying your code, you'll come right back here to continue.</div>
+          </form>
+          {% else %}
+          <div class="alert alert-light border mb-0">
+            A promo code isn't needed or available for your account right now. Continue to the next step.
+          </div>
+          {% endif %}
+
+          <div class="wizard-nav">
+            <button type="button" class="btn btn-primary wizard-next">
+              {% if show_promo_field %}I Don't Have a Code &mdash; Next Step{% else %}Next Step{% endif %} <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- ---------- MAIN PROFILE FORM (steps 2 - 14) ---------- -->
+        <form method="post" enctype="multipart/form-data" id="profile-form" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- STEP 2: Profile photo -->
+          <div class="wizard-step" data-step="2">
+            <div class="wizard-title"><i class="bi bi-person-bounding-box"></i> Upload a Profile Photo <span class="text-danger">*</span></div>
+            <p class="wizard-help">Your logo or a clear photo that represents your business. A square image (at least 400 &times; 400 pixels) works best. This step is required.</p>
+
+            <div class="photo-preview-wrap">
+              {% if profile_img_url %}
+                <img src="{{ profile_img_url }}" alt="Profile Photo" class="photo-preview" id="profile-photo-preview">
+              {% else %}
+                <img src="" alt="Profile Photo preview" class="photo-preview" id="profile-photo-preview" style="display:none;">
+                <div class="placeholder-pic" id="profile-photo-placeholder" style="width:150px;height:150px;font-size:3rem;">
+                  <i class="bi bi-camera"></i>
+                </div>
+              {% endif %}
+            </div>
+
+            <input type="file" name="profile_photo" id="profile_photo_input" accept="image/*" class="form-control"
+                   data-required="1" data-label="A profile photo"
+                   {% if profile_img_url %}data-has-existing="1"{% endif %}>
+            {% if profile_img_url %}
+              <div class="form-text">You already have a photo. Choose a new file only if you want to replace it.</div>
+            {% endif %}
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 3: Business name and phone -->
+          <div class="wizard-step" data-step="3">
+            <div class="wizard-title"><i class="bi bi-shop"></i> Business Name &amp; Phone</div>
+            <p class="wizard-help">This is how customers will see and reach your business.</p>
+
+            <div class="mb-3">
+              <label class="form-label" for="business_name">Business Name</label>
+              <input type="text" class="form-control" id="business_name" name="business_name"
+                     value="{{ form_data.business_name or '' }}" placeholder="Enter your business name">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="us-phone">Phone Number</label>
+              <input type="text" class="form-control" id="us-phone" name="phone_number"
+                     value="{{ form_data.phone_number or '' }}" placeholder="(555) 555-5555">
+              <div class="form-text">Format: (555) 555-5555</div>
+            </div>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 4: Business address + map + location varies -->
+          <div class="wizard-step" data-step="4">
+            <div class="wizard-title"><i class="bi bi-geo-alt-fill"></i> Business Address</div>
+            <p class="wizard-help">Start typing your address and pick it from the list. Your pin will move to match. You can also click the map or drag the pin to fine-tune your location.</p>
+
+            <div class="mb-3">
+              <label class="form-label" for="address-autocomplete">Business Address</label>
+              <input type="text" class="form-control" id="address-autocomplete" name="address"
+                     value="{{ form_data.address or '' }}" placeholder="Business address" autocomplete="off">
+            </div>
+
+            <input type="hidden" name="latitude" id="latitude" value="{{ latitude or '' }}">
+            <input type="hidden" name="longitude" id="longitude" value="{{ longitude or '' }}">
+            <label class="form-label mt-1 mb-1 d-block">Pin or change your location on the map below:</label>
+            <div id="profile-map"></div>
+
+            <!-- location varies (for food trucks, in-home services, etc.) -->
+            <div class="mb-2">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="location_varies"
+                  name="location_varies"
+                  value="1"
+                  {% if business.location_varies %}checked{% endif %}>
+                <label class="form-check-label" for="location_varies">
+                  my business location varies (food truck / mobile service)
+                </label>
+              </div>
+              <small class="text-muted">
+                when this is checked, your listing can use your live GPS location instead of your business address.
+              </small>
+            </div>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 5: Hours -->
+          <div class="wizard-step" data-step="5">
+            <div class="wizard-title"><i class="bi bi-clock"></i> Hours of Operation</div>
+            <p class="wizard-help">Let customers know when you're open.</p>
+
+            <div class="mb-3">
+              <label class="form-label" for="hours_of_operation">Hours of Operation</label>
+              <input type="text" class="form-control" id="hours_of_operation" name="hours_of_operation"
+                     value="{{ form_data.hours_of_operation or '' }}" placeholder="e.g. Mon-Fri 9am–5pm">
+              <div class="form-text">Example: Mon-Fri 9am–5pm; Sat 10am–2pm</div>
+            </div>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 6: Public profile URL -->
+          <div class="wizard-step" data-step="6">
+            <div class="wizard-title"><i class="bi bi-link-45deg"></i> Public Profile URL</div>
+            <p class="wizard-help">Choose the web address for your free public profile page.</p>
+
+            <div class="mb-3">
+              <label class="form-label" for="store_slug">Public profile URL</label>
+              <div class="input-group">
+                <span class="input-group-text">perkminer.com/public_profile/</span>
+                <input
+                  type="text"
+                  id="store_slug"
+                  name="store_slug"
+                  class="form-control"
+                  pattern="[A-Za-z0-9\-]*"
+                  data-error-msg="Use letters, numbers, and dashes only (no spaces)."
+                  value="{{ form_data.get('store_slug', business.store_slug or '') }}"
+                  placeholder="your-business-name"
+                >
+              </div>
+              <small class="text-muted">
+                Letters, numbers, and dashes only. Example: <code>my-plumbing-co</code>
+              </small>
+            </div>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 7: Website + e-commerce options -->
+          <div class="wizard-step" data-step="7">
+            <div class="wizard-title"><i class="bi bi-globe"></i> Website</div>
+            <p class="wizard-help">Add your website if you have one. If it's an online store, you'll see extra options appear below.</p>
+
+            <div class="mb-3">
+              <label class="form-label" for="website_url">Website</label>
+              <input type="url" class="form-control" id="website_url" name="website_url" maxlength="255"
+                     data-error-msg="Enter a full web address that starts with https:// (for example https://your-website.com)."
+                     value="{{ form_data.website_url or '' }}" placeholder="https://your-website.com">
+            </div>
+
+            {# online purchase settings – options appear once a website address is entered #}
+            <div class="mb-2" id="ecommerce-wrapper" {% if not form_data.website_url %}style="display:none;"{% endif %}>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="is_ecommerce_site"
+                  name="is_ecommerce_site"
+                  value="1"
+                  {% if business.is_ecommerce_site %}checked{% endif %}>
+                <label class="form-check-label" for="is_ecommerce_site">
+                  this is an e‑commerce website (customers can complete purchases online)
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-2" id="allow-online-wrapper" {% if not business.is_ecommerce_site %}style="display:none;"{% endif %}>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="allow_website_purchases"
+                  name="allow_website_purchases"
+                  value="1"
+                  {% if business.allow_website_purchases %}checked{% endif %}>
+                <label class="form-check-label" for="allow_website_purchases">
+                  allow perkminer members to make purchases on my website
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-3" id="online-terms-wrapper"
+                 {% if not (business.is_ecommerce_site and business.allow_website_purchases) %}style="display:none;"{% endif %}>
+              <div class="border rounded p-3 bg-light">
+                <p class="fw-bold mb-2">online purchase terms</p>
+                <ul class="small mb-2">
+                  <li>you agree to maintain an advertising account balance of at least <strong>$250</strong> at all times while online purchases are enabled.</li>
+                  <li>if your balance falls below $250, perkminer will automatically block new online purchases until you add more funds.</li>
+                  <li>you are required to install and keep perkminer’s tracking script on your order confirmation / “thank you” page so qualifying purchases are reported.</li>
+                  <li>removing, disabling, or altering the script so purchases are not reported may result in suspension; repeated or intentional violations may result in permanent account closure and forfeiture of any remaining advertising balance.</li>
+                  <li>if a member reports that they completed a purchase on your website but did not receive cashback, perkminer may suspend your account while we investigate. if we confirm that purchases were not reported as required, your account may remain suspended or be closed.</li>
+                  <li>view installation instructions <a href="{{ url_for('online_purchase_instructions') }}" target="_blank">HERE</a>.</li>
+                  <li>you must contact Perk Miner LLC at <a href="mailto:support@perkminer.com">support@perkminer.com upon proper installation of the script so that it could be verified.</a>.</li>
+                  <li>once verified, the online purchase option button will appear on your listing.  you can keep track of the status (website status will appear when all 3 boxes are checked).</li>
+                </ul>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="online_terms_agree"
+                    name="online_terms_agree"
+                    value="1"
+                    {% if business.online_terms_agreed %}checked{% endif %}>
+                  <label class="form-check-label" for="online_terms_agree">
+                    i have read and agree to these terms.
+                  </label>
+                  <p class="small text-muted mt-1 mb-0">
+                    uncheck this box and save if you want to revoke online purchases on your website.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 8: Google reviews link -->
+          <div class="wizard-step" data-step="8">
+            <div class="wizard-title"><i class="bi bi-star-fill"></i> Google Reviews Link</div>
+            <p class="wizard-help">Optional. You can leave this blank and continue.</p>
+
+            <div class="mb-3">
+              <label class="form-label" for="google_reviews_url">Google Reviews Link <span class="text-muted">(optional)</span></label>
+              <input type="url" class="form-control" id="google_reviews_url" name="google_reviews_url" maxlength="500"
+                     value="{{ business.google_reviews_url or '' }}"
+                     placeholder="https://g.page/r/your-business/review"
+                     data-label="Your Google Reviews link"
+                     data-error-msg="Enter a full web address that starts with https://"
+                     {% if business.google_reviews_url %}data-required="1"{% endif %}>
+              <div class="form-text">
+                Adds a "See Google reviews" button to your listing. Changes take effect right away without re-submitting your listing.
+                Once added, it can be updated but not removed.
+              </div>
+            </div>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 9: Products or services -->
+          <div class="wizard-step" data-step="9">
+            <div class="wizard-title"><i class="bi bi-list-check"></i> Products or Services Offered</div>
+            <p class="wizard-help">List what your business offers. Add up to 10.</p>
+
+            <div id="services-list">
+              {% set services = [
+                form_data.service_1 or '',
+                form_data.service_2 or '',
+                form_data.service_3 or '',
+                form_data.service_4 or '',
+                form_data.service_5 or '',
+                form_data.service_6 or '',
+                form_data.service_7 or '',
+                form_data.service_8 or '',
+                form_data.service_9 or '',
+                form_data.service_10 or ''
+              ] %}
+              {% for s in range(0, 10) %}
+                {% if services[s] or s < 3 %}
+                  <div class="input-group mb-2 service-field" data-index="{{ s }}">
+                    <span class="input-group-text">{{ s+1 }}</span>
+                    <input type="text" class="form-control" name="service_{{ s+1 }}" maxlength="100" placeholder="Service #{{ s+1 }}" value="{{ services[s] }}">
+                    <button class="btn btn-outline-danger service-remove" type="button" aria-label="Remove service" {% if s < 3 %}disabled{% endif %}>&minus;</button>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+            <button class="btn btn-outline-primary" type="button" id="addServiceBtn">+ Add Service</button>
+            <small class="text-muted d-block mt-1">Max 10 services.</small>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 10: About us -->
+          <div class="wizard-step" data-step="10">
+            <div class="wizard-title"><i class="bi bi-info-circle"></i> About Us</div>
+            <p class="wizard-help">Tell customers what makes your business special.</p>
+
+            <div class="mb-3">
+              <label class="form-label" for="about_us">About Us</label>
+              <textarea class="form-control" id="about_us" name="about_us" rows="5" maxlength="1000" placeholder="Write about your business (max 1000 characters)">{{ form_data.about_us or '' }}</textarea>
+              <div class="d-flex justify-content-between form-text">
+                <span>Recommended: up to 500 characters. Max: 1000.</span>
+                <span id="about_counter">0 / 1000</span>
+              </div>
+            </div>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 11: Perks (required) -->
+          <div class="wizard-step" data-step="11">
+            <div class="wizard-title"><i class="bi bi-gift"></i> Perks Offered <span class="text-danger">*</span></div>
+            <p class="wizard-help">What special offers or perks will PerkMiner members get from your business? This step is required.</p>
+
+            <div class="mb-3">
+              <label class="form-label" for="perks">Perks Offered <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="perks" name="perks" rows="4" maxlength="500"
+                        data-required="1" data-label="At least one perk"
+                        placeholder="List your business perks here">{{ form_data.perks or '' }}</textarea>
+              <div class="form-text">At least one perk required. Separate with commas or new lines.</div>
+            </div>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 12: Photos from social media / web (skippable) -->
+          <div class="wizard-step" data-step="12">
+            <div class="wizard-title"><i class="bi bi-images"></i> Add Photos from Social Media or Web</div>
+            <p class="wizard-help">
+              Optional. Paste direct image URLs (for example from Facebook, Instagram, or other hosts) to build your gallery.
+              Recommended size: 800 &times; 800 pixels (square) for best display. You can skip this step.
+            </p>
+
+            <div id="photos-list">
+              {# prepare up to 6 current values from draft/live #}
+              {% set photos = [
+                business.draft_photo1_url or business.photo1_url,
+                business.draft_photo2_url or business.photo2_url,
+                business.draft_photo3_url or business.photo3_url,
+                business.draft_photo4_url or business.photo4_url,
+                business.draft_photo5_url or business.photo5_url,
+                business.draft_photo6_url or business.photo6_url
+              ] %}
+
+              {# always show at least 3 fields; show more if there is data #}
+              {% for i in range(0, 6) %}
+                {% if photos[i] or i < 3 %}
+                  <div class="input-group mb-2 photo-field" data-index="{{ i }}">
+                    <span class="input-group-text">Photo {{ i+1 }}</span>
+                    <input
+                      type="url"
+                      class="form-control"
+                      name="photo_url_{{ i+1 }}"
+                      data-error-msg="Enter a full image address that starts with https://"
+                      placeholder="https://example.com/your-image.jpg"
+                      value="{{ photos[i] or '' }}">
+                    <button
+                      class="btn btn-outline-danger photo-remove"
+                      type="button"
+                      aria-label="Remove photo"
+                      {% if i < 3 %}disabled{% endif %}>
+                      &minus;
+                    </button>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+
+            <button class="btn btn-outline-primary" type="button" id="addPhotoBtn">+ Add Photo</button>
+            <small class="text-muted d-block mt-1">Max 6 photos.</small>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-outline-primary wizard-skip">Skip This Step</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 13: Listing type, category, finalization -->
+          <div class="wizard-step" data-step="13">
+            <div class="wizard-title"><i class="bi bi-tags"></i> Listing Type, Category &amp; Finalization</div>
+            <p class="wizard-help">Tell us what kind of business you are and how finalized sales are handled. All three are required.</p>
+
+            <div class="mb-3">
+              <label class="form-label" for="listing_type">Listing Type <span class="text-danger">*</span></label>
+              <select class="form-select" id="listing_type" name="listing_type" data-required="1" data-label="Listing Type">
+                <option value="">Select listing type...</option>
+                <option value="Seller Storefront" {% if form_data.listing_type == 'Seller Storefront' %}selected{% endif %}>Seller Storefront</option>
+                <option value="Service Provider" {% if form_data.listing_type == 'Service Provider' %}selected{% endif %}>Service Provider</option>
+                <option value="Seller and Service Provider" {% if form_data.listing_type == 'Seller and Service Provider' %}selected{% endif %}>Seller and Service Provider</option>
+                <option value="Lead Generation" {% if form_data.listing_type == 'Lead Generation' %}selected{% endif %}>Lead Generation</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="business_category">Category <span class="text-danger">*</span></label>
+              <select class="form-select" name="category" id="business_category" data-required="1" data-label="Category">
+                <option value="">Select category...</option>
+                <option value="Handyman-Contractor" {% if form_data.category == 'Handyman-Contractor' %}selected{% endif %}>Handyman-Contractor</option>
+                <option value="Restaurant-Food-and-Drink" {% if form_data.category == 'Restaurant-Food-and-Drink' %}selected{% endif %}>Restaurant/Food/Drink</option>
+                <option value="Auto-Service-Repair-Parts" {% if form_data.category == 'Auto-Service-Repair-Parts' %}selected{% endif %}>Auto Service-Repair-Parts</option>
+                <option value="Home-and-Garden" {% if form_data.category == 'Home-and-Garden' %}selected{% endif %}>Home and Garden</option>
+                <option value="Shopping-and-Retail" {% if form_data.category == 'Shopping-and-Retail' %}selected{% endif %}>Shopping and Retail</option>
+                <option value="Health-and-Beauty" {% if form_data.category == 'Health-and-Beauty' %}selected{% endif %}>Health and Beauty</option>
+                <option value="Real-Estate" {% if form_data.category == 'Real-Estate' %}selected{% endif %}>Real Estate</option>
+                <option value="Pet-Service-and-Supplies" {% if form_data.category == 'Pet-Service-and-Supplies' %}selected{% endif %}>Pet Service and Supplies</option>
+                <option value="Travel-Lodging-Tourism" {% if form_data.category == 'Travel-Lodging-Tourism' %}selected{% endif %}>Travel-Lodging-Tourism</option>
+                <option value="Financial-Services" {% if form_data.category == 'Financial-Services' %}selected{% endif %}>Financial Services</option>
+                <option value="Professional-Services" {% if form_data.category == 'Professional-Services' %}selected{% endif %}>Professional Services</option>
+                <option value="Events-and-Entertainment" {% if form_data.category == 'Events-and-Entertainment' %}selected{% endif %}>Events and Entertainment</option>
+                <option value="Education-and-Training" {% if form_data.category == 'Education-and-Training' %}selected{% endif %}>Education and Training</option>
+                <option value="Wedding-Services" {% if form_data.category == 'Wedding-Services' %}selected{% endif %}>Wedding Services</option>
+                <option value="Transportation-Services" {% if form_data.category == 'Transportation-Services' %}selected{% endif %}>Transportation Services</option>
+                <option value="Legal-Services" {% if form_data.category == 'Legal-Services' %}selected{% endif %}>Legal Services</option>
+                <option value="All-Rentals" {% if form_data.category == 'All-Rentals' %}selected{% endif %}>All Rentals</option>
+                <option value="Gaming" {% if form_data.category == 'Gaming' %}selected{% endif %}>Gaming</option>
+                <option value="Sports-and-Recreation" {% if form_data.category == 'Sports-and-Recreation' %}selected{% endif %}>Sports and Recreation</option>
+                <option value="Cleaning-Services" {% if form_data.category == 'Cleaning-Services' %}selected{% endif %}>Cleaning Services</option>
+                <option value="Moving-and-Delivery" {% if form_data.category == 'Moving-and-Delivery' %}selected{% endif %}>Moving and Delivery</option>
+                <option value="Security-and-Protection" {% if form_data.category == 'Security-and-Protection' %}selected{% endif %}>Security and Protection</option>
+                <option value="Industrial-Services" {% if form_data.category == 'Industrial-Services' %}selected{% endif %}>Industrial Services</option>
+                <option value="Other" {% if form_data.category == 'Other' %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="business_finalization">Finalization <span class="text-danger">*</span></label>
+              <select class="form-select" name="finalization" id="business_finalization" data-required="1" data-label="Finalization">
+                <option value="">Select finalization...</option>
+                <option value="All-Sales-Final" {% if form_data.finalization == 'All-Sales-Final' %}selected{% endif %}>All Sales Final</option>
+                <option value="No-Refund-Re-Done" {% if form_data.finalization == 'No-Refund-Re-Done' %}selected{% endif %}>No Refund, but Re-Done</option>
+                <option value="Store-Credit-Only" {% if form_data.finalization == 'Store-Credit-Only' %}selected{% endif %}>Store Credit Only</option>
+                <option value="Exchange-Only" {% if form_data.finalization == 'Exchange-Only' %}selected{% endif %}>Exchange Only</option>
+                <option value="Exchange-Store-Credit" {% if form_data.finalization == 'Exchange-Store-Credit' %}selected{% endif %}>Exchange or Store Credit</option>
+                <option value="Returns-Accepted" {% if form_data.finalization == 'Returns-Accepted' %}selected{% endif %}>Returns Accepted</option>
+              </select>
+            </div>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 14: Keywords + Save -->
+          <div class="wizard-step" data-step="14">
+            <div class="wizard-title"><i class="bi bi-search"></i> Keywords</div>
+            <p class="wizard-help">Add words customers might search for to find your business.</p>
+
+            <div class="mb-3">
+              <label class="form-label" for="search_keywords">Keywords (for search, separated by commas)</label>
+              <input type="text" class="form-control" id="search_keywords" name="search_keywords" maxlength="500"
+                     value="{{ form_data.search_keywords or '' }}" placeholder="e.g. roofing,solar,energy">
+              <div class="form-text">Up to 20 keywords (comma-separated).</div>
+            </div>
+
+            <div class="alert alert-light border mb-0" style="font-size:.95rem;">
+              <i class="bi bi-check-circle-fill text-success me-1"></i>
+              When you click <strong>Save Profile</strong>, you'll return to your dashboard where you can <strong>Preview Listing</strong> and submit it for review.
+            </div>
+
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              {{ profile_form.submit(class="btn btn-success", value="Save Profile") }}
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- ===================== /PROFILE WIZARD ===================== -->
+
+  <!-- Section jump nav -->
+  <div class="dash-nav">
+    <a href="#overview"><i class="bi bi-graph-up"></i> Overview</a>
+    <a href="#earnings"><i class="bi bi-cash-coin"></i> Earnings &amp; Payouts</a>
+    <a href="#transactions"><i class="bi bi-receipt"></i> Transactions</a>
+    <a href="#referrals"><i class="bi bi-people"></i> Referrals</a>
+    <a href="#staff"><i class="bi bi-person-badge"></i> Staff</a>
+    <a href="#calculators"><i class="bi bi-calculator"></i> Calculators</a>
+    <a href="#network"><i class="bi bi-diagram-3"></i> My Network</a>
+  </div>
+
+  {% if biz_level_code %}
   <div class="card p-4 mb-4">
     {% if biz_level_code == 'biz_founding_5' %}
       <h5>Congratulations, Founding Business!</h5>
       <p class="mb-2">
-        As one of our advertisers with <strong>5 finalized transactions</strong>, you can upload a testimonial video.
+        As one of our advertisers with <strong>5 finalized transactions</strong>, you can now upload a testimonial video.
       </p>
     {% else %}
-      <h5>Congratulations! You qualify to upload a Testimonial Video</h5>
+      <h5>Congratulations!  Share your story.</h5><br><h6>(60 second testimonial video)</h6>
       <p class="mb-2">
         Your business currently qualifies for level:
         <strong>{{ biz_level_code }}</strong>.
       </p>
     {% endif %}
 
-    <button
-      class="btn btn-primary mb-3"
-      id="biz-upload-testimonial-btn"
-      data-level="{{ biz_level_code }}"
-      type="button"
-    >
-      Upload / Replace testimonial video
-    </button>
+    <div>
+      <button
+        class="btn btn-primary mb-3"
+        id="biz-upload-testimonial-btn"
+        data-level="{{ biz_level_code }}"
+        type="button"
+      >
+        Upload / Replace testimonial video
+      </button>
+    </div>
 
     <ul class="list-unstyled mb-3">
       {% for tv in biz_testimonials %}
@@ -448,17 +1240,19 @@
       {% endfor %}
     </ul>
 
-    <!-- NEW: collapsible list of approved business videos -->
-    <button
-      class="btn btn-outline-secondary btn-sm mb-2"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#bizApprovedVideos"
-      aria-expanded="false"
-      aria-controls="bizApprovedVideos"
-    >
-      My approved testimonial videos
-    </button>
+    <!-- collapsible list of approved business videos -->
+    <div>
+      <button
+        class="btn btn-outline-secondary btn-sm mb-2"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#bizApprovedVideos"
+        aria-expanded="false"
+        aria-controls="bizApprovedVideos"
+      >
+        My approved testimonial videos
+      </button>
+    </div>
 
     <div class="collapse mt-2" id="bizApprovedVideos">
       {% set approved_biz = biz_testimonials | selectattr("status", "equalto", "approved") | list %}
@@ -477,475 +1271,231 @@
       {% endif %}
     </div>
   </div>
-{% endif %}
-
-      <!-- Invite Modal stays unchanged... -->
-      <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <form class="modal-content" method="post" action="{{ url_for('business_invite') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="modal-header">
-              <h5 class="modal-title" id="inviteModalLabel">Invite Others to Join PerkMiner</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <label for="invitee-email" class="form-label">Recipient's Email Address:</label>
-              {{ invite_form.invitee_email(class="form-control", id="invitee-email", placeholder="Enter email to invite", required=True) }}
-            </div>
-            <div class="modal-footer">
-              {{ invite_form.submit(class="btn btn-primary") }}
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-<!-- Profile Edit Section -->
-<div class="collapse mb-4" id="profileCollapse">
-  <div class="card p-4">
-    <h4>Your Profile</h4>
-
-    {% if show_promo_field %}
-    <form method="post" action="{{ url_for('business_redeem_promo') }}" class="mb-4 p-3 border rounded bg-light">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label for="promo_code" class="form-label fw-bold">Promo Code</label>
-      <div class="input-group">
-        <input type="text" class="form-control" id="promo_code" name="promo_code"
-               placeholder="Enter promo code" maxlength="50" autocomplete="off" required>
-        <button type="submit" class="btn btn-warning">Apply</button>
-      </div>
-      <div class="form-text">Have a promo code? Enter it to have free pre-advertising dollars added to your account balance.</div>
-    </form>
-    {% endif %}
-
-    <form method="post" enctype="multipart/form-data" class="row g-3 align-items-center" id="profile-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <!-- Profile Photo -->
-      <div class="col-12 mb-3 text-center">
-        {% if profile_img_url %}
-          <img src="{{ profile_img_url }}" alt="Profile Photo" class="rounded-circle profile-pic">
-        {% else %}
-          <div class="placeholder-pic">No Image</div>
-        {% endif %}
-        <input type="file" name="profile_photo" accept="image/*" class="form-control mt-2">
-      </div>
-
-      <!-- Business Name -->
-      <div class="col-12 mb-3">
-        <label class="form-label">Business Name</label>
-        <input type="text" class="form-control" name="business_name" value="{{ form_data.business_name or '' }}" placeholder="Enter your business name">
-      </div>
-
-      <!-- Phone Number -->
-      <div class="col-12 mb-3">
-        <label class="form-label">Phone Number</label>
-        <input type="text" class="form-control" id="us-phone" name="phone_number" value="{{ form_data.phone_number or '' }}" placeholder="(555) 555-5555">
-        <div class="form-text">Format: (555) 555-5555</div>
-      </div>
-
-      <!-- Business Address -->
-      <div class="col-12 mb-3">
-        <label class="form-label">Business Address</label>
-        <input type="text" class="form-control" id="address-autocomplete" name="address" value="{{ form_data.address or '' }}" placeholder="Business address" autocomplete="off">
-      </div>
-
-      <!-- Address with Map in Profile Form -->
-      <div class="col-12 mb-3">
-        <input type="hidden" name="latitude" id="latitude" value="{{ latitude or '' }}">
-        <input type="hidden" name="longitude" id="longitude" value="{{ longitude or '' }}">
-        <label class="form-label mt-2 mb-1 d-block">Pin or change your location on the map below:</label>
-        <div id="profile-map" style="width:100%; height:300px; border-radius:8px; margin-bottom:12px;"></div>
-      </div>
-
-      <!-- location varies (for food trucks, in-home services, etc.) -->
-      <div class="col-12 mb-3">
-        <div class="form-check">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="location_varies"
-            name="location_varies"
-            value="1"
-            {% if business.location_varies %}checked{% endif %}>
-          <label class="form-check-label" for="location_varies">
-            my business location varies (food truck / mobile service)
-          </label>
-        </div>
-        <small class="text-muted">
-          when this is checked, your listing can use your live GPS location instead of your business address.
-        </small>
-      </div>
-
-      <div class="col-12 mb-3">
-        <label class="form-label">Hours of Operation</label>
-        <input type="text" class="form-control" name="hours_of_operation"
-               value="{{ form_data.hours_of_operation or '' }}" placeholder="e.g. Mon-Fri 9am–5pm">
-        <div class="form-text">Example: Mon-Fri 9am–5pm; Sat 10am–2pm</div>
-      </div>
-
-<div class="mb-3">
-  <label class="form-label">Public profile URL</label>
-  <div class="input-group">
-    <span class="input-group-text">perkminer.com/public_profile/</span>
-    <input
-      type="text"
-      name="store_slug"
-      class="form-control"
-      value="{{ form_data.get('store_slug', business.store_slug or '') }}"
-      placeholder="your-business-name"
-    >
-  </div>
-  <small class="text-muted">
-    Letters, numbers, and dashes only. Example: <code>my-plumbing-co</code>
-  </small>
-</div>
-
-      <div class="col-12 mb-3">
-        <label class="form-label">Website</label>
-        <input type="url" class="form-control" id="website_url" name="website_url" maxlength="255"
-               value="{{ form_data.website_url or '' }}" placeholder="https://your-website.com">
-      </div>
-
-{# online purchase settings – only show if website_url is present #}
-{% if form_data.website_url %}
-  <div class="col-12 mb-2">
-    <div class="form-check">
-      <input
-        class="form-check-input"
-        type="checkbox"
-        id="is_ecommerce_site"
-        name="is_ecommerce_site"
-        value="1"
-        {% if business.is_ecommerce_site %}checked{% endif %}>
-      <label class="form-check-label" for="is_ecommerce_site">
-        this is an e‑commerce website (customers can complete purchases online)
-      </label>
-    </div>
-  </div>
-
-  <div class="col-12 mb-2" id="allow-online-wrapper" {% if not business.is_ecommerce_site %}style="display:none;"{% endif %}>
-    <div class="form-check">
-      <input
-        class="form-check-input"
-        type="checkbox"
-        id="allow_website_purchases"
-        name="allow_website_purchases"
-        value="1"
-        {% if business.allow_website_purchases %}checked{% endif %}>
-      <label class="form-check-label" for="allow_website_purchases">
-        allow perkminer members to make purchases on my website
-      </label>
-    </div>
-  </div>
-
-  <div class="col-12 mb-3" id="online-terms-wrapper"
-       {% if not (business.is_ecommerce_site and business.allow_website_purchases) %}style="display:none;"{% endif %}>
-    <div class="border rounded p-3 bg-light">
-      <p class="fw-bold mb-2">online purchase terms</p>
-      <ul class="small mb-2">
-        <li>you agree to maintain an advertising account balance of at least <strong>$250</strong> at all times while online purchases are enabled.</li>
-        <li>if your balance falls below $250, perkminer will automatically block new online purchases until you add more funds.</li>
-        <li>you are required to install and keep perkminer’s tracking script on your order confirmation / “thank you” page so qualifying purchases are reported.</li>
-        <li>removing, disabling, or altering the script so purchases are not reported may result in suspension; repeated or intentional violations may result in permanent account closure and forfeiture of any remaining advertising balance.</li>
-        <li>if a member reports that they completed a purchase on your website but did not receive cashback, perkminer may suspend your account while we investigate. if we confirm that purchases were not reported as required, your account may remain suspended or be closed.</li>
-        <li>view installation instructions <a href="{{ url_for('online_purchase_instructions') }}" target="_blank">HERE</a>.</li>
-        <li>you must contact Perk Miner LLC at <a href="mailto:support@perkminer.com">support@perkminer.com upon proper installation of the script so that it could be verified.</a>.</li>
-        <li>once verified, the online purchase option button will appear on your listing.  you can keep track of the status (website status will appear when all 3 boxes are checked).</li>
-      </ul>
-      <div class="form-check">
-        <input
-          class="form-check-input"
-          type="checkbox"
-          id="online_terms_agree"
-          name="online_terms_agree"
-          value="1"
-          {% if business.online_terms_agreed %}checked{% endif %}>
-        <label class="form-check-label" for="online_terms_agree">
-          i have read and agree to these terms.
-        </label>
-        <p class="small text-muted mt-1 mb-0">
-          uncheck this box and save if you want to revoke online purchases on your website.
-        </p>
-      </div>
-    </div>
-  </div>
-{% endif %}
-
-      <!-- Services Offered Collapse -->
-      <div class="col-12 mt-3">
-        <button class="btn btn-outline-primary mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#servicesCollapse" aria-expanded="false" aria-controls="servicesCollapse">
-          Products or Services Offered (10 max)
-          <br>(click to add product types and services)
-        </button>
-        <div class="collapse mt-2" id="servicesCollapse">
-          <div id="services-list">
-            {% set services = [
-              form_data.service_1 or '',
-              form_data.service_2 or '',
-              form_data.service_3 or '',
-              form_data.service_4 or '',
-              form_data.service_5 or '',
-              form_data.service_6 or '',
-              form_data.service_7 or '',
-              form_data.service_8 or '',
-              form_data.service_9 or '',
-              form_data.service_10 or ''
-            ] %}
-            {% for s in range(0, 10) %}
-              {% if services[s] or s < 2 %}
-                <div class="input-group mb-2 service-field" data-index="{{ s }}">
-                  <input type="text" class="form-control" name="service_{{ s+1 }}" maxlength="100" placeholder="Service #{{ s+1 }}" value="{{ services[s] }}">
-                  <button class="btn btn-outline-danger service-remove" type="button" onclick="removeService(this)" {% if s < 2 %}disabled{% endif %}>&minus;</button>
-                </div>
-              {% endif %}
-            {% endfor %}
-          </div>
-          <button class="btn btn-outline-primary" type="button" id="addServiceBtn">+ Add Service</button>
-          <small class="text-muted d-block mt-1">Max 10 services.</small>
-        </div>
-      </div>
-      <div class="col-12 mb-3">
-        <label class="form-label">About Us</label>
-        <textarea class="form-control" id="about_us" name="about_us" rows="3" maxlength="1000" placeholder="Write about your business (max 1000 characters)">{{ form_data.about_us or '' }}</textarea>
-        <div class="form-text">Recommended: up to 500 characters. Max: 1000.</div>
-      </div>
-      <div class="col-12 mb-3">
-        <label class="form-label">Perks Offered <span class="text-danger">*</span></label>
-        <textarea class="form-control" id="perks" name="perks" rows="2" maxlength="500" placeholder="List your business perks here">{{ form_data.perks or '' }}</textarea>
-        <div class="form-text">At least one perk required. Separate with commas or new lines.</div>
-      </div>
-
-      <!-- Photos from Social Media -->
-      <div class="col-12 mt-3">
-        <button
-          class="btn btn-outline-primary mb-2"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#photosCollapse"
-          aria-expanded="false"
-          aria-controls="photosCollapse">
-          Add Photos from Social Media or Web
-          <br>(click to add image URLs for your gallery)
-        </button>
-
-        <div class="collapse mt-2" id="photosCollapse">
-          <small class="text-muted d-block mb-2">
-            Paste direct image URLs (for example from Facebook, Instagram, or other hosts).  
-            Recommended size: 800 × 800 pixels (square) for best display.
-          </small>
-
-          <div id="photos-list">
-            {# prepare up to 6 current values from draft/live #}
-            {% set photos = [
-              business.draft_photo1_url or business.photo1_url,
-              business.draft_photo2_url or business.photo2_url,
-              business.draft_photo3_url or business.photo3_url,
-              business.draft_photo4_url or business.photo4_url,
-              business.draft_photo5_url or business.photo5_url,
-              business.draft_photo6_url or business.photo6_url
-            ] %}
-
-            {# always show at least 3 fields; show more if there is data #}
-            {% for i in range(0, 6) %}
-              {% if photos[i] or i < 3 %}
-                <div class="input-group mb-2 photo-field" data-index="{{ i }}">
-                  <span class="input-group-text">Photo {{ i+1 }}</span>
-                  <input
-                    type="url"
-                    class="form-control"
-                    name="photo_url_{{ i+1 }}"
-                    placeholder="https://example.com/your-image.jpg"
-                    value="{{ photos[i] or '' }}">
-                  <button
-                    class="btn btn-outline-danger photo-remove"
-                    type="button"
-                    onclick="removePhotoField(this)"
-                    {% if i < 3 %}disabled{% endif %}>
-                    &minus;
-                  </button>
-                </div>
-              {% endif %}
-            {% endfor %}
-          </div>
-
-          <button
-            class="btn btn-outline-primary"
-            type="button"
-            id="addPhotoBtn">
-            + Add Photo
-          </button>
-          <small class="text-muted d-block mt-1">Max 6 photos.</small>
-        </div>
-      </div>
-
-      <div class="col-12 mb-3">
-        <label class="form-label">Listing Type <span class="text-danger">*</span></label>
-        <select class="form-select" name="listing_type" required>
-          <option value="">Select listing type...</option>
-          <option value="Seller Storefront" {% if form_data.listing_type == 'Seller Storefront' %}selected{% endif %}>Seller Storefront</option>
-          <option value="Service Provider" {% if form_data.listing_type == 'Service Provider' %}selected{% endif %}>Service Provider</option>
-          <option value="Seller and Service Provider" {% if form_data.listing_type == 'Seller and Service Provider' %}selected{% endif %}>Seller and Service Provider</option>
-          <option value="Lead Generation" {% if form_data.listing_type == 'Lead Generation' %}selected{% endif %}>Lead Generation</option>
-        </select>
-      </div>
-      <div class="col-12 mb-3">
-        <label class="form-label">Category</label>
-        <select class="form-select" name="category" id="business_category" required>
-          <option value="">Select category...</option>
-          <option value="Handyman-Contractor" {% if form_data.category == 'Handyman-Contractor' %}selected{% endif %}>Handyman-Contractor</option>
-          <option value="Restaurant-Food-and-Drink" {% if form_data.category == 'Restaurant-Food-and-Drink' %}selected{% endif %}>Restaurant/Food/Drink</option>
-          <option value="Auto-Service-Repair-Parts" {% if form_data.category == 'Auto-Service-Repair-Parts' %}selected{% endif %}>Auto Service-Repair-Parts</option>
-          <option value="Home-and-Garden" {% if form_data.category == 'Home-and-Garden' %}selected{% endif %}>Home and Garden</option>
-          <option value="Shopping-and-Retail" {% if form_data.category == 'Shopping-and-Retail' %}selected{% endif %}>Shopping and Retail</option>
-          <option value="Health-and-Beauty" {% if form_data.category == 'Health-and-Beauty' %}selected{% endif %}>Health and Beauty</option>
-          <option value="Real-Estate" {% if form_data.category == 'Real-Estate' %}selected{% endif %}>Real Estate</option>
-          <option value="Pet-Service-and-Supplies" {% if form_data.category == 'Pet-Service-and-Supplies' %}selected{% endif %}>Pet Service and Supplies</option>
-          <option value="Travel-Lodging-Tourism" {% if form_data.category == 'Travel-Lodging-Tourism' %}selected{% endif %}>Travel-Lodging-Tourism</option>
-          <option value="Financial-Services" {% if form_data.category == 'Financial-Services' %}selected{% endif %}>Financial Services</option>
-          <option value="Professional-Services" {% if form_data.category == 'Professional-Services' %}selected{% endif %}>Professional Services</option>
-          <option value="Events-and-Entertainment" {% if form_data.category == 'Events-and-Entertainment' %}selected{% endif %}>Events and Entertainment</option>
-          <option value="Education-and-Training" {% if form_data.category == 'Education-and-Training' %}selected{% endif %}>Education and Training</option>
-          <option value="Wedding-Services" {% if form_data.category == 'Wedding-Services' %}selected{% endif %}>Wedding Services</option>
-          <option value="Transportation-Services" {% if form_data.category == 'Transportation-Services' %}selected{% endif %}>Transportation Services</option>
-          <option value="Legal-Services" {% if form_data.category == 'Legal-Services' %}selected{% endif %}>Legal Services</option>
-          <option value="All-Rentals" {% if form_data.category == 'All-Rentals' %}selected{% endif %}>All Rentals</option>
-          <option value="Gaming" {% if form_data.category == 'Gaming' %}selected{% endif %}>Gaming</option>
-          <option value="Sports-and-Recreation" {% if form_data.category == 'Sports-and-Recreation' %}selected{% endif %}>Sports and Recreation</option>
-          <option value="Cleaning-Services" {% if form_data.category == 'Cleaning-Services' %}selected{% endif %}>Cleaning Services</option>
-          <option value="Moving-and-Delivery" {% if form_data.category == 'Moving-and-Delivery' %}selected{% endif %}>Moving and Delivery</option>
-          <option value="Security-and-Protection" {% if form_data.category == 'Security-and-Protection' %}selected{% endif %}>Security and Protection</option>
-          <option value="Industrial-Services" {% if form_data.category == 'Industrial-Services' %}selected{% endif %}>Industrial Services</option>
-          <option value="Other" {% if form_data.category == 'Other' %}selected{% endif %}>Other</option>
-        </select>
-      </div>
-      <div class="col-12 mb-3">
-        <label class="form-label">Finalization</label>
-        <select class="form-select" name="finalization" id="business_finalization" required>
-          <option value="">Select finalization...</option>
-          <option value="All-Sales-Final" {% if form_data.finalization == 'All-Sales-Final' %}selected{% endif %}>All Sales Final</option>
-          <option value="No-Refund-Re-Done" {% if form_data.finalization == 'No-Refund-Re-Done' %}selected{% endif %}>No Refund, but Re-Done</option>
-          <option value="Store-Credit-Only" {% if form_data.finalization == 'Store-Credit-Only' %}selected{% endif %}>Store Credit Only</option>
-          <option value="Exchange-Only" {% if form_data.finalization == 'Exchange-Only' %}selected{% endif %}>Exchange Only</option>
-          <option value="Exchange-Store-Credit" {% if form_data.finalization == 'Exchange-Store-Credit' %}selected{% endif %}>Exchange or Store Credit</option>
-          <option value="Returns-Accepted" {% if form_data.finalization == 'Returns-Accepted' %}selected{% endif %}>Returns Accepted</option>
-        </select>
-      </div>
-      <!-- Keywords -->
-      <div class="col-12 mt-3">
-        <label class="form-label">Keywords (for search, separated by commas)</label>
-        <input type="text" class="form-control" id="search_keywords" name="search_keywords" maxlength="500" value="{{ form_data.search_keywords or '' }}" placeholder="e.g. roofing,solar,energy">
-        <div class="form-text">Up to 20 keywords (comma-separated).</div>
-      </div>
-      <div class="col-12 mt-3 d-flex gap-2">
-        {{ profile_form.submit(class="btn btn-success") }}
-      </div>
-    </form>
-  </div>
-</div>
-<!-- end .card.mb-4.p-4 (dashboard main card) -->
-
-  <!-- Referral Code Section -->
-  <div class="card p-4 mb-4">
-    <h4>Your Referral Code</h4>
-    <div class="mb-0"><b>{{ referral_code }}</b></div>
-
-  {% if sponsor %}
-
-    <div>
-      <small class="text-muted">Sponsored by: <span class="text-success">{{ sponsor.business_name }}</span></small></div>
-    </div>
   {% endif %}
 
-    <div>
-      <button class="btn btn-success w-100" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal">
-        <i class="bi bi-person-plus me-1"></i>Invite Businesses to join by Email
-      </button></br></br>
-  <a href="{{ url_for('b2b_flyer') }}" class="btn w-100 btn-outline-secondary">
-    B2B Flyer
-  </a>
+  <!-- ===================== OVERVIEW: KPIs + CHARTS ===================== -->
+  <div class="dash-section-head" id="overview">
+    <div class="icon-badge"><i class="bi bi-graph-up-arrow"></i></div>
+    <h3>Your Business Activity</h3>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+      <div class="card kpi-tile">
+        <div class="kpi-icon kpi-green"><i class="bi bi-bag-check"></i></div>
+        <div class="kpi-label">Lifetime Gross Sales</div>
+        <div class="kpi-value">${{ "{:,.2f}".format(business.lifetime_gross_sales or 0) }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card kpi-tile">
+        <div class="kpi-icon kpi-gold"><i class="bi bi-megaphone"></i></div>
+        <div class="kpi-label">Lifetime Ad Fees Paid</div>
+        <div class="kpi-value">${{ "{:,.2f}".format(business.lifetime_ad_fee_paid or 0) }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card kpi-tile">
+        <div class="kpi-icon kpi-teal"><i class="bi bi-piggy-bank"></i></div>
+        <div class="kpi-label">Net Gross (after ad fees)</div>
+        <div class="kpi-value">${{ "{:,.2f}".format(business.lifetime_net_gross or 0) }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card kpi-tile">
+        <div class="kpi-icon kpi-blue"><i class="bi bi-percent"></i></div>
+        <div class="kpi-label">Lifetime Marketing ROI</div>
+        <div class="kpi-value">{{ "{:,.2f}".format(business.lifetime_roi or 0) }}%</div>
+      </div>
     </div>
   </div>
 
-
-<div class="card p-4 mb-4">
-  <div class="d-flex justify-content-between align-items-center">
-    <h4 class="mb-0">Invite Businesses on Social Media</h4>
-    <button
-      class="btn btn-sm btn-outline-secondary"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#b2bShareCollapse"
-      aria-expanded="false"
-      aria-controls="b2bShareCollapse"
-    >
-      Show / Hide
-    </button>
+  <div class="row g-3 mb-2">
+    <div class="col-12 col-lg-4">
+      <div class="card chart-card">
+        <h5>Sales vs. Ad Fees</h5>
+        <div class="chart-box">
+          <canvas id="salesFeesChart"></canvas>
+          <div class="chart-empty" id="salesFeesEmpty">No finalized sales yet. Your chart will appear after your first finalized transaction.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-4">
+      <div class="card chart-card">
+        <h5>Where Each Sales Dollar Goes</h5>
+        <div class="chart-box">
+          <canvas id="salesSplitChart"></canvas>
+          <div class="chart-empty" id="salesSplitEmpty">No finalized sales yet.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-4">
+      <div class="card chart-card">
+        <h5>Earnings Overview (Cashback &amp; Commissions)</h5>
+        <div class="chart-box">
+          <canvas id="earningsChart"></canvas>
+          <div class="chart-empty" id="earningsEmpty">No earnings yet. Cashback and referral commissions will show here.</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-<div class="collapse mt-3" id="b2bShareCollapse">
-  <label for="b2b-share-link" class="form-label">Your B2B invite link</label>
-  <input
-    id="b2b-share-link"
-    type="text"
-    class="form-control mb-2"
-    readonly
-    value="{{ b2b_share_url }}"
-  >
+  <!-- ===================== EARNINGS & PAYOUTS ===================== -->
+  <div class="dash-section-head" id="earnings">
+    <div class="icon-badge"><i class="bi bi-cash-coin"></i></div>
+    <h3>Earnings &amp; Payouts</h3>
+  </div>
 
-  <!-- download for social -->
-  <a href="{{ url_for('download_b2b_flyer') }}" class="btn btn-outline-primary w-100 mb-2">
-    Download B2B Flyer Image (for social posts - no QR code)
-  </a>
+  <div class="row g-3">
+    <div class="col-12 col-lg-5">
+      <div class="card p-4 h-100 mb-0">
+        <div class="card-title-row"><i class="bi bi-wallet2"></i><h5>Business Earnings Summary <small class="text-muted fw-normal">(7-day delay)</small></h5></div>
+        <div class="summary-row"><span class="s-label">Lifetime Total Earnings</span><span class="s-value">${{ "{:,.2f}".format(total_biz_earnings or 0) }}</span></div>
+        <div class="summary-row"><span class="s-label">Pending Earnings</span><span class="s-value">${{ "{:,.2f}".format(pending_biz_earnings or 0) }}</span></div>
+        <div class="summary-row"><span class="s-label">Available for Withdrawal</span><span class="s-value text-success">${{ "{:,.2f}".format(net_available_biz_earnings or 0) }}</span></div>
+        <div class="summary-row"><span class="s-label">Total Withdrawn (All Time)</span><span class="s-value">${{ "{:,.2f}".format(biz_withdrawn_total or 0) }}</span></div>
+        <small class="text-muted mt-2 d-block">
+          <a href="#" data-bs-toggle="modal" data-bs-target="#businessEarningsInfo">
+            <i class="bi bi-info-circle"></i> Payout Info
+          </a>
+        </small>
 
-  <p class="mt-1 mb-1" style="font-size:0.9rem;">
-    Suggested caption (this is what will be copied):
-  </p>
-  <textarea
-    id="b2b-caption"
-    readonly
-    rows="3"
-    class="form-control mb-2"
-    style="max-width:520px; font-size:0.9rem;"
-  >Business owners: Want advertising where you only pay when a sale actually closes with 1000% ROAS (Return on Advertising Spend) or higher (spend $1 = $10 sale)?  What about getting exclusive leads at no cost to your business (one member connected to one business at a time and not oversold to your competitors), plus zero cost for website and foot traffic, phone calls, appointments and meetups?
-   LIVE TRACKING:  Have service techs in the field?  We give you the ability to see every service provider's location in real-time when the status is set to "on the way" and with zero cost to your business.  You receive status updates for every service call and if the destination address is incorrect, members can update the destination address for you (reduced fuel waste, time and unnecessary vehicle wear and tear).
-   WHAT'S THE COST?  You simply pay 10% of the sale (capped at $250) after you get paid.  No hidden fees, no contracts, no monthly membership fees, subscriptions.  All you have to do is finalize the transaction once you've received payment and make sure that you have enough in your account balance to cover the advertising fee prior to getting paid.
-   REWARDS PROGRAM:  Perk Miner also rewards it's members for making purchases from it's advertisers and it's advertisers for finalizing transactions (all cash back and commissions are paid by Perk Miner from the advertising revenue paid - up to 84% of the advertising revenue is paid out to members and businesses from every finalized transaction).
-   MUTUAL GROWTH MODEL:  By joining and inviting other business owners to join, you each earn a commission from each other's sales (finalized transactions) through Perk Miner and at the same time, I am also rewarded.  It's a mutual growth model designed to help businesses prosper and it's all paid by Perk Miner ... not by your business.
-   NEEDED TO GET STARTED:  It only takes $25 to fund your account (this is not a fee, but is used to cover the advertising fee when you make a sale) to get started.  $25 covers $250 in sales.  If your lowest sale is over $2,500, you must deposit $250 or more to cover the advertising fee.
-   No special equipment required to finalize transactions and you or your staff can finalize transactions in seconds.  Upon successful finalization of every transaction, you also get real-time analytics and you also see your cash back earned.  That's right!  You earn cash back for finalizing transactions in return for offering a perk to Perk Miner members (you earn 10% of the advertising fee paid).
-   There is zero risk to your business.  Join PerkMiner as an advertiser through my business invite link today:
-{{ business_share_url }}</textarea>
-
-  <button
-    type="button"
-    class="btn btn-primary w-100"
-    onclick="copyCaptionAndLink('b2b-caption')"
-  >
-    Copy caption + link
-  </button>
-
-  <p class="mt-2 mb-0" style="font-size:0.85rem; color:#6b7280;">
-    1. Take a screen shot of your own Business flyer with QR code (on mobile device) or Download our standardized B2B flyer image without QR code above.<br>
-    2. Upload it to your post.<br>
-    3. Paste the copied caption + link.
-  </p>
-</div>
-</div>
-    <div class="card p-4 mb-4">
-<h4>Finalize Transactions</h4>
-
-          <!-- Finalized Transactions Report Button -->
-          <a href="{{ url_for('finalized_report') }}" class="btn btn-info w-100 mt-3">
-            <i class="bi bi-list-check"></i> Finalized Transactions by Staff
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <a href="{{ url_for('business_receipts') }}" class="btn btn-outline-secondary">View Invoices</a>
+          <a href="{{ url_for('business_earnings') }}" class="btn btn-outline-success">
+            <i class="bi bi-graph-up"></i> View Earnings
           </a>
         </div>
+      </div>
+    </div>
 
-<div class="mb-3">
-  <div class="row align-items-center">
-    <div class="col-12 col-md-auto d-flex flex-wrap gap-2 mb-2 mb-md-0">
+    <div class="col-12 col-lg-7">
+      <div class="card p-4 h-100 mb-0">
+        <div class="card-title-row"><i class="bi bi-bank"></i><h5>Payouts</h5></div>
+
+        <div class="fs-5 fw-semibold text-primary mb-3">
+          Earnings Balance: ${{ "{:,.2f}".format(business.earnings_balance or 0) }}
+        </div>
+
+        {% if business.stripe_account_id %}
+          <div class="mb-3">
+            <div class="btn-group" role="group" aria-label="Business payout actions">
+              <a href="{{ url_for('business_stripe_update_info') }}"
+                 class="btn btn-outline-primary">
+                Bank Details
+              </a>
+              <a href="{{ url_for('business_stripe_dashboard') }}"
+                 class="btn btn-secondary"
+                 target="_blank"
+                 rel="noopener noreferrer">
+                Stripe Dashboard
+              </a>
+            </div>
+          </div>
+        {% endif %}
+
+        <div>
+          {% if not business.stripe_account_id %}
+            <!-- No Stripe account yet -->
+            <a href="{{ url_for('business_onboarding') }}" class="btn btn-primary w-100">
+              Set Up Payouts (Bank Transfer)
+            </a>
+
+          {% else %}
+            <!-- Stripe account exists: show payout status -->
+            <div class="mb-2">
+              {% if not stripe_status.connected %}
+                <span class="badge bg-secondary">Stripe not connected</span>
+
+              {% elif stripe_status.payouts_status == 'active' %}
+                <span class="badge bg-success">Stripe payouts active</span>
+
+              {% elif stripe_status.payouts_status == 'pending_requirements' %}
+                <span class="badge bg-warning text-dark">Stripe action required</span>
+                <div class="text-muted small mt-1">
+                  Stripe needs more information before enabling payouts.
+                </div>
+                <div class="mt-1">
+                  <a href="{{ url_for('business_onboarding') }}" class="btn btn-sm btn-warning w-100">
+                    Finish Stripe setup
+                  </a>
+                </div>
+
+              {% else %}
+                <span class="badge bg-danger">Stripe payouts disabled</span>
+                <div class="text-muted small mt-1">
+                  Your Stripe account is not ready for payouts. Please review your details in Stripe.
+                </div>
+                <div class="mt-1">
+                  <a href="{{ url_for('business_onboarding') }}" class="btn btn-sm btn-danger w-100">
+                    Update Stripe account
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+
+            {# only show withdrawal options if payouts are actually active #}
+            {% if stripe_status.payouts_status == 'active' %}
+              {% set biz_net = business.earnings_balance|float %}
+              {% if biz_net >= 10 %}
+                {# Standard business payout #}
+                {% set std_fee_biz = biz_net * 0.005 + 0.35 %}
+                {% set std_net_biz = biz_net - std_fee_biz %}
+                <div class="mb-3 border rounded p-3">
+                  <div class="fw-bold mb-1">
+                    <i class="bi bi-bank"></i> Standard Payout (1-10 business days)
+                  </div>
+                  <div class="text-muted mb-1" style="font-size:0.97em;">
+                    Perk Miner transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee_biz) }} (0.5% + $0.35)<br>
+                    If you withdraw full balance to your Stripe balance, you will receive: <b>${{ '{:,.2f}'.format(std_net_biz) }}<br>
+                    Stripe may charge an additional fee to send funds to your bank account.</b>
+                  </div>
+                  <form action="{{ url_for('business_withdraw') }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="input-group mb-2">
+                      <span class="input-group-text">$</span>
+                      <input
+                        type="number"
+                        name="amount"
+                        class="form-control"
+                        step="0.01"
+                        min="10"
+                        max="{{ '{:.2f}'.format(biz_net) }}"
+                        placeholder="Amount (leave blank for full)"
+                      >
+                    </div>
+                      <button type="submit" class="btn btn-success w-100"
+                              onclick="this.disabled=true; this.form.submit();">
+                        Withdraw (Standard)
+                      </button>
+                  </form>
+                </div>
+              {% else %}
+                <small class="text-muted">
+                  You need at least $10 in available business earnings to withdraw.
+                </small>
+              {% endif %}
+            {% else %}
+              <small class="text-muted">
+                Once your Stripe payouts are active, you'll be able to withdraw your business earnings here.
+              </small>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TRANSACTIONS ===================== -->
+  <div class="dash-section-head" id="transactions">
+    <div class="icon-badge"><i class="bi bi-receipt"></i></div>
+    <h3>Finalize Transactions</h3>
+  </div>
+
+  <div class="card p-4">
+    <div class="row g-2">
       {% if has_active_biz_sessions %}
-        <div class="mb-2">
+        <div class="col-12 col-md-6">
           <a href="{{ url_for('biz_user_interactions') }}" class="btn btn-outline-primary w-100">
             <i class="bi bi-chat-dots me-1"></i>
             My Active Sessions
@@ -955,313 +1505,298 @@
           </a>
         </div>
       {% endif %}
-      {% if payment_alerts %}
-        <div class="mb-3">
-          <div class="alert alert-warning text-center p-2 mb-2">
-            <b>New Scan:</b> A customer is awaiting for you to scan their QR code!
-            {% for ia in payment_alerts %}
-              <div class="mt-2">
-                <a class="btn btn-success btn-sm w-100"
-                   href="{{ url_for('scan_qr', interaction_id=ia.id) }}">
-                   Scan Payment QR for {{ ia.user.name or ia.user.email }}
-                </a>
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-      {% endif %}
-  </div>
-</div>
-
-    <div class="card p-4 mb-4">
-
-<h4>Your Business Activity</h4>
-
-  <div class="card mb-3">
-    <div class="card-header">
-      Lifetime Sales Summary
-    </div>
-    <div class="card-body">
-      <table class="table table-sm">
-        <tbody>
-          <tr>
-            <td>Lifetime Gross Sales</td>
-            <td>
-              ${{ "{:,.2f}".format(business.lifetime_gross_sales or 0) }}
-            </td>
-          </tr>
-          <tr>
-            <td>Lifetime Advertising Fees Paid</td>
-            <td>
-              ${{ "{:,.2f}".format(business.lifetime_ad_fee_paid or 0) }}
-            </td>
-          </tr>
-          <tr>
-            <td>Lifetime Net Gross (after ad fees)</td>
-            <td>
-              ${{ "{:,.2f}".format(business.lifetime_net_gross or 0) }}
-            </td>
-          </tr>
-          <tr>
-            <td>Lifetime Marketing ROI</td>
-            <td>
-              {{ "{:,.2f}".format(business.lifetime_roi or 0) }}%
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-<!-- Business earnings summary with 7-day delay -->
-<div class="mb-3">
-  <div class="card mb-3">
-    <div class="card-header">
-      Business Earnings Summary (7-day delay)
-    </div>
-    <div class="card-body">
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th>Field</th>
-            <th>Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Lifetime Total Earnings</td>
-            <td>${{ "{:,.2f}".format(total_biz_earnings or 0) }}</td>
-          </tr>
-          <tr>
-            <td>Pending Earnings</td>
-            <td>${{ "{:,.2f}".format(pending_biz_earnings or 0) }}</td>
-          </tr>
-          <tr>
-            <td>Available for Withdrawal</td>
-            <td>${{ "{:,.2f}".format(net_available_biz_earnings or 0) }}</td>
-          </tr>
-          <tr>
-            <td>Total Withdrawn (All Time)</td>
-            <td>${{ "{:,.2f}".format(biz_withdrawn_total or 0) }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <small class="text-muted">
-        <a href="#" data-bs-toggle="modal" data-bs-target="#businessEarningsInfo">
-          <i class="bi bi-info-circle"></i> Payout Info
+      <div class="col-12 {% if has_active_biz_sessions %}col-md-6{% endif %}">
+        <!-- Finalized Transactions Report Button -->
+        <a href="{{ url_for('finalized_report') }}" class="btn btn-info w-100">
+          <i class="bi bi-list-check"></i> Finalized Transactions by Staff
         </a>
-      </small>
-    </div>
-  </div>
-
-  <div class="row align-items-center">
-    <div class="col-12 col-md-auto d-flex flex-wrap gap-2 mb-2 mb-md-0">
-      <a href="{{ url_for('business_receipts') }}" class="btn btn-outline-secondary">View Invoices</a>
-      <a href="{{ url_for('business_earnings') }}" class="btn btn-outline-success">
-        <i class="bi bi-graph-up"></i> View Earnings
-      </a>
-    </div>
-
-    {% if business.stripe_account_id %}
-      <div class="col-12 col-md text-md-end">
-        <div class="btn-group" role="group" aria-label="Business payout actions">
-          <a href="{{ url_for('business_stripe_update_info') }}"
-             class="btn btn-outline-primary">
-            Bank Details
-          </a>
-          <a href="{{ url_for('business_stripe_dashboard') }}"
-             class="btn btn-secondary"
-             target="_blank"
-             rel="noopener noreferrer">
-            Stripe Dashboard
-          </a>
-        </div>
       </div>
-    {% endif %}
-  </div>
-
-  <div class="fs-5 fw-semibold text-primary mb-2 mt-2">
-    Earnings Balance: ${{ "{:,.2f}".format(business.earnings_balance or 0) }}
-  </div>
-
-<div>
-  {% if not business.stripe_account_id %}
-    <!-- No Stripe account yet -->
-    <a href="{{ url_for('business_onboarding') }}" class="btn btn-primary w-100">
-      Set Up Payouts (Bank Transfer)
-    </a>
-
-  {% else %}
-    <!-- Stripe account exists: show payout status -->
-    <div class="mb-2">
-      {% if not stripe_status.connected %}
-        <span class="badge bg-secondary">Stripe not connected</span>
-
-      {% elif stripe_status.payouts_status == 'active' %}
-        <span class="badge bg-success">Stripe payouts active</span>
-
-      {% elif stripe_status.payouts_status == 'pending_requirements' %}
-        <span class="badge bg-warning text-dark">Stripe action required</span>
-        <div class="text-muted small mt-1">
-          Stripe needs more information before enabling payouts.
-        </div>
-        <div class="mt-1">
-          <a href="{{ url_for('business_onboarding') }}" class="btn btn-sm btn-warning w-100">
-            Finish Stripe setup
-          </a>
-        </div>
-
-      {% else %}
-        <span class="badge bg-danger">Stripe payouts disabled</span>
-        <div class="text-muted small mt-1">
-          Your Stripe account is not ready for payouts. Please review your details in Stripe.
-        </div>
-        <div class="mt-1">
-          <a href="{{ url_for('business_onboarding') }}" class="btn btn-sm btn-danger w-100">
-            Update Stripe account
-          </a>
-        </div>
-      {% endif %}
     </div>
+  </div>
 
-    {# only show withdrawal options if payouts are actually active #}
-    {% if stripe_status.payouts_status == 'active' %}
-      {% set biz_net = business.earnings_balance|float %}
-      {% if biz_net >= 10 %}
-        {# Standard business payout #}
-        {% set std_fee_biz = biz_net * 0.005 + 0.35 %}
-        {% set std_net_biz = biz_net - std_fee_biz %}
-        <div class="mb-3 border rounded p-3">
-          <div class="fw-bold mb-1">
-            <i class="bi bi-bank"></i> Standard Payout (1-10 business days)
-          </div>
-          <div class="text-muted mb-1" style="font-size:0.97em;">
-            Perk Miner transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee_biz) }} (0.5% + $0.35)<br>
-            If you withdraw full balance to your Stripe balance, you will receive: <b>${{ '{:,.2f}'.format(std_net_biz) }}<br>
-            Stripe may charge an additional fee to send funds to your bank account.</b>
-          </div>
-          <form action="{{ url_for('business_withdraw') }}" method="POST" class="d-inline">
+  <!-- ===================== REFERRALS ===================== -->
+  <div class="dash-section-head" id="referrals">
+    <div class="icon-badge"><i class="bi bi-people"></i></div>
+    <h3>Referrals &amp; Invites</h3>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <!-- Referral Code Section -->
+      <div class="card p-4 h-100 mb-0">
+        <div class="card-title-row"><i class="bi bi-qr-code"></i><h4>Your Referral Code</h4></div>
+        <div class="mb-3"><span class="referral-code-pill">{{ referral_code }}</span></div>
+
+        <div>
+          <button class="btn btn-sm btn-outline-secondary mb-2" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#changeRefCode">
+            Change my referral code
+          </button>
+        </div>
+
+        <div class="collapse mb-3" id="changeRefCode">
+          <form method="post" action="{{ url_for('business_change_referral_code') }}"
+                onsubmit="return confirm('Invites, QR codes on flyers and social media posts that use your old referral code may stop working. If you have generated any earnings, they may be affected (recommended to do this before you start earning cash back or referral commissions). Continue?');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="input-group mb-2">
-              <span class="input-group-text">$</span>
-              <input
-                type="number"
-                name="amount"
-                class="form-control"
-                step="0.01"
-                min="10"
-                max="{{ '{:.2f}'.format(biz_net) }}"
-                placeholder="Amount (leave blank for full)"
-              >
+            <div class="input-group">
+              <input type="text" class="form-control" name="referral_code"
+                     minlength="4" maxlength="20" pattern="[A-Za-z0-9\-]{4,20}"
+                     placeholder="New referral code" autocomplete="off" required>
+              <button type="submit" class="btn btn-primary">Save</button>
             </div>
-              <button type="submit" class="btn btn-success w-100"
-                      onclick="this.disabled=true; this.form.submit();">
-                Withdraw (Standard)
-              </button>
+            <div class="form-text">4-20 characters: letters, numbers and dashes only.</div>
           </form>
         </div>
+
+        {% if sponsor %}
+          <div class="mb-3">
+            <small class="text-muted">Sponsored by: <span class="text-success">{{ sponsor.business_name }}</span></small>
+          </div>
+        {% endif %}
+
+        <div class="d-grid gap-2 mt-auto">
+          <button class="btn btn-success w-100" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal">
+            <i class="bi bi-person-plus me-1"></i>Invite Businesses to join by Email
+          </button>
+          <a href="{{ url_for('b2b_flyer') }}" class="btn w-100 btn-outline-secondary">
+            B2B Flyer
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card p-4 h-100 mb-0">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="card-title-row mb-0"><i class="bi bi-share"></i><h4>Invite Businesses on Social Media or via Text</h4></div>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#b2bShareCollapse"
+            aria-expanded="false"
+            aria-controls="b2bShareCollapse"
+          >
+            Show / Hide
+          </button>
+        </div>
+
+        <div class="collapse mt-3" id="b2bShareCollapse">
+          <label for="b2b-share-link" class="form-label">Your B2B invite link</label>
+          <input
+            id="b2b-share-link"
+            type="text"
+            class="form-control mb-2"
+            readonly
+            value="{{ b2b_share_url }}"
+          >
+
+          <!-- download for social -->
+          <a href="{{ url_for('download_b2b_flyer') }}" class="btn btn-outline-primary w-100 mb-2">
+            Download B2B Flyer Image (for social posts - no QR code)
+          </a>
+
+          <p class="mt-1 mb-1" style="font-size:0.9rem;">
+            Suggested caption (this is what will be copied):
+          </p>
+          <textarea
+            id="b2b-caption"
+            readonly
+            rows="3"
+            class="form-control mb-2"
+            style="max-width:520px; font-size:0.9rem;"
+          >Attention Business owners:
+ 
+          I’m an advertiser on PerkMiner and this is why I think you should advertise too.
+
+          •  You only pay when a sale actually closes — 10% of the sale (capped at $250). That’s 1,000% Return On Ad Spend or higher
+
+          •  No sale means zero fees. No contracts, no monthly fees, no hidden charges
+
+          •  Exclusive leads at no cost (one member connected to one business — not oversold to competitors)
+
+          •  Zero cost for website traffic, phone calls, appointments, and meetups
+
+          •  Free live tracking for your service techs when “on the way” (members can even correct the address - cuts down on wasted trips)
+
+          •  Earn 1% cash back on every finalized sale (paid by Perk Miner) just for offering a perk
+
+          •  Invite other businesses and earn mutual commissions from each other’s sales — all paid by Perk Miner
+
+          •  Only $25 minimum to fund your account to start (covers up to $250 in sales)
+
+          •  Finalize transactions in seconds with real-time analytics
+
+          Zero risk to your business. I’m inviting businesses I know because the model actually makes sense.
+
+          Join through my invite link:
+          {{ b2b_share_url }}
+          </textarea>
+
+          <button
+            type="button"
+            class="btn btn-primary w-100"
+            onclick="copyCaptionAndLink('b2b-caption')"
+          >
+            Copy caption + link
+          </button>
+
+          <p class="mt-2 mb-0" style="font-size:0.85rem; color:#6b7280;">
+            1. Take a screen shot of your own Business flyer with QR code (on mobile device) or Download our standardized B2B flyer image without QR code above.<br>
+            2. Upload it to your post.<br>
+            3. Paste the copied caption + link.
+          </p>
+        </div>
+        <p class="text-muted small mt-3 mb-0">Share your invite link on social media and earn when businesses you invite finalize sales.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== STAFF ===================== -->
+  <div class="dash-section-head" id="staff">
+    <div class="icon-badge"><i class="bi bi-person-badge"></i></div>
+    <h3>Staff Section</h3>
+  </div>
+
+  <div class="card p-4">
+    <a href="{{ url_for('staff_new') }}" class="btn btn-primary w-100 mb-3">
+      <i class="bi bi-person-plus"></i> Add Staff Member
+    </a>
+    <h5>Current Staff</h5>
+    <ul class="list-group">
+      {% for staff in business.staff_members %}
+        <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+          <span>
+            {{ staff.role }} - {{ staff.name }} - {{ staff.email }}{% if staff.is_active %} (Active){% else %} (Inactive){% endif %}
+          </span>
+          <form method="post" action="{{ url_for('remove_staff', staff_id=staff.id) }}"
+            style="display:inline;"
+            onsubmit="return confirm('Are you sure you want to remove this staff member? This action cannot be reversed.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+          </form>
+        </li>
       {% else %}
-        <small class="text-muted">
-          You need at least $10 in available business earnings to withdraw.
-        </small>
-      {% endif %}
-    {% else %}
-      <small class="text-muted">
-        Once your Stripe payouts are active, you'll be able to withdraw your business earnings here.
-      </small>
-    {% endif %}
-  {% endif %}
-</div>
-</div>
+        <li class="list-group-item">No staff added yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
 
-<div class="card p-4 mb-4">
-  <h4>Staff Section</h4>
-  <div class="mb-3">
-    <div class="row align-items-center">
-      <div class="col-12">
-        <a href="{{ url_for('staff_new') }}" class="btn btn-primary w-100 mb-3">
-          <i class="bi bi-person-plus"></i> Add Staff Member
-        </a>
+  <!-- ===================== CALCULATORS ===================== -->
+  <div class="dash-section-head" id="calculators">
+    <div class="icon-badge"><i class="bi bi-calculator"></i></div>
+    <h3>Rewards Calculators</h3>
+  </div>
+
+  <div class="row g-3">
+    <!-- Single paid invoice calculator -->
+    <div class="col-12 col-lg-6">
+      <div class="card calc-card">
+        <div class="calc-head">
+          <div class="calc-icon"><i class="bi bi-receipt-cutoff"></i></div>
+          <div>
+            <h4>Estimate Your Rewards From One Single Paid Invoice</h4>
+            <small>Pick a tier and an invoice amount.</small>
+          </div>
+        </div>
+        <div class="calc-body">
+          <div class="mb-3">
+            <label class="form-label" for="reward_amount">Invoice amount</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input id="reward_amount" type="number" class="form-control" placeholder="Amount (e.g. 500)" max="2500" required>
+            </div>
+            <div class="form-text">Maximum sale amount allowed is $2,500.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="reward_tier">Whose invoice is it?</label>
+            <select id="reward_tier" class="form-select" required>
+              <option value="1" selected>Tier 1 (your paid invoices)</option>
+              <option value="2">Tier 2 (direct referral paid invoices)</option>
+              <option value="3">Tier 3 (Tier 2 referral paid invoices)</option>
+              <option value="4">Tier 4 (Tier 3 referral paid invoices)</option>
+              <option value="5">Tier 5 (Tier 4 referral paid invoices)</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary w-100" onclick="calculateSingleReward()">
+            <i class="bi bi-calculator me-1"></i> Calculate My Reward
+          </button>
+          <div id="rewards_output">
+            {{ rewards_table | safe }}
+          </div>
+        </div>
       </div>
-      <div class="col-12 mt-2">
-        <h5>Current Staff</h5>
-        <ul class="list-group">
-          {% for staff in business.staff_members %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              <span>
-                {{ staff.role }} - {{ staff.name }} - {{ staff.email }}{% if staff.is_active %} (Active){% else %} (Inactive){% endif %}
-              </span>
-              <form method="post" action="{{ url_for('remove_staff', staff_id=staff.id) }}"
-                style="display:inline;"
-                onsubmit="return confirm('Are you sure you want to remove this staff member? This action cannot be reversed.');">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-              </form>
-            </li>
-          {% else %}
-            <li class="list-group-item">No staff added yet.</li>
-          {% endfor %}
-        </ul>
+    </div>
+
+    <!-- Network calculator -->
+    <div class="col-12 col-lg-6">
+      <div class="card calc-card">
+        <div class="calc-head">
+          <div class="calc-icon"><i class="bi bi-diagram-3"></i></div>
+          <div>
+            <h4>Business Referral Network Calculator</h4>
+            <small>One single finalized transaction from every business in your network.</small>
+          </div>
+        </div>
+        <div class="calc-body">
+          <p class="text-muted mb-3" style="font-size:.95rem;">
+            If your business and every business in your network refers a number of businesses, and every business finalizes just one transaction (sale), this is how much your business would earn in Cashback and Referral Commissions.
+          </p>
+          <div class="row g-3 mb-2">
+            <div class="col-12 col-sm-6">
+              <label class="form-label" for="network_people">Businesses referred by each</label>
+              <input id="network_people" type="number" class="form-control" min="1" value="4" />
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label" for="network_amount">Sale amount</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input id="network_amount" type="number" class="form-control" min="0" max="2500" step="0.01" value="100" />
+              </div>
+            </div>
+          </div>
+          <small class="text-muted d-block mb-3">*Maximum sale amount allowed is $2,500</small>
+          <button class="btn btn-primary w-100" type="button" onclick="calculateNetworkEarnings()">
+            <i class="bi bi-calculator me-1"></i> Calculate
+          </button>
+
+          <div id="network_results" style="display:none;" class="mt-3">
+            <table class="tier-table">
+              <tbody>
+                <tr><td>Tier One: (Your paid invoices)</td><td>$<span id="network_t1"></span></td></tr>
+                <tr><td>Tier Two: (Paid invoices from your direct referrals)</td><td>$<span id="network_t2"></span></td></tr>
+                <tr><td>Tier Three: (Paid invoices from 2nd Tier referrals)</td><td>$<span id="network_t3"></span></td></tr>
+                <tr><td>Tier Four: (Paid invoices from 3rd Tier referrals)</td><td>$<span id="network_t4"></span></td></tr>
+                <tr><td>Tier Five: (Paid invoices from 4th Tier referrals)</td><td>$<span id="network_t5"></span></td></tr>
+              </tbody>
+            </table>
+
+            <div class="tier-total">
+              <span>Cash back and Commissions earnings from every business in your network finalizing just one sale for the same amount would be</span>
+              <span class="tier-total-amt">$<span id="network_total"></span></span>
+            </div>
+
+            <div class="chart-box mt-3" style="height:210px;">
+              <canvas id="network_chart"></canvas>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-  <!-- Reward calculators and Network tree -->
-  <div class="card p-4 mb-4">
-    <h4>Estimate Your Rewards From One Single Paid Invoice</h4>
-    <div class="row g-3 mb-3">
-      <div class="col-12 col-md-auto">
-        <input id="reward_amount" type="number" class="form-control" placeholder="Amount (e.g. 500)" max="2500" required>
-      </div>
-      <div class="col-12 col-md-auto">
-        <select id="reward_tier" class="form-select" required>
-            <option value="1" selected>Tier 1 (your paid invoices)</option>
-            <option value="2">Tier 2 (direct referral paid invoices)</option>
-            <option value="3">Tier 3 (Tier 2 referral paid invoices)</option>
-            <option value="4">Tier 4 (Tier 3 referral paid invoices)</option>
-            <option value="5">Tier 5 (Tier 4 referral paid invoices)</option>
-        </select>
-      </div>
-      <div class="col-12 col-md-auto">
-        <button type="button" class="btn btn-primary" onclick="calculateSingleReward()">Calculate My Reward</button>
-      </div>
-    </div>
-    <div id="rewards_output">
-      {{ rewards_table | safe }}
-    </div>
+  <!-- ===================== MY NETWORK ===================== -->
+  <div class="dash-section-head" id="network">
+    <div class="icon-badge"><i class="bi bi-diagram-3-fill"></i></div>
+    <h3>My Network</h3>
   </div>
 
-  <div class="card p-4 mb-4">
-    <h4>Business Referral Network Calculator (one single finalized transaction from every business in your network)</h4>
-    <div class="mb-2">
-      <label>If your business and every business in your network refers 
-        <input id="network_people" type="number" class="form-control d-inline-block w-auto" min="1" value="4" style="width:80px;" />
-        businesses and every business finalizes just one transaction (sale) in the amount of $ 
-        <input id="network_amount" type="number" class="form-control d-inline-block w-auto" min="0" max="2500" step="0.01" value="100" style="width:110px;" />
-        , this is how much your business would earn in Cashback and Referral Commissions:
-      </label>
-      <small class="text-muted d-block">*Maximum sale amount allowed is $2,500</small>
-    </div>
-    <button class="btn btn-info mb-2" type="button" onclick="calculateNetworkEarnings()">Calculate</button>
-    <div id="network_results" style="display:none;">
-      <ul class="mb-1">
-        <li>Tier One: (Your paid invoices) = <span id="network_t1"></span></li>
-        <li>Tier Two: (Paid invoices from your direct referrals) = <span id="network_t2"></span></li>
-        <li>Tier Three: (Paid invoices from 2nd Tier referrals) = <span id="network_t3"></span></li>
-        <li>Tier Four: (Paid invoices from 3rd Tier referrals) = <span id="network_t4"></span></li>
-        <li>Tier Five: (Paid invoices from 4th Tier referrals) = <span id="network_t5"></span></li>
-      </ul>
-      <strong>Cash back and Commissions earnings from every business in your network finalizing just one sale for the same amount would be $<span id="network_total"></span></strong>
-    </div>
-  </div>
-  <div class="card p-4 mb-4">
-    <h4>My Network</h4>
+  <div class="card p-4">
     <div>
-      <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#tier2" aria-expanded="false" aria-controls="tier2">
-        Tier 2 (direct referrals)
+      <a role="button" class="network-tier" data-bs-toggle="collapse" href="#tier2" aria-expanded="false" aria-controls="tier2">
+        <span>Tier 2 (direct referrals)</span><i class="bi bi-chevron-down"></i>
       </a>
-      <div class="collapse mt-2" id="tier2">
+      <div class="collapse mb-2 ps-2" id="tier2">
         {% if level2 %}
           <ul class="mb-2">{% for user in level2 %}<li>{{ user.email }} ({{ user.referral_code }})</li>{% endfor %}</ul>
         {% else %}
@@ -1270,10 +1805,10 @@
       </div>
     </div>
     <div>
-      <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#tier3" aria-expanded="false" aria-controls="tier3">
-        Tier 3 (referred by Tier 2 people)
+      <a role="button" class="network-tier" data-bs-toggle="collapse" href="#tier3" aria-expanded="false" aria-controls="tier3">
+        <span>Tier 3 (referred by Tier 2 people)</span><i class="bi bi-chevron-down"></i>
       </a>
-      <div class="collapse mt-2" id="tier3">
+      <div class="collapse mb-2 ps-2" id="tier3">
         {% if level3 %}
           <ul class="mb-2">{% for user in level3 %}<li>{{ user.email }} ({{ user.referral_code }})</li>{% endfor %}</ul>
         {% else %}
@@ -1282,10 +1817,10 @@
       </div>
     </div>
     <div>
-      <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#tier4" aria-expanded="false" aria-controls="tier4">
-        Tier 4 (referred by Tier 3 people)
+      <a role="button" class="network-tier" data-bs-toggle="collapse" href="#tier4" aria-expanded="false" aria-controls="tier4">
+        <span>Tier 4 (referred by Tier 3 people)</span><i class="bi bi-chevron-down"></i>
       </a>
-      <div class="collapse mt-2" id="tier4">
+      <div class="collapse mb-2 ps-2" id="tier4">
         {% if level4 %}
           <ul class="mb-2">{% for user in level4 %}<li>{{ user.email }} ({{ user.referral_code }})</li>{% endfor %}</ul>
         {% else %}
@@ -1294,10 +1829,10 @@
       </div>
     </div>
     <div>
-      <a role="button" class="fw-semibold text-primary" data-bs-toggle="collapse" href="#tier5" aria-expanded="false" aria-controls="tier5">
-        Tier 5 (referred by Tier 4 people)
+      <a role="button" class="network-tier" data-bs-toggle="collapse" href="#tier5" aria-expanded="false" aria-controls="tier5">
+        <span>Tier 5 (referred by Tier 4 people)</span><i class="bi bi-chevron-down"></i>
       </a>
-      <div class="collapse mt-2" id="tier5">
+      <div class="collapse mb-2 ps-2" id="tier5">
         {% if level5 %}
           <ul class="mb-2">{% for user in level5 %}<li>{{ user.email }} ({{ user.referral_code }})</li>{% endfor %}</ul>
         {% else %}
@@ -1307,13 +1842,37 @@
     </div>
   </div>
 
-<div class="card p-4 text-center">
-  <h4>This is your dashboard.</h4>
-  <p class="mb-3">Congrats on registering your business with PerkMiner!</p>
-  <a href="https://perkminer.com/discontinue" class="btn btn-danger btn-sm mx-auto">
-    <i class="bi bi-x-circle-fill me-1"></i>
-    Discontinue Business Account
-  </a>
+  <div class="card p-4 text-center">
+    <h4>This is your dashboard.</h4>
+    <p class="mb-3">Congrats on registering your business with PerkMiner!</p>
+    <a href="https://perkminer.com/discontinue" class="btn btn-danger btn-sm mx-auto">
+      <i class="bi bi-x-circle-fill me-1"></i>
+      Discontinue Business Account
+    </a>
+  </div>
+
+</div>
+<!-- /container -->
+
+<!-- Invite Modal -->
+<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post" action="{{ url_for('business_invite') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-header">
+        <h5 class="modal-title" id="inviteModalLabel">Invite Others to Join PerkMiner</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label for="invitee-email" class="form-label">Recipient's Email Address:</label>
+        {{ invite_form.invitee_email(class="form-control", id="invitee-email", placeholder="Enter email to invite", required=True) }}
+      </div>
+      <div class="modal-footer">
+        {{ invite_form.submit(class="btn btn-primary") }}
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <div class="modal fade" id="businessEarningsInfo" tabindex="-1" aria-labelledby="businessEarningsInfoLabel" aria-hidden="true">
@@ -1334,85 +1893,74 @@
 </div>
 
 <footer>
-  <div>
-    <div class="mb-2">
-      <a href="/" style="color:var(--pm-primary);font-weight:600;text-decoration:none;">PerkMiner</a> &copy; 2026
-    </div>
-    <div>
-      <small>Need help? <a href="mailto:support@perkminer.com" style="color:var(--pm-primary);">Contact Support</a></small>
-    </div>
-    <div class="mt-1">
-      <a href="#" style="color:#3dbbee; margin:0 6px;text-decoration:none;">Privacy</a>
-      <a href="#" style="color:#3dbbee; margin:0 6px;text-decoration:none;">Terms</a>
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Preview Listing Modal -->
+<div class="modal fade" id="listingPreviewModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Profile Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="listing-preview-content">
+      {# -- START: Updated Submit for Review condition -- #}
+      {% if business.status == "not_submitted"
+            or business.status == "rejected"
+            or (business.status == "approved" and (
+              business.trust_changes_pending or
+              business.draft_business_name or
+              business.draft_category or
+              business.draft_finalization or
+              business.draft_profile_photo or
+              business.draft_phone_number or
+              business.draft_address or
+              business.draft_latitude or
+              business.draft_longitude or
+              business.draft_hours_of_operation or
+              business.draft_website_url or
+              business.draft_about_us or
+              business.draft_service_1 or business.draft_service_2 or business.draft_service_3 or
+              business.draft_service_4 or business.draft_service_5 or business.draft_service_6 or
+              business.draft_service_7 or business.draft_service_8 or business.draft_service_9 or
+              business.draft_service_10 or business.draft_search_keywords or
+              business.draft_photo1_url or
+              business.draft_photo2_url or
+              business.draft_photo3_url or
+              business.draft_photo4_url or
+              business.draft_photo5_url or
+              business.draft_photo6_url
+            ))
+      %}
+        <form method="post" action="{{ url_for('listing_disclaimer') }}" class="mb-3 mt-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="listing_id" value="{{ business.id }}">
+          <input type="hidden" name="referral_code" value="{{ business.referral_code }}">
+          <button type="submit" class="btn btn-warning w-100 mb-2">
+            Submit for Review
+          </button>
+        </form>
+        {# -- If zero balance, show warning (optional)—keep this under the same condition -- #}
+        {% if (business.account_balance is not none and business.account_balance|float <= 0.0) and business.status == "not_submitted" %}
+          <div class="text-danger fw-bold text-center mb-2" style="font-size:1.07em;">
+            You must add funds to your account prior to submitting for review.<br>
+            Your account balance is $0.
+          </div>
+        {% endif %}
+      {% endif %}
+        <!-- Your JS will fill in the rest of this div at runtime, below this form -->
+      </div>
     </div>
   </div>
-</footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</div>
 
-    <!-- Preview Listing Modal -->
-    <div class="modal fade" id="listingPreviewModal" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Profile Preview</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body" id="listing-preview-content">
-          {# -- START: Updated Submit for Review condition -- #}
-          {% if business.status == "not_submitted"
-                or business.status == "rejected"
-                or (business.status == "approved" and (
-                  business.draft_business_name or
-                  business.draft_category or
-                  business.draft_finalization or
-                  business.draft_profile_photo or
-                  business.draft_phone_number or
-                  business.draft_address or
-                  business.draft_latitude or
-                  business.draft_longitude or
-                  business.draft_hours_of_operation or
-                  business.draft_website_url or
-                  business.draft_about_us or
-                  business.draft_service_1 or business.draft_service_2 or business.draft_service_3 or
-                  business.draft_service_4 or business.draft_service_5 or business.draft_service_6 or
-                  business.draft_service_7 or business.draft_service_8 or business.draft_service_9 or
-                  business.draft_service_10 or business.draft_search_keywords or
-                  business.draft_photo1_url or
-                  business.draft_photo2_url or
-                  business.draft_photo3_url or
-                  business.draft_photo4_url or
-                  business.draft_photo5_url or
-                  business.draft_photo6_url
-                ))
-          %}
-            <form method="post" action="{{ url_for('listing_disclaimer') }}" class="mb-3 mt-2">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input type="hidden" name="listing_id" value="{{ business.id }}">
-              <input type="hidden" name="referral_code" value="{{ business.referral_code }}">
-              <button type="submit" class="btn btn-warning w-100 mb-2">
-                Submit for Review
-              </button>
-            </form>
-            {# -- If zero balance, show warning (optional)—keep this under the same condition -- #}
-            {% if (business.account_balance is not none and business.account_balance|float <= 0.0) and business.status == "not_submitted" %}
-              <div class="text-danger fw-bold text-center mb-2" style="font-size:1.07em;">
-                You must add funds to your account prior to submitting for review.<br>
-                Your account balance is $0.
-              </div>
-            {% endif %}
-          {% endif %}
-            <!-- Your JS will fill in the rest of this div at runtime, below this form -->
-          </div>
-        </div>
-      </div>
-    </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
+<!-- ===================== PREVIEW LISTING SCRIPT ===================== -->
 <script>
 window.addEventListener('DOMContentLoaded', function() {
   let previewBtn = document.getElementById('previewListingBtn');
@@ -1547,11 +2095,14 @@ let largeListing = `
 });
 </script>
 
+<!-- ===================== WEBSITE / E-COMMERCE OPTIONS ===================== -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const websiteInput = document.getElementById('website_url');
   const ecommerceCb = document.getElementById('is_ecommerce_site');
   const allowCb = document.getElementById('allow_website_purchases');
+  const termsCb = document.getElementById('online_terms_agree');
+  const ecomWrapper = document.getElementById('ecommerce-wrapper');
   const allowWrapper = document.getElementById('allow-online-wrapper');
   const termsWrapper = document.getElementById('online-terms-wrapper');
 
@@ -1559,11 +2110,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateVisibility() {
     const hasWebsite = websiteInput.value.trim() !== '';
+
+    // no website => none of the online purchase options apply
+    if (!hasWebsite) {
+      ecommerceCb.checked = false;
+      if (allowCb) allowCb.checked = false;
+      if (termsCb) termsCb.checked = false;
+    }
+
     const isEcom = ecommerceCb.checked;
+    if (!isEcom && allowCb) allowCb.checked = false;
     const allowOnline = allowCb && allowCb.checked;
 
-    // show ecommerce checkbox only if website is present (server already does main hide)
-    // show "allow purchases" only if e‑commerce box is checked
+    // e-commerce checkbox only if a website address is present
+    if (ecomWrapper) {
+      ecomWrapper.style.display = hasWebsite ? '' : 'none';
+    }
+    // "allow purchases" only if e‑commerce box is checked
     if (allowWrapper) {
       allowWrapper.style.display = (hasWebsite && isEcom) ? '' : 'none';
     }
@@ -1581,138 +2144,343 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+<!-- ===================== SERVICES + PHOTOS DYNAMIC FIELDS ===================== -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+  // ---- Services (3 to 10) ----
   const servicesList = document.getElementById('services-list');
   const addServiceBtn = document.getElementById('addServiceBtn');
 
-  function countServiceFields() {
-    return servicesList.querySelectorAll('.service-field').length;
+  function renumberServices() {
+    if (!servicesList) return;
+    const fields = Array.from(servicesList.querySelectorAll('.service-field'));
+    fields.forEach(function (f, i) {
+      f.setAttribute('data-index', i);
+      const inp = f.querySelector('input');
+      const num = f.querySelector('.input-group-text');
+      const rm = f.querySelector('.service-remove');
+      if (inp) { inp.name = 'service_' + (i + 1); inp.placeholder = 'Service #' + (i + 1); }
+      if (num) num.textContent = i + 1;
+      if (rm) rm.disabled = i < 3;
+    });
+    if (addServiceBtn) addServiceBtn.disabled = fields.length >= 10;
   }
 
-  addServiceBtn.addEventListener('click', function() {
-    let current = countServiceFields();
-    if (current < 10) {
-      // Create the new input div
+  if (servicesList && addServiceBtn) {
+    addServiceBtn.addEventListener('click', function () {
+      const current = servicesList.querySelectorAll('.service-field').length;
+      if (current >= 10) return;
       const div = document.createElement('div');
       div.className = 'input-group mb-2 service-field';
-      div.setAttribute('data-index', current);
-
-      // Create input
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.className = 'form-control';
-      input.name = 'service_' + (current + 1);
-      input.maxLength = 100;
-      input.placeholder = 'Service #' + (current + 1);
-
-      // Remove button
-      const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.className = 'btn btn-outline-danger service-remove';
-      removeBtn.innerHTML = '&minus;';
-      removeBtn.addEventListener('click', function() {
-        if (current > 2) div.remove();
-      });
-
-      div.appendChild(input);
-      div.appendChild(removeBtn);
-
+      div.innerHTML =
+        '<span class="input-group-text"></span>' +
+        '<input type="text" class="form-control" maxlength="100">' +
+        '<button class="btn btn-outline-danger service-remove" type="button" aria-label="Remove service">&minus;</button>';
       servicesList.appendChild(div);
-    }
-    if (countServiceFields() >= 10) {
-      addServiceBtn.disabled = true;
-    }
-  });
-
-  servicesList.querySelectorAll('.service-remove').forEach(btn => {
-    btn.addEventListener('click', function() {
-      // Only allow remove for fields > 2
-      if (countServiceFields() > 2 && !btn.disabled) {
-        btn.parentElement.remove();
-        addServiceBtn.disabled = false;
-      }
+      renumberServices();
+      const inp = div.querySelector('input');
+      if (inp) inp.focus();
     });
-  });
-});
-</script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  var btn = document.getElementById('profileToggleBtn');
-  var collapseEl = document.getElementById('profileCollapse');
-  if (!btn || !collapseEl) return;
+    servicesList.addEventListener('click', function (e) {
+      const btn = e.target.closest('.service-remove');
+      if (!btn || btn.disabled) return;
+      const field = btn.closest('.service-field');
+      if (field) field.remove();
+      renumberServices();
+    });
 
-  // when collapse is shown
-  collapseEl.addEventListener('shown.bs.collapse', function () {
-    btn.textContent = 'Scroll Down';
-  });
+    renumberServices();
+  }
 
-  // when collapse is hidden
-  collapseEl.addEventListener('hidden.bs.collapse', function () {
-    btn.textContent = 'View/Edit Profile';
-  });
-});
-</script>
-
-<script>
-  // existing window.addEventListener('DOMContentLoaded', function() { ... }) is already there.
-  // we’ll extend it, not replace it.
-
-window.addEventListener('DOMContentLoaded', function() {
-  // ... your existing previewListingBtn code is here ...
-
-  // ---- photos dynamic fields (3–6) ----
+  // ---- Photos (3 to 6) ----
   const photosList = document.getElementById('photos-list');
   const addPhotoBtn = document.getElementById('addPhotoBtn');
 
-  function currentPhotoCount() {
-    return photosList ? photosList.querySelectorAll('.photo-field').length : 0;
+  function renumberPhotos() {
+    if (!photosList) return;
+    const fields = Array.from(photosList.querySelectorAll('.photo-field'));
+    fields.forEach(function (f, i) {
+      f.setAttribute('data-index', i);
+      const inp = f.querySelector('input');
+      const label = f.querySelector('.input-group-text');
+      const rm = f.querySelector('.photo-remove');
+      if (inp) inp.name = 'photo_url_' + (i + 1);
+      if (label) label.textContent = 'Photo ' + (i + 1);
+      if (rm) rm.disabled = i < 3;
+    });
+    if (addPhotoBtn) addPhotoBtn.disabled = fields.length >= 6;
   }
 
-  window.removePhotoField = function (btn) {
-    const field = btn.closest('.photo-field');
-    if (!field) return;
-    const idx = parseInt(field.getAttribute('data-index'), 10);
-    // only allow removing fields 4–6 (index >= 3)
-    if (idx >= 3) {
-      field.remove();
-    }
-  };
-
-  if (addPhotoBtn && photosList) {
+  if (photosList && addPhotoBtn) {
     addPhotoBtn.addEventListener('click', function () {
-      let count = currentPhotoCount();
+      const count = photosList.querySelectorAll('.photo-field').length;
       if (count >= 6) return;
-
-      const index = count; // next index
       const wrapper = document.createElement('div');
       wrapper.className = 'input-group mb-2 photo-field';
-      wrapper.setAttribute('data-index', index);
-
-      wrapper.innerHTML = `
-        <span class="input-group-text">Photo ${index + 1}</span>
-        <input
-          type="url"
-          class="form-control"
-          name="photo_url_${index + 1}"
-          placeholder="https://example.com/your-image.jpg">
-        <button
-          class="btn btn-outline-danger photo-remove"
-          type="button"
-          onclick="removePhotoField(this)">
-          &minus;
-        </button>
-      `;
-
+      wrapper.innerHTML =
+        '<span class="input-group-text"></span>' +
+        '<input type="url" class="form-control" data-error-msg="Enter a full image address that starts with https://" placeholder="https://example.com/your-image.jpg">' +
+        '<button class="btn btn-outline-danger photo-remove" type="button" aria-label="Remove photo">&minus;</button>';
       photosList.appendChild(wrapper);
+      renumberPhotos();
+      const inp = wrapper.querySelector('input');
+      if (inp) inp.focus();
+    });
+
+    photosList.addEventListener('click', function (e) {
+      const btn = e.target.closest('.photo-remove');
+      if (!btn || btn.disabled) return;
+      const field = btn.closest('.photo-field');
+      if (field) field.remove();
+      renumberPhotos();
+    });
+
+    renumberPhotos();
+  }
+
+  // ---- About Us character counter ----
+  const about = document.getElementById('about_us');
+  const counter = document.getElementById('about_counter');
+  if (about && counter) {
+    const upd = function () { counter.textContent = about.value.length + ' / 1000'; };
+    about.addEventListener('input', upd);
+    upd();
+  }
+
+  // ---- Profile photo preview ----
+  const photoInput = document.getElementById('profile_photo_input');
+  const photoPreview = document.getElementById('profile-photo-preview');
+  const photoPlaceholder = document.getElementById('profile-photo-placeholder');
+  if (photoInput && photoPreview) {
+    photoInput.addEventListener('change', function () {
+      const f = photoInput.files && photoInput.files[0];
+      if (!f) return;
+      photoPreview.src = URL.createObjectURL(f);
+      photoPreview.style.display = '';
+      if (photoPlaceholder) photoPlaceholder.style.display = 'none';
     });
   }
 });
 </script>
 
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDo-AojTUQUwwvvywrSiDRcF-oVpw9m_w4&libraries=places"></script>
-    <script>
+<!-- ===================== PROFILE WIZARD (14 STEPS) ===================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const TOTAL = 14;
+  const TITLES = {
+    1: 'Promo Code',
+    2: 'Profile Photo',
+    3: 'Business Name & Phone',
+    4: 'Business Address',
+    5: 'Hours of Operation',
+    6: 'Public Profile URL',
+    7: 'Website',
+    8: 'Google Reviews Link',
+    9: 'Products or Services Offered',
+    10: 'About Us',
+    11: 'Perks Offered',
+    12: 'Photos from Social Media or Web',
+    13: 'Listing Type, Category & Finalization',
+    14: 'Keywords'
+  };
+
+  const panel = document.getElementById('profileCollapse');
+  const wizard = document.getElementById('profile-wizard');
+  const form = document.getElementById('profile-form');
+  const label = document.getElementById('wizard-step-label');
+  const sub = document.getElementById('wizard-step-sub');
+  const bar = document.getElementById('wizard-progress-bar');
+  const progress = document.getElementById('wizard-progress');
+  const jump = document.getElementById('wizard-jump');
+  const toggleBtn = document.getElementById('profileToggleBtn');
+  if (!panel || !wizard || !form) return;
+
+  const steps = Array.prototype.slice.call(wizard.querySelectorAll('.wizard-step'));
+  let current = 1;
+
+  // build "jump to step" dropdown
+  if (jump) {
+    for (let i = 1; i <= TOTAL; i++) {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = (i === TOTAL ? 'Final Step' : 'Step ' + i) + ': ' + TITLES[i];
+      jump.appendChild(opt);
+    }
+    jump.addEventListener('change', function () {
+      showStep(parseInt(jump.value, 10));
+    });
+  }
+
+  function refreshMap() {
+    if (window.pmProfileMap && window.google && google.maps) {
+      setTimeout(function () {
+        google.maps.event.trigger(window.pmProfileMap, 'resize');
+        if (window.pmProfileMarker) {
+          const pos = window.pmProfileMarker.getPosition();
+          if (pos) window.pmProfileMap.setCenter(pos);
+        }
+      }, 60);
+    }
+  }
+
+  function showStep(n, opts) {
+    opts = opts || {};
+    current = Math.max(1, Math.min(TOTAL, n));
+    steps.forEach(function (s) {
+      s.classList.toggle('active', parseInt(s.getAttribute('data-step'), 10) === current);
+    });
+    label.textContent = (current === TOTAL) ? 'Final Step' : 'Step ' + current + ' of ' + TOTAL;
+    sub.textContent = TITLES[current];
+    bar.style.width = ((current / TOTAL) * 100) + '%';
+    if (progress) progress.setAttribute('aria-valuenow', current);
+    if (jump) jump.value = current;
+    if (current === 4) refreshMap();
+    if (!opts.noScroll) {
+      wizard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function stepEl(n) {
+    return steps.find(function (s) { return parseInt(s.getAttribute('data-step'), 10) === n; });
+  }
+
+  function showError(el, msg) {
+    const box = el.querySelector('.step-error');
+    if (!box) return;
+    box.textContent = msg || '';
+    box.classList.toggle('show', !!msg);
+  }
+
+  // returns an error message string, or '' if the step is OK
+  function validateStep(n) {
+    if (n === 1) return '';
+    const el = stepEl(n);
+    if (!el) return '';
+    let msg = '';
+    el.querySelectorAll('.is-invalid').forEach(function (x) { x.classList.remove('is-invalid'); });
+
+    const fields = el.querySelectorAll('input, select, textarea');
+    for (let i = 0; i < fields.length; i++) {
+      const f = fields[i];
+      if (f.type === 'hidden' || f.type === 'checkbox' || f.type === 'radio' || f.type === 'submit' || f.type === 'button') continue;
+      const needs = f.hasAttribute('data-required');
+      const friendly = f.getAttribute('data-label') || 'This field';
+
+      if (f.type === 'file') {
+        if (needs && !(f.files && f.files.length) && !f.hasAttribute('data-has-existing')) {
+          msg = friendly + ' is required. Please choose an image to continue.';
+          f.classList.add('is-invalid');
+          break;
+        }
+        continue;
+      }
+
+      const val = (f.value || '').trim();
+      if (needs && !val) {
+        msg = friendly + ' is required.';
+        f.classList.add('is-invalid');
+        break;
+      }
+      if (val && typeof f.checkValidity === 'function' && !f.checkValidity()) {
+        msg = f.getAttribute('data-error-msg') || f.validationMessage || 'Please check this field.';
+        f.classList.add('is-invalid');
+        break;
+      }
+    }
+    showError(el, msg);
+    return msg;
+  }
+
+  function goNext() {
+    if (validateStep(current)) return;
+    showStep(current + 1);
+  }
+
+  // Next / Back / Skip buttons
+  wizard.addEventListener('click', function (e) {
+    const next = e.target.closest('.wizard-next');
+    const back = e.target.closest('.wizard-back');
+    const skip = e.target.closest('.wizard-skip');
+    if (next) { goNext(); }
+    else if (skip) { showStep(current + 1); }
+    else if (back) { showStep(current - 1); }
+  });
+
+  // Enter key should move forward, never submit the profile early
+  form.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    const t = e.target;
+    if (!t || t.tagName === 'TEXTAREA' || t.type === 'submit' || t.type === 'button') return;
+    e.preventDefault();
+    if (t.id === 'address-autocomplete') return; // let the address list handle Enter
+    if (current < TOTAL) goNext();
+  });
+
+  // Final save: validate everything, add blank slots for removed fields
+  form.addEventListener('submit', function (e) {
+    if (current !== TOTAL) { e.preventDefault(); return; }
+    for (let n = 2; n <= TOTAL; n++) {
+      const msg = validateStep(n);
+      if (msg) {
+        e.preventDefault();
+        showStep(n);
+        return;
+      }
+    }
+    // make sure removed service/photo slots are sent as blank (so they are cleared)
+    function ensureBlank(prefix, max) {
+      for (let i = 1; i <= max; i++) {
+        if (!form.querySelector('[name="' + prefix + i + '"]')) {
+          const h = document.createElement('input');
+          h.type = 'hidden';
+          h.name = prefix + i;
+          h.value = '';
+          form.appendChild(h);
+        }
+      }
+    }
+    ensureBlank('service_', 10);
+    ensureBlank('photo_url_', 6);
+  });
+
+  // Promo form: after applying a code, come back and keep the wizard open
+  const promoForm = document.getElementById('promo-form');
+  if (promoForm) {
+    promoForm.addEventListener('submit', function () {
+      try { sessionStorage.setItem('pm_wizard_resume', '1'); } catch (err) {}
+    });
+  }
+
+  // Toggle button label + reset behavior
+  panel.addEventListener('shown.bs.collapse', function () {
+    if (toggleBtn) toggleBtn.textContent = 'Close Profile Steps';
+    if (current === 4) refreshMap();
+  });
+  panel.addEventListener('hidden.bs.collapse', function () {
+    if (toggleBtn) toggleBtn.textContent = 'View/Edit Profile';
+    showStep(1, { noScroll: true });
+  });
+
+  // initial state
+  showStep(1, { noScroll: true });
+
+  let resume = null;
+  try {
+    resume = sessionStorage.getItem('pm_wizard_resume');
+    if (resume) sessionStorage.removeItem('pm_wizard_resume');
+  } catch (err) {}
+  if (resume && window.bootstrap) {
+    bootstrap.Collapse.getOrCreateInstance(panel, { toggle: false }).show();
+    showStep(1, { noScroll: true });
+  }
+});
+</script>
+
+<!-- ===================== GOOGLE MAP (address step) ===================== -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDo-AojTUQUwwvvywrSiDRcF-oVpw9m_w4&libraries=places"></script>
+<script>
 function initProfileMap() {
   const latInput = document.getElementById('latitude');
   const lngInput = document.getElementById('longitude');
@@ -1730,6 +2498,10 @@ function initProfileMap() {
     map: map,
     draggable: true
   });
+
+  // keep references so the wizard can refresh the map when step 4 is shown
+  window.pmProfileMap = map;
+  window.pmProfileMarker = marker;
 
   // Drag the marker to update fields
   marker.addListener('dragend', function(event) {
@@ -1767,6 +2539,108 @@ window.addEventListener('DOMContentLoaded', function() {
   } else {
     // Ensure map initializes after API loads
     window.initProfileMap = initProfileMap;
+  }
+});
+</script>
+
+<!-- ===================== DASHBOARD CHARTS ===================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (!window.Chart) return;
+
+  const gross = {{ (business.lifetime_gross_sales or 0)|float }};
+  const adFees = {{ (business.lifetime_ad_fee_paid or 0)|float }};
+  const net = {{ (business.lifetime_net_gross or 0)|float }};
+  const totalEarn = {{ (total_biz_earnings or 0)|float }};
+  const pendingEarn = {{ (pending_biz_earnings or 0)|float }};
+  const availEarn = {{ (net_available_biz_earnings or 0)|float }};
+  const withdrawn = {{ (biz_withdrawn_total or 0)|float }};
+
+  const money = function (v) { return '$' + Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  const moneyTick = function (v) { return '$' + Number(v).toLocaleString(); };
+
+  function showEmpty(canvasId, emptyId) {
+    const c = document.getElementById(canvasId);
+    const e = document.getElementById(emptyId);
+    if (c) c.style.display = 'none';
+    if (e) e.style.display = 'flex';
+  }
+
+  // 1) Sales vs ad fees (bar)
+  if (gross > 0 || adFees > 0 || net > 0) {
+    new Chart(document.getElementById('salesFeesChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Gross Sales', 'Ad Fees Paid', 'Net Gross'],
+        datasets: [{
+          data: [gross, adFees, net],
+          backgroundColor: ['#2a5859', '#ffd66b', '#5b9a9b'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function (ctx) { return money(ctx.parsed.y); } } }
+        },
+        scales: { y: { beginAtZero: true, ticks: { callback: moneyTick } } }
+      }
+    });
+  } else {
+    showEmpty('salesFeesChart', 'salesFeesEmpty');
+  }
+
+  // 2) Where each sales dollar goes (doughnut)
+  if (net > 0 || adFees > 0) {
+    new Chart(document.getElementById('salesSplitChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Net Gross (yours)', 'Ad Fees'],
+        datasets: [{
+          data: [Math.max(net, 0), Math.max(adFees, 0)],
+          backgroundColor: ['#2a5859', '#ffd66b'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { callbacks: { label: function (ctx) { return ctx.label + ': ' + money(ctx.parsed); } } }
+        }
+      }
+    });
+  } else {
+    showEmpty('salesSplitChart', 'salesSplitEmpty');
+  }
+
+  // 3) Earnings overview (bar)
+  if (totalEarn > 0 || pendingEarn > 0 || availEarn > 0 || withdrawn > 0) {
+    new Chart(document.getElementById('earningsChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Total Earned', 'Pending', 'Available', 'Withdrawn'],
+        datasets: [{
+          data: [totalEarn, pendingEarn, availEarn, withdrawn],
+          backgroundColor: ['#2a5859', '#ffd66b', '#3a9d6e', '#9aa9ae'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function (ctx) { return money(ctx.parsed.y); } } }
+        },
+        scales: { y: { beginAtZero: true, ticks: { callback: moneyTick } } }
+      }
+    });
+  } else {
+    showEmpty('earningsChart', 'earningsEmpty');
   }
 });
 </script>
@@ -1862,6 +2736,34 @@ window.addEventListener('DOMContentLoaded', function () {
       }
     );
   });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var typeSel = document.querySelector('select[name="listing_type"]');
+  if (!typeSel || !document.getElementById('licensed')) return;
+  var serviceTypes = ['Service Provider', 'Seller and Service Provider'];
+
+  function setShown(el, show) {
+    if (!el) return;
+    el.style.display = show ? '' : 'none';
+    el.querySelectorAll('[data-req]').forEach(function (inp) { inp.required = show; });
+  }
+
+  function sync() {
+    var isService = serviceTypes.indexOf(typeSel.value) !== -1;
+    setShown(document.getElementById('license-fields'), document.getElementById('licensed').checked);
+    setShown(document.getElementById('service-trust-fields'), isService);
+    setShown(document.getElementById('bond-fields'), isService && document.getElementById('bonded').checked);
+    setShown(document.getElementById('ins-fields'), isService && document.getElementById('insured').checked);
+  }
+
+  ['licensed', 'bonded', 'insured'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', sync);
+  });
+  typeSel.addEventListener('change', sync);
+  sync();
 });
 </script>
 

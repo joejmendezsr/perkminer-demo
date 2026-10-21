@@ -3,141 +3,326 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Press Release: Perk Miner Launches Revolutionary Platform</title>
+  <title>Perk Miner Launches Pay-Per-Sale Advertising Platform Built Around Consumer Privacy | PerkMiner</title>
+  <meta name="description" content="Perk Miner launches a privacy-first, pay-per-sale advertising and rewards platform. Businesses pay only when a sale closes, while members control when their contact information is shared.">
+  <meta name="theme-color" content="#214d4e">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Perk Miner Launches Pay-Per-Sale Advertising Platform Built Around Consumer Privacy">
+  <meta property="og:description" content="Businesses pay only when a sale closes, while members control when their contact information is shared.">
+
   <style>
-    body {margin:0; font-family:system-ui,sans-serif; color:#222; background:#fff;}
-    header {background:#1769aa; color:#fff; text-align:center; padding:1rem 0.5rem;}
-    main {max-width:700px; margin:2rem auto; padding:1rem;}
-    h1 {font-size:2rem;}
-    .date {color:#888; margin-bottom:1em; font-size:1em;}
-    h2 {margin-top:2em; font-size:1.25rem; color:#1769aa;}
-    ul, ol {margin-left:1.5em;}
-    li {margin-bottom: 0.4em;}
-    .section {margin-bottom:2em;}
-    .contact {background:#f5faff; border-radius:8px; padding:1em; margin-top:2em;}
-    .press-lead, .about {margin-bottom:1.8em;}
-    .headline {font-weight: bold; font-size:1.15em;}
-    @media (max-width:700px) {main{margin:1rem 0.5rem; padding:0.7rem;} }
-    @media (max-width:480px) {h1{font-size:1.3rem;} main{padding:0.4rem;} }
-    a.nav {display:inline-block; margin-bottom:1.2em; color:#1769aa; text-decoration:none; font-weight:500;}
+    :root {
+      --primary: #214d4e;
+      --primary-2: #2a5859;
+      --accent: #ffd66b;
+      --accent-soft: #fff6dc;
+      --bg: #f2f7f6;
+      --card: #ffffff;
+      --text: #1a3132;
+      --muted: #5d7780;
+      --line: #dfeae8;
+      --shadow: 0 6px 28px rgba(33, 77, 78, 0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 1.0625rem;
+      line-height: 1.7;
+    }
+
+    .page { max-width: 880px; margin: 0 auto; padding: 1rem 1.1rem 3rem; }
+
+    /* Back link */
+    .nav {
+      display: inline-flex; align-items: center; gap: .4rem;
+      color: var(--primary); font-weight: 600; text-decoration: none;
+      padding: .5rem .25rem; margin-bottom: .6rem;
+    }
+    .nav:hover, .nav:focus { text-decoration: underline; }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(120deg, var(--primary) 80%, #3d7a72 100%);
+      color: #fff;
+      border-radius: 24px;
+      padding: 2.4rem 2.2rem 2.2rem;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute; right: -60px; top: -60px;
+      width: 220px; height: 220px; border-radius: 50%;
+      background: rgba(255, 214, 107, 0.18);
+    }
+    .badge {
+      display: inline-block;
+      background: var(--accent); color: #3a2f00;
+      font-weight: 800; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase;
+      padding: .35rem .85rem; border-radius: 999px; margin-bottom: 1.1rem;
+      position: relative; z-index: 1;
+    }
+    .hero h1 {
+      margin: 0 0 .9rem;
+      font-size: clamp(1.65rem, 4.6vw, 2.55rem);
+      line-height: 1.2; font-weight: 900; letter-spacing: -0.5px;
+      position: relative; z-index: 1;
+    }
+    .hero .sub {
+      margin: 0; font-size: clamp(1.02rem, 2.4vw, 1.2rem);
+      color: #e4f0ee; font-weight: 500;
+      border-left: 4px solid var(--accent); padding-left: .9rem;
+      position: relative; z-index: 1;
+    }
+
+    /* Contact */
+    .contact {
+      display: grid; gap: .9rem 1.4rem;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      background: var(--card);
+      border: 1px solid var(--line); border-radius: 16px;
+      padding: 1.1rem 1.4rem; margin: 1.1rem 0 1.4rem;
+      box-shadow: 0 2px 10px rgba(33, 77, 78, 0.05);
+    }
+    .contact .label {
+      display: block; font-size: .72rem; font-weight: 700; letter-spacing: .09em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .contact .value { font-weight: 600; word-break: break-word; line-height: 1.4; }
+    .contact a { color: var(--primary-2); }
+
+    /* Article card */
+    .article {
+      background: var(--card); border-radius: 24px;
+      padding: 2.2rem 2.4rem; box-shadow: var(--shadow);
+    }
+    .article p { margin: 0 0 1.15rem; }
+    .dateline { font-weight: 800; color: var(--primary); letter-spacing: .01em; }
+    .lede { font-size: 1.14rem; }
+    mark {
+      background: linear-gradient(transparent 55%, rgba(255, 214, 107, 0.75) 55%);
+      color: inherit; font-weight: 700; padding: 0 .1em;
+    }
+
+    .eyebrow {
+      display: flex; align-items: center; gap: .6rem;
+      margin: 2rem 0 .8rem;
+      font-size: .95rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--primary-2);
+    }
+    .eyebrow::after { content: ""; flex: 1; height: 2px; background: var(--line); }
+
+    /* Key numbers */
+    .stats {
+      display: grid; gap: .8rem; margin: 1.6rem 0 1.8rem;
+      grid-template-columns: repeat(5, 1fr);
+    }
+    .stat {
+      background: linear-gradient(160deg, #f4fbf9, #eaf4f2);
+      border: 1px solid var(--line); border-top: 4px solid var(--accent);
+      border-radius: 14px; padding: 1rem .6rem .9rem; text-align: center;
+    }
+    .stat .num {
+      display: block; font-size: 1.55rem; font-weight: 900; color: var(--primary);
+      line-height: 1.15; letter-spacing: -0.5px;
+    }
+    .stat .txt { display: block; margin-top: .35rem; font-size: .8rem; line-height: 1.3; color: var(--muted); font-weight: 600; }
+
+    /* Quote */
+    blockquote.pull {
+      margin: 1.8rem 0; padding: 1.5rem 1.6rem 1.3rem 1.8rem;
+      background: var(--accent-soft); border-left: 6px solid var(--accent); border-radius: 0 16px 16px 0;
+      position: relative;
+    }
+    blockquote.pull::before {
+      content: "\201C"; position: absolute; top: -.1rem; left: .55rem;
+      font-size: 3.6rem; line-height: 1; color: rgba(33, 77, 78, 0.22); font-family: Georgia, serif;
+    }
+    blockquote.pull p { margin: 0 0 .8rem; font-size: 1.15rem; font-style: italic; color: #2c3d33; padding-top: .6rem; }
+    blockquote.pull cite { display: block; font-style: normal; font-weight: 700; color: var(--primary); font-size: .95rem; }
+
+    /* Privacy callout */
+    .callout {
+      background: #eef6f5; border: 1px solid #cfe3df; border-left: 6px solid var(--primary-2);
+      border-radius: 14px; padding: 1.2rem 1.4rem 0.3rem; margin: 0 0 1.2rem;
+    }
+    .callout .icon { font-size: 1.4rem; margin-right: .35rem; }
+
+    /* Reward cards */
+    .rewards { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; margin: 1.2rem 0; }
+    .reward {
+      border: 1px solid var(--line); border-radius: 16px; padding: 1.2rem 1.3rem .4rem;
+      background: #fcfefd; box-shadow: 0 2px 10px rgba(33, 77, 78, 0.05);
+    }
+    .reward h3 { margin: 0 0 .7rem; font-size: 1.05rem; color: var(--primary); }
+    .reward .big {
+      display: inline-block; background: var(--primary); color: #fff; border-radius: 10px;
+      padding: .1rem .6rem; margin-right: .35rem; font-weight: 800;
+    }
+    .reward p { font-size: .98rem; line-height: 1.55; }
+    .paidby {
+      background: var(--primary); color: #fff; border-radius: 14px;
+      padding: 1rem 1.3rem; margin: 0 0 1.2rem; font-weight: 600; text-align: center;
+    }
+
+    /* CTA */
+    .cta {
+      text-align: center; background: linear-gradient(120deg, var(--accent-soft), #fff);
+      border: 2px solid var(--accent); border-radius: 18px;
+      padding: 1.6rem 1.2rem; margin: 2rem 0 1.4rem;
+    }
+    .cta p { margin: 0 0 1rem; font-size: 1.15rem; font-weight: 700; }
+    .btn {
+      display: inline-block; background: var(--primary); color: #fff !important; text-decoration: none;
+      font-weight: 800; padding: .85rem 2rem; border-radius: 999px;
+      box-shadow: 0 6px 16px rgba(33, 77, 78, 0.25);
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .btn:hover, .btn:focus { background: #173b3c; transform: translateY(-2px); box-shadow: 0 10px 22px rgba(33, 77, 78, 0.3); }
+
+    /* About */
+    .about {
+      background: #f6f9f8; border-radius: 14px; padding: 1.3rem 1.5rem 0.4rem;
+      border: 1px solid var(--line); font-size: .98rem;
+    }
+    .about h2 { margin: 0 0 .5rem; font-size: 1.05rem; color: var(--primary); }
+    .end { text-align: center; color: var(--muted); letter-spacing: .5em; margin: 1.6rem 0 0; font-weight: 700; }
+    .foot { text-align: center; color: var(--muted); font-size: .85rem; margin-top: 1.4rem; }
+
+    /* Tablet */
+    @media (max-width: 760px) {
+      .stats { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* Mobile */
+    @media (max-width: 560px) {
+      body { font-size: 1rem; }
+      .page { padding: .6rem .7rem 2.2rem; }
+      .hero { padding: 1.7rem 1.2rem 1.5rem; border-radius: 20px; }
+      .article { padding: 1.5rem 1.15rem; border-radius: 20px; }
+      .contact { padding: 1rem 1.1rem; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .stat:last-child { grid-column: 1 / -1; }
+      .rewards { grid-template-columns: 1fr; }
+      blockquote.pull { padding: 1.4rem 1.1rem 1.1rem 1.3rem; }
+      blockquote.pull p { font-size: 1.05rem; }
+      .btn { display: block; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .nav { display: none; }
+      .hero, .article, .contact { box-shadow: none; }
+      .hero { background: var(--primary) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+    footer a { color: var(--pm-primary-light); text-decoration: none; }
+
   </style>
 </head>
 <body>
-  <header>
-    <h1>Press Release: Perk Miner Launches Revolutionary Platform</h1>
-  </header>
-  <main>
+  <div class="page">
+
     <a href="/news" class="nav">&larr; Back to News</a>
-    <div class="date">FOR IMMEDIATE RELEASE &mdash; September 10, 2026</div>
 
-    <div class="press-lead">
-      <div class="headline">
-        Perk Miner Launches Revolutionary No-Risk Advertising Platform (A True Pay Per Sale / Pay Per Close Model) That Puts Member Privacy First and Guarantees a Minimum 900% ROI (ROAS - Return on Ad Spend) for Business Advertisers
+    <header class="hero">
+      <span class="badge">For Immediate Release</span>
+      <h1>Perk Miner Launches Pay-Per-Sale Advertising Platform Built Around Consumer Privacy</h1>
+      <p class="sub">Businesses pay only when a sale closes, while members control when their contact information is shared.</p>
+    </header>
+
+    <section class="contact" aria-label="Media contact">
+      <div><span class="label">Contact</span><span class="value">Joe Mendez</span></div>
+      <div><span class="label">Title</span><span class="value">Founder, Perk Miner LLC</span></div>
+      <div><span class="label">Email</span><span class="value"><a href="mailto:support@perkminer.com">support@perkminer.com</a></span></div>
+      <div><span class="label">Website</span><span class="value"><a href="https://perkminer.com">PerkMiner.com</a></span></div>
+    </section>
+
+    <main class="article">
+
+      <p class="lede"><span class="dateline">LAS VEGAS, NV &mdash; October 12, 2026 &mdash;</span> Perk Miner today announced the launch of its <mark>privacy-first advertising and rewards platform</mark>, designed to connect businesses and members through secure messaging without ever compromising member personal data. Advertising fees are tied to <mark>completed sales</mark> rather than impressions, clicks, leads, calls, or appointments.</p>
+
+      <h2 class="eyebrow">How it works</h2>
+
+      <p>Advertisers maintain a pre-funded working balance to cover the advertising fees and funds are drawn only when a qualifying transaction is completed. There are no contracts, subscriptions, or hidden fees.</p>
+
+      <p>Members pay businesses directly for the purchase of all products or for services rendered and upon successful finalization, a 10% advertising fee, capped at $250 is deducted from the advertiser&rsquo;s account balance.</p>
+
+      <p>This represents a minimum 10x revenue-to-advertising-cost ratio, or <mark>1,000% return on ad spend (ROAS)</mark>, before cost of goods sold.</p>
+
+      <div class="stats" aria-label="Key numbers">
+        <div class="stat"><span class="num">$0</span><span class="txt">wasted ad dollars &mdash; no sale, no fee</span></div>
+        <div class="stat"><span class="num">10%</span><span class="txt">advertising fee, capped at $250</span></div>
+        <div class="stat"><span class="num">1,000%</span><span class="txt">minimum return on ad spend (ROAS)</span></div>
+        <div class="stat"><span class="num">2% / 1%</span><span class="txt">cash back for members / advertisers</span></div>
+        <div class="stat"><span class="num">Up to 84%</span><span class="txt">of ad revenue re-invested in the ecosystem</span></div>
       </div>
-      <p>
-        New platform connects consumers and businesses through secure messaging — with zero fees unless a sale is made (a pay-per-sale / pay-per-close model), and zero compromise of member data.
-      </p>
-      <p>
-        <b>Las Vegas, NV &mdash; September 10, 2026 &mdash;</b> Perk Miner (<a href="https://perkminer.com">PerkMiner.com</a>) today announced the launch of its groundbreaking advertising and rewards platform that fundamentally re-imagines the relationship between consumers and businesses. 
-        Built on the principles of privacy, transparency, and performance-based advertising, Perk Miner delivers a first-of-its-kind model where members pay nothing—ever—and business advertisers only pay after they make a sale and with a guaranteed 900% ROI (ROAS) or higher.  Business Advertisers never have to worry about paying a high premium, which taps into their profit margins.
-      </p>
-    </div>
 
-    <div class="section">
-      <h2>A Paradigm Shift in Advertising</h2>
-      <p>
-        Founded by a business owner who experienced firsthand the frustration of spending thousands on leads, pay-per-click campaigns, email marketing, and SEO with little to no return, Perk Miner was built to solve a problem that millions of small business owners face every day: paying for advertising with no guarantee of results.
-      </p>
-      <p>
-        “I have paid thousands for leads, thousands for PPC campaigns, email campaigns, TV and radio advertising and a lot in SEO without making sales,” said the founder of Perk Miner. “My system is a complete No-Risk, No-Loss-Marketing model — advertisers pay zero if they don’t make a sale or close a deal and we guarantee a 900% ROI (ROAS) or higher. I have experienced the frustration of paying $10,000 for an annual contract, while generating only $250 in sales for the entire year.  To me, it seemed unfair.  That why I created this model ... It’s a win for members and a win for advertisers.”
-      </p>
-    </div>
+      <blockquote class="pull">
+        <p>Our model is designed to help our advertisers increase their profit margins, while providing a safe, privacy-focused marketplace for our members. Businesses get zero wasted advertising dollars and our members never have to worry about receiving unsolicited phone calls, spam emails or uninvited sales people showing up at their door when searching for a business, product or service.</p>
+        <cite>&mdash; Joe Mendez, Founder of Perk Miner LLC</cite>
+      </blockquote>
 
-    <div class="section">
-      <h2>How It Works for Members</h2>
-      <ul>
-        <li>Perk Miner membership is completely free — no subscription fees, no contracts, no commitments, and no hidden fees of any kind.</li>
-        <li>Members browse participating business advertisers and connect through secure, one-on-one messaging.</li>
-      </ul>
-      <p>Member Protection:</p>
-      <ul>
-        <li>Never sells or shares member contact information</li>
-        <li>Never tracks browsing history to serve targeted ads</li>
-        <li>Never uses listening or surveillance to generate spam or push marketing</li>
-        <li>Gives members full control over when and to whom they disclose their contact information</li>
-      </ul>
-      <p>Member Earnings:</p>
-      <ul>
-        <li>Our members can own their own advertising agency</li>
-        <li>Zero Investment, Cost, Contract or Commitment</li>
-        <li>Members earn referral commissions when they invite others to join (paid after purchases have been finalized and not just for inviting others)</li>
-        <li>Members earn referral commissions when they invite businesses to advertise (paid after sales have been finalized and not just for inviting)</li>
-      </ul>
+      <h2 class="eyebrow">Privacy first</h2>
 
-      <p>
-        When a member selects a business, that connection is exclusive—leads are not sold to multiple competing businesses. Members are protected from harassment, unsolicited calls, and the data exploitation that is standard practice on most consumer platforms.
-      </p>
-      <p>
-        Members who make a purchase through Perk Miner earn <b>2% cash back</b> on purchases up to $2,500 — paid directly by Perk Miner from the advertising revenue paid and not paid by our business advertisers.
-      </p>
-    </div>
+      <div class="callout">
+        <p><span class="icon" aria-hidden="true">&#128274;</span>Unlike other marketing agencies that collect consumer data by tracking browsing history, using call to action forms on their website or utilizing technology that listens to conversations, Perk Miner LLC will never utilize any of these data collection techniques nor collect and store member information, except for a name and email for account creation purposes.</p>
+        <p>Even more importantly, members never have to worry about their data being sold or them being exploited for monetization purposes, which is a common practice used by many companies.</p>
+      </div>
 
-    <div class="section">
-      <h2>How It Works for Business Advertisers</h2>
-      <ul>
-        <li>Business advertisers join Perk Miner with no membership fees, no contracts, and no commitments.</li>
-        <li>No cost for leads, phone calls, appointments, or meet-ups.</li>
-        <li>Advertisers are only charged a 10% advertising fee, capped at $250, and only after a sale is made or a deal is closed.</li>
-      </ul>
-      <p>Key benefits for business advertisers include:</p>
-      <ul>
-        <li>Guaranteed minimum <b>900% ROI (ROAS) on advertising spend</b></li>
-        <li>Minimum 10:1 Marketing ROI ratio—paying $1 or less for every $10 in sales generated (excluding Cost of Goods Sold)</li>
-        <li>Real-time analytics dashboard: gross sales, advertising fee paid, net gross, ROI, and Marketing ROI ratio</li>
-        <li>1% cash back on up to $2,500 of the sale when finalizing a transaction, rewarding timely processing (equals 10% of the ad fee paid)</li>
-        <li>Immediate payment — businesses are paid directly by the customer at the time of sale; Perk Miner does not collect, hold, or deduct fees from business payments.</li>
-        <li>Ability to earn additional revenue for your business just by inviting other businesses to advertise (earn from finalized transactions and not just from inviting).</li>
-      </ul>
-      <p>
-        Transaction finalization is simple: once the business has been paid by the member, they scan the member’s QR code and submit the total amount paid, or complete the transaction manually for remote sales. (Businesses should keep enough funds in their account balance to cover advertising fees, starting with $25 which allows up to $250 in sales.)
-      </p>
-    </div>
+      <h2 class="eyebrow">Real cash rewards</h2>
 
-    <div class="section">
-      <h2>Privacy by Design</h2>
-      <p>
-        At its core, Perk Miner is a privacy-first platform. Unlike most consumer-facing advertising platforms that monetize user data, track behavior, and sell contact information to the highest bidder, Perk Miner is structurally designed to prevent those practices. Member contact information is never used as a commodity.
-      </p>
-      <p>
-        “We protect member privacy and they decide who and when to disclose their contact information to businesses,” the founder explained. “Perk Miner gives the member total control and complete protection.”
-      </p>
-    </div>
+      <p>Perk Miner LLC re-invests <mark>up to 84% of its advertising revenue</mark> from every finalized transaction back into the ecosystem with its rewards program in the form of withdrawable earnings deposited to bank accounts; not points, coupons or gift cards.</p>
 
-    <div class="section">
-      <h2>Cash Back and Referral Commissions</h2>
-      <p>
-        All member cash back (2%), member referral commissions (varied at tiers 2-5), business cash back (1%) and business referral cash back (varied at tiers 2-5) are paid by Perk Miner out of the advertising fee collected (up to 84% of advertising revenue received is paid out from every transaction).
-      </p>
-      <ul>
-        <li>Business advertisers are never asked to fund these rewards—they are an investment by Perk Miner</li>
-        <li>Members also earn a commission for referring businesses to advertise (1%, plus varied for tiers 2-5)</li>
-      </ul>
-    </div>
+      <div class="rewards">
+        <div class="reward">
+          <h3><span class="big">2%</span> For members</h3>
+          <p>Members receive 2% cash back on qualifying purchases (up to $2,500 of every purchase).</p>
+          <p>Members can earn referral commissions when people and businesses they refer generate qualifying purchases or sales.</p>
+        </div>
+        <div class="reward">
+          <h3><span class="big">1%</span> For advertisers</h3>
+          <p>Advertisers receive 1% cash back on up to $2,500 of every qualified sale in exchange for offering a perk to members.</p>
+          <p>Businesses can earn referral commissions when merchants they introduce to the ecosystem generate qualifying sales.</p>
+        </div>
+      </div>
 
-    <div class="section about">
-      <h2>About Perk Miner LLC</h2>
-      <p>
-        Perk Miner LLC is a registered Nevada-based business, located in Las Vegas, NV.  PerkMiner.com is a consumer and business advertising platform built to eliminate risk, waste, and privacy violations that define traditional digital advertising. By connecting members and businesses through secure, one-on-one messaging and charging advertisers only upon completed sales, Perk Miner delivers guaranteed results for businesses and guaranteed privacy for consumers.
-      </p>
-    </div>
+      <p>Both sides can earn additional revenue through referrals.</p>
 
-    <div class="contact">
-      <strong>Media Contact:</strong><br>
-      Joe Mendez<br>
-      President and Founder, Perk Miner<br>
-      Email: <a href="mailto:support@perkminer.com">support@perkminer.com</a><br>
-      Website: <a href="https://perkminer.com">www.PerkMiner.com</a>
-    </div>
-  </main>
+      <div class="paidby">All cashback and referral commissions are paid by Perk Miner LLC and not from its advertisers.</div>
+
+      <h2 class="eyebrow">Live tracking for service jobs</h2>
+
+      <p>For service jobs, live en-route location of service providers and address confirmation are included to help reduce wrong-address trips and to keep members and business owners updated with live status updates at no cost to advertisers.</p>
+
+      <div class="cta">
+        <p>To register or learn more, visit PerkMiner.com.</p>
+        <a class="btn" href="https://perkminer.com">Visit PerkMiner.com</a>
+      </div>
+
+      <section class="about">
+        <h2>About Perk Miner LLC</h2>
+        <p>Perk Miner LLC is a Nevada-based advertising and consumer rewards technology company. Founded in 2026, the company provides a secure, mutually beneficial ecosystem where businesses pay strictly for closed sales and consumers retain complete ownership over their digital privacy.</p>
+      </section>
+
+      <p class="end" aria-hidden="true">###</p>
+    </main>
+
+  </div>
+
+<footer>
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
+</footer>
+
 </body>
 </html>

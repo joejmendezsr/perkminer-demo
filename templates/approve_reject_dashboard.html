@@ -1,3 +1,55 @@
+{% set SOS_LINKS = [
+  ('Alabama', 'https://arc-sos.state.al.us/CGI/CORPNAME.MBR/INPUT'),
+  ('Alaska', 'https://www.commerce.alaska.gov/cbp/main/search/entities'),
+  ('Arizona', 'https://apps.azsos.gov/apps/tntp/se.html'),
+  ('Arkansas', 'https://www.sos.arkansas.gov/corps/search_all.php'),
+  ('California', 'https://bizfileonline.sos.ca.gov/search/business'),
+  ('Colorado', 'https://www.coloradosos.gov/biz/BusinessEntityCriteriaExt.do'),
+  ('Connecticut', 'https://service.ct.gov/business/s/onlinebusinesssearch'),
+  ('Delaware', 'https://icis.corp.delaware.gov/ecorp/entitysearch/namesearch.aspx'),
+  ('Florida', 'https://search.sunbiz.org/Inquiry/CorporationSearch/ByName'),
+  ('Georgia', 'https://ecorp.sos.ga.gov/BusinessSearch'),
+  ('Hawaii', 'https://hbe.dcca.hawaii.gov/'),
+  ('Idaho', 'https://sosbiz.idaho.gov/search/business'),
+  ('Illinois', 'https://apps.ilsos.gov/businessentitysearch/'),
+  ('Indiana', 'https://bsd.sos.in.gov/publicbusinesssearch'),
+  ('Iowa', 'https://sos.iowa.gov/search/business/search.aspx'),
+  ('Kansas', 'https://www.sos.ks.gov/eforms/BusinessEntity/Search.aspx'),
+  ('Kentucky', 'https://sosbes.sos.ky.gov/BusSearchNProfile/search.aspx'),
+  ('Louisiana', 'https://coraweb.sos.la.gov/commercialsearch/commercialsearch.aspx'),
+  ('Maine', 'https://apps3.web.maine.gov/nei-sos-icrs/ICRS?MainPage=x'),
+  ('Maryland', 'https://egov.maryland.gov/BusinessExpress/EntitySearch'),
+  ('Massachusetts', 'https://corp.sec.state.ma.us/corpweb/corpsearch/corpsearch.aspx'),
+  ('Michigan', 'https://mibusinessregistry.lara.state.mi.us/search/business'),
+  ('Minnesota', 'https://mblsportal.sos.mn.gov/Business/Search'),
+  ('Mississippi', 'https://corp.sos.ms.gov/corp/portal/c/page/corpBusinessIdSearch/portal.aspx'),
+  ('Missouri', 'https://bsd.sos.mo.gov/BusinessEntity/BESearch.aspx?SearchType=0'),
+  ('Montana', 'https://biz.sosmt.gov/search/business'),
+  ('Nebraska', 'https://www.nebraska.gov/sos/corp/corpsearch.cgi?nav=search'),
+  ('Nevada', 'https://orion.nv.gov/portal/public/#/public/nvsos/en/CaseXscreen?screen=external-GenericFilingsSearch&tabRoute=business'),
+  ('New Hampshire', 'https://quickstart.sos.nh.gov/online/BusinessInquire'),
+  ('New Jersey', 'https://www.njportal.com/DOR/BusinessNameSearch/Search/BusinessName'),
+  ('New Mexico', 'https://enterprise.sos.nm.gov/search'),
+  ('New York', 'https://apps.dos.ny.gov/publicInquiry/'),
+  ('North Carolina', 'https://www.sosnc.gov/online_services/search/by_title/_Business_Registration'),
+  ('North Dakota', 'https://firststop.sos.nd.gov/search/business'),
+  ('Ohio', 'https://businesssearch.ohiosos.gov/'),
+  ('Oklahoma', 'https://www.sos.ok.gov/corp/corpInquiryFind.aspx'),
+  ('Oregon', 'https://sos.oregon.gov/business/pages/find.aspx'),
+  ('Pennsylvania', 'https://file.dos.pa.gov/search/business'),
+  ('Rhode Island', 'https://business.sos.ri.gov/CorpWeb/CorpSearch/CorpSearch.aspx'),
+  ('South Carolina', 'https://businessfilings.sc.gov/BusinessFiling/Entity/Search'),
+  ('South Dakota', 'https://sosenterprise.sd.gov/BusinessServices/Business/FilingSearch.aspx'),
+  ('Tennessee', 'https://tncab.tnsos.gov/business-entity-search'),
+  ('Texas (Fee)', 'https://mycpa.cpa.state.tx.us/coa/'),
+  ('Utah', 'https://businessregistration.utah.gov/EntitySearch/OnlineEntitySearch'),
+  ('Vermont (Fee)', 'https://bizfilings.vermont.gov/online/BusinessInquire/'),
+  ('Virginia', 'https://cis.scc.virginia.gov/EntitySearch/Index'),
+  ('Washington DC', 'https://corponline.dlcp.dc.gov/'),
+  ('West Virginia', 'https://apps.sos.wv.gov/business/corporations/'),
+  ('Wisconsin', 'https://apps.dfi.wi.gov/apps/corpsearch/search.aspx'),
+  ('Wyoming', 'https://wyobiz.wyo.gov/Business/FilingSearch.aspx')
+] %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -72,7 +124,7 @@
                       Start Review
                     </button>
                   </form>
-<form method="post" action="{{ url_for('approve_listing', listing_id=biz.id) }}">
+<form method="post" action="{{ url_for('approve_listing', listing_id=biz.id) }}" id="approve-form-{{ biz.id }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   {% if current_user.is_authenticated and current_user.has_role('super_admin') %}
     <div class="form-check form-switch my-2">
@@ -121,6 +173,87 @@
                       <span class="text-danger ms-2">No registration document uploaded.</span>
                     {% endif %}
                   </div>
+
+                  <!-- VERIFICATION: license, bond, insurance -->
+                  <div class="mb-3 p-2 border rounded bg-white">
+                    <strong>Verification (license, bond, insurance)(Coming soon!)</strong>
+                    <div class="small text-muted mb-2">
+                      Check a box only after you have verified the details yourself.
+                      Unchecked items will not show a badge on the listing.
+                    </div>
+                    {% set svc = (biz.eff('listing_type') or '') in SERVICE_LISTING_TYPES %}
+
+                    <div class="border-top pt-2 mt-2">
+                      {% if biz.eff('licensed') %}
+                        <div>
+                          <b>License:</b> {{ biz.eff('license_number') }} ({{ biz.eff('license_state') }})
+                          {% if biz.group_changed('lic') %}<span class="badge bg-warning text-dark ms-1">new or changed - verify</span>{% endif %}
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="lic_verified_{{ biz.id }}"
+                                 name="lic_verified" value="1" form="approve-form-{{ biz.id }}"
+                                 {% if biz.lic_verified and not biz.group_changed('lic') %}checked{% endif %}>
+                          <label class="form-check-label" for="lic_verified_{{ biz.id }}">License verified</label>
+                        </div>
+                      {% else %}
+                        <div class="text-muted"><b>License:</b> not claimed</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="border-top pt-2 mt-2">
+                      {% if svc and biz.eff('bonded') %}
+                        <div>
+                          <b>Bond:</b> {{ BOND_AMOUNT_LABELS.get(biz.eff('bond_amount'), '-') }}, {{ biz.eff('bond_company') }}, #{{ biz.eff('bond_number') }}
+                          {% if biz.group_changed('bond') %}<span class="badge bg-warning text-dark ms-1">new or changed - verify</span>{% endif %}
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="bond_verified_{{ biz.id }}"
+                                 name="bond_verified" value="1" form="approve-form-{{ biz.id }}"
+                                 {% if biz.bond_verified and not biz.group_changed('bond') %}checked{% endif %}>
+                          <label class="form-check-label" for="bond_verified_{{ biz.id }}">Bond verified</label>
+                        </div>
+                      {% else %}
+                        <div class="text-muted"><b>Bond:</b> not claimed</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="border-top pt-2 mt-2">
+                      {% if svc and biz.eff('insured') %}
+                        <div>
+                          <b>Insurance:</b> {{ INS_AMOUNT_LABELS.get(biz.eff('ins_amount'), '-') }}, {{ biz.eff('ins_company') }}, policy #{{ biz.eff('ins_number') }}
+                          {% if biz.group_changed('ins') %}<span class="badge bg-warning text-dark ms-1">new or changed - verify</span>{% endif %}
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="ins_verified_{{ biz.id }}"
+                                 name="ins_verified" value="1" form="approve-form-{{ biz.id }}"
+                                 {% if biz.ins_verified and not biz.group_changed('ins') %}checked{% endif %}>
+                          <label class="form-check-label" for="ins_verified_{{ biz.id }}">Insurance verified</label>
+                        </div>
+                      {% else %}
+                        <div class="text-muted"><b>Insurance:</b> not claimed</div>
+                      {% endif %}
+                    </div>
+                  </div>
+<!-- Secretary of State Link -->
+<div class="mb-3 p-2 border rounded bg-white sos-box">
+  <strong>Verify Business Registration (Secretary of State)</strong>
+  <div class="small text-muted mb-2">
+    Select the state where the business is registered, then open that state's
+    official business search to confirm it is in good standing.
+  </div>
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <select class="form-select form-select-sm sos-select" style="max-width:260px;"
+            aria-label="Select state for business search">
+      <option value="">Select a state...</option>
+      {% for state, url in SOS_LINKS %}
+        <option value="{{ url }}">{{ state }}</option>
+      {% endfor %}
+    </select>
+    <button type="button" class="btn btn-outline-primary btn-sm sos-open" disabled>
+      Open State Search
+    </button>
+  </div>
+</div>
                   <!-- Small Listing Preview -->
                   <div class="mb-3 p-2 border rounded bg-white">
                     <strong>Small Preview</strong>
@@ -225,5 +358,22 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  document.addEventListener('change', function (e) {
+    if (e.target.classList.contains('sos-select')) {
+      var btn = e.target.closest('.sos-box').querySelector('.sos-open');
+      btn.disabled = !e.target.value;
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.sos-open');
+    if (!btn) return;
+    var url = btn.closest('.sos-box').querySelector('.sos-select').value;
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  });
+</script>
+
 </body>
 </html>

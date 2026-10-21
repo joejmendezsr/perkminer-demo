@@ -1,180 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Member Earnings - PerkMiner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <style>
-      @media (max-width: 600px) { .table, .btn { font-size: .98em;} }
-      .summary-card { background:#f7fafb; border-radius:13px; box-shadow:0 1px 6px #e1e9ed; padding:18px 12px 9px 12px; margin:16px 0 28px 0;}
+        :root {
+          --pm-primary: #2a5859;
+          --pm-primary-dark: #1e4a4b;
+          --pm-primary-light: #2a5859;
+          --pm-accent: #ffd66b;
+          --pm-bg: #f4f8f9;
+          --pm-text: #222;
+          --pm-focus: #fadd92;
+          --pm-muted: #5c6b73;
+          --pm-shadow: 0 2px 16px #e3eee9;
+        }
+        body { background: var(--pm-bg); color: var(--pm-text); }
+        body > nav { margin-bottom: 1.5rem !important; }
+        .navbar { box-shadow: 0 2px 8px #f0f2f3; }
+        .card { background: #fff; border-radius: 16px; border: 1px solid #e8f0f2; box-shadow: var(--pm-shadow); margin-bottom: 1.5rem; }
+        .btn-primary, .btn-success { background: var(--pm-primary); border: none; color: #fff !important; }
+        .btn-primary:hover, .btn-success:hover { background: var(--pm-accent); color: var(--pm-text) !important; }
+        a:focus, button:focus, input:focus, select:focus { outline: 2px solid var(--pm-focus); outline-offset: 2px; }
+        .form-control, .form-select, .btn { border-radius: 10px !important; }
+
+        .page-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .page-head h1 { font-size: 1.6rem; font-weight: 800; color: var(--pm-primary-dark); margin: 0; line-height: 1.2; }
+        .icon-badge { width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0; background: var(--pm-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+
+        .filter-card { padding: 1.1rem 1.1rem .7rem; }
+        .search-box { position: relative; }
+        .search-box i { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: var(--pm-muted); }
+        .search-box input { padding-left: 2.6rem; height: 3rem; font-size: 1.02rem; }
+        .results-meta { color: var(--pm-muted); font-size: .9rem; }
+
+        .table-card { padding: .5rem; overflow: hidden; }
+        .table-modern { margin-bottom: 0; }
+        .table-modern thead th { background: #eef6f6; color: var(--pm-primary-dark); font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; border-bottom: 0; vertical-align: bottom; }
+        .table-modern td { vertical-align: middle; }
+        .table-modern tbody tr:hover { background: #f6fafa; }
+        .empty-state { display: none; text-align: center; padding: 2.2rem 1rem; color: var(--pm-muted); }
+        .empty-state i { font-size: 2rem; display: block; margin-bottom: .4rem; color: #9fc3c4; }
+
+        @media (max-width: 767.98px) {
+          .table-stack thead { display: none; }
+          .table-stack, .table-stack tbody, .table-stack tr, .table-stack td { display: block; width: 100%; }
+          .table-stack tr { background: #fff; border: 1px solid #e1eeee; border-radius: 14px; margin-bottom: .8rem; padding: .35rem .9rem; box-shadow: var(--pm-shadow); }
+          .table-stack td { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .45rem 0; border: 0; border-bottom: 1px dashed #e3eceb; text-align: right; }
+          .table-stack td:last-child { border-bottom: 0; }
+          .table-stack td::before { content: attr(data-label); font-weight: 600; color: var(--pm-muted); text-align: left; flex: 0 0 46%; }
+          .table-stack td.cell-empty { display: none; }
+          .page-head .btn { flex: 1 1 auto; }
+        }
+
+        footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+        footer a { color: var(--pm-primary-light); text-decoration: none; }
+
+        @page { size: landscape; margin: 10mm; }
+        @media print {
+          body { background: #fff; }
+          .card { box-shadow: none; border: 0; }
+          .d-print-none, nav, footer { display: none !important; }
+          .table-modern { font-size: 10px; }
+        }
     </style>
 </head>
 <body>
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
-    <h3 class="mb-2">My Earnings</h3>
-    <div class="d-flex gap-2">
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light d-print-none">
+    <div class="container">
+      <a class="navbar-brand" href="/">PerkMiner</a>
+    </div>
+</nav>
+
+<div class="container pb-4">
+
+  <div class="page-head">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icon-badge"><i class="bi bi-graph-up-arrow"></i></div>
+      <div>
+        <h1>My Earnings</h1>
+        <div class="text-muted small">Every cash back and commission transaction.</div>
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap d-print-none">
       <a href="{{ url_for('export_user_earnings_csv') }}?period={{ period }}&year={{ year }}&month={{ month }}" class="btn btn-outline-success">
         <i class="bi bi-cloud-arrow-down"></i> Export CSV/Excel
       </a>
-      <button onclick="window.print()" class="btn btn-outline-secondary">
+      <button onclick="window.print()" class="btn btn-outline-secondary" type="button">
         <i class="bi bi-printer"></i> Print / Save as PDF
       </button>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
     </div>
   </div>
-  <a href="{{ url_for('dashboard') }}" class="btn btn-primary mt-3 w-100">Back to Dashboard</a></div>
-  <form class="row gy-2 gx-2 mb-3" id="filter-form" method="get">
-    <div class="col-12 col-sm-3">
-      <select class="form-select" name="period" onchange="this.form.submit()">
-        <option value="all" {% if not period or period == 'all' %}selected{% endif %}>All Time</option>
-        <option value="year" {% if period == 'year' %}selected{% endif %}>Full Year</option>
-        <option value="month" {% if period == 'month' %}selected{% endif %}>Month</option>
-      </select>
-    </div>
-    <div class="col-12 col-sm-3">
-      <input type="number" name="year" id="year" class="form-control" placeholder="Year (YYYY)" value="{{ year or '' }}">
-    </div>
-    <div class="col-12 col-sm-3">
-      <input type="number" min="1" max="12" name="month" id="month" class="form-control" placeholder="Month (1-12)" value="{{ month or '' }}">
-    </div>
-    <div class="col-12 col-sm-3">
-      <input type="text" id="searchInput" class="form-control" placeholder="Search receipts...">
-    </div>
-  </form>
-  <div class="summary-card">
-    <b>Grand Total Earned:</b> ${{ summary.total }}<br>
-    <b>2% Cash Back (Self/Tier 1):</b> ${{ summary.tier1_earnings }}<br>
-    <b>Total Commission (Tiers 2-5):</b> ${{ summary.commissions_total }}<br>
-    {% if has_invited_business %}
-      <b>Total User-Business Commission (UBC Tiers 1-5):</b> ${{ summary.total_user_business_commission }}<br>
-    {% endif %}
-    <hr>
-    <b>Tier 2 (Commission):</b> ${{ summary.tier2_earnings }}<br>
-    <b>Tier 3 (Commission):</b> ${{ summary.tier3_earnings }}<br>
-    <b>Tier 4 (Commission):</b> ${{ summary.tier4_earnings }}<br>
-    <b>Tier 5 (Commission):</b> ${{ summary.tier5_earnings }}<br>
-    {% if has_invited_business %}
-      <hr>
-      <b>Tier 1 UBC (Businesses referred by you):</b> ${{ summary.tier1_user_business_earnings }}<br>
-      <b>Tier 2 UBC (Referred by T1 Businesses:</b> ${{ summary.tier2_user_business_earnings }}<br>
-      <b>Tier 3 UBC (Referred by T2 Businesses:</b> ${{ summary.tier3_user_business_earnings }}<br>
-      <b>Tier 4 UBC (Referred by T3 Businesses:</b> ${{ summary.tier4_user_business_earnings }}<br>
-      <b>Tier 5 UBC (Referred by T4 Businesses:</b> ${{ summary.tier5_user_business_earnings }}<br>
-    {% endif %}
+
+  <!-- Search + period filters -->
+  <div class="card filter-card d-print-none">
+    <form class="row gy-2 gx-2 mb-2" id="filter-form" method="get">
+      <div class="col-12">
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" id="searchInput" class="form-control" placeholder="Search earnings (date, amount, business...)" aria-label="Search earnings">
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-4">
+        <label class="form-label small text-muted mb-1" for="period">Period</label>
+        <select class="form-select" name="period" id="period" onchange="this.form.submit()">
+          <option value="all" {% if not period or period == 'all' %}selected{% endif %}>All Time</option>
+          <option value="year" {% if period == 'year' %}selected{% endif %}>Full Year</option>
+          <option value="month" {% if period == 'month' %}selected{% endif %}>Month</option>
+        </select>
+      </div>
+      <div class="col-6 col-sm-3 col-lg-3">
+        <label class="form-label small text-muted mb-1" for="year">Year</label>
+        <input type="number" name="year" id="year" class="form-control" placeholder="YYYY" value="{{ year or '' }}">
+      </div>
+      <div class="col-6 col-sm-3 col-lg-3">
+        <label class="form-label small text-muted mb-1" for="month">Month</label>
+        <input type="number" min="1" max="12" name="month" id="month" class="form-control" placeholder="1-12" value="{{ month or '' }}">
+      </div>
+      <div class="col-12 col-lg-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> Apply</button>
+      </div>
+    </form>
+    <div class="results-meta mb-2" id="results-count"></div>
   </div>
-<div class="table-responsive">
-  <table class="table table-bordered align-middle" id="receipts-table">
-    <thead class="table-light">
-      <tr>
-        <th>Date/Time</th>
-        <th>Tier 1<br>(2% Cash Back)</th>
-        <th>Tier 2<br>(Commission)</th>
-        <th>Tier 3<br>(Commission)</th>
-        <th>Tier 4<br>(Commission)</th>
-        <th>Tier 5<br>(Commission)</th>
-        {% if has_invited_business %}
-          <th>Tier 1<br>UBC</th>
-          <th>Tier 2<br>UBC</th>
-          <th>Tier 3<br>UBC</th>
-          <th>Tier 4<br>UBC</th>
-          <th>Tier 5<br>UBC</th>
-        {% endif %}
-        <th>From Business</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for txn in transactions %}
-      <tr>
-        <td><span class="local-receipt-time" data-utc="{{ txn.date_time.strftime('%Y-%m-%dT%H:%M:%S') }}Z"></span></td>
-        <td>
-          {% if txn.user_referral_id == current_user.referral_code and txn.cash_back > 0 %}
-              ${{ "{:,.2f}".format(txn.cash_back) }}
-          {% endif %}
-        </td>
-        <td>
-          {% if txn.tier2_user_referral_id == current_user.referral_code %}
-              ${{ "{:,.2f}".format(txn.tier2_commission) }}
-          {% endif %}
-        </td>
-        <td>
-          {% if txn.tier3_user_referral_id == current_user.referral_code %}
-              ${{ "{:,.2f}".format(txn.tier3_commission) }}
-          {% endif %}
-        </td>
-        <td>
-          {% if txn.tier4_user_referral_id == current_user.referral_code %}
-              ${{ "{:,.2f}".format(txn.tier4_commission) }}
-          {% endif %}
-        </td>
-        <td>
-          {% if txn.tier5_user_referral_id == current_user.referral_code %}
-              ${{ "{:,.2f}".format(txn.tier5_commission) }}
-          {% endif %}
-        </td>
-        {% if has_invited_business %}
-        <td>
-          {% if txn.tier1_business_user_referral_id == current_user.referral_code and txn.tier1_business_user_commission > 0 %}
-              ${{ "{:,.2f}".format(txn.tier1_business_user_commission) }}
-          {% endif %}
-        </td>
-        <td>
-          {% if txn.tier2_business_user_referral_id == current_user.referral_code and txn.tier2_business_user_commission > 0 %}
-              ${{ "{:,.2f}".format(txn.tier2_business_user_commission) }}
-          {% endif %}
-        </td>
-        <td>
-          {% if txn.tier3_business_user_referral_id == current_user.referral_code and txn.tier3_business_user_commission > 0 %}
-              ${{ "{:,.2f}".format(txn.tier3_business_user_commission) }}
-          {% endif %}
-        </td>
-        <td>
-          {% if txn.tier4_business_user_referral_id == current_user.referral_code and txn.tier4_business_user_commission > 0 %}
-              ${{ "{:,.2f}".format(txn.tier4_business_user_commission) }}
-          {% endif %}
-        </td>
-        <td>
-          {% if txn.tier5_business_user_referral_id == current_user.referral_code and txn.tier5_business_user_commission > 0 %}
-              ${{ "{:,.2f}".format(txn.tier5_business_user_commission) }}
-          {% endif %}
-        </td>
-        {% endif %}
-        <td>
-          {% if business_lookup and txn.business_referral_id %}
-            {{ business_lookup[txn.business_referral_id].business_name if txn.business_referral_id in business_lookup else txn.business_referral_id }}
-          {% else %}
-            {{ txn.business_referral_id or "N/A" }}
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+
+  <!-- Detailed earnings -->
+  <div class="card table-card">
+    <div class="table-responsive">
+      <table class="table table-modern table-stack align-middle" id="receipts-table">
+        <thead>
+          <tr>
+            <th>Date/Time</th>
+            <th>Tier 1<br>(2% Cash Back)</th>
+            <th>Tier 2<br>(Commission)</th>
+            <th>Tier 3<br>(Commission)</th>
+            <th>Tier 4<br>(Commission)</th>
+            <th>Tier 5<br>(Commission)</th>
+            {% if has_invited_business %}
+              <th>Tier 1<br>UBC</th>
+              <th>Tier 2<br>UBC</th>
+              <th>Tier 3<br>UBC</th>
+              <th>Tier 4<br>UBC</th>
+              <th>Tier 5<br>UBC</th>
+            {% endif %}
+            <th>From Business</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for txn in transactions %}
+          <tr>
+            <td data-label="Date/Time"><span class="local-receipt-time" data-utc="{{ txn.date_time.strftime('%Y-%m-%dT%H:%M:%S') }}Z"></span></td>
+            <td data-label="Tier 1 (2% Cash Back)">
+              {% if txn.user_referral_id == current_user.referral_code and txn.cash_back > 0 %}
+                  ${{ "{:,.2f}".format(txn.cash_back) }}
+              {% endif %}
+            </td>
+            <td data-label="Tier 2 Commission">
+              {% if txn.tier2_user_referral_id == current_user.referral_code %}
+                  ${{ "{:,.2f}".format(txn.tier2_commission) }}
+              {% endif %}
+            </td>
+            <td data-label="Tier 3 Commission">
+              {% if txn.tier3_user_referral_id == current_user.referral_code %}
+                  ${{ "{:,.2f}".format(txn.tier3_commission) }}
+              {% endif %}
+            </td>
+            <td data-label="Tier 4 Commission">
+              {% if txn.tier4_user_referral_id == current_user.referral_code %}
+                  ${{ "{:,.2f}".format(txn.tier4_commission) }}
+              {% endif %}
+            </td>
+            <td data-label="Tier 5 Commission">
+              {% if txn.tier5_user_referral_id == current_user.referral_code %}
+                  ${{ "{:,.2f}".format(txn.tier5_commission) }}
+              {% endif %}
+            </td>
+            {% if has_invited_business %}
+            <td data-label="Tier 1 UBC">
+              {% if txn.tier1_business_user_referral_id == current_user.referral_code and txn.tier1_business_user_commission > 0 %}
+                  ${{ "{:,.2f}".format(txn.tier1_business_user_commission) }}
+              {% endif %}
+            </td>
+            <td data-label="Tier 2 UBC">
+              {% if txn.tier2_business_user_referral_id == current_user.referral_code and txn.tier2_business_user_commission > 0 %}
+                  ${{ "{:,.2f}".format(txn.tier2_business_user_commission) }}
+              {% endif %}
+            </td>
+            <td data-label="Tier 3 UBC">
+              {% if txn.tier3_business_user_referral_id == current_user.referral_code and txn.tier3_business_user_commission > 0 %}
+                  ${{ "{:,.2f}".format(txn.tier3_business_user_commission) }}
+              {% endif %}
+            </td>
+            <td data-label="Tier 4 UBC">
+              {% if txn.tier4_business_user_referral_id == current_user.referral_code and txn.tier4_business_user_commission > 0 %}
+                  ${{ "{:,.2f}".format(txn.tier4_business_user_commission) }}
+              {% endif %}
+            </td>
+            <td data-label="Tier 5 UBC">
+              {% if txn.tier5_business_user_referral_id == current_user.referral_code and txn.tier5_business_user_commission > 0 %}
+                  ${{ "{:,.2f}".format(txn.tier5_business_user_commission) }}
+              {% endif %}
+            </td>
+            {% endif %}
+            <td data-label="From Business">
+              {% if business_lookup and txn.business_referral_id %}
+                {{ business_lookup[txn.business_referral_id].business_name if txn.business_referral_id in business_lookup else txn.business_referral_id }}
+              {% else %}
+                {{ txn.business_referral_id or "N/A" }}
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="no-results">
+      <i class="bi bi-inbox"></i>
+      <div id="no-results-text">No earnings match your search.</div>
+    </div>
+  </div>
+
 </div>
+
+<footer>
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.getElementById('filter-form').addEventListener('input', function() {
-    const period = document.querySelector('select[name="period"]').value;
-    const year = document.getElementById('year').value;
-    const month = document.getElementById('month').value;
-    const filter = document.getElementById('searchInput').value.toLowerCase();
-
-    document.querySelectorAll('#receipts-table tbody tr').forEach(function(row) {
-        const cells = row.querySelectorAll('td');
-        const rowDate = cells[0].textContent;
-        const rowText = row.textContent.toLowerCase();
-
-        let show = true;
-        if (period === "year" && year) show = rowDate.startsWith(year);
-        if (period === "month" && year && month) show = rowDate.startsWith(year + '-' + month.padStart(2, '0'));
-        if (filter && rowText.indexOf(filter) === -1) show = false;
-
-        row.style.display = show ? "" : "none";
-    });
-});
-</script>
-<script>
+// Show each earning time in the member's own time zone
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.local-receipt-time').forEach(function(elem) {
     if (elem.dataset.utc) {
@@ -186,7 +249,47 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
+
+  // hide empty cells in the stacked mobile layout
+  document.querySelectorAll('#receipts-table tbody td').forEach(function (td) {
+    if (td.textContent.trim() === '') td.classList.add('cell-empty');
+  });
 });
+</script>
+<script>
+(function () {
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#receipts-table tbody tr'));
+
+  function applyFilters() {
+    var period = document.querySelector('select[name="period"]').value;
+    var year = document.getElementById('year').value;
+    var month = document.getElementById('month').value;
+    var filter = document.getElementById('searchInput').value.toLowerCase();
+    var shown = 0;
+
+    rows.forEach(function (row) {
+      var timeEl = row.querySelector('.local-receipt-time');
+      // use the raw date (YYYY-MM-DD...) so filtering still works after the time is localized
+      var rowDate = timeEl && timeEl.dataset.utc ? timeEl.dataset.utc : '';
+      var rowText = row.textContent.toLowerCase();
+
+      var show = true;
+      if (period === "year" && year) show = rowDate.startsWith(year);
+      if (period === "month" && year && month) show = rowDate.startsWith(year + '-' + month.padStart(2, '0'));
+      if (filter && rowText.indexOf(filter) === -1) show = false;
+
+      row.style.display = show ? "" : "none";
+      if (show) shown++;
+    });
+
+    document.getElementById('results-count').textContent = 'Showing ' + shown.toLocaleString() + ' of ' + rows.length.toLocaleString() + ' transactions';
+    document.getElementById('no-results-text').textContent = rows.length === 0 ? 'No earnings yet for this period.' : 'No earnings match your search.';
+    document.getElementById('no-results').style.display = shown === 0 ? 'block' : 'none';
+  }
+
+  document.getElementById('filter-form').addEventListener('input', applyFilters);
+  applyFilters();
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,336 @@
+{# ---------------------------------------------------------------
+   "Earn more than your sponsor" illustration.
+
+   Two five-tier trees side by side:
+     - your sponsor's tree (sponsor refers 3, everyone else refers 4)
+     - your tree (you and everyone below you refer 4)
+   You joined one level below your sponsor, so your tree starts one row
+   lower. Money is in CENTS and every number on the page is calculated
+   from the inputs below, so the page can't disagree with itself.
+
+   Payout rule (same as the full payout sample page), per $50 purchase:
+     tier 1 (the earner's own purchase) ... 2% cash back
+     tiers 2, 3 and 4 below the earner .... 0.2% each
+     tier 5 below the earner .............. 2%
+     anything deeper ...................... nothing
+   To change the example, edit only the inputs in this block.
+   --------------------------------------------------------------- #}
+{% set purchase = 5000 %}
+{% set cashback = purchase * 2 // 100 %}
+{% set near = purchase * 2 // 1000 %}
+{% set far = purchase * 2 // 100 %}
+{% set rates = [cashback, near, near, near, far] %}
+
+{% set sponsor_refs = 3 %}
+{% set member_refs = 4 %}
+{% set n_tiers = 5 %}
+
+{% set sp = namespace(c=[1]) %}
+{% for i in range(1, n_tiers) %}
+  {% set sp.c = sp.c + [sp.c[-1] * (sponsor_refs if i == 1 else member_refs)] %}
+{% endfor %}
+{% set yo = namespace(c=[1]) %}
+{% for i in range(1, n_tiers) %}
+  {% set yo.c = yo.c + [yo.c[-1] * member_refs] %}
+{% endfor %}
+
+{% set T = namespace(rows=[], s=0, y=0) %}
+{% for i in range(n_tiers) %}
+  {% set se = sp.c[i] * rates[i] %}
+  {% set ye = yo.c[i] * rates[i] %}
+  {% set T.rows = T.rows + [{"tier": i + 1, "rate": rates[i], "sm": sp.c[i], "ym": yo.c[i], "se": se, "ye": ye}] %}
+  {% set T.s = T.s + se %}
+  {% set T.y = T.y + ye %}
+{% endfor %}
+
+{% set s_notes = [
+  "Sponsor, 2% cash back",
+  sponsor_refs ~ " referrals: you and " ~ (sponsor_refs - 1) ~ " others",
+  member_refs ~ " referrals each",
+  member_refs ~ " referrals each",
+  member_refs ~ " referrals each"
+] %}
+{% set y_notes = [
+  "You, 2% cash back",
+  member_refs ~ " referrals",
+  member_refs ~ " referrals each",
+  member_refs ~ " referrals each",
+  member_refs ~ " referrals each"
+] %}
+{% set rate_labels = ["2% cash back", "0.2% commission", "0.2% commission", "0.2% commission", "2% commission"] %}
+
+{% macro money(c) %}${{ "{:,.2f}".format(c / 100) }}{% endmacro %}
+{% macro plus(c) %}{% if c > 0 %}+{% endif %}${{ "{:,.2f}".format(c / 100) }}{% endmacro %}
+{% macro dollars(c) %}${{ c // 100 }}{% endmacro %}
+{% macro people(n) %}{{ "{:,}".format(n) }} {{ "member" if n == 1 else "members" }}{% endmacro %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Earn More Than Your Sponsor - Perk Miner</title>
+  <meta name="description" content="An illustration of how a Perk Miner member who joins one level below a sponsor can earn more than that sponsor, based on their own purchases and referrals.">
+  <meta name="theme-color" content="#2a5859">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://www.perkminer.com/earn_more_than_sponsor">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Perk Miner">
+  <meta property="og:title" content="You can earn more than your sponsor">
+  <meta property="og:description" content="A best-case illustration comparing a sponsor's earnings with the earnings of a member who joins one level below them.">
+  <meta property="og:url" content="https://www.perkminer.com/earn_more_than_sponsor">
+  <meta property="og:image" content="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg">
+  <style>
+    :root {
+      --ink: #14302f;
+      --teal: #2a5859;
+      --muted: #4b6463;
+      --paper: #fafcfb;
+      --wash: #edf3f2;
+      --rule: #c3d2cf;
+      --amber: #d9a441;
+      --amber-ink: #3b2a05;
+      --s-bg: #e1ecea;
+      --y-bg: #f7e9c8;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 1.0625rem; line-height: 1.55; }
+    a { color: var(--teal); text-underline-offset: 3px; }
+    a:focus-visible, .btn:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; border-radius: 4px; }
+    .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 1.25rem; }
+    .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    /* top bar */
+    .topbar { border-bottom: 1px solid var(--rule); }
+    .topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: .75rem; padding-bottom: .75rem; }
+    .topbar img { display: block; height: 44px; width: auto; }
+    .topbar nav { display: flex; gap: 1.25rem; font-size: .975rem; }
+    .topbar nav a { text-decoration: none; font-weight: 600; }
+    .topbar nav a:hover { text-decoration: underline; }
+
+    /* hero */
+    .hero { padding: 3rem 0 2.25rem; }
+    .hero h1 { font-family: var(--serif); font-weight: 700; font-size: clamp(2rem, 4.8vw + .4rem, 3.4rem); line-height: 1.1; letter-spacing: -.01em; margin: 0 0 1rem; max-width: 18ch; text-wrap: balance; }
+    .lede { max-width: 62ch; color: var(--muted); margin: 0 0 1.5rem; font-size: 1.125rem; }
+    .notice { margin: 0; padding: .9rem 1.1rem; border: 1px solid var(--ink); border-left-width: 6px; border-radius: 6px; background: var(--wash); max-width: 62ch; font-size: .98rem; }
+    .notice strong { display: block; margin-bottom: .1rem; }
+
+    /* sections */
+    .block { padding: 2.75rem 0; border-top: 1px solid var(--rule); }
+    .block > .wrap > h2 { font-family: var(--serif); font-size: clamp(1.5rem, 2.2vw + 1rem, 2.1rem); line-height: 1.2; margin: 0 0 .6rem; }
+    .block > .wrap > .lede { font-size: 1.05rem; }
+
+    /* the two trees, one shared grid so rows line up */
+    .trees { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem 1rem; max-width: 820px; margin-top: 1.75rem; }
+    .cc1 { grid-column: 1; }
+    .cc2 { grid-column: 2; }
+    .rr1 { grid-row: 1; } .rr2 { grid-row: 2; } .rr3 { grid-row: 3; } .rr4 { grid-row: 4; }
+    .rr5 { grid-row: 5; } .rr6 { grid-row: 6; } .rr7 { grid-row: 7; }
+    .tree-head { display: flex; align-items: center; gap: .55rem; font-family: var(--serif); font-size: 1.2rem; line-height: 1.25; margin: 0 0 .2rem; }
+    .sw { flex: none; width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--ink); }
+    .sw-s { background: var(--teal); }
+    .sw-y { background: var(--amber); }
+    .cell { display: flex; flex-direction: column; gap: .1rem; padding: .8rem 1rem; border: 1px solid var(--ink); border-left-width: 8px; border-radius: 6px; }
+    .cell-s { background: var(--s-bg); border-left-color: var(--teal); }
+    .cell-y { background: var(--y-bg); border-left-color: var(--amber); }
+    .t-name { font-size: .9rem; font-weight: 700; color: var(--muted); }
+    .t-count { display: flex; align-items: baseline; gap: .4rem; flex-wrap: wrap; }
+    .t-count strong { font-family: var(--serif); font-size: 1.6rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .t-count span { font-size: .95rem; }
+    .t-note { font-size: .92rem; color: var(--muted); line-height: 1.35; }
+    .tree-note { margin: 1.1rem 0 0; color: var(--muted); font-size: .95rem; max-width: 62ch; }
+
+    /* earnings comparison */
+    .takeaway { font-family: var(--serif); font-size: clamp(1.25rem, 1.6vw + .95rem, 1.75rem); line-height: 1.3; margin: 0 0 1.5rem; max-width: 34ch; }
+    .cmp { width: 100%; max-width: 820px; border-collapse: collapse; table-layout: fixed; }
+    .cmp col.k1 { width: 28%; }
+    .cmp col.k2 { width: 24%; }
+    .cmp th, .cmp td { padding: .7rem .75rem; text-align: right; border-bottom: 1px solid var(--rule); vertical-align: top; font-weight: 400; }
+    .cmp th:first-child, .cmp td:first-child { text-align: left; }
+    .cmp thead th { font-size: .95rem; font-weight: 700; vertical-align: bottom; border-bottom: 2px solid var(--ink); padding-top: .9rem; }
+    .cmp thead th.c-s { box-shadow: inset 0 5px 0 var(--teal); }
+    .cmp thead th.c-y { box-shadow: inset 0 5px 0 var(--amber); }
+    .cmp tbody th .tn { display: block; font-weight: 700; }
+    .cmp small { display: block; color: var(--muted); font-size: .82rem; line-height: 1.3; }
+    .cmp td strong { font-family: var(--serif); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+    .cmp .c-s { background: rgba(42, 88, 89, .08); }
+    .cmp .c-y { background: rgba(217, 164, 65, .17); }
+    .cmp tfoot th, .cmp tfoot td { border-top: 4px double var(--ink); border-bottom: 0; padding-top: .9rem; font-weight: 700; }
+    .cmp tfoot strong { font-size: 1.45rem; }
+    .why { margin: 1.25rem 0 0; color: var(--muted); max-width: 62ch; }
+
+    /* closing */
+    .summary { background: var(--wash); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+    .actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+    .btn { display: inline-block; padding: .8rem 1.4rem; border-radius: 6px; font-weight: 700; text-decoration: none; border: 2px solid var(--teal); min-height: 48px; }
+    .btn-solid { background: var(--teal); color: #fff; }
+    .btn-solid:hover { background: var(--ink); border-color: var(--ink); }
+    .btn-line { background: transparent; color: var(--teal); }
+    .btn-line:hover { background: #fff; }
+    .fineprint { padding: 1.75rem 0 2.25rem; color: var(--muted); font-size: .9rem; }
+    .fineprint p { margin: 0; max-width: 80ch; }
+
+    /* Footer */
+    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
+    footer a { color: var(--pm-primary-light); text-decoration: none; }
+
+    @media (min-width: 1000px) {
+      .hero { padding: 4.25rem 0 3rem; }
+      .block { padding: 3.5rem 0; }
+    }
+
+    /* phones: keep both trees side by side, just tighter */
+    @media (max-width: 560px) {
+      body { font-size: 1rem; }
+      .topbar nav { gap: .9rem; font-size: .9rem; }
+      .lede { font-size: 1.05rem; }
+      .trees { gap: .5rem .6rem; }
+      .tree-head { font-size: 1.02rem; gap: .4rem; }
+      .cell { padding: .55rem .55rem .6rem; border-left-width: 6px; }
+      .t-name { font-size: .82rem; }
+      .t-count strong { font-size: 1.3rem; }
+      .t-count span { font-size: .8rem; }
+      .t-note { font-size: .8rem; }
+      .cmp th, .cmp td { padding: .6rem .35rem; }
+      .cmp thead th { font-size: .82rem; }
+      .cmp td strong { font-size: 1rem; }
+      .cmp small { font-size: .72rem; }
+      .cmp tfoot strong { font-size: 1.1rem; }
+      .btn { width: 100%; text-align: center; }
+    }
+    @media print {
+      .topbar nav, .actions { display: none; }
+      .summary { background: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="wrap">
+      <a href="/" aria-label="Perk Miner home">
+        <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" height="44">
+      </a>
+      <nav aria-label="Primary">
+        <a href="/">Home</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <h1>You can earn more than your sponsor</h1>
+        <p class="lede">Your earnings come from your own purchases and your own network, not from how many members joined before you.</p>
+        <div class="notice" role="note">
+          <strong>This is a best-case example.</strong>
+          It assumes every referral joins and every member makes one {{ dollars(purchase) }} purchase. Earnings are not guaranteed.
+        </div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="h-trees">
+      <div class="wrap">
+        <h2 id="h-trees">Your sponsor's network and yours</h2>
+        <p class="lede">You joined one level below your sponsor, so your tree starts one row lower. Your sponsor referred {{ sponsor_refs }} members. Every other member in this example refers {{ member_refs }}.</p>
+
+        <div class="trees" role="group" aria-label="Your sponsor's tree and your tree, side by side">
+          <h3 class="tree-head cc1 rr1"><span class="sw sw-s"></span>Your sponsor's tree</h3>
+          {% for i in range(n_tiers) %}
+            <div class="cell cell-s cc1 rr{{ i + 2 }}">
+              <span class="t-name">Tier {{ i + 1 }}</span>
+              <span class="t-count"><strong>{{ "{:,}".format(sp.c[i]) }}</strong> <span>{{ "member" if sp.c[i] == 1 else "members" }}</span></span>
+              <span class="t-note">{{ s_notes[i] }}</span>
+            </div>
+          {% endfor %}
+
+          <h3 class="tree-head cc2 rr1"><span class="sw sw-y"></span>Your tree</h3>
+          {% for i in range(n_tiers) %}
+            <div class="cell cell-y cc2 rr{{ i + 3 }}">
+              <span class="t-name">Tier {{ i + 1 }}</span>
+              <span class="t-count"><strong>{{ "{:,}".format(yo.c[i]) }}</strong> <span>{{ "member" if yo.c[i] == 1 else "members" }}</span></span>
+              <span class="t-note">{{ y_notes[i] }}</span>
+            </div>
+          {% endfor %}
+        </div>
+
+        <p class="tree-note">Your sponsor earns from their {{ n_tiers }} tiers, so their sixth row is blank for them since they don't earn beyond their tier 5. Your tier {{ n_tiers }}, with {{ "{:,}".format(yo.c[n_tiers - 1]) }} members, sits in that row.  Your tier 1 begins at your sponsor's tier 2 since you do not earn anything from your sponsor's purchases, so the row above yours is blank.</p>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="h-earn">
+      <div class="wrap">
+        <h2 id="h-earn">How much each of you earns</h2>
+        <p class="lede">Everyone makes one {{ dollars(purchase) }} purchase. Each member earns 2% cash back on their own purchase, then commissions on the tiers below them: 0.2% on tiers 2 to 4 and 2% on tier 5.</p>
+
+        <p class="takeaway">You earn {{ money(T.y) }}. Your sponsor earns {{ money(T.s) }}. That is {{ money(T.y - T.s) }} more for you.</p>
+
+        <table class="cmp">
+          <caption class="sr-only">Earnings by tier for your sponsor and for you</caption>
+          <colgroup><col class="k1"><col class="k2"><col class="k2"><col class="k2"></colgroup>
+          <thead>
+            <tr>
+              <th scope="col">Tier</th>
+              <th scope="col" class="c-s">Sponsor</th>
+              <th scope="col" class="c-y">You</th>
+              <th scope="col">Difference</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in T.rows %}
+              <tr>
+                <th scope="row"><span class="tn">Tier {{ r.tier }}</span><small>{{ rate_labels[loop.index0] }}</small></th>
+                <td class="c-s"><strong>{{ money(r.se) }}</strong><small>{{ people(r.sm) }}</small></td>
+                <td class="c-y"><strong>{{ money(r.ye) }}</strong><small>{{ people(r.ym) }}</small></td>
+                <td>
+                  <strong>{{ plus(r.ye - r.se) }}</strong>
+                  <small>{% if r.ym == r.sm %}same{% else %}{{ "{:+,}".format(r.ym - r.sm) }} {{ "member" if (r.ym - r.sm) == 1 else "members" }}{% endif %}</small>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Total</th>
+              <td class="c-s"><strong>{{ money(T.s) }}</strong></td>
+              <td class="c-y"><strong>{{ money(T.y) }}</strong></td>
+              <td><strong>{{ plus(T.y - T.s) }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <p class="why">You earn more here because you directly referred {{ member_refs }} members and your sponsor directly referred {{ sponsor_refs }} members, including you.</p>
+      </div>
+    </section>
+
+    <section class="block summary" aria-labelledby="h-join">
+      <div class="wrap">
+        <h2 id="h-join">Start Earning Cash Back</h2>
+        <p class="lede">Every member who makes a purchase from any advertiser earns 2% cash back on their own purchases and any advertisers who finalizes a transaction for any member earns 1% cash back. Everything beyond that depends on the member and advertiser referral, and on them making purchases or sales as well.</p>
+        <div class="actions">
+          <a class="btn btn-solid" href="/register">Members - Join For Free</a>
+          <a class="btn btn-line" href="/business">Advertise With Us</a>
+          <a class="btn btn-solid" href="/full_payout_sample">See the full payout sample</a>
+          <a class="btn btn-line" href="/how_much_can_i_earn">How Much Can You Earn?</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="fineprint">
+    <div class="wrap">
+      <p>This is an illustration only, not a prediction. It assumes every referral joins, every member makes one {{ dollars(purchase) }} purchase, and payouts stop after {{ n_tiers }} tiers. Most networks will be smaller and will earn less. Actual earnings depend on real purchases and your own referral network, and are not guaranteed.</p>
+    </div>
+  </div>
+
+<footer>
+  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
+  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
+  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
+  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
+</footer>
+
+</body>
+</html>

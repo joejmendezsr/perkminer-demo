@@ -30,7 +30,18 @@
               <input type="text" class="form-control" readonly id="local-time-input">
           </div>
           <input type="hidden" name="local_datetime" id="local-datetime">
-          <button type="submit" class="btn btn-success w-100">Finalize Transaction</button>
+
+          <div class="alert alert-warning border-warning mt-3 mb-2" role="alert">
+            <strong>Please confirm the amount before finalizing.</strong><br>
+            Make sure the amount entered matches the exact amount paid by the member.
+          </div>
+
+          <div class="alert alert-secondary small mb-0" role="note">
+            <strong>Please note:</strong> Finalized transactions cannot be changed or refunded, because multiple members and advertisers may earn cash back or referral commissions from this transaction. <b>If your business accepts returns, you understant that the advertising fee is not refundable in the event that a return is later processed.</b>
+          </div>
+
+          <br><button type="submit" class="btn btn-success w-100">Finalize Transaction</button>
+
       </form>
       <script>
       document.addEventListener('DOMContentLoaded', function() {
