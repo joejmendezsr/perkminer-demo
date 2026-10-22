@@ -48,7 +48,7 @@ from flask import (Blueprint, abort, current_app, flash, g, has_request_context,
 USER_TABLE = '"user"'                 # "user" is a reserved word in Postgres, so it must be quoted
 USER_ID_COL = "id"
 USER_EMAIL_COL = "email"
-USER_NAME_SQL = "TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,''))"   # <-- change to your name column(s)
+USER_NAME_SQL = "name"
 USER_REF_COL = "ref_code"             # column that holds values like 'refJoeJMendez'
 ADMIN_REF_VALUE = "refJoeJMendez"     # owner account: can always open /docuseries/admin
 ALLOW_ROLE_ON_ADMIN = True            # True = any user with the docuseries role (docuseries_role = TRUE) can also open it
