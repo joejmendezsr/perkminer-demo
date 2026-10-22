@@ -1,0 +1,14 @@
+{# =====================================================================
+   Paste into your existing dashboard template (wherever you want the button).
+   `docuseries_participant()` is provided by the blueprint's context processor:
+   it is true only when docuseries_terms is TRUE and a Talent Release Form is on file,
+   so no change to the /dashboard view function is needed.
+   Swap the classes for whatever button classes your dashboard already uses.
+   ===================================================================== #}
+{% if docuseries_participant() %}
+  <a class="btn btn-gold" href="{{ url_for('docuseries.member') }}">🎬 My Docuseries Dashboard</a>
+{% endif %}
+{# Users with the docuseries role who aren't admins can't see /admin_roles_landing, so give them a direct link too #}
+{% if docuseries_role() %}
+  <a class="btn btn-teal" href="{{ url_for('docuseries.admin') }}">Docuseries Admin</a>
+{% endif %}

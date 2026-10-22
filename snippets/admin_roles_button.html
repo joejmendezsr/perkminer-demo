@@ -1,0 +1,9 @@
+{# =====================================================================
+   Paste into your /admin_roles_landing template next to your other role buttons.
+   `docuseries_role()` is provided by the blueprint's context processor and is true
+   when "user".docuseries_role = TRUE. If your landing page already decides button
+   visibility in the view (e.g. `{% if 'docuseries' in roles %}`), use that condition instead.
+   ===================================================================== #}
+{% if docuseries_role() %}
+  <a class="btn btn-teal" href="{{ url_for('docuseries.admin') }}">Docuseries Admin</a>
+{% endif %}

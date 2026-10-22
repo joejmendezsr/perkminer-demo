@@ -1,0 +1,114 @@
+{% extends "docuseries/base_docuseries.html" %}
+{% block title %}Docuseries Admin – Perk Miner{% endblock %}
+{% block robots %}<meta name="robots" content="noindex,nofollow">{% endblock %}
+
+{% block head %}
+<style>
+.tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff;max-height:70vh}
+table.people{border-collapse:separate;border-spacing:0;width:100%;min-width:1100px;font-size:.9rem}
+table.people th,table.people td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:center}
+table.people thead th{position:sticky;top:0;background:var(--teal-l);z-index:2;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--teal-d)}
+table.people td:first-child,table.people th:first-child{position:sticky;left:0;text-align:left;background:#fff;z-index:1;min-width:190px;box-shadow:2px 0 0 var(--line)}
+table.people thead th:first-child{background:var(--teal-l);z-index:3}
+table.people td.email{text-align:left;color:var(--muted)}
+.dl{display:inline-block;min-width:30px;padding:4px 8px;border-radius:8px;background:var(--teal);color:#fff!important;text-decoration:none;font-weight:700}
+.dl:hover{background:var(--teal-d)}
+.dl.unv{background:var(--gold);color:#201400!important}
+.none{color:#b4c4c4}
+.search{width:100%;max-width:360px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:1rem}
+.toolbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+</style>
+{% endblock %}
+
+{% block submenu %}
+<div class="submenu">
+  <div class="wrap-wide">
+    <a href="{{ admin_roles_url }}">← Back to Admin Roles</a>
+    <a href="{{ url_for('docuseries.live_locations') }}">Live Locations</a>
+    <a href="{{ url_for('docuseries.episodes') }}" target="_blank" rel="noopener">Episodes ↗</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="wrap-wide"><h1>Docuseries admin page</h1><p>Participants, videos and live recordings</p></div>
+</section>
+
+<div class="wrap-wide section">
+  <div class="grid grid-3" style="margin-bottom:24px">
+    <div class="fact"><div class="k">Participants</div><div class="v">{{ people|length }}</div></div>
+    <div class="fact"><div class="k">Videos uploaded</div><div class="v">{{ total_videos }}</div></div>
+    <div class="fact"><div class="k">Upcoming live recordings</div><div class="v">{{ locations|length }}</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Participants</h2>
+    <div class="toolbar">
+      <input class="search" id="q" type="search" placeholder="Search by name or email…" aria-label="Search participants">
+      <span class="small muted">Gold buttons = length wasn't verified by the server. Hover a button for details.</span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="people" id="people">
+        <thead>
+          <tr>
+            <th>Name</th><th>Email</th><th>Release form</th>
+            {% for n in slots %}<th title="Video #{{ n }}">#{{ n }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+        {% for p in people %}
+          <tr>
+            <td><strong>{{ p.full_name or '(no name)' }}</strong></td>
+            <td class="email">{{ p.email }}</td>
+            <td>{% if p.release_form %}<a class="dl" href="{{ url_for('docuseries.admin_download_release', user_id=p.id) }}">⬇</a>{% else %}<span class="none">—</span>{% endif %}</td>
+            {% for n in slots %}
+              {% set v = vids.get(p.id, {}).get(n) %}
+              <td>{% if v %}<a class="dl" href="{{ url_for('docuseries.admin_download_video', video_id=v.id) }}" title="Video #{{ n }} · {{ v.duration_seconds if v.duration_seconds else '?' }}s · {{ v.size_bytes|ds_mb }}">⬇</a>{% else %}<span class="none">—</span>{% endif %}</td>
+            {% endfor %}
+          </tr>
+        {% else %}
+          <tr><td colspan="20" style="text-align:center;padding:30px" class="muted">No participants yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Live location recordings</h2>
+    {% if locations %}
+      <div class="tbl-wrap" style="max-height:none">
+        <table class="people" style="min-width:0">
+          <thead><tr><th>Date &amp; time</th><th>Event</th><th>Location</th><th>Notes</th></tr></thead>
+          <tbody>
+          {% for l in locations %}
+            <tr>
+              <td style="text-align:left;min-width:0;position:static;box-shadow:none">{{ l.starts_at|ds_dt }}</td>
+              <td style="text-align:left;white-space:normal"><strong>{{ l.title }}</strong></td>
+              <td style="text-align:left;white-space:normal">{{ l.location_name }}{% if l.address %}<br><span class="muted small">{{ l.address }}</span>{% endif %}</td>
+              <td style="text-align:left;white-space:normal" class="muted">{{ l.notes or '' }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted">No upcoming live recordings are scheduled.</p>
+    {% endif %}
+    <p style="margin-top:14px"><a class="btn btn-outline" href="{{ url_for('docuseries.live_locations') }}">Open live locations →</a></p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  var q=document.getElementById('q'), rows=[].slice.call(document.querySelectorAll('#people tbody tr'));
+  q.addEventListener('input',function(){
+    var t=q.value.trim().toLowerCase();
+    rows.forEach(function(r){r.style.display=(!t||r.textContent.toLowerCase().indexOf(t)>-1)?'':'none';});
+  });
+})();
+</script>
+{% endblock %}

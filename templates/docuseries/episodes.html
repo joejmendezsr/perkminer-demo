@@ -1,0 +1,107 @@
+{% extends "docuseries/base_docuseries.html" %}
+{% block title %}Episodes – Perk Miner 45-Day Challenge Docuseries{% endblock %}
+{% block meta_desc %}Watch every episode of the Perk Miner Filmed Docuseries and see which participants appear in each one.{% endblock %}
+{% block body_class %}theater{% endblock %}
+
+{% block head %}
+<style>
+body.theater{background:#0d1b1c;color:#e8f3f3}
+.theater a{color:#9fd3d3}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:26px;padding:26px 0 10px;align-items:start}
+@media (max-width:1000px){.stage{grid-template-columns:1fr}}
+.player{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.player video,.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+.player .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:#bcd4d4;background:radial-gradient(circle at 50% 40%,#1d3f40,#0a1516)}
+.player .empty .big{font-size:3rem}
+.now h1{font-size:clamp(1.4rem,3.2vw,2.1rem);margin:18px 0 6px;color:#fff;line-height:1.25}
+.now .meta{color:#9bb8b8;font-size:.92rem;margin-bottom:12px}
+.now p{color:#d3e4e4;max-width:75ch}
+.who h2{font-size:1rem;text-transform:uppercase;letter-spacing:.08em;color:#9bb8b8;margin:22px 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#173133;border:1px solid #2a4c4e;color:#e8f3f3;padding:6px 12px;border-radius:999px;font-size:.9rem}
+.list{background:#122426;border:1px solid #223c3e;border-radius:14px;padding:10px;max-height:78vh;overflow:auto}
+@media (max-width:1000px){.list{max-height:none}}
+.list h2{font-size:1rem;margin:8px 10px 10px;color:#fff}
+.ep{display:flex;gap:12px;padding:10px;border-radius:10px;text-decoration:none;color:#e8f3f3!important;align-items:center}
+.ep:hover{background:#1a3133}
+.ep.active{background:#1f4244;outline:2px solid var(--gold)}
+.ep .num{flex:none;width:44px;height:44px;border-radius:10px;background:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff}
+.ep .t{font-weight:700;line-height:1.3}
+.ep .s{font-size:.82rem;color:#9bb8b8}
+.protect{font-size:.8rem;color:#7f9c9c;margin-top:18px}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap-wide">
+  <div class="stage">
+    <section class="now" aria-live="polite">
+      <div class="player" id="player">
+        {% if selected and selected.player %}
+          {% if selected.player.kind == 'video' %}
+            <video id="pv" controls playsinline preload="metadata"
+                   controlsList="nodownload noplaybackrate" disablePictureInPicture disableRemotePlayback
+                   {% if selected.poster_url %}poster="{{ selected.poster_url }}"{% endif %}>
+              <source src="{{ selected.player.src }}" type="video/mp4">
+              Your browser can't play this video.
+            </video>
+          {% else %}
+            <iframe src="{{ selected.player.src }}" title="{{ selected.title }}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          {% endif %}
+        {% else %}
+          <div class="empty">
+            <div class="big" aria-hidden="true">🎬</div>
+            <h2 style="color:#fff;margin:10px 0 4px">{% if selected %}This episode isn't available yet{% else %}Episodes are coming soon{% endif %}</h2>
+            <p style="margin:0">The 45-Day Perk Miner Challenge hasn't started yet. Check back soon.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if selected %}
+      <h1>Episode {{ selected.episode_number }}: {{ selected.title }}</h1>
+      <div class="meta">
+        {% if selected.air_date %}{{ selected.air_date|ds_date }}{% endif %}
+        {% if selected.duration_minutes %}{% if selected.air_date %} · {% endif %}{{ selected.duration_minutes }} min{% endif %}
+      </div>
+      {% if selected.description %}<p>{{ selected.description }}</p>{% endif %}
+      <div class="who">
+        <h2>Participants in this episode</h2>
+        {% if selected.participants %}
+          <div class="chips">{% for name in selected.participants %}<span class="chip">{{ name }}</span>{% endfor %}</div>
+        {% else %}
+          <p class="muted">Participant names will be listed here when the episode is released.</p>
+        {% endif %}
+      </div>
+      {% else %}
+      <h1>The Perk Miner Docuseries</h1>
+      <p>Follow everyday Las Vegas members on the 45-Day Perk Miner Challenge. New episodes will appear here every week once the series begins.</p>
+      <p><a href="{{ url_for('docuseries.landing') }}">Learn about the docuseries</a> · <a href="{{ url_for('docuseries.pre_register') }}">Join the challenge</a></p>
+      {% endif %}
+      <p class="protect">Episodes are streamed for viewing only.</p>
+    </section>
+
+    <aside class="list" aria-label="All episodes">
+      <h2>All episodes</h2>
+      {% for ep in episodes %}
+        <a class="ep {{ 'active' if selected and ep.id == selected.id }}" href="{{ url_for('docuseries.episodes', ep=ep.episode_number) }}" {% if selected and ep.id == selected.id %}aria-current="true"{% endif %}>
+          <span class="num">{{ ep.episode_number }}</span>
+          <span><span class="t">{{ ep.title }}</span><br>
+          <span class="s">{% if ep.air_date %}{{ ep.air_date|ds_date }}{% endif %}{% if ep.duration_minutes %} · {{ ep.duration_minutes }} min{% endif %}</span></span>
+        </a>
+      {% else %}
+        <p style="padding:6px 12px;color:#9bb8b8">No episodes have been released yet.</p>
+      {% endfor %}
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  var v=document.getElementById('pv'); if(!v)return;
+  v.addEventListener('contextmenu',function(e){e.preventDefault();});
+  v.addEventListener('dragstart',function(e){e.preventDefault();});
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "docuseries/base_docuseries.html" %}
+{% block title %}Perk Miner Filmed Docuseries – The 45-Day Perk Miner Challenge and Race to $5k in Lifetime Earnings{% endblock %}
+{% block meta_desc %}Be part of a filmed docuseries following everyday Las Vegas members racing to $5k in lifetime earnings in 45 days on PerkMiner.com — free to join, privacy-first.{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="wrap">
+    <span class="kicker">Perk Miner Filmed Docuseries</span>
+    <h1>The 45-Day Perk Miner Challenge and <em>Race to $5k</em> in Lifetime Earnings</h1>
+    <p class="sub">Follow everyday people on their journey to earning $5k within 45 days with perkminer.com</p>
+    <a class="btn btn-gold btn-lg" href="{{ url_for('docuseries.pre_register') }}">I want to participate</a>
+    <a class="btn btn-outline btn-lg" style="color:#fff;border-color:rgba(255,255,255,.6);margin-left:6px" href="{{ url_for('docuseries.episodes') }}">Watch episodes</a>
+  </div>
+</section>
+
+<div class="wrap section">
+
+  <div class="grid grid-4" style="margin-bottom:26px">
+    <div class="fact"><div class="k">Cost</div><div class="v">Free</div><div class="d">No fee to participate</div></div>
+    <div class="fact"><div class="k">Challenge</div><div class="v">45 days</div><div class="d">Race to $5k lifetime earnings</div></div>
+    <div class="fact"><div class="k">Series</div><div class="v">12+ episodes</div><div class="d">20 minutes each, weekly</div></div>
+    <div class="fact"><div class="k">Where</div><div class="v">Las Vegas, NV</div><div class="d">Everyday local members</div></div>
+  </div>
+
+  <div class="card">
+    <p style="font-size:1.1rem">Be part of a filmed docuseries that follows PerkMiner.com members (everyday people) from Las Vegas, NV trying to hit $5k in lifetime earnings in 45 days using a 100% free, privacy-first platform (PerkMiner.com).</p>
+    <p>Some members may only hit $100 and others may exceed $5k. A few will be selected where we document their entire journey starting from day 1, while the majority of you will have some limited exposure in the docuseries.</p>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h2>Cost</h2>
+      <p><strong>Free</strong> (no fee to participate)</p>
+      <h2 style="margin-top:22px">Compensation</h2>
+      <p>No compensation for participating in the program itself, including any appearance fee, hourly wage or royalty for the footage.</p>
+      <p>The real compensation comes from your participation in the program: cash back and referral commissions from real purchases and finalized transactions. This is real money that gets deposited into your bank account (not coupons, points or gift cards).</p>
+      <p>This compensation becomes ongoing passive income and continues for as long as you remain a member.</p>
+    </div>
+    <div class="card">
+      <h2>Disclaimer</h2>
+      <p>By participating in the program, you are considered self-employed and there are no set hours or schedules or requirements beyond what is stated below. You will be responsible for paying taxes on your earnings.</p>
+      <div class="callout warn" style="margin-top:14px"><span class="ic" aria-hidden="true">📌</span><p>Earnings cannot be guaranteed. Some members may only hit $100 and others may exceed $5k.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>How do I earn, and how much cash back and referral commission?</h2>
+    <table class="rates">
+      <thead><tr><th>What</th><th>You earn</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Cash back</strong></td><td>2% on up to $2,500 of each purchase ($50 max) per transaction</td><td>Your personal purchases from any advertiser</td></tr>
+        <tr><td><strong>Referral commission, tiers 2–4</strong></td><td>0.2%</td><td>Your direct and subsequent referrals make purchases from any advertiser</td></tr>
+        <tr><td><strong>Referral commission, tier 5</strong></td><td>2%</td><td>The fruit of your tree from the tree of opportunity</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>How does the recording take place?</h2>
+    <p>The majority of the documentation will be self-recorded and uploaded for Perk Miner to use in the docuseries, including first-hand experiences of registering, seeing real earnings in your dashboard and the money getting deposited into your bank account.</p>
+    <p>At other times, we will be doing live recordings in real business locations (participating members will be informed of the dates, times and locations of these live on-site recordings).</p>
+    <ul>
+      <li>If a member chooses to have Perk Miner LLC record a live interaction with a business owner (live invitation), we would love to record the entire interaction, even if they say no, and record your experience.</li>
+      <li>If a member chooses to have us record their major milestones (earning $1,000 in lifetime earnings).</li>
+    </ul>
+    <div class="callout info"><span class="ic" aria-hidden="true">✉️</span><p><strong>Note:</strong> For live one-on-one business invites and major milestone one-on-one recordings, members must contact Perk Miner LLC at <a href="mailto:support@perkminer.com?subject=Live%20Recording%20Request">support@perkminer.com</a> and place <strong>"Live Recording Request"</strong> in the subject line.</p></div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h2>How many episodes will be recorded?</h2>
+      <p>Since this docuseries plans to capture as many details of each member's experience and milestones in phases, we expect to run a minimum of 12 (20 minute) episodes during a 90-day period (1 episode per week). Starting date to be determined. The more participants, the longer the series.</p>
+      <h2 style="margin-top:22px">How will you know which episode you appear in?</h2>
+      <p>Since we will only be using your full name in the episodes, we will provide a list of the names of the participating members for each episode on <a href="{{ url_for('docuseries.episodes') }}">perkminer.com/docuseries/episodes</a>.</p>
+    </div>
+    <div class="card">
+      <h2>How many videos will I be uploading?</h2>
+      <p>Each participant can upload up to 17 videos of 60 seconds or less during the 45-day period.</p>
+      <ul>
+        <li><strong>Video #1:</strong> Intro Video</li>
+        <li><strong>Video #2:</strong> Registration Experience Video</li>
+        <li><strong>Videos #3–#17:</strong> Up to 15 Experience Videos (60 seconds each)</li>
+      </ul>
+      <h2 style="margin-top:22px">Where will the docuseries be shown?</h2>
+      <p>The docuseries will be available to view on perkminer.com and uploaded to YouTube and other social media platforms. In the event that a big network picks up this docuseries, it may eventually air on TV.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h2>Advantages of participating</h2>
+      <p>Perk Miner LLC will help each participating member by:</p>
+      <ul>
+        <li>Helping you grow your network of members and businesses (fast track)</li>
+        <li>Giving you all the tools you need to succeed</li>
+        <li>Providing you with personal guidance along the way</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>How many people can participate?</h2>
+      <p>There is no limit to the number of people that can participate, since some episodes may only contain 15–30 seconds of a participating member. Our selection process is based on lifetime earnings, but we will make sure that every member gets some exposure during the series.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Requirements</h2>
+    {% include "docuseries/_terms.html" %}
+  </div>
+
+  <div class="card">
+    <h2>Privacy</h2>
+    <p>We take member privacy very seriously.</p>
+    <ul>
+      <li>Perk Miner LLC will never collect more than your name, email address, photo and video as a participant in this docuseries.</li>
+      <li>Perk Miner LLC will not share, sell or exploit the data that is collected for any monetary gains.</li>
+      <li>You will never receive spam emails. Businesses never gain access to your phone number or address unless you decide to provide that information (for in-home estimates, etc.).</li>
+      <li>Advertisers are required to protect member privacy as well and cannot share, sell or exploit your data.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Why we're doing this</h2>
+    <p>The purpose of this docuseries is to document that perkminer.com's model is real, not a scam, and our main goal is to capture real experiences, testimonials and the earnings of our participants.</p>
+    <p>We want participants to make money during this 45 day period and beyond. We know that once your business reaches certain milestones (this week you earned $500), the chance of earning the same amount the following week or more is greater, even though earnings cannot be guaranteed.</p>
+  </div>
+
+  <div class="cta-band">
+    <h2>Ready to start your journey?</h2>
+    <p>Get started with Perk Miner LLC by clicking the button below. We want all participating members to succeed.</p>
+    <a class="btn btn-gold btn-lg" href="{{ url_for('docuseries.pre_register') }}">I want to participate</a>
+  </div>
+</div>
+{% endblock %}

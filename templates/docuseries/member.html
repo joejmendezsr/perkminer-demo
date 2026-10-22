@@ -1,0 +1,157 @@
+{% extends "docuseries/base_docuseries.html" %}
+{% block title %}Docuseries Dashboard – Perk Miner 45-Day Challenge{% endblock %}
+{% block robots %}<meta name="robots" content="noindex,nofollow">{% endblock %}
+
+{% block submenu %}
+<div class="submenu">
+  <div class="wrap">
+    <a href="/dashboard">Dashboard</a>
+    <a href="{{ url_for('docuseries.episodes') }}" target="_blank" rel="noopener">Episodes ↗</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="wrap">
+    <h1>Welcome to your docuseries dashboard</h1>
+    <p>{{ user.full_name or 'Participant' }}</p>
+  </div>
+</section>
+
+<div class="wrap section">
+
+  {% if first_time %}
+  <div class="callout ok" role="status">
+    <span class="ic" aria-hidden="true">🎉</span>
+    <p><strong>Congratulations! You are officially a participant in Perk Miner's 45-Day Challenge.</strong></p>
+  </div>
+  {% endif %}
+
+  <div class="callout warn">
+    <span class="ic" aria-hidden="true">⛔</span>
+    <div>
+      <p><strong>Important:</strong> Do not make any purchases from any advertisers until day one of the challenge! On day one, your earnings must be $0.</p>
+      <p>Do not invite any other people to become members or businesses to advertise until day one of the challenge.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Challenge start date</h2>
+    {% if start_date %}
+      <p style="font-size:1.2rem;margin:0"><strong>{{ start_date|ds_date }}</strong></p>
+    {% else %}
+      <p style="margin:0"><span class="badge">To be announced</span></p>
+    {% endif %}
+  </div>
+
+  <h2 style="margin:26px 0 14px">Start by uploading your first 2 videos</h2>
+  <p class="muted" style="margin-top:-6px">Each video can be uploaded <strong>once</strong>, so take a moment to make sure it's the one you want. Record in good light, speak clearly, and don't show your email address.</p>
+
+  <div class="grid grid-2">
+    {% for s in slots %}
+    <div class="card upload-card" data-slot="{{ s.number }}" data-max="{{ s.max_seconds }}" data-max-mb="{{ max_video_mb }}">
+      <h2>{% if s.number == 1 %}Upload your intro video{% else %}Upload your pre-registration / post-registration video{% endif %}</h2>
+      <p class="muted small" style="margin-top:-4px">Video #{{ s.number }} · limited to {{ s.max_seconds }} seconds · allowed once</p>
+
+      {% if s.video %}
+        <div class="callout ok" style="margin:0">
+          <span class="ic" aria-hidden="true">✅</span>
+          <div><p><strong>Uploaded</strong></p>
+          <p class="small">{{ s.video.completed_at|ds_dt }}{% if s.video.duration_seconds %} · {{ '%.0f'|format(s.video.duration_seconds) }}s{% endif %}</p></div>
+        </div>
+      {% else %}
+        <div class="filebox">
+          <label for="file-{{ s.number }}" class="small"><strong>Choose a video</strong> (MP4, MOV or WebM, up to {{ max_video_mb }} MB)</label><br>
+          <input type="file" id="file-{{ s.number }}" accept="video/*,.mp4,.mov,.webm">
+        </div>
+        <progress class="js-bar" value="0" max="100" style="width:100%;margin-top:12px;display:none" aria-label="Upload progress"></progress>
+        <p class="js-msg small" style="min-height:1.4em;margin:10px 0" aria-live="polite"></p>
+        <button type="button" class="btn btn-teal js-upload" disabled>Upload video</button>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="callout info">
+    <span class="ic" aria-hidden="true">🔓</span>
+    <p>Videos #3–#17 (up to 15 more 60-second experience videos) unlock when the challenge begins.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  var csrf=(document.querySelector('meta[name="csrf-token"]')||{}).content||'';
+
+  function getDuration(file){
+    return new Promise(function(resolve){
+      var v=document.createElement('video'); v.preload='metadata'; v.muted=true;
+      var url=URL.createObjectURL(file);
+      v.onloadedmetadata=function(){URL.revokeObjectURL(url);resolve(isFinite(v.duration)?v.duration:null);};
+      v.onerror=function(){URL.revokeObjectURL(url);resolve(null);};
+      v.src=url;
+    });
+  }
+  function api(url,body){
+    return fetch(url,{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-CSRFToken':csrf},body:JSON.stringify(body||{})})
+      .then(function(r){return r.json().catch(function(){return {};}).then(function(j){if(!r.ok)throw new Error(j.error||'Something went wrong.');return j;});});
+  }
+  function xhrSend(method,url,body,headers,onProgress){
+    return new Promise(function(resolve,reject){
+      var x=new XMLHttpRequest(); x.open(method,url);
+      Object.keys(headers||{}).forEach(function(k){x.setRequestHeader(k,headers[k]);});
+      x.upload.onprogress=function(e){if(e.lengthComputable)onProgress(Math.round(e.loaded/e.total*100));};
+      x.onload=function(){
+        if(x.status>=200&&x.status<300)return resolve(x.responseText);
+        var msg='Upload failed. Please try again.'; try{msg=JSON.parse(x.responseText).error||msg;}catch(e){}
+        reject(new Error(msg));
+      };
+      x.onerror=function(){reject(new Error('Network error. Please check your connection and try again.'));};
+      x.send(body);
+    });
+  }
+
+  document.querySelectorAll('.upload-card[data-slot]').forEach(function(card){
+    var input=card.querySelector('input[type=file]'); if(!input)return;
+    var n=+card.dataset.slot, max=+card.dataset.max, maxBytes=+card.dataset.maxMb*1048576;
+    var btn=card.querySelector('.js-upload'), msg=card.querySelector('.js-msg'), bar=card.querySelector('.js-bar');
+    var file=null, duration=null;
+    function say(t,bad){msg.textContent=t;msg.style.color=bad?'#b42318':'';}
+
+    input.addEventListener('change',function(){
+      file=input.files[0]||null; duration=null; btn.disabled=true; say('');
+      if(!file)return;
+      if(file.size>maxBytes){say('That file is '+(file.size/1048576).toFixed(0)+' MB. The limit is '+(maxBytes/1048576)+' MB.',true);return;}
+      say('Checking video…');
+      getDuration(file).then(function(d){
+        duration=d;
+        if(d!==null&&d>max+2){say('This video is '+Math.round(d)+' seconds. The limit is '+max+' seconds. Please trim it and choose it again.',true);return;}
+        say('Ready: '+file.name+' ('+(file.size/1048576).toFixed(1)+' MB'+(d!==null?', '+Math.round(d)+'s':'')+')');
+        btn.disabled=false;
+      });
+    });
+
+    btn.addEventListener('click',function(){
+      if(!file)return;
+      if(!confirm('You can only upload this video once. Upload it now?'))return;
+      btn.disabled=true; input.disabled=true; bar.style.display='block'; bar.value=0; say('Starting upload…');
+      api('/docuseries/api/video/init',{video_number:n,filename:file.name,content_type:file.type,size:file.size,duration:duration})
+      .then(function(init){
+        say('Uploading… please keep this page open.');
+        if(init.mode==='direct'){
+          return xhrSend('PUT',init.upload_url,file,{'Content-Type':init.content_type},function(p){bar.value=p;})
+            .then(function(){return api('/docuseries/api/video/'+init.video_id+'/complete');});
+        }
+        var fd=new FormData(); fd.append('file',file); fd.append('csrf_token',csrf);
+        return xhrSend('POST',init.upload_url,fd,{'X-CSRFToken':csrf},function(p){bar.value=p;});
+      })
+      .then(function(){bar.value=100;say('Upload complete! 🎉');setTimeout(function(){location.reload();},900);})
+      .catch(function(e){say(e.message,true);input.disabled=false;btn.disabled=false;bar.style.display='none';});
+    });
+  });
+})();
+</script>
+{% endblock %}

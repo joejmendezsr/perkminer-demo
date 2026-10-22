@@ -1,0 +1,65 @@
+{% extends "docuseries/base_docuseries.html" %}
+{% block title %}Live Locations – Docuseries Admin{% endblock %}
+{% block robots %}<meta name="robots" content="noindex,nofollow">{% endblock %}
+
+{% block submenu %}
+<div class="submenu">
+  <div class="wrap">
+    <a href="{{ url_for('docuseries.admin') }}">← Docuseries Admin</a>
+    <a href="/admin_roles_landing">Admin Roles</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="wrap"><h1>Live locations</h1><p>On-site recordings with participants and business owners</p></div>
+</section>
+
+<div class="wrap section">
+  <div class="callout warn">
+    <span class="ic" aria-hidden="true">🚧</span>
+    <p><strong>Sample page.</strong> More live-location features are coming. The cards below show how scheduled recordings will look.</p>
+  </div>
+
+  <div class="grid grid-2">
+    {% for l in locations %}
+    <div class="card">
+      <span class="badge ok">Scheduled</span>
+      <h2 style="margin-top:10px">{{ l.title }}</h2>
+      <p style="margin-bottom:4px"><strong>{{ l.starts_at|ds_dt }}</strong></p>
+      <p style="margin-bottom:4px">📍 {{ l.location_name }}</p>
+      {% if l.address %}<p class="muted small">{{ l.address }}</p>{% endif %}
+      {% if l.notes %}<p>{{ l.notes }}</p>{% endif %}
+    </div>
+    {% else %}
+    <div class="card">
+      <span class="badge sample">Sample</span>
+      <h2 style="margin-top:10px">Live invitation: local coffee shop</h2>
+      <p style="margin-bottom:4px"><strong>Sat, Dec 5, 2026 · 10:00 AM PT</strong></p>
+      <p style="margin-bottom:4px">📍 Sample Coffee Co.</p>
+      <p class="muted small">123 Fremont St, Las Vegas, NV</p>
+      <p>A participant invites the owner to become an advertiser while we record the full conversation.</p>
+    </div>
+    <div class="card">
+      <span class="badge sample">Sample</span>
+      <h2 style="margin-top:10px">Milestone recording: $1,000 earned</h2>
+      <p style="margin-bottom:4px"><strong>Sat, Dec 12, 2026 · 2:00 PM PT</strong></p>
+      <p style="margin-bottom:4px">📍 Participant's choice of location</p>
+      <p class="muted small">Las Vegas, NV</p>
+      <p>One-on-one recording of a member hitting a major milestone.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <h2>Coming next</h2>
+    <ul>
+      <li>Add, edit and cancel recordings from this page</li>
+      <li>Assign participants and business contacts to each location</li>
+      <li>Map view and participant notifications</li>
+    </ul>
+    <div style="border:2px dashed var(--line);border-radius:12px;padding:40px;text-align:center;color:var(--muted)">🗺️ Map placeholder</div>
+  </div>
+</div>
+{% endblock %}

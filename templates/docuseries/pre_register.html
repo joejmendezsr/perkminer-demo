@@ -1,0 +1,115 @@
+{% extends "docuseries/base_docuseries.html" %}
+{% block title %}Pre-Register – Perk Miner 45-Day Challenge{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="wrap">
+    <h1>We are excited to have you take this 45-Day journey with us.</h1>
+    <p>This is your first step to building a real business with zero cost, investment or any out-of-pocket expenses.</p>
+  </div>
+</section>
+
+<div class="wrap section">
+
+  <div class="callout info">
+    <span class="ic" aria-hidden="true">💡</span>
+    <p><strong>Note:</strong> Making purchases from any advertiser is not considered a fee. You are paying for products or services (eating at a restaurant, car service, etc.) that you would normally pay for whether done with Perk Miner LLC or not.</p>
+  </div>
+
+  {% if already %}
+  <div class="callout ok">
+    <span class="ic" aria-hidden="true">✅</span>
+    <div><p><strong>You're already registered for the docuseries.</strong></p>
+    <p><a href="{{ url_for('docuseries.member') }}">Go to your docuseries dashboard</a>. You can re-upload a corrected Talent Release Form below if you need to.</p></div>
+  </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" id="pre-form" novalidate>
+    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+
+    <div class="card">
+      <ol class="steps">
+        <li>
+          <h2>Step One: Download and fill out the Talent Release Form</h2>
+          <p>Download, print and fill out the Talent Release Form. You'll upload a photo or scan of the signed form in Step Two.</p>
+          <a class="btn btn-teal" href="{{ url_for('docuseries.talent_release_form') }}">⬇ Download Talent Release Form (PDF)</a>
+        </li>
+
+        <li>
+          <h2>Prepare for your first recorded experience</h2>
+          <p>We want to capture every participant's experience of registering as a member with perkminer.com. This must be completed before you click the button at the bottom of this page.</p>
+          <div class="callout warn"><span class="ic" aria-hidden="true">🎬</span><p><strong>Disclaimer:</strong> all uploaded videos will be used in the docuseries.</p></div>
+
+          <h3>A. Pre-registration (optional; start recording before clicking the button below)</h3>
+          <ul>
+            <li>This is not the normal registration process. The majority of members will register from perkminer.com's home page.</li>
+            <li>If possible, have another person record you registering (be careful not to show your email address), but this is not required.</li>
+          </ul>
+
+          <h3>B. Post-registration (uploaded on the next page)</h3>
+          <p>Document your post-registration experience:</p>
+          <ul>
+            <li>How difficult or easy was it to register?</li>
+            <li>What personal information was collected?</li>
+          </ul>
+          <p class="small muted"><strong>Note:</strong> Pre- and post-registration video is limited to 30 seconds.</p>
+
+          <h3>C. Intro video (uploaded on the next page)</h3>
+          <p>Record yourself on video for the first time (limited to 60 seconds):</p>
+          <ul>
+            <li>State your real name</li>
+            <li>Why you're participating in the challenge</li>
+            <li>Your current financial status (struggling, need to pay off debt, etc.)</li>
+            <li>What you would do if you earned $5k in the next 45 days</li>
+            <li>State that you are voluntarily participating in the challenge and are not being paid for your testimonials (because it's true)</li>
+            <li>Show yourself holding up the Talent Release Form</li>
+          </ul>
+        </li>
+
+        <li>
+          <h2>Step Two: Upload your Talent Release Form</h2>
+          <div class="filebox">
+            <label for="release_form"><strong>Signed Talent Release Form</strong> <span class="muted small">(PDF, JPG, PNG or HEIC, up to 10 MB)</span></label><br>
+            <input type="file" id="release_form" name="release_form" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,application/pdf,image/*" required>
+            <p class="small muted" style="margin:8px 0 0">Please don't write a phone number, address or any financial details on the form. We only collect your name, email, photo and video.</p>
+          </div>
+        </li>
+
+        <li>
+          <h2>Step Three: Agree to the terms</h2>
+          <div class="terms" tabindex="0" aria-label="Terms and conditions">
+            <h2 style="font-size:1.1rem;margin:0 0 4px">Terms</h2>
+            {% include "docuseries/_terms.html" %}
+          </div>
+          <div class="checkrow">
+            <input type="checkbox" id="agree_terms" name="agree_terms" value="1" required>
+            <label for="agree_terms">I agree to all these terms and conditions to participating in the challenge.</label>
+          </div>
+          <button class="btn btn-gold btn-lg" type="submit" id="go" disabled>Get Started</button>
+          <p class="small muted" style="margin-top:10px">
+            {% if user %}You're logged in, so we'll take you straight to your docuseries dashboard.
+            {% else %}Next you'll create your free Perk Miner account. Your form and agreement are saved automatically.{% endif %}
+          </p>
+        </li>
+      </ol>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  var f=document.getElementById('release_form'), c=document.getElementById('agree_terms'),
+      b=document.getElementById('go'), form=document.getElementById('pre-form');
+  function sync(){ b.disabled = !(f.files.length && c.checked); }
+  f.addEventListener('change',function(){
+    if(f.files[0] && f.files[0].size > 10*1024*1024){ alert('That file is over 10 MB. Please upload a smaller photo or scan.'); f.value=''; }
+    sync();
+  });
+  c.addEventListener('change',sync);
+  form.addEventListener('submit',function(){ b.disabled=true; b.textContent='Uploading…'; });
+  sync();
+})();
+</script>
+{% endblock %}
