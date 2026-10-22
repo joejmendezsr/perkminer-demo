@@ -151,7 +151,7 @@ table.rates th{background:var(--teal-l);font-size:.85rem;text-transform:uppercas
     </a>
     <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" id="menu-btn">Menu</button>
     <nav class="nav" id="site-nav" aria-label="Main">
-      {% if session.get('user_id') %}
+      {% if (current_user is defined and current_user.is_authenticated) or session.get('user_id') %}
         <a href="/dashboard">Dashboard</a>
       {% else %}
         <a href="/login">Login</a>
