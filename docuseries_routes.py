@@ -49,7 +49,7 @@ USER_TABLE = '"user"'                 # "user" is a reserved word in Postgres, s
 USER_ID_COL = "id"
 USER_EMAIL_COL = "email"
 USER_NAME_SQL = "name"
-USER_REF_COL = "ref_code"             # column that holds values like 'refJoeJMendez'
+USER_REF_COL = "NULL"             # column that holds values like 'refJoeJMendez'
 ADMIN_REF_VALUE = "refJoeJMendez"     # owner account: can always open /docuseries/admin
 ALLOW_ROLE_ON_ADMIN = True            # True = any user with the docuseries role (docuseries_role = TRUE) can also open it
 
