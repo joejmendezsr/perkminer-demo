@@ -97,20 +97,9 @@ docuseries_bp = Blueprint("docuseries", __name__, url_prefix="/docuseries",
 # ---------------------------------------------------------------------------
 # Database helpers (plain psycopg2 -- swap _conn() for your existing helper if you have one)
 # ---------------------------------------------------------------------------
-def _dsn():
-    """Find the database URL: DATABASE_URL (env or config), else your SQLAlchemy URI."""
-    dsn = (current_app.config.get("DATABASE_URL") or os.environ.get("DATABASE_URL")
-           or current_app.config.get("SQLALCHEMY_DATABASE_URI"))
-    if not dsn:
-        raise RuntimeError("docuseries: set DATABASE_URL or SQLALCHEMY_DATABASE_URI")
-    if hasattr(dsn, "render_as_string"):  # SQLAlchemy URL object
-        dsn = dsn.render_as_string(hide_password=False)
-    # psycopg2 wants postgresql://  (not postgres:// or postgresql+psycopg2://)
-    return re.sub(r"^postgres(ql)?(\+\w+)?://", "postgresql://", str(dsn))
-
-
 def _conn():
-    return psycopg2.connect(_dsn(), cursor_factory=psycopg2.extras.RealDictCursor)
+    dsn = current_app.config.get("DATABASE_URL") or os.environ["DATABASE_URL"]
+    return psycopg2.connect(dsn, cursor_factory=psycopg2.extras.RealDictCursor)
 
 
 @contextmanager
@@ -162,21 +151,8 @@ def _load_user(uid):
         f"docuseries_role FROM {USER_TABLE} WHERE {USER_ID_COL} = %s", (uid,))
 
 
-def _logged_in_user_id():
-    """Id of the logged-in user. Works with Flask-Login (what your app uses), and
-    falls back to a plain session key (SESSION_USER_KEY) if Flask-Login isn't active."""
-    try:
-        from flask_login import current_user as fl_user
-        if fl_user.is_authenticated:
-            uid = fl_user.get_id()
-            return int(uid) if str(uid).isdigit() else uid
-    except Exception:
-        pass
-    return session.get(SESSION_USER_KEY)
-
-
 def current_user():
-    uid = _logged_in_user_id()
+    uid = session.get(SESSION_USER_KEY)
     if not uid:
         return None
     if "docuseries_user" not in g:
