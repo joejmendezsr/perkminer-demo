@@ -32,6 +32,8 @@ from itsdangerous import URLSafeSerializer
 from cloudinary.utils import api_sign_request
 import time
 
+from docuseries_routes import docuseries_bp
+
 from urllib.parse import urlparse
 
 import os
@@ -199,6 +201,8 @@ app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
 app.config['RECAPTCHA_PUBLIC_KEY'] = '6LdhAV8sAAAAABwITf0HytcbADISlcMd87NP-i2H'
 app.config['RECAPTCHA_PRIVATE_KEY'] = '6LdhAV8sAAAAAFi9YjxnZqFLUl3SlQjHc1g7IEOq'
 app.config['GOOGLE_MAPS_API_KEY'] = os.environ.get('GOOGLE_MAPS_API_KEY')
+
+app.register_blueprint(docuseries_bp)
 
 SHOP_SECRET = os.environ.get("SHOP_SECRET", app.config['SECRET_KEY'])
 shop_serializer = URLSafeSerializer(SHOP_SECRET, salt="shop-redirect")
