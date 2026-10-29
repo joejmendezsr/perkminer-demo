@@ -27,9 +27,10 @@
     body { background: var(--pm-bg); color: var(--pm-text); }
     .navbar { box-shadow: 0 2px 8px #f0f2f3; }
     .navbar-brand { font-weight: 800; color: var(--pm-primary-dark) !important; }
+    /* SPACING FIX: card bottom margin reduced from 1.25rem to .6rem */
     .card {
       background: #fff; border-radius: 16px; border: 1px solid #e8f0f2;
-      box-shadow: var(--pm-shadow); margin-bottom: 1.25rem;
+      box-shadow: var(--pm-shadow); margin-bottom: .6rem;
     }
     .btn { border-radius: 10px; font-weight: 600; }
     .btn-primary, .btn-success { background: var(--pm-primary); border: none; color: #fff !important; }
@@ -47,7 +48,16 @@
     .form-control, .form-select { border-color: #cfe0e2; }
     label { font-weight: 500; }
     .text-muted { color: var(--pm-muted) !important; }
-    @media (max-width: 600px) { .card { margin-bottom: 1rem; } }
+    @media (max-width: 600px) { .card { margin-bottom: .5rem; } }
+
+    /* SITE-WIDE SPACING OVERRIDES: Bootstrap utilities (mb-3, mt-3, p-md-4) use !important,
+       so they must be beaten with !important here to take effect on every page. */
+    .pm-hero { margin-bottom: .5rem !important; flex-direction: row !important; }
+    .card.mb-3, .card.mb-4 { margin-bottom: .6rem !important; }
+    .pm-hero + .card, .pm-hero + div > .card:first-child { margin-top: 0 !important; }
+    .card.p-3, .card.p-md-4 { padding: .75rem !important; }
+    .card .mt-3, .card .mt-4 { margin-top: .5rem !important; }
+    .card .mb-3, .card .mb-4 { margin-bottom: .5rem !important; }
 
     footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: .9rem; margin-top: 2rem; }
     footer a { color: var(--pm-primary-light); text-decoration: none; }
@@ -58,26 +68,27 @@
     .card-title-row i { color: var(--pm-primary); font-size: 1.25rem; }
     .card-title-row .ms-auto { font-weight: 500; }
 
+    /* SPACING FIX: hero padding/gap/icon size reduced */
     .pm-hero {
       background: var(--pm-grad); color: #fff; border: 0; border-radius: 18px;
-      padding: 1.1rem 1.25rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+      padding: .65rem 1rem; display: flex; flex-direction: row; align-items: center; gap: .75rem; flex-wrap: wrap;
     }
     .pm-hero:hover { box-shadow: var(--pm-shadow); }
     .pm-hero .pm-hero-icon {
-      width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,.16);
-      display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;
+      width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,.16);
+      display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0;
       overflow: hidden;
     }
     .pm-hero .pm-hero-icon img { width: 100%; height: 100%; object-fit: cover; }
-    .pm-hero h1, .pm-hero h2 { font-size: 1.35rem; font-weight: 800; margin: 0; line-height: 1.25; word-break: break-word; }
-    .pm-hero .pm-hero-sub { opacity: .88; font-size: .92rem; }
-    .pm-hero .pm-hero-body { flex: 1 1 220px; min-width: 0; }
+    .pm-hero h1, .pm-hero h2 { font-size: 1.35rem; font-weight: 800; margin: 0; line-height: 1.2; word-break: break-word; }
+    .pm-hero .pm-hero-sub { opacity: .88; font-size: .92rem; line-height: 1.2; }
+    .pm-hero .pm-hero-body { flex: 1 1 220px; min-width: 0; height: auto; min-height: 0; }
     .pm-hero .pm-hero-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
     .pm-hero .btn-light { color: var(--pm-primary-dark) !important; }
     .pm-hero .btn-end { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.45); color: #fff !important; }
     .pm-hero .btn-end:hover { background: #bf3636; border-color: #bf3636; }
     @media (max-width: 576px) {
-      .pm-hero { padding: 1rem; }
+      .pm-hero { padding: .6rem .85rem; }
       .pm-hero .pm-hero-actions { width: 100%; }
       .pm-hero .pm-hero-actions > *, .pm-hero .pm-hero-actions form .btn { width: 100%; }
       .pm-hero .pm-hero-actions form { flex: 1 1 100%; }
@@ -94,8 +105,8 @@
     .pm-status-go i { animation: pmPulse 1.2s infinite; }
     @keyframes pmPulse { 50% { opacity: .25; } }
 
-    /* callouts */
-    .pm-note { border-radius: 12px; padding: .75rem 1rem; font-size: .95rem; background: #e0f1f1; border: 1px solid #c4e2e2; color: var(--pm-primary-dark); }
+    /* callouts (SPACING FIX: tighter padding) */
+    .pm-note { border-radius: 12px; padding: .5rem .8rem; font-size: .95rem; background: #e0f1f1; border: 1px solid #c4e2e2; color: var(--pm-primary-dark); }
     .pm-note.ok { background: #e9f7ef; border-color: #bfe3cf; color: #146c43; }
     .pm-note.bad { background: #fdecec; border-color: #f4c4c4; color: #a12828; }
     .pm-note.warn { background: #fff8e1; border-color: #ecd58c; color: #7a5a00; }
@@ -149,10 +160,10 @@
     .pm-file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
     .pm-file-chip button { border: 0; background: none; color: inherit; padding: 0; line-height: 1; }
 
-    /* QR */
-    .pm-qr { text-align: center; background: linear-gradient(145deg, #e9f7ef 0%, #f3fbf6 100%); border: 1px solid #bfe3cf; border-radius: 16px; padding: 1.1rem; }
-    .pm-qr .pm-qr-img { background: #fff; padding: 10px; border-radius: 14px; border: 1px solid #d3eadc; width: min(240px, 70vw); height: auto; cursor: zoom-in; }
-    .pm-qr .pm-qr-title { font-weight: 800; color: #146c43; margin-bottom: .6rem; }
+    /* QR (SPACING FIX: tighter box padding, title margin, image padding; image is now a block so no stray line-height gap) */
+    .pm-qr { text-align: center; background: linear-gradient(145deg, #e9f7ef 0%, #f3fbf6 100%); border: 1px solid #bfe3cf; border-radius: 16px; padding: .6rem; }
+    .pm-qr .pm-qr-img { display: block; margin: 0 auto; background: #fff; padding: 6px; border-radius: 14px; border: 1px solid #d3eadc; width: min(240px, 70vw); height: auto; cursor: zoom-in; }
+    .pm-qr .pm-qr-title { font-weight: 800; color: #146c43; margin-bottom: .35rem; line-height: 1.25; }
 
     /* lists */
     .pm-avatar { width: 48px; height: 48px; border-radius: 14px; background: var(--pm-hover); color: var(--pm-primary); border: 1px solid #cfe5e4; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; flex-shrink: 0; overflow: hidden; }
