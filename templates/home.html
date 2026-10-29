@@ -203,9 +203,9 @@
   <div class="marquee">
     <div class="marquee-content" id="live-marquee">
       <span>DEMO SITE ONLY!</span>
-      <span class="highlight">Free to Join — Earn 2% real cash back on purchases</span>
+      <span class="highlight">Free to Join — Earn 2% real cash on purchases - deposited to your bank account</span>
       <span>DEMO SITE ONLY!</span>
-      <span class="highlight">Free to Join — Earn 2% real cash back on purchases</span>
+      <span class="highlight">Free to Join — Earn 2% real cash on purchases - deposited to your bank account</span>
     </div>
   </div>
 </div>
@@ -488,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const data = await resp.json();
       const members = data.members ?? 0;
       const advertisers = data.advertisers ?? 0;
-      marqueeEl.innerHTML = `DEMO SITE ONLY! · Members: <span class="highlight">${members.toLocaleString()}</span> · Businesses: <span class="highlight">${advertisers.toLocaleString()}</span> · Free to join & earn real cash back`;
+      marqueeEl.innerHTML = `DEMO SITE ONLY! · Members: <span class="highlight">${members.toLocaleString()}</span> · Businesses: <span class="highlight">${advertisers.toLocaleString()}</span> · Free to join & earn real money - deposited to your bank account`;
     } catch (e) {}
   }
   updateMarquee();

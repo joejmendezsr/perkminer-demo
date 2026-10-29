@@ -1,0 +1,65 @@
+{# Shared shell for login / register / password / small form pages.
+   Child pages set:  auth_icon (bootstrap icon name), auth_title, auth_sub (optional), auth_width (optional, px)
+   and fill  {% block auth_body %}  (inside the card)  and optionally  {% block auth_after %} (below the card).
+   Set  {% set flash_safe = true %}  only on pages whose flash messages intentionally contain links. #}
+{% extends "pm_base.html" %}
+
+{% block head_extra %}
+<style>
+  .auth-wrap { margin: 0 auto; }
+  .auth-head { text-align: center; margin-bottom: 1rem; }
+  .auth-head .auth-ic { width: 64px; height: 64px; border-radius: 18px; background: var(--pm-grad); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: .6rem; box-shadow: var(--pm-shadow); }
+  .auth-head h1 { font-size: clamp(1.4rem, 4.5vw, 1.8rem); font-weight: 800; color: var(--pm-primary-dark); margin: 0; }
+  .auth-head .auth-sub { color: var(--pm-muted); margin-top: .35rem; font-size: .98rem; }
+  .auth-links { text-align: center; display: flex; flex-direction: column; gap: .4rem; margin-top: 1.1rem; }
+  .auth-links a { font-weight: 600; text-decoration: none; color: var(--pm-primary); }
+  .auth-links a:hover { text-decoration: underline; }
+  .input-group .btn { border-color: #cfe0e2; }
+  .code-input { font-size: 1.6rem; letter-spacing: .35rem; font-weight: 700; }
+</style>
+{% block auth_head_extra %}{% endblock %}
+{% endblock %}
+
+{% block flashes %}
+{% with flashed = get_flashed_messages(with_categories=true) %}
+  {% if flashed %}
+    <div class="container auth-wrap" style="max-width: {{ (auth_width|default(460)) + 24 }}px;">
+      {% for category, flash_msg in flashed %}
+        {% set cls = {'error':'danger','message':'info','success':'success','danger':'danger','warning':'warning','info':'info'}.get(category, 'info') %}
+        <div class="alert alert-{{ cls }} mb-2 text-center" role="alert">{% if flash_safe is defined and flash_safe %}{{ flash_msg|safe }}{% else %}{{ flash_msg }}{% endif %}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+{% endblock %}
+
+{% block content %}
+<div class="container pb-4 auth-wrap" style="max-width: {{ (auth_width|default(460)) + 24 }}px;">
+  <div class="auth-head">
+    <div class="auth-ic"><i class="bi bi-{{ auth_icon|default('person-circle') }}"></i></div>
+    <h1>{{ auth_title }}</h1>
+    {% if auth_sub is defined and auth_sub %}<div class="auth-sub">{{ auth_sub|safe }}</div>{% endif %}
+  </div>
+  <div class="card p-3 p-md-4">
+    {% block auth_body %}{% endblock %}
+  </div>
+  {% block auth_after %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('[data-pw-toggle]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = document.querySelector(btn.getAttribute('data-pw-toggle'));
+      if (!input) return;
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      var i = btn.querySelector('i'); if (i) i.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+    });
+  });
+});
+</script>
+{% block auth_scripts %}{% endblock %}
+{% endblock %}

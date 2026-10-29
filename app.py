@@ -32,9 +32,11 @@ from itsdangerous import URLSafeSerializer
 from cloudinary.utils import api_sign_request
 import time
 
+from urllib.parse import urlparse
+
 from docuseries_routes import docuseries_bp
 
-from urllib.parse import urlparse
+from quote_helpers import build_quote_from_form, QuoteError
 
 import os
 import stripe
@@ -205,7 +207,7 @@ app.config['GOOGLE_MAPS_API_KEY'] = os.environ.get('GOOGLE_MAPS_API_KEY')
 app.register_blueprint(docuseries_bp)
 
 SHOP_SECRET = os.environ.get("SHOP_SECRET", app.config['SECRET_KEY'])
-shop_serializer = URLSafeSerializer(SHOP_SECRET, salt="shop-redirect")
+shop_serializer = URLSafeTimedSerializer(SHOP_SECRET, salt="shop-redirect")
 
 UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -971,7 +973,7 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     )
     db.session.add(user_trans)
 
-    business_referral_id = business.referral_code or "BIZPerkMiner"
+    business_referral_id = business.referral_code or "PerkMinerLLC"
     b2 = Business.query.filter_by(id=business.sponsor_id).first()
     tier2_business_referral_id = b2.referral_code if b2 else ""
     tier2_commission_biz = round(min(amount * 0.002, 5.00), 2)
@@ -982,7 +984,7 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     tier4_business_referral_id = b4.referral_code if b4 else ""
     tier4_commission_biz = round(min(amount * 0.002, 5.00), 2)
     b5 = Business.query.filter_by(id=b4.sponsor_id).first() if b4 and b4.sponsor_id else None
-    tier5_business_referral_id = b5.referral_code if b5 else "BIZPerkMiner"
+    tier5_business_referral_id = b5.referral_code if b5 else "PerkMinerLLC"
     tier5_commission_biz = round(min(amount * 0.01, 25), 2)
 
     business_cash_back_raw = amount * 0.01
@@ -1094,7 +1096,7 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     print(f"T5 biz id: {tier5_business_user_referral_id}")
 
     # Define the conditional payout helper
-    def biz_tier_commission_val(biz_id, commission_amt, special_exclude="BIZPerkMiner"):
+    def biz_tier_commission_val(biz_id, commission_amt, special_exclude="PerkMinerLLC"):
         if biz_id is None or not str(biz_id).strip() or biz_id == special_exclude:
             return Decimal("0")
         return commission_amt
@@ -1138,7 +1140,7 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     # ...previous business payout code above...
 
     capital_reserves = Decimal("0")
-    if (not tier5_business_user_referral_id or tier5_business_user_referral_id == "BIZPerkMiner"):
+    if (not tier5_business_user_referral_id or tier5_business_user_referral_id == "PerkMinerLLC"):
         capital_reserves += t5_payout
 
     print(f"Capital reserves from Tier 5: {capital_reserves}")
@@ -1382,6 +1384,10 @@ class User(db.Model, UserMixin):
     investor_earnings_balance = db.Column(db.Numeric(12, 6), default=0)
     pending_investor_earnings = db.Column(db.Numeric(12, 6), default=0)      # < 7 days
     withdrawal_in_progress = db.Column(db.Boolean, default=False, nullable=False)
+    release_form = db.Column(db.Text)
+    docuseries_terms = db.Column(db.Boolean, default=False, nullable=False)
+    docuseries_terms_at = db.Column(db.DateTime(timezone=True))
+    docuseries_welcomed = db.Column(db.Boolean, default=False, nullable=False)
     investor_earnings_withdraw_ready = db.Column(db.Numeric(12, 6), default=0)  # >= 7 days
     def has_role(self, role_name):
         return any(role.name == role_name for role in self.roles)
@@ -1549,6 +1555,8 @@ class Business(db.Model):
     ins_company = db.Column(db.String(100))
     draft_bond_company = db.Column(db.String(100))
     draft_ins_company = db.Column(db.String(100))
+    sales_key = db.Column(db.String(64))
+    shopify_webhook_secret = db.Column(db.String(160))
     theme_type = db.Column(db.String(50))
     # ---- trust-badge helpers ----
     def eff(self, field):
@@ -1585,6 +1593,22 @@ class Business(db.Model):
     def badge_insured(self):
         return bool(self.is_service_type and self.insured and self.ins_amount
                     and self.ins_company and self.ins_number and self.ins_verified)
+
+class ExternalSale(db.Model):
+    """One row per online order we recorded. The unique (business, order) pair makes retries harmless."""
+    __tablename__ = "external_sales"
+    id = db.Column(db.Integer, primary_key=True)
+    business_id = db.Column(db.Integer, db.ForeignKey("business.id"), nullable=False, index=True)
+    order_ref = db.Column(db.String(120), nullable=False)
+    interaction_id = db.Column(db.Integer)
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
+    source = db.Column(db.String(30))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __table_args__ = (db.UniqueConstraint("business_id", "order_ref", name="uq_external_sale_order"),)
+
+
+SHOP_TOKEN_MAX_AGE = 60 * 60 * 24 * 2      # a shop token is good for 48 hours
+SIGNATURE_MAX_SKEW = 300                   # signed requests must be less than 5 minutes old
 
 class ReferralCodeHistory(db.Model):
     __tablename__ = "referral_code_history"
@@ -2093,11 +2117,25 @@ def business_upload_params():
 class Quote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     interaction_id = db.Column(db.Integer, db.ForeignKey('interaction.id'), nullable=False, unique=True)
-    amount = db.Column(db.Float, nullable=False)
-    details = db.Column(db.Text, nullable=False)
+    amount = db.Column(db.Float, nullable=False)          # the TOTAL (what the member pays)
+    details = db.Column(db.Text, nullable=False)          # readable itemized text (older screens still use it)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # NEW: itemized quote
+    line_items = db.Column(db.Text)                       # JSON list: [{"desc","qty","price","total"}, ...]
+    subtotal = db.Column(db.Numeric(12, 2))
+    tax_rate = db.Column(db.Numeric(6, 3))                # percent, e.g. 8.250
+    tax_amount = db.Column(db.Numeric(12, 2))
+    notes = db.Column(db.Text)
+
     interaction = db.relationship('Interaction', backref=db.backref('quote', uselist=False))
+
+def quote_items_for(q):
+    """Line items of a quote as a list for quote.html (empty for older quotes)."""
+    try:
+        return json.loads(q.line_items) if q is not None and q.line_items else []
+    except ValueError:
+        return []
 
 class UserTransaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -2579,6 +2617,11 @@ def get_admin_pending_counts():
     if current_user.has_role("customer_support"):
         counts["support"] = Interaction.query.filter_by(
             service_type="Support", status="active"
+        ).count()
+
+    if current_user.has_role("docuseries"):
+        counts["support"] = Interaction.query.filter_by(
+            status="pending"
         ).count()
 
     if current_user.has_role("ecommerce"):
@@ -3093,7 +3136,7 @@ def connected_account_has_debit_card(account_id: str) -> (bool, str):
 
 def biz_tier_commission(t, tier_field, ref_field):
     ref_id = getattr(t, ref_field)
-    if ref_id and str(ref_id).strip() and ref_id != "BIZPerkMiner":
+    if ref_id and str(ref_id).strip() and ref_id != "PerkMinerLLC":
         return getattr(t, tier_field) or 0
     return 0
 
@@ -5508,22 +5551,155 @@ def export_user_earnings_csv():
         "Content-Disposition": f"attachment;filename=user_earnings_{user.referral_code}.csv"
     })
 
+def _is_finalized(interaction):
+    """True once a BusinessTransaction exists for this session (no more quotes allowed)."""
+    return BusinessTransaction.query.filter_by(interaction_id=interaction.id).first() is not None
+
+
+def _save_quote_from_form(interaction, quote_row, form):
+    """Validates the itemized form, writes it to the Quote row and commits.
+    Returns (quote_row, was_update).  Raises QuoteError for bad input (message is user-friendly)."""
+    data = build_quote_from_form(form)           # raises QuoteError
+    was_update = quote_row is not None
+    if quote_row is None:
+        quote_row = Quote(interaction_id=interaction.id)
+    quote_row.amount = float(data["total"])      # total the member pays
+    quote_row.details = data["details"]          # readable text version (older screens still use it)
+    quote_row.line_items = json.dumps(data["items"])
+    quote_row.subtotal = data["subtotal"]
+    quote_row.tax_rate = data["tax_rate"]
+    quote_row.tax_amount = data["tax_amount"]
+    quote_row.notes = data["notes"]
+    db.session.add(quote_row)
+    db.session.commit()
+    return quote_row, was_update
+
+
 # USER — View Quote (read-only; user context)
 @app.route("/session/<int:interaction_id>/user-quote")
 @login_required
 def user_quote_view(interaction_id):
     interaction = Interaction.query.get_or_404(interaction_id)
-    is_user = interaction.user_id == current_user.id
-    is_biz = False
-    if not is_user:
+    if interaction.user_id != current_user.id:
         abort(403)
-    quote = Quote.query.filter_by(interaction_id=interaction.id).first()
+    quote_row = Quote.query.filter_by(interaction_id=interaction.id).first()
     return render_template(
         "quote.html",
         interaction=interaction,
-        quote=quote,
-        is_user=is_user,
-        is_biz=is_biz
+        quote=quote_row,
+        quote_items=quote_items_for(quote_row),
+        is_user=True,
+        is_biz=False,
+        is_staff=False,
+        is_finalized=_is_finalized(interaction),
+        error_message=None,
+    )
+
+
+# BUSINESS — Create / Edit Quote (business context)
+@app.route("/session/<int:interaction_id>/quote", methods=["GET", "POST"])
+@business_login_required
+def create_quote(interaction_id):
+    interaction = Interaction.query.get_or_404(interaction_id)
+    is_biz = session.get("business_id") == interaction.business_id
+    if not is_biz:
+        flash("Only the business can send or edit a quote for this session.")
+        return redirect(url_for("biz_active_session", interaction_id=interaction_id))
+
+    is_finalized = _is_finalized(interaction)
+    quote_row = Quote.query.filter_by(interaction_id=interaction.id).first()
+    error_message = None
+
+    if request.method == "POST":
+        if is_finalized:
+            flash("This session has been finalized. No further quotes may be sent.", "warning")
+            return redirect(url_for("biz_active_session", interaction_id=interaction.id))
+        try:
+            quote_row, was_update = _save_quote_from_form(interaction, quote_row, request.form)
+            flash("Quote was updated!" if was_update else "Quote sent to user!", "success")
+            return redirect(url_for("biz_active_session", interaction_id=interaction.id))
+        except QuoteError as e:
+            db.session.rollback()
+            error_message = str(e)
+        except Exception as e:
+            db.session.rollback()
+            app.logger.exception("create_quote failed")
+            error_message = "Failed to save quote. Please try again."
+        # re-read so the page shows what is really saved, not half-applied edits
+        quote_row = Quote.query.filter_by(interaction_id=interaction.id).first()
+
+    return render_template(
+        "quote.html",
+        interaction=interaction,
+        quote=quote_row,
+        quote_items=quote_items_for(quote_row),
+        is_user=False,
+        is_biz=True,
+        is_staff=False,
+        is_finalized=is_finalized,
+        error_message=error_message,
+    )
+
+
+# MEMBER shortcut URL. The old version had @business_login_required but checked for the member (so it could
+# never work for a member). It now just sends the member to the real read-only quote page.
+@app.route("/session/<int:interaction_id>/quote/view")
+@login_required
+def view_quote(interaction_id):
+    interaction = Interaction.query.get_or_404(interaction_id)
+    if interaction.user_id != current_user.id:
+        flash("Only the user may view the quote.")
+        return redirect(url_for("active_session", interaction_id=interaction_id))
+    return redirect(url_for("user_quote_view", interaction_id=interaction_id))
+
+
+# STAFF — Create / Edit Quote
+@app.route("/staff/session/<int:interaction_id>/quote", methods=["GET", "POST"])
+def staff_create_quote(interaction_id):
+    staff_id = session.get("staff_id")
+    if not staff_id:
+        flash("Please log in as staff.")
+        return redirect(url_for("staff_login"))
+    staff = Staff.query.get(staff_id)
+    if not staff:
+        session.pop("staff_id", None)
+        flash("Please log in as staff.")
+        return redirect(url_for("staff_login"))
+    interaction = Interaction.query.filter_by(id=interaction_id, business_id=staff.business_id).first_or_404()
+
+    # Finalized sessions cannot be quoted
+    is_finalized = _is_finalized(interaction)
+    if is_finalized:
+        flash("This session has been finalized. No further quotes may be sent.", "warning")
+        return redirect(url_for("staff_active_session", interaction_id=interaction.id))
+
+    quote_row = Quote.query.filter_by(interaction_id=interaction.id).first()
+    error_message = None
+
+    if request.method == "POST":
+        try:
+            quote_row, was_update = _save_quote_from_form(interaction, quote_row, request.form)
+            flash("Quote was updated!" if was_update else "Quote sent to user!", "success")
+            return redirect(url_for("staff_active_session", interaction_id=interaction.id))
+        except QuoteError as e:
+            db.session.rollback()
+            error_message = str(e)
+        except Exception as e:
+            db.session.rollback()  # always roll back on error
+            app.logger.exception("staff_create_quote failed")
+            error_message = "Failed to save quote. Please try again."
+        quote_row = Quote.query.filter_by(interaction_id=interaction.id).first()
+
+    return render_template(
+        "quote.html",
+        interaction=interaction,
+        quote=quote_row,
+        quote_items=quote_items_for(quote_row),
+        is_user=False,
+        is_biz=False,
+        is_staff=True,
+        is_finalized=is_finalized,
+        error_message=error_message,
     )
 
 @app.route("/user/start-purchase/<int:biz_id>")
@@ -5650,46 +5826,6 @@ def finalize_transaction_user(interaction_id):
         interaction=interaction,
         now=now,
         summary=summary
-    )
-
-# BUSINESS — View/Edit Quote (business context)
-@app.route("/session/<int:interaction_id>/quote", methods=["GET", "POST"])
-@business_login_required
-def create_quote(interaction_id):
-    interaction = Interaction.query.get_or_404(interaction_id)
-    is_biz = session.get('business_id') == interaction.business_id
-    is_user = False
-    if not is_biz:
-        flash("Only the business can send or edit a quote for this session.")
-        return redirect(url_for('biz_active_session', interaction_id=interaction_id))
-
-    quote = Quote.query.filter_by(interaction_id=interaction.id).first()
-    if request.method == "POST":
-        amount = request.form.get("amount")
-        details = request.form.get("details")
-        if not amount or not details:
-            flash("Amount and quote details are required.", "danger")
-        else:
-            if quote:
-                quote.amount = amount
-                quote.details = details
-            else:
-                quote = Quote(
-                    interaction_id=interaction.id,
-                    amount=amount,
-                    details=details
-                )
-                db.session.add(quote)
-            db.session.commit()
-            flash("Quote sent to user!" if not quote else "Quote was updated!", "success")
-            return redirect(url_for('biz_active_session', interaction_id=interaction_id))
-
-    return render_template(
-        "quote.html",
-        interaction=interaction,
-        quote=quote,
-        is_user=is_user,
-        is_biz=is_biz
     )
 
 @app.route("/session/<int:interaction_id>/end", methods=["POST"])
@@ -6083,17 +6219,6 @@ def session_messages(interaction_id):
         return ""
     messages = Message.query.filter_by(interaction_id=interaction.id).order_by(Message.timestamp).all()
     return render_template("partials/_messages.html", interaction=interaction, messages=messages, is_user=is_user, is_biz=is_biz)
-
-@app.route("/session/<int:interaction_id>/quote/view")
-@business_login_required
-def view_quote(interaction_id):
-    interaction = Interaction.query.get_or_404(interaction_id)
-    is_user = interaction.user_id == getattr(current_user, 'id', None)
-    if not is_user:
-        flash("Only the user may view the quote.")
-        return redirect(url_for('active_session', interaction_id=interaction_id))
-    quote = Quote.query.filter_by(interaction_id=interaction.id).first()
-    return render_template("quote.html", interaction=interaction, quote=quote)
 
 @app.route("/business/receipts")
 @business_login_required
@@ -7516,7 +7641,7 @@ def finance_dashboard():
         for t in utxns
     )
 
-    # Business payouts: Tier1 always included; Tiers 2-5 only if NOT BIZPerkMiner, plus mutuals
+    # Business payouts: Tier1 always included; Tiers 2-5 only if NOT PerkMinerLLC, plus mutuals
     total_paid_businesses = (
         sum(
             (t.cash_back or 0)
@@ -7529,13 +7654,13 @@ def finance_dashboard():
         + total_sponsoree_mutual_commission
     )
 
-    # Capital reserves: only those explicitly paid to BIZPerkMiner
+    # Capital reserves: only those explicitly paid to PerkMinerLLC
     capital_reserves = sum(
-        (t.cash_back or 0) if t.business_referral_id == "BIZPerkMiner" else 0
+        (t.cash_back or 0) if t.business_referral_id == "PerkMinerLLC" else 0
         for t in main_btxns
     )
     capital_reserves += sum(
-        (t.tier5_commission or 0) if t.tier5_business_referral_id == "BIZPerkMiner" else 0
+        (t.tier5_commission or 0) if t.tier5_business_referral_id == "PerkMinerLLC" else 0
         for t in main_btxns
     )
 
@@ -7754,60 +7879,6 @@ def support_session(interaction_id):
         "support_session.html",
         interaction=interaction,
         messages=messages_with_labels
-    )
-
-from datetime import datetime, timedelta
-
-@app.route("/admin/business/<int:biz_id>/verify-ecommerce", methods=["GET", "POST"])
-@admin_required
-def admin_verify_ecommerce(biz_id):
-    biz = Business.query.get_or_404(biz_id)
-
-    if not (biz.is_ecommerce_site and biz.allow_website_purchases and biz.online_terms_agreed):
-        flash("This business is not eligible for e‑commerce verification yet.", "warning")
-        return redirect(url_for("admin_roles_landing"))
-
-    # get last 5 pings
-    recent_pings = (
-        EcommerceVerificationPing.query
-        .filter_by(business_id=biz.id)
-        .order_by(EcommerceVerificationPing.created_at.desc())
-        .limit(5)
-        .all()
-    )
-
-    if request.method == "POST":
-        biz.ecommerce_verified = True
-        db.session.commit()
-        flash(f"{biz.business_name} has been marked as e‑commerce verified.", "success")
-        return redirect(url_for("admin_verify_ecommerce", biz_id=biz.id))
-
-    return render_template(
-        "admin_verify_ecommerce.html",
-        business=biz,
-        recent_pings=recent_pings,
-    )
-
-@app.route("/admin/ecommerce-verifications")
-@admin_required
-def admin_ecommerce_verifications():
-    # businesses that are eligible but not yet verified
-    pending_biz = Business.query.filter(
-        Business.is_ecommerce_site.is_(True),
-        Business.allow_website_purchases.is_(True),
-        Business.online_terms_agreed.is_(True),
-        Business.ecommerce_verified.is_(False)
-    ).order_by(Business.business_name.asc()).all()
-
-    # already verified businesses (optional)
-    verified_biz = Business.query.filter(
-        Business.ecommerce_verified.is_(True)
-    ).order_by(Business.business_name.asc()).all()
-
-    return render_template(
-        "admin_ecommerce_verifications.html",
-        pending_biz=pending_biz,
-        verified_biz=verified_biz,
     )
 
 @app.route("/support-dashboard")
@@ -9448,61 +9519,6 @@ def staff_finalize_transaction(interaction_id):
         account_balance=staff.business.account_balance
     )
 
-@app.route("/staff/session/<int:interaction_id>/quote", methods=["GET", "POST"])
-def staff_create_quote(interaction_id):
-    staff_id = session.get("staff_id")
-    if not staff_id:
-        flash("Please log in as staff.")
-        return redirect(url_for("staff_login"))
-    staff = Staff.query.get(staff_id)
-    interaction = Interaction.query.filter_by(id=interaction_id, business_id=staff.business_id).first_or_404()
-
-    # Determine if transaction is finalized (so we can disable quote)
-    is_finalized = BusinessTransaction.query.filter_by(interaction_id=interaction.id).first() is not None
-
-    quote = Quote.query.filter_by(interaction_id=interaction.id).first()
-    error_message = None
-
-    if is_finalized:
-        flash("This session has been finalized. No further quotes may be sent.", "warning")
-        # Optionally, redirect or just show the view/read-only version
-        return redirect(url_for('staff_active_session', interaction_id=interaction.id))
-
-    if request.method == "POST":
-        amount = request.form.get("amount")
-        details = request.form.get("details")
-        if not amount or not details:
-            error_message = "Amount and quote details are required."
-            flash(error_message, "danger")
-        else:
-            try:
-                if quote:
-                    quote.amount = amount
-                    quote.details = details
-                else:
-                    quote = Quote(
-                        interaction_id=interaction.id,
-                        amount=amount,
-                        details=details
-                    )
-                    db.session.add(quote)
-                db.session.commit()
-                flash("Quote sent to user!" if not quote else "Quote was updated!", "success")
-                return redirect(url_for('staff_active_session', interaction_id=interaction.id))
-            except Exception as e:
-                error_message = "Failed to save quote: " + str(e)
-                flash(error_message, "danger")
-                db.session.rollback()  # Always rollback on error
-
-    return render_template(
-        "quote.html",
-        interaction=interaction,
-        quote=quote,
-        is_staff=True,
-        error_message=error_message,
-        is_finalized=is_finalized  # pass this to hide the quote button in your template
-    )
-
 @app.route('/staff/remove/<int:staff_id>', methods=['POST'])
 @business_login_required
 def remove_staff(staff_id):
@@ -10841,10 +10857,6 @@ def shop_link(interaction_id):
 
     return redirect(redirect_url)
 
-@app.route("/online-purchase-instructions")
-def online_purchase_instructions():
-    return render_template("online_purchase_instructions.html")
-
 @app.route("/online_marketplace")
 def online_marketplace():
     base_query = Business.query.filter(
@@ -11064,97 +11076,6 @@ def update_my_location():
 
     return jsonify({"ok": True})
 
-@csrf.exempt
-@app.route("/api/record_external_sale", methods=["POST"])
-def record_external_sale():
-    data = request.get_json(silent=True) or {}
-    token = data.get("perk_token")
-    amount = data.get("amount")
-
-    if not token or amount is None:
-        return jsonify({"error": "missing token or amount"}), 400
-
-    # 1) verify token
-    try:
-        payload = shop_serializer.loads(token)
-    except Exception:
-        return jsonify({"error": "invalid token"}), 400
-
-    interaction_id = payload.get("interaction_id")
-    user_id = payload.get("user_id")
-    business_id = payload.get("business_id")
-
-    interaction = Interaction.query.get(interaction_id)
-    if (
-        not interaction or
-        interaction.user_id != user_id or
-        interaction.business_id != business_id or
-        interaction.status != "active"
-    ):
-        return jsonify({"error": "invalid or inactive interaction"}), 400
-
-    business = Business.query.get(business_id)
-    if not business:
-        return jsonify({"error": "business not found"}), 400
-
-    # 2) validate amount
-    try:
-        amount_float = float(amount)
-        if amount_float <= 0:
-            raise ValueError()
-    except ValueError:
-        return jsonify({"error": "invalid amount"}), 400
-
-    # 3) call your existing finalize_interaction logic
-    try:
-        summary = finalize_interaction(
-            interaction=interaction,
-            business=business,
-            amount=amount_float,
-            staff_id=None,
-            source="external_cart",
-            local_date_time=None
-        )
-    except Exception as e:
-        # e.g. insufficient funds in account_balance, etc.
-        return jsonify({"error": str(e)}), 400
-
-    # 4) end the session
-    interaction.status = "ended"
-    interaction.awaiting_payment = False
-    db.session.commit()
-
-    return jsonify({"status": "ok", "summary": summary}), 200
-
-@csrf.exempt
-@app.route("/api/ecommerce/verify-beacon", methods=["POST"])
-def ecommerce_verify_beacon():
-    data = request.get_json(silent=True) or {}
-    business_id = data.get("business_id")
-    secret = data.get("secret")
-
-    expected_secret = os.environ.get("ECOMMERCE_VERIFY_SECRET")
-    if not expected_secret or secret != expected_secret:
-        return jsonify({"ok": False, "error": "unauthorized"}), 401
-
-    if not business_id:
-        return jsonify({"ok": False, "error": "missing business_id"}), 400
-
-    biz = Business.query.get(business_id)
-    if not biz:
-        return jsonify({"ok": False, "error": "unknown business"}), 404
-
-    # log the ping
-    ping = EcommerceVerificationPing(
-        business_id=biz.id,
-        user_agent=request.headers.get("User-Agent"),
-        ip_address=request.remote_addr,
-    )
-    db.session.add(ping)
-    db.session.commit()
-
-    return jsonify({"ok": True}), 200
-
 @app.route("/onboarding")
 @login_required
 def user_onboarding():
@@ -11169,6 +11090,304 @@ def user_onboarding():
         "onboarding_user.html",
         stripe_status=stripe_status,
         user_onboard_video_url=user_onboard_video_url,
+    )
+
+def _ext_json(payload, status=200):
+    """JSON reply that browsers on OTHER websites may read (only used by the receipt-status helper)."""
+    resp = make_response(jsonify(payload), status)
+    resp.headers["Access-Control-Allow-Origin"] = "*"      # no cookies are used, the signed token is the credential
+    resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Max-Age"] = "86400"
+    return resp
+
+
+def _get_or_create_sales_key(biz):
+    if not biz.sales_key:
+        biz.sales_key = secrets.token_urlsafe(32)
+        db.session.commit()
+    return biz.sales_key
+
+
+def _verify_signed_request():
+    """Checks X-PerkMiner-Business / -Timestamp / -Signature.
+    Signature = hex HMAC-SHA256(sales_key, "<timestamp>." + raw request body).
+    Returns (business, raw_body, None) when valid, or (None, None, (json, status)) when not."""
+    raw = request.get_data()
+    try:
+        biz_id = int(request.headers.get("X-PerkMiner-Business", ""))
+        ts = request.headers.get("X-PerkMiner-Timestamp", "")
+        age = abs(time.time() - int(ts))
+    except (TypeError, ValueError):
+        return None, None, ({"error": "missing or invalid signature headers"}, 400)
+    sig = (request.headers.get("X-PerkMiner-Signature", "") or "").strip().lower()
+
+    biz = Business.query.get(biz_id)
+    key = biz.sales_key if biz else None
+    if not key:
+        return None, None, ({"error": "unauthorized"}, 401)
+    if age > SIGNATURE_MAX_SKEW:
+        return None, None, ({"error": "timestamp too old - check your server clock"}, 401)
+    expected = hmac.new(key.encode(), ts.encode() + b"." + raw, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected, sig):
+        return None, None, ({"error": "bad signature"}, 401)
+    return biz, raw, None
+
+
+def _log_ping(biz, kind):
+    db.session.add(EcommerceVerificationPing(
+        business_id=biz.id,
+        user_agent=(kind + " | " + (request.headers.get("User-Agent") or ""))[:500],
+        ip_address=request.remote_addr,
+    ))
+    db.session.commit()
+
+
+def _receipt_url(interaction_id):
+    return url_for("show_user_receipt", interaction_id=interaction_id, _external=True)
+
+
+def _complete_external_sale(biz, token, amount, order_ref, source):
+    """The ONE place an online sale gets recorded. Returns (payload_dict, http_status).
+    Safe to call twice for the same order (returns the first result, never double-pays)."""
+    # 1) the order must not have been recorded already
+    existing = ExternalSale.query.filter_by(business_id=biz.id, order_ref=order_ref).first()
+    if existing:
+        return {"status": "ok", "duplicate": True, "receipt_url": _receipt_url(existing.interaction_id)}, 200
+
+    # 2) the shop token must be genuine, unexpired and belong to THIS business
+    try:
+        payload = shop_serializer.loads(token, max_age=SHOP_TOKEN_MAX_AGE)
+    except Exception:
+        return {"error": "invalid or expired perk_token"}, 400
+    if payload.get("business_id") != biz.id:
+        return {"error": "perk_token belongs to a different business"}, 400
+
+    # 3) amount (comes from the business's server, never from the member's browser)
+    try:
+        amount_f = round(float(amount), 2)
+        if not math.isfinite(amount_f) or amount_f <= 0 or amount_f > 1_000_000:
+            raise ValueError()
+    except (TypeError, ValueError):
+        return {"error": "invalid amount"}, 400
+
+    # 4) lock the session row so simultaneous requests cannot both finalize it
+    interaction = Interaction.query.filter_by(id=payload.get("interaction_id")).with_for_update().first()
+    if (not interaction or interaction.user_id != payload.get("user_id")
+            or interaction.business_id != biz.id):
+        db.session.rollback()
+        return {"error": "invalid session"}, 400
+    if (interaction.status != "active"
+            or BusinessTransaction.query.filter_by(interaction_id=interaction.id).first()):
+        # (the BusinessTransaction check also covers a request that was waiting on the row lock above)
+        db.session.rollback()
+        return {"error": "this member session already has a recorded sale"}, 409
+
+    try:
+        finalize_interaction(interaction=interaction, business=biz, amount=amount_f,
+                             staff_id=None, source=source, local_date_time=None)
+        db.session.add(ExternalSale(business_id=biz.id, order_ref=order_ref, interaction_id=interaction.id,
+                                    amount=amount_f, source=source))
+        interaction.status = "ended"
+        interaction.awaiting_payment = False
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        again = ExternalSale.query.filter_by(business_id=biz.id, order_ref=order_ref).first()
+        if again:
+            return {"status": "ok", "duplicate": True, "receipt_url": _receipt_url(again.interaction_id)}, 200
+        return {"error": "could not record sale"}, 400
+    except Exception as e:
+        db.session.rollback()
+        app.logger.warning("external sale failed (business %s, order %s): %s", biz.id, order_ref, e)
+        if "Insufficient funds" in str(e):
+            return {"error": "insufficient_balance",
+                    "message": "Add funds to your PerkMiner advertising balance, then retry."}, 402
+        if "already been finalized" in str(e):
+            return {"error": "this member session already has a recorded sale"}, 409
+        return {"error": "could not record sale"}, 400
+
+    return {"status": "ok", "receipt_url": _receipt_url(interaction.id)}, 200
+
+@csrf.exempt
+@app.route("/api/external_sale/confirm", methods=["POST"])
+def external_sale_confirm():
+    biz, raw, err = _verify_signed_request()
+    if err:
+        return jsonify(err[0]), err[1]
+    data = request.get_json(silent=True) or {}
+
+    token = data.get("perk_token")
+    order_ref = str(data.get("order_id") or "").strip()
+    if not token or not order_ref or len(order_ref) > 120 or data.get("amount") is None:
+        return jsonify({"error": "perk_token, order_id and amount are required"}), 400
+
+    body, status = _complete_external_sale(biz, token, data.get("amount"), order_ref, "external_server")
+    return jsonify(body), status
+
+
+# ---------------------------------------------------------------------------------------------------
+# 2) Shopify "Order payment" webhook -> PerkMiner
+#    Shopify signs the body with the shop's webhook secret (X-Shopify-Hmac-Sha256). The business pastes that
+#    secret into the Online Purchase Guide page. The member's token rides along in the order's note attributes.
+# ---------------------------------------------------------------------------------------------------
+@csrf.exempt
+@app.route("/api/external_sale/shopify/<int:business_id>", methods=["POST"])
+def external_sale_shopify(business_id):
+    biz = Business.query.get(business_id)
+    secret = (biz.shopify_webhook_secret or "") if biz else ""
+    if not secret:
+        return jsonify({"error": "unauthorized"}), 401
+
+    raw = request.get_data()
+    got = request.headers.get("X-Shopify-Hmac-Sha256", "")
+    expected = base64.b64encode(hmac.new(secret.encode(), raw, hashlib.sha256).digest()).decode()
+    if not hmac.compare_digest(expected, got):
+        return jsonify({"error": "bad signature"}), 401
+
+    data = request.get_json(silent=True) or {}
+    token = None
+    for attr in (data.get("note_attributes") or []):
+        if isinstance(attr, dict) and attr.get("name") == "perk_token":
+            token = attr.get("value")
+
+    if not token:
+        # Shopify's "Send test notification" (and orders from non-PerkMiner customers) land here.
+        _log_ping(biz, "shopify-webhook")
+        return jsonify({"ok": True, "note": "no perk_token on this order - nothing to record"}), 200
+
+    if (data.get("currency") or "USD").upper() != "USD":
+        app.logger.warning("shopify order %s skipped: currency %s", data.get("id"), data.get("currency"))
+        return jsonify({"ok": True, "note": "non-USD order ignored"}), 200
+
+    order_ref = "shopify-" + str(data.get("id") or "")
+    body, status = _complete_external_sale(biz, token, data.get("total_price"), order_ref, "shopify_webhook")
+    # permanent problems return 200 so Shopify stops retrying; a low balance returns 402 so Shopify retries later
+    if status in (400, 409):
+        return jsonify(body), 200
+    return jsonify(body), status
+
+
+# ---------------------------------------------------------------------------------------------------
+# 3) Browser helper: "has my sale been recorded yet?"  (NO amount is accepted here any more)
+#    Same URL as before, so Script B on sites that already installed it keeps redirecting to the receipt.
+# ---------------------------------------------------------------------------------------------------
+@csrf.exempt
+@app.route("/api/record_external_sale", methods=["POST", "OPTIONS"])
+def record_external_sale():
+    if request.method == "OPTIONS":                 # browser preflight
+        return _ext_json({}, 204)
+
+    data = request.get_json(silent=True) or {}
+    token = data.get("perk_token")
+    if not token:
+        return _ext_json({"error": "missing token"}, 400)
+    try:
+        payload = shop_serializer.loads(token, max_age=SHOP_TOKEN_MAX_AGE)
+    except Exception:
+        return _ext_json({"error": "invalid or expired token"}, 400)
+
+    interaction = Interaction.query.get(payload.get("interaction_id"))
+    if (not interaction or interaction.user_id != payload.get("user_id")
+            or interaction.business_id != payload.get("business_id")):
+        return _ext_json({"error": "invalid session"}, 400)
+
+    recorded = BusinessTransaction.query.filter_by(interaction_id=interaction.id).first()
+    if recorded:
+        return _ext_json({"status": "ok", "receipt_url": _receipt_url(interaction.id)}, 200)
+    return _ext_json({"status": "pending"}, 202)
+
+
+# ---------------------------------------------------------------------------------------------------
+# 4) Connection test ("beacon"): the business's server sends a SIGNED ping. It proves the site can reach
+#    PerkMiner and that it holds the right key. The admin queue shows when the last ping arrived.
+# ---------------------------------------------------------------------------------------------------
+@csrf.exempt
+@app.route("/api/ecommerce/verify-beacon", methods=["POST"])
+def ecommerce_verify_beacon():
+    biz, raw, err = _verify_signed_request()
+    if err:
+        return jsonify({"ok": False, **err[0]}), err[1]
+    _log_ping(biz, "signed-ping")
+    return jsonify({"ok": True, "business": biz.business_name}), 200
+
+
+# ---------------------------------------------------------------------------------------------------
+# 5) Guide page + key management (the business sees THEIR key only while logged in)
+# ---------------------------------------------------------------------------------------------------
+@app.route("/online-purchase-instructions")
+def online_purchase_instructions():
+    biz = Business.query.get(session["business_id"]) if session.get("business_id") else None
+    sales_key = _get_or_create_sales_key(biz) if biz else None
+    return render_template(
+        "online_purchase_instructions.html",
+        biz=biz,
+        sales_key=sales_key,
+        has_shopify_secret=bool(biz and biz.shopify_webhook_secret),
+        shopify_webhook_url=(url_for("external_sale_shopify", business_id=biz.id, _external=True) if biz else None),
+    )
+
+
+@app.route("/business/ecommerce/regenerate_key", methods=["POST"])
+@business_login_required
+def ecommerce_regenerate_key():
+    biz = Business.query.get_or_404(session["business_id"])
+    biz.sales_key = secrets.token_urlsafe(32)
+    db.session.commit()
+    flash("New sales key created. Update it in your server code - the old key no longer works.", "success")
+    return redirect(url_for("online_purchase_instructions"))
+
+
+@app.route("/business/ecommerce/shopify_secret", methods=["POST"])
+@business_login_required
+def ecommerce_save_shopify_secret():
+    biz = Business.query.get_or_404(session["business_id"])
+    biz.shopify_webhook_secret = (request.form.get("shopify_secret") or "").strip()[:160] or None
+    db.session.commit()
+    flash("Shopify webhook secret saved." if biz.shopify_webhook_secret else "Shopify webhook secret removed.", "success")
+    return redirect(url_for("online_purchase_instructions"))
+
+
+# ---------------------------------------------------------------------------------------------------
+# 6) Admin queue: shows, per business, whether a ping / a signed sale has arrived
+# ---------------------------------------------------------------------------------------------------
+@app.route("/admin/ecommerce-verifications")
+@admin_required
+def admin_ecommerce_verifications():
+    pending_biz = Business.query.filter(
+        Business.is_ecommerce_site.is_(True),
+        Business.allow_website_purchases.is_(True),
+        Business.online_terms_agreed.is_(True),
+        Business.ecommerce_verified.is_(False)
+    ).order_by(Business.business_name.asc()).all()
+
+    verified_biz = Business.query.filter(
+        Business.ecommerce_verified.is_(True)
+    ).order_by(Business.business_name.asc()).all()
+
+    ids = [b.id for b in pending_biz + verified_biz]
+    ping_info, sale_info = {}, {}
+    if ids:
+        for bid, last, cnt in (db.session.query(EcommerceVerificationPing.business_id,
+                                                func.max(EcommerceVerificationPing.created_at),
+                                                func.count(EcommerceVerificationPing.id))
+                               .filter(EcommerceVerificationPing.business_id.in_(ids))
+                               .group_by(EcommerceVerificationPing.business_id).all()):
+            ping_info[bid] = {"last": last, "count": cnt}
+        for bid, last, cnt in (db.session.query(ExternalSale.business_id,
+                                                func.max(ExternalSale.created_at),
+                                                func.count(ExternalSale.id))
+                               .filter(ExternalSale.business_id.in_(ids))
+                               .group_by(ExternalSale.business_id).all()):
+            sale_info[bid] = {"last": last, "count": cnt}
+
+    return render_template(
+        "admin_ecommerce_verifications.html",
+        pending_biz=pending_biz,
+        verified_biz=verified_biz,
+        ping_info=ping_info,
+        sale_info=sale_info,
+        now=datetime.utcnow(),
     )
 
 @app.route("/business/onboarding")
@@ -11583,7 +11802,7 @@ _sitemap_cache = {"xml": None, "built": 0.0}
 # Public marketing pages that are always in the sitemap
 STATIC_SITEMAP_PATHS = [
     "/", "/about", "/how-it-works", "/intro", "/faq", "/news",
-    "/press-release", "/new-featured-businesses", "/business",
+    "/press-release", "/new-featured-businesses", "/business", "/docuseries", "/docuseries/episodes",
     "/register", "/business/register", "/testimonials", "/earn_more_than_sponsor",
     "/public_profiles", "/privacy", "/full_payout_sample", "/how_much_can_i_earn", "/terms"
 ]
@@ -11872,6 +12091,12 @@ PROMO_CODES = {
         "max_redemptions": 50,
         "amount": Decimal("10.00"),
         "sales_covered": 100,
+    },
+    "challenge10": {
+        "label": "Challenge10",
+        "max_redemptions": 10000,
+        "amount": Decimal("1.00"),
+        "sales_covered": 10,
     },
 }
 

@@ -1,0 +1,77 @@
+{# Shared payouts-onboarding layout. Child pages set: ob_title, ob_items (list of strings), ob_start_url #}
+{% extends "pm_base.html" %}
+{% block title %}{{ ob_title }} – payouts setup{% endblock %}
+
+{% block head_extra %}
+<style>
+  .ob-wrap { max-width: 760px; margin: 0 auto; }
+  .ob-video video { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; background: #000; display: block; margin-bottom: .8rem; }
+  .ob-steps li { margin-bottom: .35rem; }
+  .ob-badge { display: inline-flex; align-items: center; gap: .35rem; border-radius: 999px; padding: .3rem .85rem; font-size: .85rem; font-weight: 700; }
+  .ob-badge.ok { background: #16a34a; color: #fff; }
+  .ob-badge.warn { background: #facc15; color: #422006; }
+  .ob-badge.bad { background: #dc2626; color: #fff; }
+  .ob-badge.off { background: #e5e7eb; color: #374151; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pb-3 ob-wrap">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-bank"></i></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">{{ ob_title }}</div><h1>Set up your payouts</h1></div>
+  </div>
+  <p class="text-center text-muted">Watch this short video, then click the button below to complete your Stripe onboarding.</p>
+
+  <div class="card p-3 p-md-4 mb-3 ob-video">
+    <div class="fw-bold text-center" style="color:var(--pm-primary-dark);">How to complete your payout onboarding</div>
+    <div class="text-muted text-center small mb-3">~2 minutes • watch first, then follow the steps</div>
+    <video id="onboard-video" controls controlsList="nodownload" oncontextmenu="return false;" preload="metadata"
+           poster="https://res.cloudinary.com/dmrntlcfd/video/upload/so_2,w_960,h_540,c_fill/v1791159464/Stripe_Onboarding_je4joj.jpg">
+      <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1791159464/Stripe_Onboarding_je4joj.mp4" type="video/mp4">
+      Sorry, your browser doesn't support embedded videos.
+    </video>
+    <div>In this video, we walk you through:
+      <ul class="ob-steps mt-2 mb-0">
+        {% for item in ob_items %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="card p-3 p-md-4">
+    <h2 class="h5 fw-bold" style="color:var(--pm-primary-dark);">Complete your Stripe setup</h2>
+
+    {% if not stripe_status.connected %}
+      <div class="mb-2"><span class="ob-badge off"><i class="bi bi-plug"></i> Stripe not connected</span></div>
+      <p class="text-muted">When you click the button below, you’ll be taken to a secure Stripe page to start onboarding.</p>
+      <a href="{{ ob_start_url }}" class="btn btn-primary btn-lg w-100">Set up payouts (bank transfer)<br><small>(You'll be re-directed to Stripe)</small></a>
+
+    {% elif stripe_status.payouts_status == 'active' %}
+      <div class="mb-2"><span class="ob-badge ok"><i class="bi bi-check-circle-fill"></i> Stripe payouts active</span></div>
+      <p class="text-muted">Your payouts are active. You can still open Stripe to review or update your details if needed.</p>
+      <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary">Open Stripe dashboard</a>
+
+    {% elif stripe_status.payouts_status == 'pending_requirements' %}
+      <div class="mb-2"><span class="ob-badge warn"><i class="bi bi-exclamation-triangle-fill"></i> Stripe action required</span></div>
+      <p class="text-muted">Stripe needs more information before enabling payouts. Click below to finish onboarding.</p>
+      <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary btn-lg w-100">Finish Stripe setup</a>
+
+    {% else %}
+      <div class="mb-2"><span class="ob-badge bad"><i class="bi bi-x-octagon-fill"></i> Stripe payouts disabled</span></div>
+      <p class="text-muted">Your Stripe account is not ready for payouts. Click below to review and update your information.</p>
+      <a href="{{ url_for('onboard_stripe') }}" class="btn btn-primary btn-lg w-100">Update Stripe account</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var v = document.getElementById('onboard-video'); if (!v) return;
+  v.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  v.addEventListener('mouseover', function () { v.setAttribute('controlsList', 'nodownload'); });
+  v.addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) e.preventDefault(); });
+})();
+</script>
+{% endblock %}

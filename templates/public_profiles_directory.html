@@ -1,3 +1,4 @@
+```html
 {# templates/public_profiles_directory.html #}
 {% extends "base.html" %}
 
@@ -6,354 +7,813 @@ Perk Miner Public Business Profiles Directory – Search our public profiles
 {% endblock %}
 
 {% block head_extra %}
-  <meta name="description" content="Search our public business profiles directory - no registration or login required. We make it easy for you to obtain enough information before deciding if you want to move forward.">
-  <meta name="keywords" content="perk, perks, perk miner, grow your business, pay per sale, pay per close, no risk advertising, best advertising, high roi, roi, return on investment, return on advertising spend, highest roi, no sale no fee">
+<meta name="description" content="Search our public business profiles directory - no registration or login required. We make it easy for you to obtain enough information before deciding if you want to move forward.">
+<meta name="keywords" content="perk, perks, perk miner, grow your business, pay per sale, pay per close, no risk advertising, best advertising, high roi, roi, return on investment, return on advertising spend, highest roi, no sale no fee">
 
-  {# robots_meta and canonical_url come from the public_profiles_directory route #}
-  <meta name="robots" content="{{ robots_meta }}">
-  <link rel="canonical" href="{{ canonical_url }}">
+{# robots_meta and canonical_url come from the public_profiles_directory route #}
+<meta name="robots" content="{{ robots_meta }}">
+<link rel="canonical" href="{{ canonical_url }}">
 
-  {# prev/next hints (only for the plain browse pages, not search results) #}
-  {% if pagination and not has_filters %}
-    {% if pagination.has_prev %}
-      <link rel="prev" href="{{ url_for('public_profiles_directory', page=pagination.prev_num, _external=True) }}">
-    {% endif %}
-    {% if pagination.has_next %}
-      <link rel="next" href="{{ url_for('public_profiles_directory', page=pagination.next_num, _external=True) }}">
-    {% endif %}
+{# prev/next hints – only for plain browse pages #}
+{% if pagination and not has_filters %}
+  {% if pagination.has_prev %}
+    <link rel="prev" href="{{ url_for('public_profiles_directory', page=pagination.prev_num, _external=True) }}">
   {% endif %}
+  {% if pagination.has_next %}
+    <link rel="next" href="{{ url_for('public_profiles_directory', page=pagination.next_num, _external=True) }}">
+  {% endif %}
+{% endif %}
 
-  <style>
-    body {
-      background-color: #f7f7f7;
+<style>
+  /* =========================================================
+     PUBLIC PROFILES DIRECTORY
+     Matches Perk Miner home/search-results visual language
+     ========================================================= */
+
+  .directory-page {
+    background: var(--pm-bg, #f8fafb);
+    min-height: 100vh;
+  }
+
+  /* ---------------------------------------------------------
+     Hero
+     --------------------------------------------------------- */
+
+  .directory-hero {
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(
+        145deg,
+        rgba(30, 74, 75, 0.97) 0%,
+        rgba(42, 88, 89, 0.94) 60%,
+        rgba(58, 109, 110, 0.92) 100%
+      );
+    color: #fff;
+    text-align: center;
+    padding: 2.8rem 1rem 5rem;
+    margin-bottom: 0;
+  }
+
+  .directory-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      url("https://res.cloudinary.com/dmrntlcfd/image/upload/v1782601402/Cash-Back_rignwa.jpg?auto=format&fit=crop&w=1600&q=40")
+      center / cover no-repeat;
+    opacity: 0.12;
+  }
+
+  .directory-hero-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .directory-logo {
+    width: auto;
+    height: 62px;
+    max-width: 190px;
+    object-fit: contain;
+    background: #fff;
+    padding: 5px;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+  }
+
+  .directory-hero h1 {
+    font-weight: 800;
+    font-size: clamp(1.8rem, 5vw, 2.55rem);
+    line-height: 1.15;
+    margin-bottom: 0.65rem;
+  }
+
+  .directory-hero p {
+    max-width: 680px;
+    margin: 0 auto;
+    font-size: 1rem;
+    opacity: 0.94;
+    line-height: 1.55;
+  }
+
+  .directory-back-link {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 3;
+  }
+
+  .directory-back-link .btn {
+    border-radius: 50px;
+    font-weight: 600;
+  }
+
+  /* ---------------------------------------------------------
+     Search
+     --------------------------------------------------------- */
+
+  .directory-search-wrap {
+    position: relative;
+    z-index: 5;
+    margin: -3rem auto 2rem;
+    max-width: 1080px;
+    padding: 0 1rem;
+  }
+
+  .directory-search-card {
+    background: #fff;
+    border: 1px solid #e8eef0;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(30, 74, 75, 0.12);
+    padding: 1rem;
+  }
+
+  .directory-search-card .form-label {
+    color: var(--pm-primary-dark, #173b3c);
+    font-weight: 600;
+    font-size: 0.84rem;
+  }
+
+  .directory-search-card .form-control,
+  .directory-search-card .form-select {
+    min-height: 46px;
+    border: 1px solid #d9e7e7;
+    border-radius: 12px;
+  }
+
+  .directory-search-card .form-control:focus,
+  .directory-search-card .form-select:focus {
+    border-color: var(--pm-primary-light, #2a5859);
+    box-shadow: 0 0 0 0.2rem rgba(42, 88, 89, 0.12);
+  }
+
+  .directory-search-card .btn-primary {
+    min-height: 46px;
+    border: none;
+    border-radius: 12px;
+    background: var(--pm-primary-light, #2a5859);
+    font-weight: 700;
+  }
+
+  .directory-search-card .btn-primary:hover {
+    background: var(--pm-primary, #1e4a4b);
+  }
+
+  /* ---------------------------------------------------------
+     Main content
+     --------------------------------------------------------- */
+
+  .directory-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem 3rem;
+  }
+
+  .directory-heading {
+    color: var(--pm-primary-dark, #173b3c);
+    font-weight: 800;
+    margin-bottom: 0.2rem;
+  }
+
+  .directory-subheading {
+    color: var(--pm-muted, #5c6b73);
+    font-size: 0.9rem;
+  }
+
+  /* ---------------------------------------------------------
+     Listing cards – same family as search_results.html
+     --------------------------------------------------------- */
+
+  .small-listing-modern {
+    height: 100%;
+    border: 1px solid #d9ece7;
+    border-radius: 14px;
+    background: #fafefe;
+    box-shadow: 0 1px 5px #e6f9f4;
+    overflow: hidden;
+    transition:
+      box-shadow 0.18s ease,
+      transform 0.18s ease,
+      background 0.18s ease;
+  }
+
+  .listing-link {
+    display: block;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .listing-link:hover {
+    color: inherit;
+  }
+
+  .listing-link:hover .small-listing-modern {
+    background: #e6f6f5;
+    box-shadow: 0 7px 22px rgba(42, 88, 89, 0.18);
+    transform: translateY(-3px);
+  }
+
+  .listing-image-container {
+    width: 100%;
+    min-height: 145px;
+    background: #f7faf9;
+    border-bottom: 1px solid #e5f0ee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .small-listing-modern-img {
+    width: 112px;
+    height: 112px;
+    object-fit: cover;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #e2eeee;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .listing-placeholder {
+    width: 112px;
+    height: 112px;
+    border-radius: 14px;
+    background: #eef6f5;
+    border: 1px solid #d9ece7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .listing-placeholder i {
+    font-size: 2.15rem;
+    color: var(--pm-primary-light, #2a5859);
+  }
+
+  .small-listing-info {
+    padding: 1rem 1rem 1.1rem;
+    text-align: center;
+  }
+
+  .small-listing-title {
+    color: var(--pm-primary-dark, #173b3c);
+    font-size: 1.08rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 0.5rem;
+  }
+
+  .small-listing-category-badge {
+    display: inline-block;
+    background: #e6f6f5;
+    color: var(--pm-primary-light, #2a5859);
+    border-radius: 10px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .small-listing-location {
+    color: var(--pm-muted, #5c6b73);
+    font-size: 0.88rem;
+    margin-top: 0.7rem;
+    line-height: 1.4;
+  }
+
+  .small-listing-about {
+    color: #40545a;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    margin-top: 0.65rem;
+  }
+
+  .small-listing-perks {
+    background: #fff8e1;
+    border: 1px dashed #e0b84a;
+    color: #6f5600;
+    border-radius: 10px;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.86rem;
+    line-height: 1.4;
+    margin-top: 0.75rem;
+  }
+
+  .listing-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.85rem;
+    color: var(--pm-primary-light, #2a5859);
+    font-size: 0.88rem;
+    font-weight: 800;
+  }
+
+  /* ---------------------------------------------------------
+     Pagination
+     --------------------------------------------------------- */
+
+  .directory-pagination .page-link {
+    color: var(--pm-primary-light, #2a5859);
+    border-color: #d9ece7;
+    border-radius: 10px;
+    margin: 0 0.15rem;
+  }
+
+  .directory-pagination .page-item.active .page-link,
+  .directory-pagination .page-link:hover {
+    background: var(--pm-primary-light, #2a5859);
+    border-color: var(--pm-primary-light, #2a5859);
+    color: #fff;
+  }
+
+  /* ---------------------------------------------------------
+     Empty state
+     --------------------------------------------------------- */
+
+  .directory-empty {
+    background: #fff;
+    border: 1px solid #e2eeee;
+    border-radius: 18px;
+    box-shadow: var(--pm-shadow, 0 4px 20px rgba(30,74,75,.08));
+    padding: 2.5rem 1.25rem;
+    text-align: center;
+    color: var(--pm-muted, #5c6b73);
+  }
+
+  .directory-empty i {
+    display: block;
+    color: var(--pm-primary-light, #2a5859);
+    font-size: 2.4rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* ---------------------------------------------------------
+     Footer
+     --------------------------------------------------------- */
+
+  .directory-footer {
+    background: #f4f7f8;
+    padding: 2rem 1rem 1.5rem;
+    text-align: center;
+    color: #6b7c82;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+
+  .directory-footer a {
+    color: var(--pm-primary-light, #2a5859);
+    text-decoration: none;
+  }
+
+  .directory-footer a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 767.98px) {
+    .directory-hero {
+      padding-top: 3.5rem;
+      padding-bottom: 4.5rem;
     }
 
-    .page-shell {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0;
+    .directory-back-link {
+      top: 0.7rem;
+      right: 0.7rem;
     }
 
-    .hero-section {
-      position: relative;
-      min-height: 260px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: #fff;
-      margin-left: -0.75rem;
-      margin-right: -0.75rem;
-      overflow: hidden;
+    .directory-back-link .btn {
+      font-size: 0.78rem;
     }
 
-    .hero-bg {
-      position: absolute;
-      inset: 0;
-      background-image: url("https://res.cloudinary.com/dmrntlcfd/image/upload/v1782601402/Cash-Back_rignwa.jpg?auto=format&fit=crop&w=1600&q=80");
-      background-size: cover;
-      background-position: center;
-      filter: brightness(0.45);
-      z-index: -1;
+    .directory-search-wrap {
+      margin-top: -2.5rem;
     }
 
-    .hero-content {
-      padding: 3rem 1rem 5rem;
+    .directory-search-card {
+      padding: 0.85rem;
     }
 
-    .directory-search-wrapper {
-      margin-top: -3rem;
-      margin-bottom: 2rem;
+    .listing-image-container {
+      min-height: 130px;
     }
 
-    .directory-search-box {
-      background: #fff;
-      border-radius: 0.75rem;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-      padding: 1rem;
+    .small-listing-modern-img,
+    .listing-placeholder {
+      width: 100px;
+      height: 100px;
     }
-
-    @media (min-width: 768px) {
-      .hero-section {
-        min-height: 340px;
-      }
-      .hero-content {
-        padding: 4rem 1rem 6rem;
-      }
-      .directory-search-box {
-        padding: 1.5rem;
-      }
-    }
-
-    .business-card {
-      border-radius: 0.5rem;
-      border: 1px solid #e4e4e4;
-      padding: 1rem;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      background-color: #fff;
-    }
-
-    .business-name {
-      font-size: 1.05rem;
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-    }
-
-    .business-category {
-      font-size: 0.9rem;
-      color: #666;
-      margin-bottom: 0.5rem;
-    }
-
-    .business-location {
-      font-size: 0.9rem;
-      color: #555;
-      margin-bottom: 0.5rem;
-    }
-
-    .business-snippet {
-      font-size: 0.9rem;
-      color: #444;
-      margin-bottom: 0.75rem;
-    }
-
-    .btn-profile {
-      font-size: 0.9rem;
-    }
-
-    /* Footer */
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
-
-  </style>
+  }
+</style>
 {% endblock %}
 
 {% block content %}
-  {# has_filters, robots_meta and canonical_url are provided by the route. #}
+<div class="directory-page">
 
-  <div class="page-shell">
-
-    <div class="mt-3 mb-2">
-      <a href="{{ url_for('home') }}" class="btn btn-outline-secondary btn-sm">
-        ← Return to Home
+  {# =========================================================
+     HERO
+     ========================================================= #}
+  <section class="directory-hero">
+    <div class="directory-back-link">
+      <a href="{{ url_for('home') }}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Home
       </a>
     </div>
 
-    {# HERO SECTION #}
-    <section class="hero-section">
-      <div class="hero-bg"></div>
-      <div class="hero-content">
-        <h1 class="h2 h1-md fw-semibold">
-          Discover Perk Miner public business profiles
-        </h1>
-        <p class="lead mt-2 mb-0">
-          Browse approved advertisers and learn about their exclusive member perks – no login required.
-        </p>
-      </div>
-    </section>
+    <div class="directory-hero-inner">
+      <img
+        src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg"
+        alt="Perk Miner"
+        class="directory-logo"
+        loading="lazy"
+      >
 
-    {# SEARCH BAR OVERLAPPING HERO #}
-    <section class="directory-search-wrapper">
-      <div class="directory-search-box">
-        <form method="get" action="{{ url_for('public_profiles_directory') }}">
-          <div class="row g-2 align-items-center">
-            <div class="col-12 col-md-4">
-              <label for="q" class="form-label mb-1">Search by business name or keyword</label>
-              <input
-                type="text"
-                class="form-control"
-                id="q"
-                name="q"
-                value="{{ q or '' }}"
-                placeholder="e.g. car wash, dentist, marketing"
-              >
-            </div>
+      <h1>Discover Perk Miner Public Business Profiles</h1>
 
-            <div class="col-12 col-md-3">
-              <label for="category" class="form-label mb-1">Category</label>
-              <select
-                class="form-select"
-                id="category"
-                name="category"
-              >
-                <option value="" disabled {% if not category %}selected{% endif %}>
-                  Select one
-                </option>
-                {% for cat in categories %}
-                  <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>
-                    {{ cat }}
-                  </option>
-                {% endfor %}
-              </select>
-            </div>
+      <p>
+        Browse approved advertisers, discover local businesses,
+        and learn about their exclusive member perks — no login required.
+      </p>
+    </div>
+  </section>
 
-            <div class="col-12 col-md-3">
-              <label for="distance" class="form-label mb-1">Distance</label>
-              <select
-                class="form-select"
-                id="distance"
-                name="distance"
-              >
-                {% set current_distance = selected_distance or 'all' %}
-                <option value="all" {% if current_distance == 'all' %}selected{% endif %}>Any distance</option>
-                <option value="5" {% if current_distance == '5' %}selected{% endif %}>Within 5 miles</option>
-                <option value="10" {% if current_distance == '10' %}selected{% endif %}>Within 10 miles</option>
-                <option value="25" {% if current_distance == '25' %}selected{% endif %}>Within 25 miles</option>
-                <option value="50" {% if current_distance == '50' %}selected{% endif %}>Within 50 miles</option>
-              </select>
-            </div>
+  {# =========================================================
+     SEARCH
+     ========================================================= #}
+  <div class="directory-search-wrap">
+    <div class="directory-search-card">
 
-            <div class="col-12 col-md-2 d-grid mt-2 mt-md-4">
-              <button type="submit" class="btn btn-primary">
-                Search
-              </button>
-            </div>
+      <form method="get" action="{{ url_for('public_profiles_directory') }}">
+        <div class="row g-3 align-items-end">
+
+          <div class="col-12 col-md-5">
+            <label for="q" class="form-label mb-1">
+              Search businesses
+            </label>
+
+            <input
+              type="text"
+              class="form-control"
+              id="q"
+              name="q"
+              value="{{ q or '' }}"
+              placeholder="Business name, service, keyword..."
+            >
           </div>
 
-          {# hidden lat/lng, filled by geolocation script #}
-          <input type="hidden" name="lat" id="lat" value="{{ request.args.get('lat', '') }}">
-          <input type="hidden" name="lng" id="lng" value="{{ request.args.get('lng', '') }}">
-        </form>
-      </div>
-    </section>
+          <div class="col-12 col-md-3">
+            <label for="category" class="form-label mb-1">
+              Category
+            </label>
 
-    {# DIRECTORY LIST – always shown when there are businesses, so crawlers can follow the links #}
-    {% if businesses %}
-      <main class="mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-column flex-md-row">
-          <h2 class="h5 mb-2 mb-md-0">
-            Public business profiles
-          </h2>
-          {% if pagination %}
-            <span class="text-muted small">
-              Page {{ pagination.page }} of {{ pagination.pages }}
-            </span>
-          {% endif %}
+            <select
+              class="form-select"
+              id="category"
+              name="category"
+            >
+              <option value="" {% if not category %}selected{% endif %}>
+                All categories
+              </option>
+
+              {% for cat in categories %}
+                <option
+                  value="{{ cat }}"
+                  {% if category == cat %}selected{% endif %}
+                >
+                  {{ cat }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12 col-md-2">
+            <label for="distance" class="form-label mb-1">
+              Distance
+            </label>
+
+            {% set current_distance = selected_distance or 'all' %}
+
+            <select
+              class="form-select"
+              id="distance"
+              name="distance"
+            >
+              <option value="all" {% if current_distance == 'all' %}selected{% endif %}>
+                Any distance
+              </option>
+              <option value="5" {% if current_distance == '5' %}selected{% endif %}>
+                Within 5 miles
+              </option>
+              <option value="10" {% if current_distance == '10' %}selected{% endif %}>
+                Within 10 miles
+              </option>
+              <option value="25" {% if current_distance == '25' %}selected{% endif %}>
+                Within 25 miles
+              </option>
+              <option value="50" {% if current_distance == '50' %}selected{% endif %}>
+                Within 50 miles
+              </option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-2 d-grid">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search me-1"></i>
+              Search
+            </button>
+          </div>
+
         </div>
 
-        <div class="row g-3">
-          {% for biz in businesses %}
-            <div class="col-12 col-md-6 col-lg-4">
-              <div class="business-card">
-                <div>
-                  <div class="business-name">
+        {# Hidden coordinates – filled by geolocation script #}
+        <input
+          type="hidden"
+          name="lat"
+          id="lat"
+          value="{{ request.args.get('lat', '') }}"
+        >
+
+        <input
+          type="hidden"
+          name="lng"
+          id="lng"
+          value="{{ request.args.get('lng', '') }}"
+        >
+      </form>
+
+    </div>
+  </div>
+
+  {# =========================================================
+     DIRECTORY RESULTS
+     ========================================================= #}
+  <main class="directory-content">
+
+    {% if businesses %}
+
+      <div class="d-flex justify-content-between align-items-md-center align-items-start flex-column flex-md-row mb-4">
+
+        <div>
+          <h2 class="h4 directory-heading">
+            Public Business Profiles
+          </h2>
+
+          <div class="directory-subheading">
+            Browse approved Perk Miner businesses and their member perks.
+          </div>
+        </div>
+
+        {% if pagination %}
+          <div class="small text-muted mt-2 mt-md-0">
+            Page {{ pagination.page }} of {{ pagination.pages }}
+          </div>
+        {% endif %}
+
+      </div>
+
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+
+        {% for biz in businesses %}
+
+          <div class="col">
+
+            <a
+              href="{{ url_for('public_profile', store_slug=biz.store_slug) }}"
+              class="listing-link"
+            >
+
+              <div class="small-listing-modern">
+
+                {# Logo / profile photo #}
+                <div class="listing-image-container">
+
+                  {% if biz.profile_photo %}
+
+                    <img
+                      src="{{ biz.profile_photo }}"
+                      class="small-listing-modern-img"
+                      alt="{{ biz.business_name }} logo"
+                      width="112"
+                      height="112"
+                      loading="lazy"
+                    >
+
+                  {% else %}
+
+                    <div class="listing-placeholder">
+                      <i class="bi bi-shop"></i>
+                    </div>
+
+                  {% endif %}
+
+                </div>
+
+                <div class="small-listing-info">
+
+                  <div class="small-listing-title">
                     {{ biz.business_name }}
                   </div>
 
                   {% if biz.category %}
-                    <div class="business-category">
-                      {{ biz.category }}
+                    <div>
+                      <span class="small-listing-category-badge">
+                        {{ biz.category }}
+                      </span>
                     </div>
                   {% endif %}
 
-                  {% if biz.distance_mi is defined %}
-                    <div class="business-location">
-                      {% if biz.city %}{{ biz.city }}{% endif %}
-                      {% if biz.city and biz.state %}, {% endif %}
-                      {% if biz.state %}{{ biz.state }}{% endif %}
-                      · ~{{ "%.1f"|format(biz.distance_mi) }} miles away
+                  {% if biz.distance_mi is defined and biz.distance_mi is not none %}
+
+                    <div class="small-listing-location">
+                      <i class="bi bi-geo-alt-fill me-1"></i>
+
+                      {% if biz.city %}
+                        {{ biz.city }}
+                      {% endif %}
+
+                      {% if biz.city and biz.state %}
+                        , 
+                      {% endif %}
+
+                      {% if biz.state %}
+                        {{ biz.state }}
+                      {% endif %}
+
+                      <span class="d-block">
+                        ~{{ "%.1f"|format(biz.distance_mi) }} miles away
+                      </span>
                     </div>
+
                   {% elif biz.city or biz.state %}
-                    <div class="business-location">
-                      {% if biz.city %}{{ biz.city }}{% endif %}
-                      {% if biz.city and biz.state %}, {% endif %}
-                      {% if biz.state %}{{ biz.state }}{% endif %}
+
+                    <div class="small-listing-location">
+                      <i class="bi bi-geo-alt-fill me-1"></i>
+
+                      {% if biz.city %}
+                        {{ biz.city }}
+                      {% endif %}
+
+                      {% if biz.city and biz.state %}
+                        ,
+                      {% endif %}
+
+                      {% if biz.state %}
+                        {{ biz.state }}
+                      {% endif %}
                     </div>
+
                   {% endif %}
 
                   {% if biz.about_us %}
-                    <div class="business-snippet">
-                      {{ biz.about_us[:140] }}{% if biz.about_us|length > 140 %}…{% endif %}
+
+                    <div class="small-listing-about">
+                      {{ biz.about_us[:160] }}
+                      {% if biz.about_us|length > 160 %}…{% endif %}
                     </div>
+
                   {% endif %}
-                </div>
 
-                <div class="mt-2">
-                  <a
-                    href="{{ url_for('public_profile', store_slug=biz.store_slug) }}"
-                    class="btn btn-outline-primary btn-sm btn-profile w-100"
-                  >
+                  <div class="small-listing-perks">
+                    <strong>
+                      <i class="bi bi-gift me-1"></i>
+                      Perks:
+                    </strong>
+
+                    {{ biz.perks or "Member perks available" }}
+                  </div>
+
+                  <div class="listing-cta">
                     View public profile
-                  </a>
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+
                 </div>
+
               </div>
-            </div>
-          {% endfor %}
-        </div>
 
-        {# PAGINATION – real links so crawlers can follow them #}
-        {% if pagination and pagination.pages > 1 %}
-          <nav aria-label="Public business profiles page navigation" class="mt-4">
-            <ul class="pagination justify-content-center">
-              {% if pagination.has_prev %}
-                <li class="page-item">
-                  <a class="page-link"
-                     href="{{ url_for('public_profiles_directory',
-                                      page=pagination.prev_num,
-                                      q=q or None,
-                                      category=category or None,
-                                      distance=(selected_distance if selected_distance != 'all' else None),
-                                      lat=request.args.get('lat') or None,
-                                      lng=request.args.get('lng') or None) }}">
-                    &laquo; Previous
-                  </a>
-                </li>
-              {% else %}
-                <li class="page-item disabled">
-                  <span class="page-link">&laquo; Previous</span>
-                </li>
-              {% endif %}
+            </a>
 
-              <li class="page-item disabled">
-                <span class="page-link">
-                  Page {{ pagination.page }} of {{ pagination.pages }}
-                </span>
+          </div>
+
+        {% endfor %}
+
+      </div>
+
+      {# =====================================================
+         PAGINATION
+         ===================================================== #}
+
+      {% if pagination and pagination.pages > 1 %}
+
+        <nav
+          aria-label="Public business profiles page navigation"
+          class="directory-pagination mt-5"
+        >
+
+          <ul class="pagination justify-content-center flex-wrap">
+
+            {% if pagination.has_prev %}
+
+              <li class="page-item">
+
+                <a
+                  class="page-link"
+                  href="{{ url_for(
+                    'public_profiles_directory',
+                    page=pagination.prev_num,
+                    q=q or None,
+                    category=category or None,
+                    distance=(selected_distance if selected_distance != 'all' else None),
+                    lat=request.args.get('lat') or None,
+                    lng=request.args.get('lng') or None
+                  ) }}"
+                >
+                  &laquo; Previous
+                </a>
+
               </li>
 
-              {% if pagination.has_next %}
-                <li class="page-item">
-                  <a class="page-link"
-                     href="{{ url_for('public_profiles_directory',
-                                      page=pagination.next_num,
-                                      q=q or None,
-                                      category=category or None,
-                                      distance=(selected_distance if selected_distance != 'all' else None),
-                                      lat=request.args.get('lat') or None,
-                                      lng=request.args.get('lng') or None) }}">
-                    Next &raquo;
-                  </a>
-                </li>
-              {% else %}
-                <li class="page-item disabled">
-                  <span class="page-link">Next &raquo;</span>
-                </li>
-              {% endif %}
-            </ul>
-          </nav>
-        {% endif %}
-      </main>
+            {% else %}
+
+              <li class="page-item disabled">
+                <span class="page-link">&laquo; Previous</span>
+              </li>
+
+            {% endif %}
+
+            <li class="page-item disabled">
+
+              <span class="page-link">
+                Page {{ pagination.page }} of {{ pagination.pages }}
+              </span>
+
+            </li>
+
+            {% if pagination.has_next %}
+
+              <li class="page-item">
+
+                <a
+                  class="page-link"
+                  href="{{ url_for(
+                    'public_profiles_directory',
+                    page=pagination.next_num,
+                    q=q or None,
+                    category=category or None,
+                    distance=(selected_distance if selected_distance != 'all' else None),
+                    lat=request.args.get('lat') or None,
+                    lng=request.args.get('lng') or None
+                  ) }}"
+                >
+                  Next &raquo;
+                </a>
+
+              </li>
+
+            {% else %}
+
+              <li class="page-item disabled">
+                <span class="page-link">Next &raquo;</span>
+              </li>
+
+            {% endif %}
+
+          </ul>
+
+        </nav>
+
+      {% endif %}
+
     {% elif has_filters %}
-      <p class="text-center text-muted my-5">
-        No profiles matched your search. Try a different keyword, category or distance.
-      </p>
+
+      <div class="directory-empty">
+
+        <i class="bi bi-search"></i>
+
+        <h2 class="h5 fw-bold mb-2">
+          No profiles matched your search.
+        </h2>
+
+        <p class="mb-0">
+          Try a different keyword, category, or distance.
+        </p>
+
+      </div>
+
     {% endif %}
-  </div>
+
+  </main>
+
+</div>
 {% endblock %}
 
 {% block scripts %}
 
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
-
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
+
   function getParam(name) {
     return new URLSearchParams(window.location.search).get(name);
   }
@@ -361,7 +821,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var latParam = getParam("lat");
   var lngParam = getParam("lng");
 
-  // if URL already has lat/lng, don't overwrite
+  /* If URL already contains coordinates, leave it alone. */
   if (latParam && lngParam) {
     return;
   }
@@ -370,24 +830,33 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
-  navigator.geolocation.getCurrentPosition(function(pos) {
-    var lat = pos.coords.latitude;
-    var lng = pos.coords.longitude;
+  navigator.geolocation.getCurrentPosition(
+    function (pos) {
 
-    var params = new URLSearchParams(window.location.search);
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
 
-    params.set("lat", lat);
-    params.set("lng", lng);
+      var params = new URLSearchParams(window.location.search);
 
-    if (!params.get("distance") || params.get("distance") === "") {
-      params.set("distance", "10");
+      params.set("lat", lat);
+      params.set("lng", lng);
+
+      if (!params.get("distance") || params.get("distance") === "") {
+        params.set("distance", "10");
+      }
+
+      window.location.replace(
+        window.location.pathname + "?" + params.toString()
+      );
+    },
+    function () {
+      /* User denied location or browser returned an error.
+         Continue normally without location. */
     }
+  );
 
-    var newUrl = window.location.pathname + "?" + params.toString();
-    window.location.replace(newUrl);
-  }, function(error) {
-    // user denied or error; just continue without location
-  });
 });
 </script>
+
 {% endblock %}
+```

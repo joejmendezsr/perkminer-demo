@@ -1,222 +1,586 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Perk Miner – Online Marketplace</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Shop online with PerkMiner advertisers and earn cashback on real purchases.">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-  <style>
-    :root { 
-      --pm-primary: #2a5859; 
-      --pm-accent: #ffd66b; 
-      --pm-bg: #fff; 
-      --pm-text: #222; 
-    }
-    body { background: var(--pm-bg); color: var(--pm-text); }
-    .hero-section {
-      min-height: 30vh;
-      background: url('https://res.cloudinary.com/dmrntlcfd/image/upload/v1782601402/Cash-Back_rignwa.jpg?auto=format&fit=crop&w=1200&q=60')
-        center/cover no-repeat;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 0;
-    }
-    .hero-section .overlay {
-      position: absolute; inset: 0; background: rgba(42,88,89,.4); z-index:1;
-    }
-    .hero-content {
-      position: relative; z-index: 2; width:100%;
-      max-width: 680px; margin:0 auto; color:#fff;
-      text-align:center; padding: 2.5rem 1rem 2rem;
-    }
-    .hero-logo { height: 80px; width:auto; display:block; margin:0 auto 12px; }
-    .search-form .input-group {
-      border-radius: 18px;
-      box-shadow: 0 2px 10px #f2f5f5;
-      background: #fff;
-      overflow: hidden;
-    }
-    .search-form .form-control, .search-form .btn {
-      border-radius: 18px !important;
-      font-size: 1.05em;
-    }
-    .back-home-btn {
-      position: absolute;
-      top: 18px;
-      right: 24px;
-      z-index: 5;
-    }
+```html
+{% extends "pm_base.html" %}
 
-.small-listing-modern {
-  border: none;
-  overflow: hidden;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 4px 18px #e5eceb;
-  transition: box-shadow 0.18s, transform 0.16s;
-  min-height: 360px;
-  max-width: 380px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-}
+{% block title %}
+Perk Miner – Online Marketplace
+{% endblock %}
 
-.small-listing-modern:hover {
-  box-shadow: 0 6px 22px rgba(0,0,0,0.12);
-  transform: translateY(-2px);
-}
+{% block meta %}
+<meta
+  name="description"
+  content="Shop online with PerkMiner advertisers and earn cashback on real purchases."
+>
+{% endblock %}
 
-.small-listing-modern-img {
-  width: 180px;
-  height: 180px;
-  object-fit: cover;
-  display: block;
-  margin: 0 auto;
-}
+{# Keep the marketplace's custom hero instead of the standard navbar. #}
+{% block navbar %}{% endblock %}
 
-.biz-services {
-  white-space: normal;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  max-width: 100%;
-  margin: 0 auto;
-  display: block;
-  font-size: .94em;
-  color: #345;
-  font-weight: 500;
-  opacity: .93;
-}
+{% block head_extra %}
+<style>
+  /* =========================================================
+     ONLINE MARKETPLACE
+     Matches Perk Miner home/search-results visual language
+     ========================================================= */
 
-      .small-listing-perks {
-        background: #feebe7;
-        color: #345;
-        opacity: 0.93;
-        font-size: 0.96em;
-        margin-top: 8px;
-        line-height: 1.4;
-      }
-
-.mb-1.small { font-size: .96em; }
-
-@media (max-width:600px) {
-  .small-listing-modern { max-width: 97vw; }
-  .biz-services { max-width: 74vw; font-size:.98em;}
-  .small-listing-modern-img {
-    width: 160px;
-    height: 160px;
+  .marketplace-page {
+    background: var(--pm-bg, #f8fafb);
+    min-height: 100vh;
   }
-}
 
-    @media (max-width: 576px) {
-      .back-home-btn {
-        top: 10px;
-        right: 10px;
-      }
+  /* ---------------------------------------------------------
+     Hero
+     --------------------------------------------------------- */
+
+  .marketplace-hero {
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(
+        145deg,
+        rgba(30, 74, 75, 0.97) 0%,
+        rgba(42, 88, 89, 0.94) 60%,
+        rgba(58, 109, 110, 0.92) 100%
+      );
+    color: #fff;
+    text-align: center;
+    padding: 2.8rem 1rem 4rem;
+  }
+
+  .marketplace-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      url("https://res.cloudinary.com/dmrntlcfd/image/upload/v1782601402/Cash-Back_rignwa.jpg?auto=format&fit=crop&w=1600&q=40")
+      center / cover no-repeat;
+    opacity: 0.12;
+  }
+
+  .marketplace-hero-inner {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .marketplace-back {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 5;
+  }
+
+  .marketplace-back .btn {
+    border-radius: 50px;
+    font-weight: 600;
+  }
+
+  .marketplace-logo {
+    height: 70px;
+    width: auto;
+    max-width: 190px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 1rem;
+    border-radius: 13px;
+    background: #fff;
+    padding: 5px;
+  }
+
+  .marketplace-hero h1 {
+    font-weight: 800;
+    font-size: clamp(1.9rem, 5vw, 2.7rem);
+    line-height: 1.15;
+    margin-bottom: 0.55rem;
+  }
+
+  .marketplace-hero h2 {
+    max-width: 650px;
+    margin: 0 auto 1.4rem;
+    font-size: clamp(0.98rem, 2.6vw, 1.12rem);
+    font-weight: 500;
+    line-height: 1.5;
+    opacity: 0.94;
+  }
+
+  /* ---------------------------------------------------------
+     Search
+     --------------------------------------------------------- */
+
+  .marketplace-search {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .marketplace-search .input-group {
+    overflow: hidden;
+    background: #fff;
+    border-radius: 50px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  }
+
+  .marketplace-search .form-control {
+    min-height: 52px;
+    border: none;
+    padding: 0.8rem 1.1rem;
+    font-size: 1rem;
+  }
+
+  .marketplace-search .form-control:focus {
+    box-shadow: none;
+  }
+
+  .marketplace-search .btn {
+    min-height: 52px;
+    border: none;
+    border-radius: 0 50px 50px 0;
+    background: var(--pm-accent, #ffd66b);
+    color: var(--pm-primary, #1e4a4b);
+    font-weight: 800;
+    padding: 0 1.35rem;
+  }
+
+  .marketplace-search .btn:hover {
+    background: #ffe08b;
+    color: var(--pm-primary, #1e4a4b);
+  }
+
+  .marketplace-note {
+    margin-top: 0.7rem;
+    font-size: 0.82rem;
+    opacity: 0.85;
+  }
+
+  /* ---------------------------------------------------------
+     Main section
+     --------------------------------------------------------- */
+
+  .marketplace-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 1rem 4rem;
+  }
+
+  .marketplace-section-title {
+    color: var(--pm-primary-dark, #173b3c);
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .marketplace-section-title i {
+    color: var(--pm-primary-light, #2a5859);
+  }
+
+  /* ---------------------------------------------------------
+     Featured listing cards
+     --------------------------------------------------------- */
+
+  .marketplace-listing-link {
+    display: block;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .marketplace-listing-link:hover {
+    color: inherit;
+  }
+
+  .small-listing-modern {
+    height: 100%;
+    border: 1px solid #d9ece7;
+    border-radius: 14px;
+    background: #fafefe;
+    box-shadow: 0 1px 5px #e6f9f4;
+    overflow: hidden;
+    transition:
+      box-shadow 0.18s ease,
+      transform 0.18s ease,
+      background 0.18s ease;
+  }
+
+  .marketplace-listing-link:hover .small-listing-modern {
+    background: #e6f6f5;
+    box-shadow: 0 7px 22px rgba(42, 88, 89, 0.18);
+    transform: translateY(-3px);
+  }
+
+  .listing-image-container {
+    width: 100%;
+    min-height: 145px;
+    background: #f7faf9;
+    border-bottom: 1px solid #e5f0ee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .small-listing-modern-img {
+    width: 112px;
+    height: 112px;
+    object-fit: cover;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #e2eeee;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .listing-placeholder {
+    width: 112px;
+    height: 112px;
+    border-radius: 14px;
+    background: #eef6f5;
+    border: 1px solid #d9ece7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .listing-placeholder i {
+    font-size: 2.15rem;
+    color: var(--pm-primary-light, #2a5859);
+  }
+
+  .small-listing-info {
+    padding: 1rem 1rem 1.1rem;
+    text-align: center;
+  }
+
+  .small-listing-title {
+    color: var(--pm-primary-dark, #173b3c);
+    font-size: 1.08rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 0.5rem;
+  }
+
+  .small-listing-category-badge {
+    display: inline-block;
+    background: #e6f6f5;
+    color: var(--pm-primary-light, #2a5859);
+    border-radius: 10px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .small-listing-services {
+    color: #40545a;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    margin-top: 0.75rem;
+  }
+
+  .small-listing-services strong {
+    color: var(--pm-primary-dark, #173b3c);
+  }
+
+  .small-listing-perks {
+    background: #fff8e1;
+    border: 1px dashed #e0b84a;
+    color: #6f5600;
+    border-radius: 10px;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.86rem;
+    line-height: 1.4;
+    margin-top: 0.75rem;
+  }
+
+  .listing-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.85rem;
+    color: var(--pm-primary-light, #2a5859);
+    font-size: 0.88rem;
+    font-weight: 800;
+  }
+
+  .marketplace-empty {
+    background: #fff;
+    border: 1px solid #e2eeee;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  @media (max-width: 767.98px) {
+
+    .marketplace-hero {
+      padding-top: 3.7rem;
+      padding-bottom: 3rem;
     }
 
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
+    .marketplace-back {
+      top: 0.7rem;
+      right: 0.7rem;
+    }
 
-  </style>
-</head>
-<body>
+    .marketplace-back .btn {
+      font-size: 0.78rem;
+    }
 
-  <section class="hero-section">
-    <div class="overlay"></div>
+    .marketplace-logo {
+      height: 62px;
+    }
 
-  {% if current_user.business_email %}
-      <a href="{{ url_for('business_home') }}" class="btn btn-light btn-sm shadow-sm">
-        &larr; Back to home
-  {% else %}
-      <a href="{{ url_for('home') }}" class="btn btn-light btn-sm shadow-sm">
-        &larr; Back to home
-  {% endif %}
+    .marketplace-search .input-group {
+      border-radius: 14px;
+    }
 
-    <div class="back-home-btn">
-      <a href="{{ url_for('home') }}" class="btn btn-light btn-sm shadow-sm">
-        &larr; Back to home
-      </a>
+    .marketplace-search .btn {
+      border-radius: 0 14px 14px 0;
+      padding: 0 1rem;
+    }
+
+    .listing-image-container {
+      min-height: 130px;
+    }
+
+    .small-listing-modern-img,
+    .listing-placeholder {
+      width: 100px;
+      height: 100px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="marketplace-page">
+
+  {# =========================================================
+     HERO
+     ========================================================= #}
+
+  <section class="marketplace-hero">
+
+    <div class="marketplace-back">
+
+      {% if current_user.business_email %}
+
+        <a
+          href="{{ url_for('business_home') }}"
+          class="btn btn-light btn-sm shadow-sm"
+        >
+          <i class="bi bi-arrow-left me-1"></i>
+          Back to home
+        </a>
+
+      {% else %}
+
+        <a
+          href="{{ url_for('home') }}"
+          class="btn btn-light btn-sm shadow-sm"
+        >
+          <i class="bi bi-arrow-left me-1"></i>
+          Back to home
+        </a>
+
+      {% endif %}
+
     </div>
 
-    <div class="container hero-content">
-      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg"
-           alt="Perk Miner" class="hero-logo">
-      <h1 class="mb-1">online marketplace</h1>
-      <h5 class="mb-3">shop with perkminer e‑commerce advertisers and earn cashback on real purchases.</h5>
-      <form class="search-form mb-2" method="get" action="{{ url_for('online_marketplace_results') }}">
-        <div class="input-group mb-1">
-          <input type="text"
-                 class="form-control"
-                 name="q"
-                 placeholder="Search online businesses, products, or services..."
-                 aria-label="Search">
-          <button class="btn btn-primary" type="submit">Search</button>
+    <div class="marketplace-hero-inner">
+
+      <img
+        src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg"
+        alt="Perk Miner"
+        class="marketplace-logo"
+        loading="lazy"
+      >
+
+      <h1>Online Marketplace</h1>
+
+      <h2>
+        Shop with PerkMiner e-commerce advertisers and earn
+        cashback on real purchases.
+      </h2>
+
+      <form
+        class="marketplace-search"
+        method="get"
+        action="{{ url_for('online_marketplace_results') }}"
+        role="search"
+      >
+
+        <div class="input-group">
+
+          <input
+            type="text"
+            class="form-control"
+            name="q"
+            placeholder="Search online businesses, products, or services..."
+            aria-label="Search online marketplace"
+          >
+
+          <button class="btn" type="submit">
+            <i class="bi bi-search me-1"></i>
+            Search
+          </button>
+
         </div>
+
       </form>
-      <p class="small mb-0">online marketplace results are not filtered by distance.</p>
+
+      <div class="marketplace-note">
+        Online marketplace results are not filtered by distance.
+      </div>
+
     </div>
+
   </section>
 
-  <main class="container my-5">
-    <section class="mb-4">
-      <h3 class="mt-5 mb-3 text-center">featured online businesses</h3>
-      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for biz in featured_ecom %}
-          <div class="col">
-            <a href="{{ url_for('view_listing', biz_id=biz.id, from_online_featured=1) }}"
-               style="text-decoration:none;">
-              <div class="small-listing-modern">
+  {# =========================================================
+     FEATURED LISTINGS
+     ========================================================= #}
+
+  <main class="marketplace-content">
+
+    <h2 class="h3 marketplace-section-title">
+      <i class="bi bi-stars me-1"></i>
+      Featured Online Businesses
+    </h2>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+
+      {% for biz in featured_ecom %}
+
+        <div class="col">
+
+          <a
+            href="{{ url_for('view_listing', biz_id=biz.id, from_online_featured=1) }}"
+            class="marketplace-listing-link"
+          >
+
+            <div class="small-listing-modern">
+
+              {# Business logo/profile photo #}
+              <div class="listing-image-container">
+
                 {% if biz.profile_photo %}
-                  <img src="{{ biz.profile_photo }}" class="small-listing-modern-img" alt="{{ biz.business_name }} logo">
+
+                  <img
+                    src="{{ biz.profile_photo }}"
+                    class="small-listing-modern-img"
+                    alt="{{ biz.business_name }} logo"
+                    width="112"
+                    height="112"
+                    loading="lazy"
+                  >
+
                 {% else %}
-                  <div class="small-listing-modern-img d-flex align-items-center justify-content-center bg-light border">
-                    <i class="bi bi-shop" style="font-size:1.6em; color:#2a5859;"></i>
+
+                  <div class="listing-placeholder">
+                    <i class="bi bi-shop"></i>
                   </div>
+
                 {% endif %}
 
-                <div class="card-body text-center px-3">
-                  <h5 class="card-title mb-2">{{ biz.business_name }}</h5>
-                  <div class="mb-1 small" style="font-weight:500;">
-                    <span class="badge bg-success">Online Marketplace</span>
-                  </div>
-                  <div class="mb-1">
-                    <strong>Category:</strong> {{ biz.category or "N/A" }}
-                  </div>
-                  <div class="mb-1 biz-services">
-                    <strong>Services:</strong>
-                    {% set services = [biz.service_1, biz.service_2, biz.service_3, biz.service_4, biz.service_5,
-                                       biz.service_6, biz.service_7, biz.service_8, biz.service_9, biz.service_10] %}
-                    {{ services|select|reject('equalto','')|join(', ') if services|select|reject('equalto','')|list else 'N/A' }}
-                  </div>
-                  <div class="small-listing-perks">
-                    <strong>Perks:</strong> {{ biz.perks or "N/A" }}
-                  </div>
-                </div>
               </div>
-            </a>
-          </div>
-        {% endfor %}
-        {% if featured_ecom|length == 0 %}
-          <div class="col-12">
-            <div class="alert alert-warning text-center mt-2">
-              No online marketplace businesses are featured at this time.
+
+              <div class="small-listing-info">
+
+                <div class="small-listing-title">
+                  {{ biz.business_name }}
+                </div>
+
+                <div>
+                  <span class="small-listing-category-badge">
+                    <i class="bi bi-bag-check me-1"></i>
+                    {{ biz.category or "Online Marketplace" }}
+                  </span>
+                </div>
+
+                <div class="small-listing-services">
+
+                  <strong>Services:</strong>
+
+                  {% set services = [
+                    biz.service_1,
+                    biz.service_2,
+                    biz.service_3,
+                    biz.service_4,
+                    biz.service_5,
+                    biz.service_6,
+                    biz.service_7,
+                    biz.service_8,
+                    biz.service_9,
+                    biz.service_10
+                  ] %}
+
+                  {% set valid_services = services
+                    |select
+                    |reject('equalto', '')
+                    |list
+                  %}
+
+                  {% if valid_services %}
+                    {{ valid_services|join(', ') }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+
+                </div>
+
+                <div class="small-listing-perks">
+
+                  <strong>
+                    <i class="bi bi-gift me-1"></i>
+                    Perks:
+                  </strong>
+
+                  {{ biz.perks or "Member perks available" }}
+
+                </div>
+
+                <div class="listing-cta">
+                  View listing
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+
+              </div>
+
             </div>
+
+          </a>
+
+        </div>
+
+      {% endfor %}
+
+      {% if featured_ecom|length == 0 %}
+
+        <div class="col-12">
+
+          <div class="marketplace-empty">
+
+            <i class="bi bi-shop fs-2 text-muted"></i>
+
+            <h3 class="h5 mt-2">
+              No online marketplace businesses are featured yet.
+            </h3>
+
+            <p class="text-muted mb-0">
+              Check back soon for new marketplace advertisers.
+            </p>
+
           </div>
-        {% endif %}
-      </div>
-    </section>
+
+        </div>
+
+      {% endif %}
+
+    </div>
+
   </main>
 
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}
+```

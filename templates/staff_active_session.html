@@ -1,523 +1,355 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Staff Session – PerkMiner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-  >
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-  >
-<style>
-  body { background:#f5f7fb; }
+{% extends "pm_base.html" %}
+{% from 'pm_macros.html' import status_badge %}
+{% set is_provider = (staff.role == 'service_provider' and interaction.assigned_staff_id == staff.id) %}
+{% block title %}Staff Session – PerkMiner{% endblock %}
 
-  .session-card {
-    max-width: 800px;
-    margin: 24px auto;
-    border-radius: 16px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-    background:#ffffff;
-    padding: 1.5rem 1.5rem 2rem;
-  }
-
-  .messages-box {
-    border: 1px solid #e1e5ee;
-    border-radius: 8px;
-    max-height: 320px;
-    overflow-y: auto;
-    padding: 0.75rem;
-    background:#f9fafb;
-    font-size: 0.94rem;
-  }
-
-  .message-row + .message-row {
-    border-top:1px solid #e5e7eb;
-    margin-top:0.35rem;
-    padding-top:0.35rem;
-  }
-
-  .message-meta {
-    font-size: 0.78rem;
-    color: #6b7280;
-  }
-
-  .status-badge {
-    font-size: 0.8rem;
-  }
-
-  /* shared fixed-width, touch-friendly buttons on this page */
-  .session-btn {
-    width: 200px;
-    text-align: center;
-    white-space: nowrap;
-
-    padding-top: 0.4rem;
-    padding-bottom: 0.4rem;
-    font-size: 1.05rem;
-  }
-
-  .session-btn i {
-    font-size: 1.1em;
-    margin-right: 4px;
-  }
-
-  @media (max-width: 650px) {
-    .session-card {
-      margin: 12px auto;
-      padding: 1.2rem 0.75rem 1.5rem;
-    }
-
-    .session-btn {
-      width: 100%;
-    }
-  }
-</style>
-</head>
-<body>
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
   <div class="container">
-    <div class="session-card">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, msg in messages %}
-            <div class="alert alert-{{ category if category in ['success','danger','warning','info'] else 'info' }} mb-2">
-              {{ msg }}
-            </div>
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
+    <a class="navbar-brand" href="/">PerkMiner</a>
+    <div class="navbar-nav ms-auto flex-row gap-2">
+      <a href="{{ url_for('staff_dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i><span class="d-none d-sm-inline"> Back to dashboard</span></a>
+      <a href="{{ url_for('staff_logout') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i><span class="d-none d-sm-inline"> Log out</span></a>
+    </div>
+  </div>
+</nav>
+{% endblock %}
 
-      <div class="text-center mb-3">
-        <h4 class="mb-1">
-          Session #{{ interaction.id }}
-        </h4>
-        <div class="text-muted" style="font-size:0.95rem;">
-          Member:
-          <strong>{{ interaction.user.name or interaction.user.email }}</strong><br>
-          Business:
-          <strong>{{ interaction.business.business_name }}</strong>
-        </div>
+{% block head_extra %}
+<style>
+  .pm-details-stack > * + * { margin-top: 1rem; }
+  .pm-details-stack .card { margin-bottom: 0; }
+  .pm-send-row { display: flex; gap: .5rem; }
+  .pm-send-row textarea { flex: 1; min-width: 0; }
+  .staff-msg { padding: .55rem .2rem; }
+  .staff-msg + .staff-msg { border-top: 1px solid #e1eeee; }
+  .staff-msg .message-meta { font-size: .78rem; color: var(--pm-muted); }
+</style>
+{% endblock %}
 
-        {% if interaction.destination_address %}
-        <div class="mt-2" style="font-size:0.85rem;">
-          <strong>Destination (member view):</strong> {{ interaction.destination_address }}<br>
-          {% if interaction.member_destination_confirmed is none %}
-            <span class="text-muted">Member has not confirmed the address yet.</span>
-          {% elif interaction.member_destination_confirmed %}
-            <span class="text-success fw-semibold">Member confirmed: Address Correct</span>
-          {% else %}
-            <span class="text-danger fw-semibold">
-              MEMBER REPORTED INCORRECT ADDRESS.</br>(Refresh the page before opening driving directions for updated address)
-            </span>
-            {% if interaction.member_destination_note %}
-              <div class="text-muted">
-                {{ interaction.member_destination_note }}
-              </div>
-            {% endif %}
-          {% endif %}
-        </div>
-        {% endif %}
+{% block content %}
+<div class="container pb-3">
 
-        {% if interaction.provider_status %}
-          <div class="mt-2">
-            <span class="badge bg-primary status-badge">
-              Status:
-              {% if interaction.provider_status == 'on_the_way' %}On the way{% endif %}
-              {% if interaction.provider_status == 'arrived' %}Arrived{% endif %}
-              {% if interaction.provider_status == 'no show - charge fee - no finalization' %}No Show - Charge Fee - No Finalization{% endif %}
-              {% if interaction.provider_status == 'no show - charge fee - finalization' %}No Show - Charge Fee - Finalization{% endif %}
-              {% if interaction.provider_status == 'no show - no fee' %}No Show - No Fee{% endif %}
-              {% if interaction.provider_status == 'contract_initial_paid' %}Contract signed - initial fee paid{% endif %}
-              {% if interaction.provider_status == 'contract_full_paid' %}Contract signed - full fee paid{% endif %}
-              {% if interaction.provider_status == 'service_fee_only' %}Service call fee only paid{% endif %}
-              {% if interaction.provider_status == 'rejected_no_contract' %}Rejected quote - no contract or fee{% endif %}
-              {% if interaction.provider_status == 'estimate_only' %}Estimate only{% endif %}
-            </span>
-            {% if interaction.provider_status_note %}
-              <div class="mt-1 text-muted" style="font-size:0.85rem;">
-                {{ interaction.provider_status_note }}
-              </div>
-            {% endif %}
-          </div>
-        {% endif %}
-
-        {# admin tracking button, centered #}
-        {% if staff.role == 'admin'
-              and staff.allow_live_tracking
-              and interaction.assigned_staff_id
-              and interaction.provider_status == 'on_the_way' %}
-          <div class="mt-3">
-            <button
-              type="button"
-              class="btn btn-outline-primary btn-sm session-btn"
-              onclick="window.open('{{ url_for('track_provider', interaction_id=interaction.id) }}', '_blank', 'width=420,height=700');">
-              Track service provider
-            </button>
-            <small class="d-block text-muted mt-1" style="font-size:0.8rem;">
-              Only available while the provider status is "On the way".
-            </small>
-          </div>
-        {% endif %}
-
-        <div class="mt-3 d-flex flex-column align-items-center gap-2">
-          <a href="{{ url_for('staff_dashboard') }}"
-             class="btn btn-outline-secondary btn-sm session-btn">
-            <i class="bi bi-arrow-left"></i> Back to dashboard
-          </a>
-          <a href="{{ url_for('staff_logout') }}"
-             class="btn btn-outline-danger btn-sm session-btn">
-            <i class="bi bi-box-arrow-right"></i> Log out
-          </a>
-        </div>
-      </div>
-
-      <hr>
-
-      <!-- DESTINATION – ONLY FOR ASSIGNED SERVICE PROVIDER -->
-      {% if staff.role == 'service_provider' and interaction.assigned_staff_id == staff.id %}
-      <div class="mb-3">
-        <h5 class="mb-2">Destination address</h5>
-        <form method="post" action="{{ url_for('staff_set_destination', interaction_id=interaction.id) }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-          <div class="mb-2">
-            <input
-              type="text"
-              id="destination-address"
-              name="destination_address"
-              class="form-control form-control-sm"
-              placeholder="Start typing an address..."
-              value="{{ interaction.destination_address or '' }}"
-              autocomplete="off"
-            >
-          </div>
-
-          <input type="hidden" id="destination-lat" name="destination_lat"
-                 value="{{ interaction.destination_lat if interaction.destination_lat is not none else '' }}">
-          <input type="hidden" id="destination-lng" name="destination_lng"
-                 value="{{ interaction.destination_lng if interaction.destination_lng is not none else '' }}">
-
-          <small class="text-muted d-block mb-2" style="font-size:0.85rem;">
-            Choose the exact address you are going to before setting status to "On the way".
-          </small>
-          <button type="submit" class="btn btn-outline-primary btn-sm">
-            Save destination
-          </button>
-        </form>
-      </div>
-
-      {% if interaction.destination_lat is not none and interaction.destination_lng is not none %}
-      <div class="mt-2 mb-3">
-        <button
-          type="button"
-          class="btn btn-outline-success btn-sm"
-          onclick="openDrivingDirections()">
-          Open driving directions
-        </button>
-      </div>
-      {% endif %}
-      {% endif %}
-
-      <hr>
-
-      <!-- STATUS UPDATE – ONLY FOR ASSIGNED SERVICE PROVIDER -->
-      {% if staff.role == 'service_provider' and interaction.assigned_staff_id == staff.id %}
-      <div class="mb-4">
-        <h5 class="mb-2">Update service status</h5>
-        <small class="text-muted d-block mb-2" style="font-size:0.85rem;">
-          Set "On the way" only after you have saved the destination address.
-        </small>
-        <form id="status-form"
-              method="post"
-              action="{{ url_for('staff_update_status', interaction_id=interaction.id) }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="mb-2">
-            <label class="form-label">Current status</label>
-            <select id="provider-status-select"
-                    name="provider_status"
-                    class="form-select form-select-sm">
-              <option value="">Select status...</option>
-              <option value="on_the_way"
-                {% if interaction.provider_status == 'on_the_way' %}selected{% endif %}>
-                On the way
-              </option>
-              <option value="arrived"
-                {% if interaction.provider_status == 'arrived' %}selected{% endif %}>
-                Arrived
-              </option>
-              <option value="no show - charge fee - no finalization"
-                {% if interaction.provider_status == 'no show - charge fee - no finalization' %}selected{% endif %}>
-                No Show - Charge Fee - No Finalization
-              </option>
-              <option value="no show - charge fee - finalization"
-                {% if interaction.provider_status == 'no show - charge fee - finalization' %}selected{% endif %}>
-                No Show - Charge Fee - Finalization
-              </option>
-              <option value="no show - no fee"
-                {% if interaction.provider_status == 'no show - no fee' %}selected{% endif %}>
-                No Show - No Fee
-              </option>
-              <option value="contract_initial_paid"
-                {% if interaction.provider_status == 'contract_initial_paid' %}selected{% endif %}>
-                Contract signed - initial fee paid
-              </option>
-              <option value="contract_full_paid"
-                {% if interaction.provider_status == 'contract_full_paid' %}selected{% endif %}>
-                Contract signed - full fee paid
-              </option>
-              <option value="service_fee_only"
-                {% if interaction.provider_status == 'service_fee_only' %}selected{% endif %}>
-                Service call fee only paid
-              </option>
-              <option value="rejected_no_contract"
-                {% if interaction.provider_status == 'rejected_no_contract' %}selected{% endif %}>
-                Rejected quote - no contract or fee
-              </option>
-              <option value="estimate_only"
-                {% if interaction.provider_status == 'estimate_only' %}selected{% endif %}>
-                Estimate only
-              </option>
-            </select>
-          </div>
-          <div class="mb-2">
-            <label class="form-label">Notes (optional)</label>
-            <textarea
-              name="provider_status_note"
-              class="form-control form-control-sm"
-              rows="2"
-            >{{ interaction.provider_status_note or '' }}</textarea>
-          </div>
-          <button type="submit" class="btn btn-primary btn-sm">
-            Save status
-          </button>
-        </form>
-      </div>
-      {% endif %}
-
-      <hr>
-
-      <!-- MESSAGES -->
-      <h5 class="mb-2">Secure messages</h5>
-      <div class="messages-box mb-3">
-        {% if messages %}
-          {% for msg in messages %}
-            <div class="message-row">
-              <div class="message-meta">
-                <strong>{{ msg.sender_label }}</strong>
-                &middot;
-                {{ msg.timestamp.strftime('%Y-%m-%d %H:%M') if msg.timestamp else '' }}
-              </div>
-              {% if msg.text %}
-                <div>{{ msg.text }}</div>
-              {% endif %}
-              {% if msg.file_url %}
-                <div>
-                  <a href="{{ msg.file_url }}" target="_blank">
-                    <i class="bi bi-paperclip"></i>
-                    {{ msg.file_name or 'Attachment' }}
-                  </a>
-                </div>
-              {% endif %}
-            </div>
-          {% endfor %}
-        {% else %}
-          <div class="text-muted">No messages yet.</div>
-        {% endif %}
-      </div>
-
-      <!-- MESSAGE FORM -->
-      <form method="post" enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="mb-2">
-          <label class="form-label">Send a message</label>
-          <textarea
-            name="message_text"
-            rows="2"
-            class="form-control"
-            placeholder="Type your message to the member..."
-          ></textarea>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Attach a file (optional)</label>
-          <input type="file" name="message_file" class="form-control form-control-sm">
-        </div>
-        <button type="submit" class="btn btn-secondary">
-          Send message
-        </button>
-      </form>
-
-      <hr class="mt-4 mb-3">
-
-      <!-- ACTION BUTTONS -->
-      <div class="d-flex flex-column align-items-center gap-2">
-        <a
-          href="{{ url_for('staff_scan_qr', interaction_id=interaction.id) }}"
-          class="btn btn-success btn-sm session-btn"
-        >
-          <i class="bi bi-upc-scan"></i> Scan QR Code
-        </a>
-        <a
-          href="{{ url_for('staff_finalize_transaction', interaction_id=interaction.id) }}"
-          class="btn btn-outline-primary btn-sm session-btn"
-        >
-          Finalize manually
-        </a>
-        <form method="post"
-              action="{{ url_for('end_session', interaction_id=interaction.id) }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn btn-danger btn-sm session-btn w-100">
-            End session
-          </button>
-        </form>
+  <!-- header -->
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-headset"></i></div>
+    <div class="pm-hero-body">
+      <div class="pm-hero-sub">Staff session</div>
+      <h1>Session #{{ interaction.id }}</h1>
+      <div class="pm-hero-sub mt-1">
+        Member: <strong>{{ interaction.user.name or interaction.user.email }}</strong><br>
+        Business: <strong>{{ interaction.business.business_name }}</strong>
       </div>
     </div>
   </div>
 
-  <!-- GOOGLE PLACES + LIVE LOCATION – ONLY FOR ASSIGNED SERVICE PROVIDER -->
-  {% if staff.role == 'service_provider' and interaction.assigned_staff_id == staff.id %}
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"
-    async defer>
-  </script>
-  <script>
-    function openDrivingDirections() {
-      const destLat = {{ interaction.destination_lat or 0 }};
-      const destLng = {{ interaction.destination_lng or 0 }};
+  <!-- tablet / mobile toggle -->
+  <div class="pm-pane-toggle d-lg-none" role="tablist">
+    <button type="button" data-pane="chat" role="tab"><i class="bi bi-chat-dots"></i> Messages<span class="pm-dot"></span></button>
+    <button type="button" data-pane="details" role="tab"><i class="bi bi-clipboard-check"></i> Details &amp; actions<span class="pm-dot"></span></button>
+  </div>
 
-      if (!destLat || !destLng) {
-        alert("Destination location is not set yet.");
-        return;
-      }
+  <div class="row g-3">
 
-      const url = `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`;
-      window.open(url, "_blank");
+    <!-- ============ LEFT: destination, status, actions ============ -->
+    <div class="col-lg-5 pm-pane" data-pane="details">
+      <div class="pm-details-stack">
+
+        <!-- live summary: member address confirmation, provider status, tracking -->
+        <div data-live="info">
+          <div class="card p-3">
+            <div class="card-title-row"><i class="bi bi-info-circle"></i><h5>Session info</h5></div>
+
+            {% if interaction.destination_address %}
+              <div style="font-size:.92rem;">
+                <strong>Destination (member view):</strong> {{ interaction.destination_address }}<br>
+                {% if interaction.member_destination_confirmed is none %}
+                  <span class="text-muted">Member has not confirmed the address yet.</span>
+                {% elif interaction.member_destination_confirmed %}
+                  <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill"></i> Member confirmed: Address Correct</span>
+                {% else %}
+                  <div class="pm-note bad mt-2">
+                    <strong>MEMBER REPORTED INCORRECT ADDRESS.</strong><br>
+                    (Refresh the page before opening driving directions for updated address)
+                    {% if interaction.member_destination_note %}
+                      <div class="mt-1">{{ interaction.member_destination_note }}</div>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="text-muted" style="font-size:.92rem;">No destination address has been set yet.</div>
+            {% endif %}
+
+            {% if interaction.provider_status %}
+              <div class="mt-3">
+                {{ status_badge(interaction.provider_status) }}
+                {% if interaction.provider_status_note %}
+                  <div class="mt-1 text-muted" style="font-size:.88rem;">{{ interaction.provider_status_note }}</div>
+                {% endif %}
+              </div>
+            {% endif %}
+
+            {# admin tracking button #}
+            {% if staff.role == 'admin'
+                  and staff.allow_live_tracking
+                  and interaction.assigned_staff_id
+                  and interaction.provider_status == 'on_the_way' %}
+              <div class="mt-3">
+                <button type="button" class="btn btn-outline-primary w-100"
+                        onclick="window.open('{{ url_for('track_provider', interaction_id=interaction.id) }}', '_blank', 'width=420,height=700');">
+                  <i class="bi bi-geo-alt"></i> Track service provider
+                </button>
+                <small class="d-block text-muted mt-1" style="font-size:.8rem;">
+                  Only available while the provider status is "On the way".
+                </small>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if is_provider %}
+        <!-- DESTINATION – ONLY FOR ASSIGNED SERVICE PROVIDER -->
+        <div class="card p-3">
+          <div class="card-title-row"><i class="bi bi-geo-alt"></i><h5>Destination address</h5></div>
+          <form method="post" action="{{ url_for('staff_set_destination', interaction_id=interaction.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-2">
+              <input type="text" id="destination-address" name="destination_address" class="form-control"
+                     placeholder="Start typing an address..." value="{{ interaction.destination_address or '' }}" autocomplete="off">
+            </div>
+            <input type="hidden" id="destination-lat" name="destination_lat"
+                   value="{{ interaction.destination_lat if interaction.destination_lat is not none else '' }}">
+            <input type="hidden" id="destination-lng" name="destination_lng"
+                   value="{{ interaction.destination_lng if interaction.destination_lng is not none else '' }}">
+            <small class="text-muted d-block mb-2" style="font-size:.85rem;">
+              Choose the exact address you are going to before setting status to "On the way".
+            </small>
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-floppy"></i> Save destination</button>
+          </form>
+
+          <div data-live="dir" id="dir-zone"
+               {% if interaction.destination_lat is not none and interaction.destination_lng is not none %}
+               data-lat="{{ interaction.destination_lat }}" data-lng="{{ interaction.destination_lng }}"
+               {% endif %}>
+            {% if interaction.destination_lat is not none and interaction.destination_lng is not none %}
+              <button type="button" class="btn btn-outline-success w-100 mt-3" onclick="openDrivingDirections()">
+                <i class="bi bi-sign-turn-right"></i> Open driving directions
+              </button>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- STATUS UPDATE – ONLY FOR ASSIGNED SERVICE PROVIDER -->
+        <div class="card p-3">
+          <div class="card-title-row"><i class="bi bi-truck"></i><h5>Update service status</h5></div>
+          <small class="text-muted d-block mb-2" style="font-size:.85rem;">
+            Set "On the way" only after you have saved the destination address.
+          </small>
+          <form id="status-form" method="post" action="{{ url_for('staff_update_status', interaction_id=interaction.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-2">
+              <label class="form-label">Current status</label>
+              <select id="provider-status-select" name="provider_status" class="form-select">
+                <option value="">Select status...</option>
+                <option value="on_the_way" {% if interaction.provider_status == 'on_the_way' %}selected{% endif %}>On the way</option>
+                <option value="arrived" {% if interaction.provider_status == 'arrived' %}selected{% endif %}>Arrived</option>
+                <option value="no show - charge fee - no finalization" {% if interaction.provider_status == 'no show - charge fee - no finalization' %}selected{% endif %}>No Show - Charge Fee - No Finalization</option>
+                <option value="no show - charge fee - finalization" {% if interaction.provider_status == 'no show - charge fee - finalization' %}selected{% endif %}>No Show - Charge Fee - Finalization</option>
+                <option value="no show - no fee" {% if interaction.provider_status == 'no show - no fee' %}selected{% endif %}>No Show - No Fee</option>
+                <option value="contract_initial_paid" {% if interaction.provider_status == 'contract_initial_paid' %}selected{% endif %}>Contract signed - initial fee paid</option>
+                <option value="contract_full_paid" {% if interaction.provider_status == 'contract_full_paid' %}selected{% endif %}>Contract signed - full fee paid</option>
+                <option value="service_fee_only" {% if interaction.provider_status == 'service_fee_only' %}selected{% endif %}>Service call fee only paid</option>
+                <option value="rejected_no_contract" {% if interaction.provider_status == 'rejected_no_contract' %}selected{% endif %}>Rejected quote - no contract or fee</option>
+                <option value="estimate_only" {% if interaction.provider_status == 'estimate_only' %}selected{% endif %}>Estimate only</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Notes (optional)</label>
+              <textarea name="provider_status_note" class="form-control" rows="2">{{ interaction.provider_status_note or '' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check2-circle"></i> Save status</button>
+          </form>
+        </div>
+        {% endif %}
+
+        <!-- ACTION BUTTONS -->
+        <div class="card p-3">
+          <div class="card-title-row"><i class="bi bi-cash-coin"></i><h5>Payment</h5></div>
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('staff_scan_qr', interaction_id=interaction.id) }}" class="btn btn-success"><i class="bi bi-upc-scan"></i> Scan QR Code</a>
+            <a href="{{ url_for('staff_finalize_transaction', interaction_id=interaction.id) }}" class="btn btn-outline-primary">Finalize manually</a>
+            <form method="post" action="{{ url_for('end_session', interaction_id=interaction.id) }}"
+                  onsubmit="return confirm('End this session? This ends the connection.');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-danger w-100"><i class="bi bi-x-octagon"></i> End session</button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============ RIGHT: secure messages ============ -->
+    <div class="col-lg-7 pm-pane" data-pane="chat">
+      <div class="card pm-chat">
+        <div class="card-title-row">
+          <i class="bi bi-shield-lock"></i><h5>Secure messages</h5>
+          <span class="pm-live-dot ms-auto">Live</span>
+        </div>
+
+        <div id="messages-box" data-live="msgs" aria-live="polite">
+          {% if messages %}
+            {% for msg in messages %}
+              <div class="staff-msg">
+                <div class="message-meta">
+                  <strong>{{ msg.sender_label }}</strong> &middot;
+                  {{ msg.timestamp.strftime('%Y-%m-%d %H:%M') if msg.timestamp else '' }}
+                </div>
+                {% if msg.text %}<div>{{ msg.text }}</div>{% endif %}
+                {% if msg.file_url %}
+                  <div>
+                    <a href="{{ msg.file_url }}" target="_blank"><i class="bi bi-paperclip"></i> {{ msg.file_name or 'Attachment' }}</a>
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-muted">No messages yet.</div>
+          {% endif %}
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="pm-composer" id="staff-chat-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="form-label" for="staff-message-text">Send a message</label>
+          <textarea name="message_text" id="staff-message-text" rows="2" class="form-control mb-2"
+                    placeholder="Type your message to the member..."></textarea>
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+            <label class="btn btn-outline-secondary btn-sm pm-attach" for="staff-message-file"><i class="bi bi-paperclip"></i> Attach a file (optional)</label>
+            <input type="file" name="message_file" id="staff-message-file" class="d-none">
+            <span class="pm-file-chip" id="file-chip"><i class="bi bi-file-earmark"></i><span id="file-chip-name"></span><button type="button" id="file-chip-clear" aria-label="Remove file">&times;</button></span>
+          </div>
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-send-fill"></i> Send message</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  window.pmPanes('chat');
+
+  var box = document.getElementById('messages-box');
+  function nearBottom() { return (box.scrollHeight - box.scrollTop - box.clientHeight) < 80; }
+  function toBottom() { box.style.scrollBehavior = 'auto'; box.scrollTop = box.scrollHeight; box.style.scrollBehavior = ''; }
+  toBottom();
+  window.addEventListener('pm-pane', function (e) { if (e.detail === 'chat') setTimeout(toBottom, 30); });
+
+  var file = document.getElementById('staff-message-file'), chip = document.getElementById('file-chip');
+  file.addEventListener('change', function () {
+    if (file.files.length) { document.getElementById('file-chip-name').textContent = file.files[0].name; chip.classList.add('show'); }
+    else { chip.classList.remove('show'); }
+  });
+  document.getElementById('file-chip-clear').addEventListener('click', function () { file.value = ''; chip.classList.remove('show'); });
+
+  /* track whether the provider has started typing/changing something, so nothing refreshes over their work */
+  var dirty = false;
+  document.addEventListener('input', function (e) { if (e.target.closest('form')) dirty = true; });
+  document.addEventListener('change', function (e) { if (e.target.closest('form')) dirty = true; });
+
+  /* live: messages, member address confirmation and provider status update without a refresh */
+  var stick = true, prevTop = 0;
+  window.pmLive({
+    interval: 5000,
+    skip: function (name) { if (name === 'msgs') { stick = nearBottom(); prevTop = box.scrollTop; } return false; },
+    onSwap: function (names) {
+      if (names.indexOf('msgs') !== -1) { if (stick) toBottom(); else box.scrollTop = prevTop; window.pmMarkPane('chat'); }
+      if (names.indexOf('info') !== -1) { window.pmMarkPane('details'); }
+    },
+    onGone: function (url) {
+      window.pmToast('This session has ended.');
+      setTimeout(function () { window.location.href = url || "{{ url_for('staff_dashboard') }}"; }, 1500);
     }
+  });
 
-    function initDestinationAutocomplete() {
-      const input = document.getElementById('destination-address');
-      const latInput = document.getElementById('destination-lat');
-      const lngInput = document.getElementById('destination-lng');
-      if (!input) return;
+  {% if is_provider %}
+  window.openDrivingDirections = function () {
+    var z = document.getElementById('dir-zone');
+    var destLat = z ? parseFloat(z.getAttribute('data-lat')) : 0;   /* read live, so a corrected address is used */
+    var destLng = z ? parseFloat(z.getAttribute('data-lng')) : 0;
+    if (!destLat || !destLng) { alert("Destination location is not set yet."); return; }
+    window.open('https://www.google.com/maps/dir/?api=1&destination=' + destLat + ',' + destLng + '&travelmode=driving', '_blank');
+  };
 
-      const autocomplete = new google.maps.places.Autocomplete(input, {
-        types: ['geocode']
-      });
+  var watchId = null;
+  function startLocationSharing() {
+    console.log("startLocationSharing called");
+    if (!navigator.geolocation) { console.warn("Geolocation not supported"); alert("Geolocation is not supported by this browser."); return; }
+    if (watchId !== null) { console.log("Already watching position, watchId:", watchId); return; }
+    watchId = navigator.geolocation.watchPosition(function (pos) {
+      var data = new FormData();
+      data.append('lat', pos.coords.latitude);
+      data.append('lng', pos.coords.longitude);
+      fetch("{{ url_for('staff_update_live_location') }}", { method: "POST", body: data })
+        .then(function (r) { console.log("Location POST status:", r.status); return r.json().catch(function () { return {}; }); })
+        .then(function (body) { console.log("Location POST response:", body); })
+        .catch(function (err) { console.error("Location POST failed:", err); });
+    }, function (err) {
+      console.error("Geolocation error", err);
+      alert("Error getting your location: " + err.message);
+    }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 });
+  }
+  function stopLocationSharing() {
+    if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; console.log("Stopped location sharing"); }
+  }
 
-      autocomplete.addListener('place_changed', function () {
-        const place = autocomplete.getPlace();
-        if (!place.geometry || !place.geometry.location) {
-          console.warn("Selected place has no geometry");
-          return;
-        }
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-
-        latInput.value = lat;
-        lngInput.value = lng;
-
-        if (place.formatted_address) {
-          input.value = place.formatted_address;
-        }
-      });
-    }
-
-    let watchId = null;
-
-    function startLocationSharing() {
-      console.log("startLocationSharing called");
-
-      if (!navigator.geolocation) {
-        console.warn("Geolocation not supported");
-        alert("Geolocation is not supported by this browser.");
-        return;
-      }
-      if (watchId !== null) {
-        console.log("Already watching position, watchId:", watchId);
-        return;
-      }
-
-      watchId = navigator.geolocation.watchPosition(function(pos) {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        console.log("Got position:", lat, lng, "at", new Date().toISOString());
-
-        const data = new FormData();
-        data.append('lat', lat);
-        data.append('lng', lng);
-
-        fetch("{{ url_for('staff_update_live_location') }}", {
-          method: "POST",
-          body: data,
-        }).then(r => {
-          console.log("Location POST status:", r.status);
-          return r.json().catch(() => ({}));
-        }).then(body => {
-          console.log("Location POST response:", body);
-        }).catch(err => {
-          console.error("Location POST failed:", err);
-        });
-
-      }, function(err) {
-        console.error("Geolocation error", err);
-        alert("Error getting your location: " + err.message);
-      }, {
-        enableHighAccuracy: true,
-        maximumAge: 3000,
-        timeout: 10000,
-      });
-    }
-
-    function stopLocationSharing() {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
-        console.log("Stopped location sharing");
-      }
-    }
-
-document.addEventListener('DOMContentLoaded', function () {
-  // Initialize Places autocomplete
-  let tries = 0;
-  const interval = setInterval(function () {
-    if (window.google && google.maps && google.maps.places) {
-      clearInterval(interval);
-      initDestinationAutocomplete();
-    } else if (tries++ > 20) {
-      clearInterval(interval);
-      console.warn("Google Places API not loaded.");
-    }
-  }, 300);
-
-  // auto-start GPS when status was already "on_the_way" on load
-  {% if interaction.provider_status == 'on_the_way' %}
-    startLocationSharing();
-
-    // auto-refresh page every 20 seconds while on_the_way
-    setInterval(function () {
-      console.log("Auto-refreshing staff_active_session because status is on_the_way");
-      window.location.reload();
-    }, 20000);  // 20000 ms = 20 seconds; adjust to 15000 or 30000 if you prefer
-  {% endif %}
-
-  // start/stop GPS based on status when provider submits the form
-  const statusForm = document.getElementById('status-form');
-  const statusSelect = document.getElementById('provider-status-select');
-
-  if (statusForm && statusSelect) {
-    statusForm.addEventListener('submit', function () {
-      if (statusSelect.value === 'on_the_way') {
-        startLocationSharing();
-      } else {
-        stopLocationSharing();
-      }
+  function initDestinationAutocomplete() {
+    var input = document.getElementById('destination-address');
+    var latInput = document.getElementById('destination-lat');
+    var lngInput = document.getElementById('destination-lng');
+    if (!input) return;
+    var autocomplete = new google.maps.places.Autocomplete(input, { types: ['geocode'] });
+    autocomplete.addListener('place_changed', function () {
+      var place = autocomplete.getPlace();
+      if (!place.geometry || !place.geometry.location) { console.warn("Selected place has no geometry"); return; }
+      latInput.value = place.geometry.location.lat();
+      lngInput.value = place.geometry.location.lng();
+      if (place.formatted_address) { input.value = place.formatted_address; }
     });
   }
-});
-  </script>
-  {% endif %}
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+  document.addEventListener('DOMContentLoaded', function () {
+    var tries = 0;
+    var interval = setInterval(function () {
+      if (window.google && google.maps && google.maps.places) { clearInterval(interval); initDestinationAutocomplete(); }
+      else if (tries++ > 20) { clearInterval(interval); console.warn("Google Places API not loaded."); }
+    }, 300);
+
+    {% if interaction.provider_status == 'on_the_way' %}
+    startLocationSharing();
+    /* auto-refresh every 20 seconds while on_the_way (skipped while you are typing or editing) */
+    setInterval(function () {
+      if (dirty || (document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))) return;
+      window.location.reload();
+    }, 20000);
+    {% endif %}
+
+    var statusForm = document.getElementById('status-form');
+    var statusSelect = document.getElementById('provider-status-select');
+    if (statusForm && statusSelect) {
+      statusForm.addEventListener('submit', function () {
+        if (statusSelect.value === 'on_the_way') { startLocationSharing(); } else { stopLocationSharing(); }
+      });
+    }
+  });
+  {% endif %}
+})();
+</script>
+{% if is_provider %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places" async defer></script>
+{% endif %}
+{% endblock %}

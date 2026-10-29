@@ -1,40 +1,27 @@
-<!-- templates/your_staff_form.html -->
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Add Staff Member</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-</head>
-<body>
-  <div class="container mt-4" style="max-width:400px;">
-    <div class="card p-4 shadow">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, msg in messages %}
-            <div class="alert alert-{{ 'danger' if category == 'danger' else 'warning' }} text-center mb-3">
-              {{ msg }}
-            </div>
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
-      <h4 class="mb-3">Add a New Staff Member</h4>
+{% extends "auth_base.html" %}
+{% set auth_icon = 'person-plus' %}
+{% set auth_title = 'Add a New Staff Member' %}
+{% set auth_width = 600 %}
+{% block title %}Add Staff Member - PerkMiner{% endblock %}
+
+{% block auth_body %}
 <form method="post">
   {{ form.hidden_tag() }}
 
   <div class="mb-3">
-    {{ form.name.label(class="form-label") }}
+    {{ form.name.label(class="form-label fw-semibold") }}
     {{ form.name(class="form-control") }}
+    {% for e in form.name.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
   </div>
-
   <div class="mb-3">
-    {{ form.email.label(class="form-label") }}
+    {{ form.email.label(class="form-label fw-semibold") }}
     {{ form.email(class="form-control") }}
+    {% for e in form.email.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
   </div>
-
   <div class="mb-3">
-    {{ form.role.label(class="form-label") }}
+    {{ form.role.label(class="form-label fw-semibold") }}
     {{ form.role(class="form-select", id="role-select") }}
+    {% for e in form.role.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
   </div>
 
   <!-- admin-only permissions + note -->
@@ -42,73 +29,61 @@
     <div class="form-check mb-2">
       {{ form.can_add_providers(class="form-check-input", id="can-add-providers") }}
       <label class="form-check-label" for="can-add-providers">
-        Check this box to allow this admin to <b>assign sessions</b> to specific service providers 
+        Check this box to allow this admin to <b>assign sessions</b> to specific service providers
         for in-home estimates, service calls, etc.
       </label>
     </div>
-
-    <div class="form-check mb-2">
+    <div class="form-check mb-3">
       {{ form.allow_live_tracking(class="form-check-input", id="allow-live-tracking") }}
       <label class="form-check-label" for="allow-live-tracking">
         Check this box to allow this admin to <b>track the live location</b> of service providers
         when they are "on the way".
       </label>
     </div>
-
-    <small class="text-muted">
-      <br><b><u>Admins</u></b> can be regular staff members that need access to all active sessions
+    <div class="pm-note">
+      <b>Admins</b> can be regular staff members that need access to all active sessions
       (restaurant, retail store, etc.) so they can finalize any transaction and, if applicable,
       message any member.
-    </small>
+    </div>
   </div>
 
   <!-- service-provider info note -->
   <div class="mb-3" id="service-provider-note-wrapper">
-    <small class="text-muted">
-      <b><u>Service providers</u></b> can only view, finalize transactions and message members
+    <div class="pm-note">
+      <b>Service providers</b> can only view, finalize transactions and message members
       specifically assigned to them. They can also <b>update their status</b> (On the way, etc.),
       and you, your admin staff members (with permission given) and members (your clients) have the ability to <b>track their live location while "on the way"</b>.
       Service providers also <b>enter the destination address</b> (not admin staff) since they are the ones that physically go to the service address.
-    </small>
+    </div>
   </div>
 
-  <button type="submit" class="btn btn-success w-100">
-    {{ form.submit.label.text }}
-  </button>
+  <button type="submit" class="btn btn-success btn-lg w-100"><i class="bi bi-person-plus"></i> {{ form.submit.label.text }}</button>
 </form>
+{% endblock %}
 
+{% block auth_scripts %}
 <script>
   function updateRoleSections() {
     var roleSelect = document.getElementById('role-select');
     var adminWrapper = document.getElementById('admin-permissions-wrapper');
     var spWrapper = document.getElementById('service-provider-note-wrapper');
     if (!roleSelect || !adminWrapper || !spWrapper) return;
-
     if (roleSelect.value === 'admin') {
-      adminWrapper.style.display = '';
-      spWrapper.style.display = 'none';
+      adminWrapper.style.display = ''; spWrapper.style.display = 'none';
     } else if (roleSelect.value === 'service_provider') {
-      adminWrapper.style.display = 'none';
-      spWrapper.style.display = '';
-      // optional: clear admin-only checkboxes when hidden
+      adminWrapper.style.display = 'none'; spWrapper.style.display = '';
       var canAdd = document.getElementById('can-add-providers');
       var allowTrack = document.getElementById('allow-live-tracking');
       if (canAdd) canAdd.checked = false;
       if (allowTrack) allowTrack.checked = false;
     } else {
-      // for any other role, hide both extras
-      adminWrapper.style.display = 'none';
-      spWrapper.style.display = 'none';
+      adminWrapper.style.display = 'none'; spWrapper.style.display = 'none';
     }
   }
-
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     updateRoleSections();
     var roleSelect = document.getElementById('role-select');
-    if (roleSelect) {
-      roleSelect.addEventListener('change', updateRoleSections);
-    }
+    if (roleSelect) roleSelect.addEventListener('change', updateRoleSections);
   });
 </script>
-</body>
-</html>
+{% endblock %}

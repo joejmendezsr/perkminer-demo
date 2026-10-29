@@ -56,6 +56,12 @@
             </a>
         {% endif %}
 
+        {% if current_user.has_role('docuseries') %}
+            <a href="{{ url_for('docuseries.admin') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-camera-video"></i> Docuseries
+            </a>
+        {% endif %}
+
         {% if current_user.has_role('customer_support') %}
             {% set n = pending_counts.get('support', 0) %}
             <a href="{{ url_for('support_dashboard') }}"

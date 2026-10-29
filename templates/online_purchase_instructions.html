@@ -1,206 +1,349 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>PerkMiner – Online Purchase Integration Guide</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-    rel="stylesheet">
-  <style>
-    body {
-      background: #f7f7fb;
-      font-family: Arial, sans-serif;
-    }
-    .page-wrap {
-      max-width: 900px;
-      margin: 30px auto 40px;
-      padding: 0 16px;
-    }
-    pre {
-      background: #111827;
-      color: #e5e7eb;
-      padding: 14px 16px;
-      border-radius: 8px;
-      font-size: 0.86rem;
-      overflow-x: auto;
-    }
-    code {
-      font-family: Consolas, Menlo, monospace;
-    }
-    h1, h2, h3 {
-      color: #111827;
-    }
-    .badge-tip {
-      font-size: 0.78rem;
-    }
+{% extends "pm_base.html" %}
+{% block title %}PerkMiner – Online Purchase Integration Guide{% endblock %}
 
-    /* Footer */
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
+{% block head_extra %}
+<style>
+  .guide-wrap { max-width: 900px; margin: 0 auto; }
+  .guide-num { flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; background: var(--pm-primary); color: #fff; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-right: .5rem; }
+  .code-box { position: relative; }
+  .code-box pre { background: #0f1b24; color: #e5e7eb; padding: 14px 16px; border-radius: 12px; font-size: .84rem; overflow-x: auto; margin: .5rem 0; }
+  .code-box code { font-family: Consolas, Menlo, monospace; }
+  .copy-btn { position: absolute; top: 14px; right: 8px; }
+  .guide-wrap h2 { font-size: 1.15rem; font-weight: 800; color: var(--pm-primary-dark); margin: 0 0 .5rem; display: flex; align-items: center; }
+  .guide-wrap li { margin-bottom: .35rem; }
+  .kv { display: grid; grid-template-columns: 9.5rem 1fr; gap: .4rem .8rem; align-items: center; }
+  @media (max-width: 575px) { .kv { grid-template-columns: 1fr; } }
+  .kv label { font-weight: 700; color: var(--pm-primary-dark); margin: 0; }
+  .flow-step { display: flex; gap: .6rem; align-items: flex-start; margin-bottom: .5rem; }
+</style>
+{% endblock %}
 
-  </style>
-</head>
-<body>
-  <div class="page-wrap">
-    <div class="text-center mb-4">
-      <img
-        src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1769980535/PerkMiner_Logo_o2qgfy.jpg"
-        alt="PerkMiner"
-        style="max-height:50px;">
-    </div>
+{% block content %}
+<div class="container pb-3 guide-wrap">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-code-slash"></i></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">For your web developer</div><h1>Online Purchase Integration Guide</h1></div>
+  </div>
 
-    <h1 class="h3 mb-3">online purchase integration guide</h1>
-    <p class="mb-3">
-      this page explains how to connect your e‑commerce “thank you” page to perkminer so that member
-      purchases are recorded and cashback can be paid correctly.
-    </p>
+  <p>This page explains how to connect your online store to PerkMiner so member purchases are recorded and cash back is paid correctly.</p>
+  <div class="pm-note warn mb-3"><strong><i class="bi bi-shield-lock"></i> Sale amounts are verified.</strong> A purchase only counts when the amount is sent by <b>your store's server</b> (or by Shopify) and signed with your private <b>Sales Key</b>. The amount can never come from the shopper's browser, which protects you from inflated sales and unexpected advertising fees.</div>
 
-    <div class="alert alert-warning small">
-      <strong>important:</strong> this script must be installed on your order confirmation /
-      “thank you” page and kept in place at all times while online purchases are enabled in your
-      perkminer business dashboard.
-    </div>
+  <!-- ================= connection details ================= -->
+  <div class="card p-3 p-md-4 mb-3" id="connection">
+    <h2><i class="bi bi-key me-2"></i> Your connection details</h2>
+    {% if biz %}
+      <div class="kv mb-3">
+        <label>Business ID</label>
+        <div class="input-group"><input type="text" class="form-control" id="bizId" value="{{ biz.id }}" readonly>
+          <button type="button" class="btn btn-outline-primary copy-input" data-target="bizId"><i class="bi bi-clipboard"></i></button></div>
+        <label>Sales Key <span class="text-muted small">(secret)</span></label>
+        <div class="input-group"><input type="password" class="form-control" id="salesKey" value="{{ sales_key }}" readonly autocomplete="off">
+          <button type="button" class="btn btn-outline-secondary" id="showKey"><i class="bi bi-eye"></i></button>
+          <button type="button" class="btn btn-outline-primary copy-input" data-target="salesKey"><i class="bi bi-clipboard"></i></button></div>
+      </div>
+      <p class="small text-muted mb-2">Keep the Sales Key <b>private</b>: it belongs only in your server code, never in a web page or a public repository. Anyone who has it can report sales for your business.</p>
+      <form method="post" action="{{ url_for('ecommerce_regenerate_key') }}" onsubmit="return confirm('Create a new key? Your server code must be updated with the new key straight away.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-arrow-repeat"></i> Create a new key</button>
+      </form>
+    {% else %}
+      <div class="pm-note">To see <b>your</b> Business ID and Sales Key, <a href="{{ url_for('business_login') }}">log in to your business account</a> and open this page again. The code below uses the placeholders <code>YOUR_BUSINESS_ID</code> and <code>YOUR_SALES_KEY</code>.</div>
+    {% endif %}
+  </div>
 
-    <hr class="my-4">
-
-    <h2 class="h5">1. how the flow works</h2>
-    <ol class="small">
-      <li>a perkminer member clicks “shop on this business's website” and is redirected to your site with a <code>perk_token</code> in the url.</li>
-      <li>after the customer completes payment, your order confirmation (“thank you”) page loads.</li>
-      <li>on that page, a small script:
-        <ul>
-          <li>reads <code>perk_token</code> from the page url</li>
-          <li>reads the final order total from your platform</li>
-          <li>calls <code>https://www.perkminer.com/api/record_external_sale</code></li>
-        </ul>
-      </li>
-      <li>if the call succeeds, the customer is redirected back to perkminer to view their cashback receipt.</li>
+  <div class="card p-3 p-md-4 mb-3">
+    <h2><i class="bi bi-diagram-3 me-2"></i> 1. How the flow works</h2>
+    <ol class="mb-0">
+      <li>A PerkMiner member clicks “Shop on this business's website” and lands on your site with a <code>perk_token</code> in the URL.</li>
+      <li><b>Script A</b> (every page) saves that token for 24 hours.</li>
+      <li>When the customer places an order, your server keeps the token with the order. When the order is <b>paid</b>, your server tells PerkMiner the order number and total, signed with your Sales Key (WooCommerce and custom sites), or Shopify does it for you with its signed “Order payment” webhook.</li>
+      <li>PerkMiner records the sale once (re-sending the same order is safe), pays cash back, and bills your 10% advertising fee.</li>
+      <li>Optional: <b>Script B</b> on your order confirmation page sends the customer to their PerkMiner receipt.</li>
     </ol>
+  </div>
 
-    <hr class="my-4">
-
-    <h2 class="h5">2. script to add to your order confirmation page</h2>
-    <p class="small mb-1">
-      add the following script to your order confirmation / “thank you” page.
-      your developer will need to replace the line that sets <code>orderTotal</code> with your
-      platform’s real order total value.
-    </p>
-
-    <pre><code>&lt;script&gt;
-(function() {
-  // 1) get perk_token from the URL
-  function getPerkToken() {
-    var params = new URLSearchParams(window.location.search || "");
-    return params.get("perk_token");
-  }
-
-  var perkToken = getPerkToken();
-  if (!perkToken) {
-    // Not a PerkMiner session, nothing to do
-    return;
-  }
-
-  // 2) get the final order total from the platform
-  // TODO: REPLACE this with your platform's actual order total variable.
-  // Examples:
-  //   - Shopify: use Shopify.checkout.total_price / 100
-  //   - Custom: expose the total into window.PERK_ORDER_TOTAL before this script
-  var orderTotal = window.PERK_ORDER_TOTAL;  // &lt;-- must be set to a number in USD
-
-  if (typeof orderTotal !== "number" || orderTotal &lt;= 0) {
-    console.warn("PerkMiner: order total is missing or invalid.");
-    return;
-  }
-
-  // 3) send the data to PerkMiner
-  fetch("https://www.perkminer.com/api/record_external_sale", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      perk_token: perkToken,
-      amount: orderTotal
-    })
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(data) {
-    if (data &amp;&amp; data.status === "ok" &amp;&amp; data.summary &amp;&amp; data.summary.transaction_id) {
-      // 4) redirect the member to their PerkMiner receipt
-      var tid = data.summary.transaction_id;
-      var receiptUrl = "https://www.perkminer.com/user/receipt/" + encodeURIComponent(tid);
-      window.location.href = receiptUrl;
-    } else {
-      console.error("PerkMiner: API error", data);
-      // Optional: show a generic message if needed
-    }
-  })
-  .catch(function(err) {
-    console.error("PerkMiner: failed to report external sale", err);
-    // Optional: show a generic message if needed
-  });
+  <!-- ================= Script A ================= -->
+  <div class="card p-3 p-md-4 mb-3">
+    <h2><span class="guide-num">2</span> Script A &mdash; add to <u>every page</u> of your site (inside <code>&lt;head&gt;</code>)</h2>
+    <p class="text-muted small mb-1">Saves the token so it is still available at checkout. Required for every platform.</p>
+    <div class="code-box">
+      <button type="button" class="btn btn-outline-light btn-sm copy-btn" data-copy="codeA"><i class="bi bi-clipboard"></i> Copy</button>
+      <pre><code id="codeA">{% filter forceescape %}{% raw %}<script>
+(function () {
+  try {
+    var t = new URLSearchParams(window.location.search || "").get("perk_token");
+    if (!t) return;
+    localStorage.setItem("perk_token", JSON.stringify({ t: t, at: Date.now() }));
+    document.cookie = "perk_token=" + encodeURIComponent(t) + "; path=/; max-age=86400; SameSite=Lax; Secure";
+  } catch (e) {}
 })();
-&lt;/script&gt;</code></pre>
-
-    <p class="small">
-      <span class="badge bg-info text-dark badge-tip">tip</span>
-      the <code>orderTotal</code> value must be the final amount paid by the customer
-      (in us dollars), including item prices and any discounts, but before perkminer’s
-      advertising fee.
-    </p>
-
-    <hr class="my-4">
-
-    <h2 class="h5">3. how to provide the order total</h2>
-
-    <h3 class="h6 mt-3">shopify (example)</h3>
-    <p class="small mb-1">
-      on the order status page, shopify often exposes a <code>Shopify.checkout</code> object.
-      your developer can set:
-    </p>
-    <pre><code>&lt;script&gt;
-  // total_price is in cents
-  window.PERK_ORDER_TOTAL = Shopify.checkout.total_price / 100.0;
-&lt;/script&gt;
-</code></pre>
-    <p class="small">
-      this snippet should appear <strong>before</strong> the main perkminer script.
-    </p>
-
-    <h3 class="h6 mt-3">custom / other platforms</h3>
-    <p class="small mb-1">
-      for a custom website or other platforms, your developer just needs to expose the
-      final order total into <code>window.PERK_ORDER_TOTAL</code> before the perkminer script runs. for example:
-    </p>
-    <pre><code>&lt;script&gt;
-  // Replace 123.45 with your real order total variable
-  window.PERK_ORDER_TOTAL = 123.45;
-&lt;/script&gt;
-</code></pre>
-
-    <hr class="my-4">
-
-    <h2 class="h5">4. important terms and compliance</h2>
-    <ul class="small">
-      <li>you must maintain an advertising account balance of at least <strong>$250</strong> while online purchases are enabled in your perkminer business dashboard.</li>
-      <li>if your balance falls below $250, perkminer will automatically block new online purchases until you add more funds.</li>
-      <li>you are required to keep the perkminer tracking script installed and active on your order confirmation / “thank you” page while online purchases are enabled.</li>
-      <li>removing, disabling, or altering the script so that purchases are not reported may result in suspension of your account. repeated or intentional violations may result in permanent account closure and forfeiture of any remaining advertising balance, as stated in your perkminer terms.</li>
-      <li>if a member reports that they completed a purchase on your website but did not receive cash back, perkminer may suspend your account while we investigate and will review whether the script was installed and working correctly.</li>
-    </ul>
-
-    <div class="alert alert-secondary small mt-3">
-      for questions or help with installation, please contact
-      <a href="mailto:support@perkminer.com">support@perkminer.com</a>.
+</script>{% endraw %}{% endfilter %}</code></pre>
     </div>
   </div>
 
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
+  <!-- ================= Server code ================= -->
+  <div class="card p-3 p-md-4 mb-3">
+    <h2><span class="guide-num">3</span> Report the paid order from your server</h2>
+    <p class="small">Choose the one that matches your store. The order number and total must come from <b>your own database / order object</b>, never from the browser.</p>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <h3 class="h6 fw-bold mt-3">A) WooCommerce (WordPress)</h3>
+    <p class="small mb-1">1) Add these two lines to <code>wp-config.php</code> (above the “That's all, stop editing” line):</p>
+    <div class="code-box">
+      <button type="button" class="btn btn-outline-light btn-sm copy-btn" data-copy="codeW1"><i class="bi bi-clipboard"></i> Copy</button>
+      <pre><code id="codeW1">{% filter forceescape %}{% raw %}define('PERKMINER_BUSINESS_ID', 'YOUR_BUSINESS_ID');
+define('PERKMINER_SALES_KEY',  'YOUR_SALES_KEY');{% endraw %}{% endfilter %}</code></pre>
+    </div>
+    <p class="small mb-1">2) Add this to your theme's <code>functions.php</code> (or a code-snippets plugin):</p>
+    <div class="code-box">
+      <button type="button" class="btn btn-outline-light btn-sm copy-btn" data-copy="codeW2"><i class="bi bi-clipboard"></i> Copy</button>
+      <pre><code id="codeW2">{% filter forceescape %}{% raw %}// Sends a signed request to PerkMiner
+function perkminer_post($path, $payload) {
+  $body = wp_json_encode($payload);
+  $ts   = (string) time();
+  $sig  = hash_hmac('sha256', $ts . '.' . $body, PERKMINER_SALES_KEY);
+  return wp_remote_post('https://www.perkminer.com' . $path, array(
+    'timeout' => 15,
+    'headers' => array(
+      'Content-Type'          => 'application/json',
+      'X-PerkMiner-Business'  => PERKMINER_BUSINESS_ID,
+      'X-PerkMiner-Timestamp' => $ts,
+      'X-PerkMiner-Signature' => $sig,
+    ),
+    'body' => $body,
+  ));
+}
+
+// 1) at checkout: keep the member's token with the order
+add_action('woocommerce_checkout_create_order', function ($order) {
+  if (!empty($_COOKIE['perk_token'])) {
+    $order->update_meta_data('_perk_token', sanitize_text_field(wp_unslash($_COOKIE['perk_token'])));
+  }
+});
+
+// 2) when the order is paid: report the REAL total from the order
+function perkminer_report_order($order_id) {
+  $order = wc_get_order($order_id);
+  if (!$order || $order->get_meta('_perk_reported')) return;
+  $token = $order->get_meta('_perk_token');
+  if (!$token || $order->get_currency() !== 'USD') return;   // not a PerkMiner customer / not US dollars
+  $res = perkminer_post('/api/external_sale/confirm', array(
+    'perk_token' => $token,
+    'order_id'   => (string) $order->get_id(),
+    'amount'     => round((float) $order->get_total(), 2),
+  ));
+  if (!is_wp_error($res) && in_array(wp_remote_retrieve_response_code($res), array(200, 409), true)) {
+    $order->update_meta_data('_perk_reported', '1');
+    $order->save();
+  }
+}
+add_action('woocommerce_order_status_processing', 'perkminer_report_order');
+add_action('woocommerce_order_status_completed',  'perkminer_report_order');
+
+// 3) connection test: while logged in as an admin, open  https://YOURSITE.com/?perkminer_test=1
+add_action('init', function () {
+  if (isset($_GET['perkminer_test']) && current_user_can('manage_woocommerce')) {
+    $r = perkminer_post('/api/ecommerce/verify-beacon', array('ping' => true));
+    wp_die('PerkMiner replied: ' . esc_html(is_wp_error($r) ? $r->get_error_message() : wp_remote_retrieve_body($r)));
+  }
+});{% endraw %}{% endfilter %}</code></pre>
+    </div>
+
+    <h3 class="h6 fw-bold mt-4">B) Custom website &mdash; PHP</h3>
+    <p class="small mb-1">Save <code>$_COOKIE['perk_token']</code> in your orders table when the order is created, then call this when the order is paid:</p>
+    <div class="code-box">
+      <button type="button" class="btn btn-outline-light btn-sm copy-btn" data-copy="codeP"><i class="bi bi-clipboard"></i> Copy</button>
+      <pre><code id="codeP">{% filter forceescape %}{% raw %}function perkminer_report_sale($perkToken, $orderId, $total) {
+  $body = json_encode(array('perk_token' => $perkToken, 'order_id' => (string)$orderId, 'amount' => round((float)$total, 2)));
+  $ts   = (string) time();
+  $sig  = hash_hmac('sha256', $ts . '.' . $body, 'YOUR_SALES_KEY');
+  $ch = curl_init('https://www.perkminer.com/api/external_sale/confirm');
+  curl_setopt_array($ch, array(
+    CURLOPT_POST => true, CURLOPT_POSTFIELDS => $body, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15,
+    CURLOPT_HTTPHEADER => array('Content-Type: application/json',
+      'X-PerkMiner-Business: YOUR_BUSINESS_ID', 'X-PerkMiner-Timestamp: ' . $ts, 'X-PerkMiner-Signature: ' . $sig),
+  ));
+  $response = curl_exec($ch);
+  $status   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  curl_close($ch);
+  return array($status, $response);   // 200 = recorded (or already recorded). 402 = add funds, then retry.
+}{% endraw %}{% endfilter %}</code></pre>
+    </div>
+
+    <h3 class="h6 fw-bold mt-4">C) Custom website &mdash; Node.js (18 or newer)</h3>
+    <div class="code-box">
+      <button type="button" class="btn btn-outline-light btn-sm copy-btn" data-copy="codeN"><i class="bi bi-clipboard"></i> Copy</button>
+      <pre><code id="codeN">{% filter forceescape %}{% raw %}const crypto = require("crypto");
+
+async function perkminerReportSale(perkToken, orderId, total) {
+  const body = JSON.stringify({ perk_token: perkToken, order_id: String(orderId), amount: Math.round(Number(total) * 100) / 100 });
+  const ts = String(Math.floor(Date.now() / 1000));
+  const sig = crypto.createHmac("sha256", process.env.PERKMINER_SALES_KEY).update(ts + "." + body).digest("hex");
+  const res = await fetch("https://www.perkminer.com/api/external_sale/confirm", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-PerkMiner-Business": process.env.PERKMINER_BUSINESS_ID,
+      "X-PerkMiner-Timestamp": ts,
+      "X-PerkMiner-Signature": sig
+    },
+    body
+  });
+  return { status: res.status, body: await res.json() };   // 200 = recorded (or already recorded). 402 = add funds, then retry.
+}{% endraw %}{% endfilter %}</code></pre>
+    </div>
+
+    <h3 class="h6 fw-bold mt-4">D) Shopify</h3>
+    <div class="pm-note warn small mb-2">Shopify no longer allows custom scripts on its Thank-you page, so Shopify tells PerkMiner about the sale itself with a signed <b>webhook</b>. No code is needed except one small snippet that attaches the member's token to the cart.</div>
+    <ol class="small">
+      <li>Add <b>Script A</b> (above) to your theme (<code>theme.liquid</code>, inside <code>&lt;head&gt;</code>).</li>
+      <li>Right below it add this snippet, which attaches the token to the cart so it appears on the order:</li>
+    </ol>
+    <div class="code-box">
+      <button type="button" class="btn btn-outline-light btn-sm copy-btn" data-copy="codeS1"><i class="bi bi-clipboard"></i> Copy</button>
+      <pre><code id="codeS1">{% filter forceescape %}{% raw %}<script>
+(function () {
+  try {
+    var s = JSON.parse(localStorage.getItem("perk_token") || "null");
+    if (!s || !s.t || Date.now() - s.at > 86400000) return;
+    if (sessionStorage.getItem("perk_cart_attr") === s.t) return;
+    fetch("/cart/update.js", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ attributes: { perk_token: s.t } })
+    }).then(function (r) { if (r.ok) sessionStorage.setItem("perk_cart_attr", s.t); });
+  } catch (e) {}
+})();
+</script>{% endraw %}{% endfilter %}</code></pre>
+    </div>
+    <ol class="small" start="3">
+      <li>In Shopify admin go to <b>Settings → Notifications → Webhooks → Create webhook</b>. Event: <b>Order payment</b>. Format: <b>JSON</b>. URL:
+        {% if shopify_webhook_url %}<code>{{ shopify_webhook_url }}</code>{% else %}<code>https://www.perkminer.com/api/external_sale/shopify/YOUR_BUSINESS_ID</code>{% endif %}</li>
+      <li>At the bottom of that Webhooks page Shopify shows <i>“Your webhooks will be signed with …”</i>. Copy that code and paste it below.</li>
+    </ol>
+    {% if biz %}
+      <form method="post" action="{{ url_for('ecommerce_save_shopify_secret') }}" class="mb-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="input-group">
+          <input type="password" name="shopify_secret" class="form-control" autocomplete="off" placeholder="{{ 'Saved - paste a new value to replace it' if has_shopify_secret else 'Shopify webhook signing secret' }}">
+          <button class="btn btn-primary">Save secret</button>
+        </div>
+      </form>
+      <p class="small text-muted mb-0">Only US-dollar orders are recorded. After saving, use Shopify's <b>Send test notification</b> button: it shows up as a connection ping for PerkMiner's team.</p>
+    {% else %}
+      <p class="small text-muted mb-0">Log in as your business to save the Shopify signing secret.</p>
+    {% endif %}
+  </div>
+
+  <!-- ================= Script B ================= -->
+  <div class="card p-3 p-md-4 mb-3">
+    <h2><span class="guide-num">4</span> Script B (optional) &mdash; send customers to their PerkMiner receipt</h2>
+    <p class="small mb-1">Add to your order confirmation (“thank you”) page on custom sites and WooCommerce. It sends <b>no amount</b>; it only waits until PerkMiner has recorded the sale (usually a few seconds) and then opens the member's receipt. Not available on Shopify, where members see their cash back in their PerkMiner account.</p>
+    <div class="code-box">
+      <button type="button" class="btn btn-outline-light btn-sm copy-btn" data-copy="codeB"><i class="bi bi-clipboard"></i> Copy</button>
+      <pre><code id="codeB">{% filter forceescape %}{% raw %}<script>
+(function () {
+  function getToken() {
+    var u = new URLSearchParams(window.location.search || "").get("perk_token");
+    if (u) return u;
+    try {
+      var s = JSON.parse(localStorage.getItem("perk_token") || "null");
+      if (s && s.t && Date.now() - s.at < 86400000) return s.t;
+    } catch (e) {}
+    var m = document.cookie.match(/(?:^|; )perk_token=([^;]*)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  var token = getToken();
+  if (!token) return;                         // not a PerkMiner customer
+  var tries = 0;
+  function check() {
+    fetch("https://www.perkminer.com/api/record_external_sale", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ perk_token: token })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d && d.status === "ok") {
+        try { localStorage.removeItem("perk_token"); } catch (e) {}
+        document.cookie = "perk_token=; path=/; max-age=0";
+        if (d.receipt_url) window.location.href = d.receipt_url;
+      } else if (d && d.status === "pending" && ++tries < 8) {
+        setTimeout(check, 2500);
+      }
+    })
+    .catch(function () {});
+  }
+  setTimeout(check, 1500);
+})();
+</script>{% endraw %}{% endfilter %}</code></pre>
+    </div>
+  </div>
+
+  <!-- ================= Test ================= -->
+  <div class="card p-3 p-md-4 mb-3">
+    <h2><span class="guide-num">5</span> Test your connection</h2>
+    <p class="small">PerkMiner's team confirms your store by seeing a <b>signed test ping</b> from it. Send one after installing:</p>
+    <ul class="small">
+      <li><b>WooCommerce:</b> while logged in as admin, open <code>https://YOURSITE.com/?perkminer_test=1</code>. It should say <code>"ok":true</code>.</li>
+      <li><b>Shopify:</b> press <b>Send test notification</b> next to your webhook.</li>
+      <li><b>Any server</b> with a command line (replace the two placeholders):</li>
+    </ul>
+    <div class="code-box">
+      <button type="button" class="btn btn-outline-light btn-sm copy-btn" data-copy="codeT"><i class="bi bi-clipboard"></i> Copy</button>
+      <pre><code id="codeT">{% filter forceescape %}{% raw %}KEY="YOUR_SALES_KEY"; BIZ="YOUR_BUSINESS_ID"
+TS=$(date +%s); BODY='{"ping":true}'
+SIG=$(printf '%s.%s' "$TS" "$BODY" | openssl dgst -sha256 -hmac "$KEY" | awk '{print $NF}')
+curl -s -X POST https://www.perkminer.com/api/ecommerce/verify-beacon \
+  -H "Content-Type: application/json" -H "X-PerkMiner-Business: $BIZ" \
+  -H "X-PerkMiner-Timestamp: $TS" -H "X-PerkMiner-Signature: $SIG" -d "$BODY"{% endraw %}{% endfilter %}</code></pre>
+    </div>
+    <p class="small mb-0">Replies: <code>{"ok":true}</code> = connected. <code>bad signature</code> = wrong Sales Key or the body was changed after signing. <code>timestamp too old</code> = your server clock is off by more than 5 minutes.</p>
+  </div>
+
+  <div class="card p-3 p-md-4 mb-3">
+    <h2><i class="bi bi-life-preserver me-2"></i> What the server replies</h2>
+    <ul class="small mb-0">
+      <li><b>200</b> &ndash; sale recorded (or this order was already recorded &ndash; sending it twice is safe).</li>
+      <li><b>402 insufficient_balance</b> &ndash; add funds to your PerkMiner advertising balance, then send the order again.</li>
+      <li><b>409</b> &ndash; that member session already has a recorded sale.</li>
+      <li><b>400 / 401</b> &ndash; something is wrong with the request, token or signature (the reply says what).</li>
+    </ul>
+  </div>
+
+  <div class="card p-3 p-md-4 mb-3">
+    <h2><i class="bi bi-file-text me-2"></i> Important terms and compliance</h2>
+    <ul class="small mb-0">
+      <li>You must maintain an advertising account balance of at least <strong>$250</strong> while online purchases are enabled in your PerkMiner business dashboard.</li>
+      <li>If your balance falls below $250, PerkMiner will automatically block new online purchases until you add more funds.</li>
+      <li>You are required to keep the PerkMiner integration installed and active while online purchases are enabled, and to report the true amount paid by the customer.</li>
+      <li>Removing, disabling, or altering the integration so that purchases are not reported, or reporting incorrect amounts, may result in suspension of your account. Repeated or intentional violations may result in permanent account closure and forfeiture of any remaining advertising balance, as stated in your PerkMiner terms.</li>
+      <li>If a member reports that they completed a purchase on your website but did not receive cash back, PerkMiner may suspend your account while we investigate and will review whether the integration was installed and working correctly.</li>
+    </ul>
+  </div>
+
+  <div class="pm-note text-center">For questions or help with installation, please contact <a href="mailto:support@perkminer.com">support@perkminer.com</a>.</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function flashBtn(b, html) { var o = b.innerHTML; b.innerHTML = html; setTimeout(function () { b.innerHTML = o; }, 1500); }
+function copyText(txt, b) {
+  var done = function () { flashBtn(b, '<i class="bi bi-check2"></i> Copied'); };
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done);
+  else { var t = document.createElement('textarea'); t.value = txt; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); done(); }
+}
+document.querySelectorAll('.copy-btn').forEach(function (b) {
+  b.addEventListener('click', function () { var el = document.getElementById(b.dataset.copy); if (el) copyText(el.textContent, b); });
+});
+document.querySelectorAll('.copy-input').forEach(function (b) {
+  b.addEventListener('click', function () { var el = document.getElementById(b.dataset.target); if (el) copyText(el.value, b); });
+});
+var sk = document.getElementById('showKey');
+if (sk) sk.addEventListener('click', function () {
+  var i = document.getElementById('salesKey');
+  i.type = (i.type === 'password') ? 'text' : 'password';
+  sk.innerHTML = '<i class="bi bi-' + (i.type === 'password' ? 'eye' : 'eye-slash') + '"></i>';
+});
+</script>
+{% endblock %}

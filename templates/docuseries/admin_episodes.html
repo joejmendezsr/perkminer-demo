@@ -1,0 +1,224 @@
+{% extends "docuseries/base_docuseries.html" %}
+{% block title %}Manage Episodes – Docuseries Admin{% endblock %}
+{% block robots %}<meta name="robots" content="noindex,nofollow">{% endblock %}
+
+{% block submenu %}
+<div class="submenu">
+  <div class="wrap">
+    <a href="{{ url_for('docuseries.admin') }}">← Docuseries Admin</a>
+    <a href="{{ url_for('docuseries.live_locations') }}">Live Locations</a>
+    <a href="{{ url_for('docuseries.episodes') }}" target="_blank" rel="noopener">View public episodes ↗</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<style>
+.fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.fgrid .full{grid-column:1/-1}
+@media (max-width:700px){.fgrid{grid-template-columns:1fr}}
+.fgrid label,.lbl{display:block;font-weight:700;font-size:.9rem;margin-bottom:4px}
+.fgrid input[type=text],.fgrid input[type=number],.fgrid input[type=date],.fgrid input[type=url],.fgrid textarea,.fgrid select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+.src{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.src label{display:flex;gap:8px;align-items:center;border:2px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer;margin:0;font-weight:600;background:#fff}
+.src input{accent-color:var(--teal)}
+.src label.on{border-color:var(--teal);background:var(--teal-l)}
+.panel{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fbfdfd}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn-sm{padding:8px 14px;font-size:.88rem;border-radius:10px}
+.btn-danger{background:#fff;color:var(--err);border-color:#e7b4af}
+.btn-danger:hover{background:var(--err-bg)}
+.pickrow{display:flex;gap:8px;margin-bottom:8px}
+.pickrow select{flex:1}
+.ep-row{padding:14px 0;border-bottom:1px solid var(--line)}
+.ep-row:last-child{border-bottom:0}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="wrap"><h1>Manage episodes</h1><p>Add the final episode videos and list the participants who appear in each one.</p></div>
+</section>
+
+<div class="wrap section">
+
+  <div class="card">
+    <h2>{% if edit %}Edit episode {{ edit.episode_number }}{% else %}Add an episode{% endif %}</h2>
+
+    <form method="post" action="{{ url_for('docuseries.admin_episode_save') }}" id="ep-form">
+      {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+      {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+      <div class="fgrid">
+        <div><label for="episode_number">Episode number *</label>
+          <input type="number" min="1" id="episode_number" name="episode_number" required value="{{ edit.episode_number if edit else next_number }}"></div>
+        <div><label for="title">Title *</label>
+          <input type="text" id="title" name="title" required maxlength="200" value="{{ edit.title if edit else '' }}" placeholder="Day One"></div>
+        <div class="full"><label for="description">Description</label>
+          <textarea id="description" name="description" rows="3" maxlength="2000" placeholder="A short summary shown under the video.">{{ edit.description if edit and edit.description else '' }}</textarea></div>
+        <div><label for="air_date">Air date</label>
+          <input type="date" id="air_date" name="air_date" value="{{ edit.air_date.isoformat() if edit and edit.air_date else '' }}"></div>
+        <div><label for="duration_minutes">Length (minutes)</label>
+          <input type="number" min="1" id="duration_minutes" name="duration_minutes" value="{{ edit.duration_minutes if edit and edit.duration_minutes else '' }}"></div>
+        <div class="full"><label for="poster_url">Thumbnail image link <span class="muted small">(optional, must start with https://)</span></label>
+          <input type="url" id="poster_url" name="poster_url" value="{{ edit.poster_url if edit and edit.poster_url else '' }}" placeholder="https://..."></div>
+      </div>
+
+      <h3 style="margin:22px 0 8px">Video</h3>
+      {% set cur = edit.playback_type if edit else 'youtube' %}
+      <div class="src" role="radiogroup" aria-label="Video source">
+        <label class="{{ 'on' if cur == 'youtube' }}"><input type="radio" name="source" value="youtube" {{ 'checked' if cur == 'youtube' }}> YouTube link (recommended)</label>
+        <label class="{{ 'on' if cur == 'file' }}"><input type="radio" name="source" value="file" {{ 'checked' if cur == 'file' }}> Upload a video file</label>
+        {% if edit and edit.playback_type == 'stream' %}
+        <label class="on"><input type="radio" name="source" value="keep" checked> Keep current (Cloudflare Stream)</label>
+        {% endif %}
+      </div>
+
+      <div class="panel" id="panel-youtube" {% if cur not in ('youtube',) %}hidden{% endif %}>
+        <label for="youtube" class="lbl">YouTube link</label>
+        <input type="text" id="youtube" name="youtube" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit"
+               value="{{ ('https://youtu.be/' ~ edit.playback_ref) if edit and edit.playback_type == 'youtube' else '' }}" placeholder="https://www.youtube.com/watch?v=...">
+        <p class="muted small" style="margin:8px 0 0">Upload the episode to YouTube as <strong>Unlisted</strong> (or Public), then paste the link here. It plays on this page without the YouTube logo bar, and you don't pay for storage or bandwidth. This is the best choice for 20-minute episodes.</p>
+      </div>
+
+      <div class="panel" id="panel-file" {% if cur != 'file' %}hidden{% endif %}>
+        {% if not storage_ok %}
+          <div class="callout err" style="margin:0"><span class="ic" aria-hidden="true">⚠️</span><p>File storage isn't configured, so uploads are turned off. Set <code>DOCUSERIES_STORAGE=cloudinary</code> or the R2 variables (see README), or use a YouTube link.</p></div>
+        {% else %}
+          {% if storage == 'cloudinary' and max_episode_mb <= 100 %}
+          <div class="callout warn"><span class="ic" aria-hidden="true">⚠️</span><p><strong>Cloudinary's free plan limits videos to 100 MB</strong>, which is too small for a 20-minute episode. Use a YouTube link, upload to Cloudflare R2, or upgrade Cloudinary.</p></div>
+          {% endif %}
+          {% if edit and edit.playback_type == 'file' %}
+          <p class="small" style="margin:0 0 10px">✅ A video is already uploaded for this episode. Choose a new file only if you want to replace it.</p>
+          {% endif %}
+          <input type="hidden" name="file_key" id="file_key" value="">
+          <label for="file" class="lbl">Episode video <span class="muted small">(MP4, MOV or WebM, up to {{ max_episode_mb }} MB)</span></label>
+          <input type="file" id="file" accept="video/*,.mp4,.mov,.webm">
+          <progress id="bar" value="0" max="100" style="width:100%;margin-top:12px;display:none" aria-label="Upload progress"></progress>
+          <p id="msg" class="small" style="min-height:1.4em;margin:8px 0 0" aria-live="polite"></p>
+        {% endif %}
+      </div>
+
+      <h3 style="margin:22px 0 8px">Participants in this episode</h3>
+      <div class="panel">
+        <label for="participants" class="lbl">Names <span class="muted small">(one per line, shown publicly in this order)</span></label>
+        {% if pool %}
+        <div class="pickrow">
+          <select id="pool" aria-label="Pick a registered participant">
+            <option value="">Add a registered participant…</option>
+            {% for n in pool %}<option>{{ n }}</option>{% endfor %}
+          </select>
+          <button type="button" class="btn btn-outline btn-sm" id="pool-add">Add</button>
+        </div>
+        {% endif %}
+        <textarea id="participants" name="participants" rows="6" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit" placeholder="Jane Doe&#10;John Smith">{{ edit.participants|join('\n') if edit else '' }}</textarea>
+        <p class="muted small" style="margin:8px 0 0">Type any name (you can include people who are not in the list). The public page shows the first 100 characters with a "Show more" link.</p>
+      </div>
+
+      <div class="checkrow">
+        <input type="checkbox" id="published" name="published" value="1" {{ 'checked' if edit and edit.published }}>
+        <label for="published">Published (visible on the public episodes page). Leave unchecked to save as a draft.</label>
+      </div>
+      <div class="row-actions">
+        <button class="btn btn-teal" type="submit" id="save">{% if edit %}Save changes{% else %}Save episode{% endif %}</button>
+        {% if edit %}<a class="btn btn-outline" href="{{ url_for('docuseries.admin_episodes') }}">Cancel</a>{% endif %}
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>All episodes</h2>
+    {% for e in episodes %}
+    <div class="ep-row">
+      <strong>Episode {{ e.episode_number }}: {{ e.title }}</strong>
+      {% if e.published %}<span class="badge ok">Published</span>{% else %}<span class="badge">Draft</span>{% endif %}
+      <span class="badge">{{ {'youtube': 'YouTube', 'file': 'Uploaded file', 'stream': 'Cloudflare Stream'}.get(e.playback_type, e.playback_type) }}</span>
+      <div class="small muted">
+        {% if e.air_date %}{{ e.air_date|ds_date }}{% endif %}{% if e.duration_minutes %}{% if e.air_date %} · {% endif %}{{ e.duration_minutes }} min{% endif %}
+        {% if e.participants %}<br>{{ e.participants|length }} participant{{ '' if e.participants|length == 1 else 's' }}: {{ e.participants|join(', ') }}{% else %}<br>No participants listed yet.{% endif %}
+      </div>
+      <div class="row-actions">
+        <a class="btn btn-outline btn-sm" href="{{ url_for('docuseries.admin_episodes', edit=e.id) }}">Edit</a>
+        {% if e.published %}<a class="btn btn-outline btn-sm" href="{{ url_for('docuseries.episodes', ep=e.episode_number) }}" target="_blank" rel="noopener">View</a>{% endif %}
+        <form method="post" action="{{ url_for('docuseries.admin_episode_delete', ep_id=e.id) }}" onsubmit="return confirm('Delete episode {{ e.episode_number }}? This also removes an uploaded video file.');">
+          {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+          <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+      <p class="muted">No episodes yet. Add the first one above.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  var csrf=(document.querySelector('meta[name="csrf-token"]')||{}).content||'';
+  var radios=document.querySelectorAll('input[name=source]'), py=document.getElementById('panel-youtube'), pf=document.getElementById('panel-file');
+  function syncSource(){
+    var v=(document.querySelector('input[name=source]:checked')||{}).value;
+    py.hidden=(v!=='youtube'); pf.hidden=(v!=='file');
+    radios.forEach(function(r){r.parentNode.classList.toggle('on',r.checked);});
+  }
+  radios.forEach(function(r){r.addEventListener('change',syncSource);}); syncSource();
+
+  // add a registered participant to the names box
+  var add=document.getElementById('pool-add'), pool=document.getElementById('pool'), box=document.getElementById('participants');
+  if(add){add.addEventListener('click',function(){
+    var n=pool.value; if(!n)return;
+    var have=box.value.split('\n').map(function(x){return x.trim().toLowerCase();});
+    if(have.indexOf(n.toLowerCase())<0){box.value=(box.value.trim()?box.value.replace(/\s+$/,'')+'\n':'')+n+'\n';}
+    pool.value='';
+  });}
+
+  // episode file upload
+  var fileEl=document.getElementById('file'); if(!fileEl)return;
+  var bar=document.getElementById('bar'), msg=document.getElementById('msg'), key=document.getElementById('file_key'), save=document.getElementById('save');
+  var maxBytes={{ max_episode_mb }}*1048576;
+  function say(t,bad){msg.textContent=t;msg.style.color=bad?'#b42318':'';}
+  function api(url,body){
+    return fetch(url,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRFToken':csrf},body:JSON.stringify(body||{})})
+      .then(function(r){return r.json().catch(function(){return {};}).then(function(j){if(!r.ok)throw new Error(j.error||'Something went wrong.');return j;});});
+  }
+  function xhrSend(method,url,body,headers,onP){
+    return new Promise(function(resolve,reject){
+      var x=new XMLHttpRequest(); x.open(method,url);
+      Object.keys(headers||{}).forEach(function(k){x.setRequestHeader(k,headers[k]);});
+      x.upload.onprogress=function(e){if(e.lengthComputable)onP(Math.round(e.loaded/e.total*100));};
+      x.onload=function(){if(x.status>=200&&x.status<300)return resolve(x.responseText);
+        var m='Upload failed. Please try again.';try{m=JSON.parse(x.responseText).error||m;}catch(e){} reject(new Error(m));};
+      x.onerror=function(){reject(new Error('Network error. Please check your connection and try again.'));};
+      x.send(body);
+    });
+  }
+  fileEl.addEventListener('change',function(){
+    var f=fileEl.files[0]; key.value=''; if(!f){say('');return;}
+    if(f.size>maxBytes){say('That file is '+(f.size/1048576).toFixed(0)+' MB. The limit is '+(maxBytes/1048576)+' MB. For long episodes, use a YouTube link.',true);fileEl.value='';return;}
+    save.disabled=true; bar.style.display='block'; bar.value=0; say('Starting upload…');
+    api('/docuseries/admin/api/episode-upload/init',{filename:f.name,content_type:f.type,size:f.size})
+    .then(function(init){
+      say('Uploading… keep this page open.'); key.value='';
+      var up;
+      if(init.mode==='cloudinary'){
+        var cf=new FormData(); Object.keys(init.fields).forEach(function(k){cf.append(k,init.fields[k]);}); cf.append('file',f);
+        up=xhrSend('POST',init.upload_url,cf,{},function(p){bar.value=p;});
+      } else if(init.mode==='direct'){
+        up=xhrSend('PUT',init.upload_url,f,{'Content-Type':init.content_type},function(p){bar.value=p;});
+      } else {
+        var fd=new FormData(); fd.append('file',f);
+        up=xhrSend('POST',init.upload_url,fd,{'X-CSRFToken':csrf},function(p){bar.value=p;});
+      }
+      return up.then(function(){return api('/docuseries/admin/api/episode-upload/complete',{key:init.key});});
+    })
+    .then(function(done){
+      key.value=done.key; bar.value=100;
+      var d=document.getElementById('duration_minutes'); if(d&&!d.value&&done.duration_minutes){d.value=done.duration_minutes;}
+      say('Upload complete ('+(done.size/1048576).toFixed(0)+' MB). Now click Save.'); save.disabled=false;
+    })
+    .catch(function(e){say(e.message,true);fileEl.value='';key.value='';bar.style.display='none';save.disabled=false;});
+  });
+})();
+</script>
+{% endblock %}

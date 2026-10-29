@@ -1,299 +1,733 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Perk Miner – Online Marketplace Results</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Search results for PerkMiner online marketplace advertisers.">
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-  <style>
-    :root {
-      --pm-primary: #2a5859;
-      --pm-accent: #ffd66b;
-      --pm-bg: #fff;
-      --pm-text: #222;
-      --pm-hover: #e6f6f5;
-    }
-    body { background: var(--pm-bg); color: var(--pm-text); }
+```html
+{% extends "pm_base.html" %}
 
-    .hero-section {
-      min-height: 22vh;
-      background: #1f2937;
-      color: #fff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      position:relative;
-    }
-    .hero-content {
-      width:100%; max-width:680px;
-      text-align:center;
-      padding:6rem 1rem 1.5rem;
-    }
-    .search-form .input-group {
-      border-radius:18px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.2);
-      background:#fff;
-      overflow:hidden;
-    }
-    .search-form .form-control, .search-form .btn {
-      border-radius:18px !important;
-      font-size:1.05em;
-    }
-    .back-links {
-      position:absolute;
-      top:10px;
-      right:12px;
-      text-align:right;
-    }
-    @media (max-width:576px) {
-      .back-links {
-        top:8px;
-        right:8px;
-      }
-      .back-links .btn {
-        width:100%;
-        margin-bottom:6px;
-      }
+{% block title %}
+Perk Miner – Online Marketplace Results
+{% endblock %}
 
-      /* push title + search further down on small screens */
-      .hero-content {
-        padding-top: 8rem;   /* was 2.5rem; bump up for more space */
-        padding-bottom: 1.5rem;
-      }
+{% block meta %}
+<meta
+  name="description"
+  content="Search results for PerkMiner online marketplace advertisers."
+>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* =========================================================
+     ONLINE MARKETPLACE RESULTS
+     Matches search_results.html / home.html
+     ========================================================= */
+
+  .marketplace-results-page {
+    background: var(--pm-bg, #f8fafb);
+    min-height: 100vh;
+  }
+
+  /* ---------------------------------------------------------
+     Hero
+     --------------------------------------------------------- */
+
+  .marketplace-results-hero {
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(
+        145deg,
+        rgba(30, 74, 75, 0.97) 0%,
+        rgba(42, 88, 89, 0.94) 60%,
+        rgba(58, 109, 110, 0.92) 100%
+      );
+    color: #fff;
+    text-align: center;
+    padding: 2.5rem 1rem 3.2rem;
+    margin-bottom: 2rem;
+  }
+
+  .marketplace-results-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      url("https://res.cloudinary.com/dmrntlcfd/image/upload/v1782601402/Cash-Back_rignwa.jpg?auto=format&fit=crop&w=1600&q=40")
+      center / cover no-repeat;
+    opacity: 0.11;
+  }
+
+  .marketplace-results-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .marketplace-results-logo {
+    height: 58px;
+    width: auto;
+    max-width: 175px;
+    object-fit: contain;
+    background: #fff;
+    padding: 4px;
+    border-radius: 11px;
+    margin-bottom: 0.85rem;
+  }
+
+  .marketplace-results-hero h1 {
+    font-weight: 800;
+    font-size: clamp(1.7rem, 4.5vw, 2.35rem);
+    line-height: 1.15;
+    margin-bottom: 0.8rem;
+  }
+
+  .marketplace-results-hero p {
+    font-size: 0.9rem;
+    opacity: 0.92;
+    margin-bottom: 1rem;
+  }
+
+  /* ---------------------------------------------------------
+     Search
+     --------------------------------------------------------- */
+
+  .marketplace-results-search {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .marketplace-results-search .input-group {
+    background: #fff;
+    border-radius: 50px;
+    overflow: hidden;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  }
+
+  .marketplace-results-search .form-control {
+    min-height: 50px;
+    border: none;
+    padding: 0.8rem 1rem;
+  }
+
+  .marketplace-results-search .form-control:focus {
+    box-shadow: none;
+  }
+
+  .marketplace-results-search .btn {
+    min-height: 50px;
+    border: none;
+    border-radius: 0 50px 50px 0;
+    background: var(--pm-accent, #ffd66b);
+    color: var(--pm-primary, #1e4a4b);
+    font-weight: 800;
+    padding: 0 1.3rem;
+  }
+
+  .marketplace-results-search .btn:hover {
+    background: #ffe08b;
+  }
+
+  .marketplace-back-links {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 5;
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .marketplace-back-links .btn {
+    border-radius: 50px;
+    font-weight: 600;
+  }
+
+  /* ---------------------------------------------------------
+     Results
+     --------------------------------------------------------- */
+
+  .marketplace-results-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem 4rem;
+  }
+
+  .marketplace-results-heading {
+    color: var(--pm-primary-dark, #173b3c);
+    font-weight: 800;
+    margin-bottom: 1.2rem;
+  }
+
+  .marketplace-results-heading i {
+    color: var(--pm-primary-light, #2a5859);
+  }
+
+  /* ---------------------------------------------------------
+     Listing cards
+     --------------------------------------------------------- */
+
+  .marketplace-result-link {
+    display: block;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .marketplace-result-link:hover {
+    color: inherit;
+  }
+
+  .small-listing-modern {
+    height: 100%;
+    border: 1px solid #d9ece7;
+    border-radius: 14px;
+    background: #fafefe;
+    box-shadow: 0 1px 5px #e6f9f4;
+    overflow: hidden;
+    transition:
+      box-shadow 0.18s ease,
+      transform 0.18s ease,
+      background 0.18s ease;
+  }
+
+  .marketplace-result-link:hover .small-listing-modern {
+    background: #e6f6f5;
+    box-shadow: 0 7px 22px rgba(42, 88, 89, 0.18);
+    transform: translateY(-3px);
+  }
+
+  .listing-image-container {
+    width: 100%;
+    min-height: 145px;
+    background: #f7faf9;
+    border-bottom: 1px solid #e5f0ee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .small-listing-modern-img {
+    width: 112px;
+    height: 112px;
+    object-fit: cover;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #e2eeee;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .listing-placeholder {
+    width: 112px;
+    height: 112px;
+    border-radius: 14px;
+    background: #eef6f5;
+    border: 1px solid #d9ece7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .listing-placeholder i {
+    font-size: 2.15rem;
+    color: var(--pm-primary-light, #2a5859);
+  }
+
+  .small-listing-info {
+    padding: 1rem 1rem 1.1rem;
+    text-align: center;
+  }
+
+  .small-listing-title {
+    color: var(--pm-primary-dark, #173b3c);
+    font-size: 1.08rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 0.5rem;
+  }
+
+  .small-listing-category-badge {
+    display: inline-block;
+    background: #e6f6f5;
+    color: var(--pm-primary-light, #2a5859);
+    border-radius: 10px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .small-listing-address {
+    color: var(--pm-muted, #5c6b73);
+    font-size: 0.87rem;
+    line-height: 1.4;
+    margin-top: 0.7rem;
+  }
+
+  .small-listing-services {
+    color: #40545a;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    margin-top: 0.75rem;
+  }
+
+  .small-listing-services strong {
+    color: var(--pm-primary-dark, #173b3c);
+  }
+
+  .small-listing-perks {
+    background: #fff8e1;
+    border: 1px dashed #e0b84a;
+    color: #6f5600;
+    border-radius: 10px;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.86rem;
+    line-height: 1.4;
+    margin-top: 0.75rem;
+  }
+
+  .listing-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.85rem;
+    color: var(--pm-primary-light, #2a5859);
+    font-size: 0.88rem;
+    font-weight: 800;
+  }
+
+  /* ---------------------------------------------------------
+     Empty state
+     --------------------------------------------------------- */
+
+  .marketplace-no-results {
+    background: #fff;
+    border: 1px solid #dfeaea;
+    border-radius: 18px;
+    box-shadow: var(--pm-shadow, 0 4px 20px rgba(30,74,75,.08));
+    padding: 2.5rem 1.25rem;
+    text-align: center;
+  }
+
+  .marketplace-no-results i {
+    color: var(--pm-primary-light, #2a5859);
+    font-size: 2.4rem;
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  /* ---------------------------------------------------------
+     Pagination
+     --------------------------------------------------------- */
+
+  .marketplace-pagination .page-link {
+    color: var(--pm-primary-light, #2a5859);
+    border-color: #d9ece7;
+    border-radius: 10px;
+    margin: 0 0.15rem;
+  }
+
+  .marketplace-pagination .page-item.active .page-link,
+  .marketplace-pagination .page-link:hover {
+    background: var(--pm-primary-light, #2a5859);
+    border-color: var(--pm-primary-light, #2a5859);
+    color: #fff;
+  }
+
+  @media (max-width: 767.98px) {
+
+    .marketplace-results-hero {
+      padding-top: 3.8rem;
+      padding-bottom: 2.7rem;
     }
 
-    /* match search_results.html card styles */
-    .small-listing-modern {
-      border: 1px solid #d9ece7;
+    .marketplace-back-links {
+      top: 0.7rem;
+      right: 0.7rem;
+      left: 0.7rem;
+      justify-content: flex-end;
+    }
+
+    .marketplace-back-links .btn {
+      font-size: 0.76rem;
+    }
+
+    .marketplace-results-logo {
+      height: 52px;
+    }
+
+    .marketplace-results-search .input-group {
       border-radius: 14px;
-      background: #fafefe;
-      box-shadow: 0 1px 5px #e6f9f4;
-      margin-bottom: 1.4rem;
-      overflow: hidden;
-      cursor: pointer;
-      transition: box-shadow 0.18s, transform 0.18s, background 0.18s;
-      text-align: center;
     }
-    .small-listing-modern:hover {
-      background: var(--pm-hover);
-      box-shadow: 0 4px 18px #b4dad9;
-      transform: translateY(-3px);
+
+    .marketplace-results-search .btn {
+      border-radius: 0 14px 14px 0;
+      padding: 0 1rem;
     }
 
     .listing-image-container {
-      width: 100%;
-      height: 120px;
-      background: #f7f7f7;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-bottom: 1px solid #e5f0ee;
+      min-height: 130px;
     }
 
-    .small-listing-modern-img {
-      width: 120px;
-      height: 120px;
-      object-fit: cover;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      background: #f7f7f7;
+    .small-listing-modern-img,
+    .listing-placeholder {
+      width: 100px;
+      height: 100px;
     }
+  }
+</style>
+{% endblock %}
 
-    .small-listing-info { padding: 12px 14px 16px; font-size: 0.98em; }
-    .small-listing-title { font-weight: 700; margin-bottom: 8px; font-size: 1.12em; }
+{% block content %}
 
-    .small-listing-category-badge {
-      font-size: 0.95em;
-      font-weight: 500;
-      border-radius: 10px;
-      background: #e6f6f5;
-      color: #2a5859;
-      padding: 4px 12px;
-      margin-bottom: 6px;
-      display: inline-block;
-    }
+<div class="marketplace-results-page">
 
-    .small-listing-services {
-      color: #345;
-      opacity: 0.93;
-      font-size: 0.96em;
-      margin-top: 8px;
-      line-height: 1.4;
-    }
+  {# =========================================================
+     HERO / SEARCH
+     ========================================================= #}
 
-    .small-listing-perks {
-      background: #feebe7;
-      color: #345;
-      opacity: 0.93;
-      font-size: 0.96em;
-      margin-top: 8px;
-      line-height: 1.4;
-    }
+  <section class="marketplace-results-hero">
 
-    @media (max-width: 600px) {
-      .listing-image-container { height: 110px; }
-      .small-listing-modern-img { width: 100px; height: 100px; }
-      .small-listing-info { padding: 10px 12px 14px; }
-      .small-listing-title { font-size: 1.05em; }
-    }
+    <div class="marketplace-back-links">
 
-    /* Footer */
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
-
-  </style>
-</head>
-<body>
-
-  <section class="hero-section">
-    <div class="back-links">
-      <a href="{{ url_for('online_marketplace') }}" class="btn btn-light btn-sm mb-1">
-        &larr; Online Marketplace
+      <a
+        href="{{ url_for('online_marketplace') }}"
+        class="btn btn-light btn-sm"
+      >
+        <i class="bi bi-arrow-left me-1"></i>
+        Marketplace
       </a>
-      <a href="{{ url_for('home') }}" class="btn btn-outline-light btn-sm">
+
+      <a
+        href="{{ url_for('home') }}"
+        class="btn btn-outline-light btn-sm"
+      >
         Home
       </a>
+
     </div>
-    <div class="hero-content">
-      <h1 class="h4 mb-2">online marketplace search</h1>
-      <form class="search-form mb-2" method="get" action="{{ url_for('online_marketplace_results') }}">
-        <div class="input-group mb-1">
-          <input type="text"
-                 class="form-control"
-                 name="q"
-                 value="{{ q or '' }}"
-                 placeholder="Search online businesses, products, or services..."
-                 aria-label="Search">
-          <button class="btn btn-primary" type="submit">Search</button>
+
+    <div class="marketplace-results-inner">
+
+      <img
+        src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg"
+        alt="Perk Miner"
+        class="marketplace-results-logo"
+        loading="lazy"
+      >
+
+      <h1>
+        Online Marketplace Search
+      </h1>
+
+      <form
+        class="marketplace-results-search"
+        method="get"
+        action="{{ url_for('online_marketplace_results') }}"
+        role="search"
+      >
+
+        <div class="input-group">
+
+          <input
+            type="text"
+            class="form-control"
+            name="q"
+            value="{{ q or '' }}"
+            placeholder="Search online businesses, products, or services..."
+            aria-label="Search online marketplace"
+          >
+
+          <button
+            class="btn"
+            type="submit"
+          >
+            <i class="bi bi-search me-1"></i>
+            Search
+          </button>
+
         </div>
+
       </form>
-      <p class="small mb-0">
+
+      <p class="mt-3 mb-0">
+
         {% if q %}
-          showing results for "<strong>{{ q }}</strong>"
+
+          Showing results for:
+          <strong>"{{ q }}"</strong>
+
         {% else %}
-          showing all online marketplace advertisers (paged)
+
+          Showing all online marketplace advertisers.
+
         {% endif %}
+
       </p>
+
     </div>
+
   </section>
 
-  <main class="container my-4">
-    <section>
-      <h3 class="mb-3">online marketplace results</h3>
-      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for biz in ecommerce_results %}
-          <div class="col">
-            <a href="{{ url_for('view_listing', biz_id=biz.id, from_online_marketplace=1, q=q) }}"
-               style="text-decoration:none; color: inherit;">
-              <div class="small-listing-modern">
-                <div class="listing-image-container">
-                  {% if biz.profile_photo %}
-                    <img src="{{ biz.profile_photo }}" class="small-listing-modern-img" alt="{{ biz.business_name }} logo">
-                  {% else %}
-                    <div class="small-listing-modern-img d-flex align-items-center justify-content-center bg-light border">
-                      <i class="bi bi-shop" style="font-size:2em; color:#2a5859;"></i>
-                    </div>
-                  {% endif %}
-                </div>
+  {# =========================================================
+     RESULTS
+     ========================================================= #}
 
-                <div class="small-listing-info">
-                  <div class="small-listing-title">{{ biz.business_name }}</div>
-                  <div class="mb-2">
-                    <span class="small-listing-category-badge">{{ biz.category or "Online Marketplace" }}</span>
+  <main class="marketplace-results-content">
+
+    <h2 class="h4 marketplace-results-heading">
+      <i class="bi bi-shop me-1"></i>
+      Online Marketplace Results
+    </h2>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+
+      {% for biz in ecommerce_results %}
+
+        <div class="col">
+
+          <a
+            href="{{ url_for(
+              'view_listing',
+              biz_id=biz.id,
+              from_online_marketplace=1,
+              q=q
+            ) }}"
+            class="marketplace-result-link"
+          >
+
+            <div class="small-listing-modern">
+
+              {# Business logo/profile photo #}
+              <div class="listing-image-container">
+
+                {% if biz.profile_photo %}
+
+                  <img
+                    src="{{ biz.profile_photo }}"
+                    class="small-listing-modern-img"
+                    alt="{{ biz.business_name }} logo"
+                    width="112"
+                    height="112"
+                    loading="lazy"
+                  >
+
+                {% else %}
+
+                  <div class="listing-placeholder">
+                    <i class="bi bi-shop"></i>
                   </div>
 
-                  {% if biz.address %}
-                    <div style="font-size:0.95em; margin-bottom: 8px;">
-                      <i class="bi bi-geo-alt" style="color:var(--pm-primary);"></i>
-                      {{ biz.address }}
-                    </div>
-                  {% endif %}
+                {% endif %}
 
-                  <div class="small-listing-services">
-                    <b>Services:</b>
-                    {% set services = [biz.service_1, biz.service_2, biz.service_3, biz.service_4, biz.service_5,
-                                       biz.service_6, biz.service_7, biz.service_8, biz.service_9, biz.service_10] %}
-                    {{ services|select|reject('equalto','')|join(', ') if services|select|reject('equalto','')|list else 'N/A' }}
-                  </div>
-                  <div class="small-listing-perks">
-                    <b>Perks:</b> {{ biz.perks or "N/A" }}
-                  </div>
-                </div>
               </div>
-            </a>
-          </div>
-        {% endfor %}
 
-        {% if ecommerce_results|length == 0 and q %}
-          <div class="col-12">
-            <div class="alert alert-info text-center mt-2">
+              <div class="small-listing-info">
+
+                <div class="small-listing-title">
+                  {{ biz.business_name }}
+                </div>
+
+                <div>
+                  <span class="small-listing-category-badge">
+                    {{ biz.category or "Online Marketplace" }}
+                  </span>
+                </div>
+
+                {% if biz.address %}
+
+                  <div class="small-listing-address">
+
+                    <i class="bi bi-geo-alt me-1"></i>
+
+                    {{ biz.address }}
+
+                  </div>
+
+                {% endif %}
+
+                <div class="small-listing-services">
+
+                  <strong>Services:</strong>
+
+                  {% set services = [
+                    biz.service_1,
+                    biz.service_2,
+                    biz.service_3,
+                    biz.service_4,
+                    biz.service_5,
+                    biz.service_6,
+                    biz.service_7,
+                    biz.service_8,
+                    biz.service_9,
+                    biz.service_10
+                  ] %}
+
+                  {% set valid_services = services
+                    |select
+                    |reject('equalto', '')
+                    |list
+                  %}
+
+                  {% if valid_services %}
+                    {{ valid_services|join(', ') }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+
+                </div>
+
+                <div class="small-listing-perks">
+
+                  <strong>
+                    <i class="bi bi-gift me-1"></i>
+                    Perks:
+                  </strong>
+
+                  {{ biz.perks or "Member perks available" }}
+
+                </div>
+
+                <div class="listing-cta">
+                  View listing
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+
+              </div>
+
+            </div>
+
+          </a>
+
+        </div>
+
+      {% endfor %}
+
+      {# =====================================================
+         EMPTY RESULTS
+         ===================================================== #}
+
+      {% if ecommerce_results|length == 0 and q %}
+
+        <div class="col-12">
+
+          <div class="marketplace-no-results">
+
+            <i class="bi bi-search"></i>
+
+            <h3 class="h5 fw-bold">
               No online marketplace advertisers matched your search.
-            </div>
+            </h3>
+
+            <p class="text-muted mb-0">
+              Try a different business name, product, or service.
+            </p>
+
           </div>
-        {% elif ecommerce_results|length == 0 and not q %}
-          <div class="col-12">
-            <div class="alert alert-secondary text-center mt-2">
+
+        </div>
+
+      {% elif ecommerce_results|length == 0 and not q %}
+
+        <div class="col-12">
+
+          <div class="marketplace-no-results">
+
+            <i class="bi bi-shop"></i>
+
+            <h3 class="h5 fw-bold">
               No online marketplace advertisers are available yet.
-            </div>
+            </h3>
+
+            <p class="text-muted mb-0">
+              Check back soon for new marketplace businesses.
+            </p>
+
           </div>
-        {% endif %}
-      </div>
 
-      {% if pagination and pagination.pages > 1 %}
-        <nav aria-label="Online marketplace page navigation" class="mt-3">
-          <ul class="pagination justify-content-center">
-            {% if pagination.has_prev %}
-              <li class="page-item">
-                <a class="page-link"
-                   href="{{ url_for('online_marketplace_results',
-                                    q=q,
-                                    page=pagination.prev_num) }}">
-                  &laquo; Previous
-                </a>
-              </li>
-            {% else %}
-              <li class="page-item disabled">
-                <span class="page-link">&laquo; Previous</span>
-              </li>
-            {% endif %}
+        </div>
 
-            <li class="page-item disabled">
-              <span class="page-link">
-                Page {{ pagination.page }} of {{ pagination.pages }}
-              </span>
+      {% endif %}
+
+    </div>
+
+    {# =========================================================
+       PAGINATION
+       ========================================================= #}
+
+    {% if pagination and pagination.pages > 1 %}
+
+      <nav
+        aria-label="Online marketplace page navigation"
+        class="marketplace-pagination mt-5"
+      >
+
+        <ul class="pagination justify-content-center flex-wrap">
+
+          {% if pagination.has_prev %}
+
+            <li class="page-item">
+
+              <a
+                class="page-link"
+                href="{{ url_for(
+                  'online_marketplace_results',
+                  q=q,
+                  page=pagination.prev_num
+                ) }}"
+              >
+                &laquo; Previous
+              </a>
+
             </li>
 
-            {% if pagination.has_next %}
-              <li class="page-item">
-                <a class="page-link"
-                   href="{{ url_for('online_marketplace_results',
-                                    q=q,
-                                    page=pagination.next_num) }}">
-                  Next &raquo;
-                </a>
-              </li>
-            {% else %}
-              <li class="page-item disabled">
-                <span class="page-link">Next &raquo;</span>
-              </li>
-            {% endif %}
-          </ul>
-        </nav>
-      {% endif %}
-    </section>
+          {% else %}
+
+            <li class="page-item disabled">
+              <span class="page-link">&laquo; Previous</span>
+            </li>
+
+          {% endif %}
+
+          <li class="page-item disabled">
+
+            <span class="page-link">
+              Page {{ pagination.page }} of {{ pagination.pages }}
+            </span>
+
+          </li>
+
+          {% if pagination.has_next %}
+
+            <li class="page-item">
+
+              <a
+                class="page-link"
+                href="{{ url_for(
+                  'online_marketplace_results',
+                  q=q,
+                  page=pagination.next_num
+                ) }}"
+              >
+                Next &raquo;
+              </a>
+
+            </li>
+
+          {% else %}
+
+            <li class="page-item disabled">
+              <span class="page-link">Next &raquo;</span>
+            </li>
+
+          {% endif %}
+
+        </ul>
+
+      </nav>
+
+    {% endif %}
+
   </main>
 
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}
+```

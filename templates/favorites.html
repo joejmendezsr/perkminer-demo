@@ -1,64 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>My Favorites</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-</head>
-<style>
+{%- from 'pm_listing_card.html' import listing_card -%}
+{% extends "pm_base.html" %}
+{% block title %}My Favorites - PerkMiner{% endblock %}
 
-    /* Footer */
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
+{% block content %}
+<div class="container pb-3">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-heart-fill"></i></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">Saved businesses</div><h1>My Favorites</h1></div>
+    <div class="pm-hero-actions"><a href="{{ url_for('dashboard') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back to Dashboard</a></div>
+  </div>
 
-</style>
-<body>
-<div class="container py-4">
-    <h2 class="mb-4 text-center">My Favorites</h2>
-    {% if favorites %}
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for fav in favorites %}
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">
-                            <a href="{{ url_for('view_listing', biz_id=fav.business.id) }}">{{ fav.business.business_name }}</a>
-                        </h5>
-                        {% if fav.business.category %}
-                            <div class="mb-2"><span class="badge bg-primary">{{ fav.business.category }}</span></div>
-                        {% endif %}
-                        {% if fav.business.address %}
-                            <p class="card-text mb-1"><i class="bi bi-geo-alt"></i> {{ fav.business.address }}</p>
-                        {% endif %}
-                        {% if fav.business.phone_number %}
-                            <p class="card-text mb-1"><i class="bi bi-telephone"></i> {{ fav.business.phone_number }}</p>
-                        {% endif %}
-                        <form action="{{ url_for('remove_favorite', business_id=fav.business.id) }}" method="post" class="mt-auto">
-                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button class="btn btn-warning btn-sm w-100 mt-2" type="submit">Remove from Favorites</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-center mt-5">No favorites yet!</p>
-    {% endif %}
-    <div class="mt-4 text-center">
-        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+  {% if favorites %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for fav in favorites %}
+    <div class="col">
+      {{ listing_card(fav.business, url_for('view_listing', biz_id=fav.business.id), 'Perks Offered') }}
+      <div class="d-flex flex-column gap-2 mt-2">
+        {% if fav.business.phone_number %}
+          <a href="tel:{{ fav.business.phone_number }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-telephone"></i> {{ fav.business.phone_number }}</a>
+        {% endif %}
+        <form action="{{ url_for('remove_favorite', business_id=fav.business.id) }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-warning btn-sm w-100" type="submit"><i class="bi bi-heart-fill"></i> Remove from Favorites</button>
+        </form>
+      </div>
     </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card pm-noresults">
+    <div class="big-ic"><i class="bi bi-heart"></i></div>
+    <p class="mb-3 text-muted">No favorites yet!</p>
+    <div><a href="{{ url_for('home') }}" class="btn btn-primary">Find businesses</a></div>
+  </div>
+  {% endif %}
 </div>
-
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
-
-<!-- Bootstrap & Icons (for phone/location icons) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}

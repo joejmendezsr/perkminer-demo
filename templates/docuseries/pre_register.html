@@ -24,6 +24,13 @@
   </div>
   {% endif %}
 
+  {% if not user %}
+  <div class="callout info">
+    <span class="ic" aria-hidden="true">🔑</span>
+    <p><strong>Already a Perk Miner member?</strong> <a href="/login?next=/docuseries/pre-register">Log in first</a> so your form is saved to your existing account. New to Perk Miner? Just continue below. You'll create your free account after Step Three.</p>
+  </div>
+  {% endif %}
+
   <form method="post" enctype="multipart/form-data" id="pre-form" novalidate>
     {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
 
@@ -42,7 +49,8 @@
 
           <h3>A. Pre-registration (optional; start recording before clicking the button below)</h3>
           <ul>
-            <li>This is not the normal registration process. The majority of members will register from perkminer.com's home page.</li>
+            <li>Already registered as a member?  Be sure to login before continuing (do not create a new account).  If not, please register to create your new account.</li>
+            <li>This is not the normal registration process. The majority of members register from perkminer.com's home page.</li>
             <li>If possible, have another person record you registering (be careful not to show your email address), but this is not required.</li>
           </ul>
 
@@ -57,12 +65,12 @@
           <h3>C. Intro video (uploaded on the next page)</h3>
           <p>Record yourself on video for the first time (limited to 60 seconds):</p>
           <ul>
-            <li>State your real name</li>
+            <li>State your real name, city and state</li>
             <li>Why you're participating in the challenge</li>
             <li>Your current financial status (struggling, need to pay off debt, etc.)</li>
             <li>What you would do if you earned $5k in the next 45 days</li>
             <li>State that you are voluntarily participating in the challenge and are not being paid for your testimonials (because it's true)</li>
-            <li>Show yourself holding up the Talent Release Form</li>
+            <li>If possible, show yourself holding up the Talent Release Form</li>
           </ul>
         </li>
 

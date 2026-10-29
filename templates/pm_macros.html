@@ -1,0 +1,27 @@
+{# Shared helpers for the session pages. Import with:
+   {% from 'pm_macros.html' import status_label, status_badge %} #}
+
+{% macro status_label(s) -%}
+{%- if s == 'on_the_way' %}On the way
+{%- elif s == 'arrived' %}Arrived
+{%- elif s == 'no show - charge fee - no finalization' %}No Show - Charge Fee - No Finalization
+{%- elif s == 'no show - charge fee - finalization' %}No Show - Charge Fee - Finalization
+{%- elif s == 'no show - no fee' %}No Show - No Fee
+{%- elif s == 'contract_initial_paid' %}Contract signed - initial fee paid
+{%- elif s == 'contract_full_paid' %}Contract signed - full fee paid
+{%- elif s == 'service_fee_only' %}Service call fee only paid
+{%- elif s == 'rejected_no_contract' %}Rejected quote - no contract or fee
+{%- elif s == 'estimate_only' %}Estimate only
+{%- else %}Assigned
+{%- endif -%}
+{%- endmacro %}
+
+{% macro status_badge(s, prefix=True) -%}
+{%- set kind = 'info' -%}
+{%- if s == 'on_the_way' %}{% set kind = 'go' %}
+{%- elif s in ['arrived', 'contract_initial_paid', 'contract_full_paid', 'service_fee_only'] %}{% set kind = 'ok' %}
+{%- elif s in ['no show - charge fee - no finalization', 'no show - charge fee - finalization', 'no show - no fee'] %}{% set kind = 'bad' %}
+{%- elif s in ['rejected_no_contract', 'estimate_only'] %}{% set kind = 'neutral' %}
+{%- endif -%}
+<span class="pm-status pm-status-{{ kind }}"><i class="bi bi-circle-fill"></i>{% if prefix %}Status: {% endif %}{{ status_label(s) }}</span>
+{%- endmacro %}

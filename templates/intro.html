@@ -1,311 +1,112 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Welcome to PerkMiner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f7fb;
-      margin: 0;
-      padding: 0;
-      color: #222;
-    }
+{% extends "pm_base.html" %}
+{% block title %}Welcome to PerkMiner{% endblock %}
 
-    .header {
-      width: 100%;
-      background: #fff;
-      padding: 16px 0 10px;
-      box-shadow: 0 2px 8px #0001;
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      text-align: center;
-    }
-    .header img {
-      max-width: 240px;
-      height: auto;
-    }
-    .close-btn {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      background: #6366f1;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 42px;
-      height: 42px;
-      font-size: 1.3em;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      transition: all 0.2s;
-    }
-    .close-btn:hover {
-      background: #4f46e5;
-      transform: scale(1.08);
-    }
+{% block head_extra %}
+<style>
+  .vid-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.2rem; }
+  .vid-card { padding: 1rem 1rem 1.2rem; }
+  .vid-card video { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; background: #000; display: block; margin-bottom: .6rem; }
+  .vid-card .t { font-weight: 800; color: var(--pm-primary-dark); }
+  .vid-card .s { font-size: .9rem; color: var(--pm-muted); }
+  .intro-tabs { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.2rem; }
+  .intro-tabs button { border: 2px solid var(--pm-primary); background: #fff; color: var(--pm-primary); font-weight: 700; border-radius: 999px; padding: .55rem 1.3rem; }
+  .intro-tabs button.is-active { background: var(--pm-primary); color: #fff; }
+  .intro-pane { display: none; }
+  .intro-pane.is-active { display: block; }
+</style>
+{% endblock %}
 
-    .page-intro {
-      padding: 16px 12px 4px;
-      text-align: center;
-    }
-    .page-intro h1 {
-      font-size: 1.4rem;
-      margin: 0 0 6px;
-      color: #23223f;
-      text-transform: lowercase;
-    }
-    .page-intro p {
-      margin: 0;
-      font-size: 0.98rem;
-      color: #555;
-    }
-    .mobile-note {
-      margin-top: 6px;
-      font-size: 0.9rem;
-      color: #cc0000;
-      font-weight: 600;
-    }
+{% block content %}
+<div class="container pb-3">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-play-btn"></i></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">Watch the short video that applies to you</div><h1>Welcome to PerkMiner</h1></div>
+    <div class="pm-hero-actions"><button type="button" class="btn btn-light" id="close-btn"><i class="bi bi-x-lg"></i> Close</button></div>
+  </div>
+  <p class="text-center text-muted">Watch the short video that applies to you, then return to complete your registration or login.</p>
 
-    /* shared layout for both sections */
-    section.video-section {
-      padding: 10px 0 0;
-    }
-    section.video-section-header {
-      text-align: center;
-      margin-top: 8px;
-    }
-
-    .section-heading {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #23223f;
-      margin: 0 0 4px;
-      text-align: center;
-    }
-    .section-subheading {
-      font-size: 0.95rem;
-      color: #555;
-      margin: 0 0 4px;
-      text-align: center;
-    }
-
-    .videos-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 28px;
-      padding: 24px 20px 40px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .video-card {
-      background: #fff;
-      border-radius: 14px;
-      box-shadow: 0 2px 12px #0002;
-      padding: 22px 18px 28px;
-      max-width: 420px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .video-title {
-      font-size: 1.15em;
-      font-weight: 700;
-      margin-bottom: 4px;
-      color: #23223f;
-      text-align: center;
-    }
-    .video-subtitle {
-      font-size: 0.9em;
-      color: #555;
-      margin-bottom: 14px;
-      text-align: center;
-    }
-
-    video {
-      width: 100%;
-      max-width: 100%;
-      aspect-ratio: 16 / 9;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      background: #000;
-    }
-
-    @media (max-width: 900px) {
-      .header img { max-width: 200px; }
-      .videos-row {
-        padding-top: 18px;
-      }
-    }
-
-    /* force single column on narrow portrait phones */
-    @media (max-width: 480px) {
-      .videos-row {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 600px) {
-      .header img { max-width: 170px; }
-      .page-intro h1 { font-size: 1.15rem; }
-      .video-title { font-size: 1.05em; }
-      .video-card { padding: 16px 10px 22px; }
-      .close-btn {
-        top: 10px;
-        right: 10px;
-        width: 36px;
-        height: 36px;
-        font-size: 1.1em;
-      }
-    }
-
-    /* Footer */
-    footer { background: #f8fafb; color: #999; padding: 1.5rem 0; margin-top: 2.3rem; text-align: center; font-size: 1em; border-top: 1px solid #e1e7ea; }
-    footer a.footer-brand { color: var(--pm-primary); font-weight: 600; text-decoration: none; }
-    footer a.footer-support { color: var(--pm-primary); }
-    footer a.footer-legal { color: #3dbbee; margin: 0 6px; text-decoration: none; }
-    footer a.footer-directory { color: var(--pm-primary); text-decoration: none; font-weight: 600; }
-    footer a.footer-directory:hover { text-decoration: underline; }
-
-  </style>
-</head>
-<body>
-
-  <div class="header">
-    <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1769980535/PerkMiner_Logo_o2qgfy.jpg" alt="PerkMiner Logo">
-    <button class="close-btn" aria-label="Close video page">×</button>
+  <div class="intro-tabs" role="tablist">
+    <button type="button" data-pane="member-videos" class="is-active" role="tab"><i class="bi bi-person-heart"></i> For Members</button>
+    <button type="button" data-pane="business-videos" role="tab"><i class="bi bi-shop"></i> For Business Owners</button>
   </div>
 
-  <section class="page-intro">
-    <h1>welcome to perkminer</h1>
-    <p>Watch the short video that applies to you, then return to complete your registration or login.</p>
-    <div class="mobile-note">(on mobile, scroll to see all videos)</div>
-  </section>
-
-  <!-- MEMBER SECTION -->
-  <section id="member-videos" class="video-section" aria-labelledby="member-heading">
-    <div class="video-section-header">
-      <h2 id="member-heading" class="section-heading">Videos for Members</h2>
-      <p class="section-subheading">Learn about Member benefits and more!</p>
-    </div>
-
-    <div class="videos-row">
-      <!-- MEMBER VIDEO 1 -->
-      <article class="video-card">
-        <h3 class="video-title">How We Protect Our Members</h3>
-        <p class="video-subtitle">~3 minutes • overview of how we protect our members</p>
-        <video
-          id="member-video-1"
-          controls
-          controlsList="nodownload"
-          oncontextmenu="return false;"
-          preload="auto"
-          poster="https://via.placeholder.com/800x450/6366f1/ffffff?text=Member+Intro+1">
+  <section id="member-videos" class="intro-pane is-active" aria-labelledby="member-heading">
+    <h2 id="member-heading" class="h5 fw-bold text-center mb-1" style="color:var(--pm-primary-dark);">Videos for Members</h2>
+    <p class="text-center text-muted">Learn about Member benefits and more!</p>
+    <div class="vid-grid">
+      <article class="card vid-card">
+        <video controls controlsList="nodownload" oncontextmenu="return false;" preload="metadata"
+               poster="https://res.cloudinary.com/dmrntlcfd/video/upload/so_2,w_800,h_450,c_fill/v1787029926/Final_PM_Member_Promo_lkgvbi.jpg">
           <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1787029926/Final_PM_Member_Promo_lkgvbi.mp4" type="video/mp4">
           Sorry, your browser doesn't support embedded videos.
         </video>
+        <div class="t">How We Protect Our Members</div>
+        <div class="s">~3 minutes • overview of how we protect our members</div>
       </article>
-
-      <!-- MEMBER VIDEO 2 (same source, different slot) -->
-      <article class="video-card">
-        <h3 class="video-title">Making Money with Perk Miner</h3>
-        <p class="video-subtitle">~4 minutes • member ownership and revenue share</p>
-        <video
-          id="member-video-2"
-          controls
-          controlsList="nodownload"
-          oncontextmenu="return false;"
-          preload="auto"
-          poster="https://via.placeholder.com/800x450/6366f1/ffffff?text=Member+Intro+2">
+      <article class="card vid-card">
+        <video controls controlsList="nodownload" oncontextmenu="return false;" preload="metadata"
+               poster="https://res.cloudinary.com/dmrntlcfd/video/upload/so_2,w_800,h_450,c_fill/v1788736607/Member-Money-Final_mkkrdg.jpg">
           <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1788736607/Member-Money-Final_mkkrdg.mp4" type="video/mp4">
           Sorry, your browser doesn't support embedded videos.
         </video>
+        <div class="t">Making Money with Perk Miner</div>
+        <div class="s">~4 minutes • member ownership and revenue share</div>
       </article>
     </div>
   </section>
 
-  <!-- BUSINESS SECTION -->
-  <section id="business-videos" class="video-section" aria-labelledby="business-heading">
-    <div class="video-section-header">
-      <h2 id="business-heading" class="section-heading">Videos for Business Owners</h2>
-      <p class="section-subheading">Learn about Business benefits and more!</p>
-    </div>
-
-    <div class="videos-row">
-      <!-- BUSINESS VIDEO 1 -->
-      <article class="video-card">
-        <h3 class="video-title">Why Advertise With Us?</h3>
-        <p class="video-subtitle">~3.5 minutes • the paradigm shift and min 900% ROI</p>
-        <video
-          id="biz-video-1"
-          controls
-          controlsList="nodownload"
-          oncontextmenu="return false;"
-          preload="auto"
-          poster="https://via.placeholder.com/800x450/232323/ffffff?text=Business+Intro+1">
+  <section id="business-videos" class="intro-pane" aria-labelledby="business-heading">
+    <h2 id="business-heading" class="h5 fw-bold text-center mb-1" style="color:var(--pm-primary-dark);">Videos for Business Owners</h2>
+    <p class="text-center text-muted">Learn about Business benefits and more!</p>
+    <div class="vid-grid">
+      <article class="card vid-card">
+        <video controls controlsList="nodownload" oncontextmenu="return false;" preload="none"
+               poster="https://res.cloudinary.com/dmrntlcfd/video/upload/so_2,w_800,h_450,c_fill/v1787029952/Final_PM_Biz_Promo_iyncur.jpg">
           <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1787029952/Final_PM_Biz_Promo_iyncur.mp4" type="video/mp4">
           Sorry, your browser doesn't support embedded videos.
         </video>
+        <div class="t">Why Advertise With Us?</div>
+        <div class="s">~3.5 minutes • the paradigm shift and min 900% ROI</div>
       </article>
-
-      <!-- BUSINESS VIDEO 2 (same source, second slot) -->
-      <article class="video-card">
-        <h3 class="video-title">Generating Additional Business $$$</h3>
-        <p class="video-subtitle">~3.5 minutes • more revenue = greater success</p>
-        <video
-          id="biz-video-2"
-          controls
-          controlsList="nodownload"
-          oncontextmenu="return false;"
-          preload="auto"
-          poster="https://via.placeholder.com/800x450/232323/ffffff?text=Business+Intro+2">
+      <article class="card vid-card">
+        <video controls controlsList="nodownload" oncontextmenu="return false;" preload="none"
+               poster="https://res.cloudinary.com/dmrntlcfd/video/upload/so_2,w_800,h_450,c_fill/v1788904874/Business_Money_Video_Final_o6xbbo.jpg">
           <source src="https://res.cloudinary.com/dmrntlcfd/video/upload/v1788904874/Business_Money_Video_Final_o6xbbo.mp4" type="video/mp4">
           Sorry, your browser doesn't support embedded videos.
         </video>
+        <div class="t">Generating Additional Business $$$</div>
+        <div class="s">~3.5 minutes • more revenue = greater success</div>
       </article>
     </div>
   </section>
+</div>
+{% endblock %}
 
-  <script>
-    function protectVideo(id) {
-      const video = document.getElementById(id);
-      if (!video) return;
-
-      video.addEventListener('contextmenu', (e) => e.preventDefault());
-      video.addEventListener('keydown', function(e){
-        if ((e.ctrlKey && e.key === "s") || (e.metaKey && (e.key === "s" || e.key === "S"))) {
-          e.preventDefault();
-        }
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // protect every player (no right-click / save)
+  document.querySelectorAll('video').forEach(function (v) {
+    v.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    v.addEventListener('mouseover', function () { v.setAttribute('controlsList', 'nodownload'); });
+  });
+  // member / business tabs (pausing the other side's videos when you switch)
+  var tabs = document.querySelectorAll('.intro-tabs button');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      tabs.forEach(function (x) { x.classList.toggle('is-active', x === b); });
+      document.querySelectorAll('.intro-pane').forEach(function (p) {
+        var on = p.id === b.dataset.pane; p.classList.toggle('is-active', on);
+        if (!on) p.querySelectorAll('video').forEach(function (v) { v.pause(); });
       });
-      video.addEventListener('mouseover', function(){
-        video.setAttribute('controlsList', 'nodownload');
-      });
-    }
-
-    protectVideo('user-video');
-    protectVideo('biz-video');
-
-    // close button behavior
-    document.querySelector('.close-btn').addEventListener('click', function() {
-      if (window.opener) {
-        window.close();
-        return;
-      }
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        alert("You can now close this tab or return to your previous page.");
-      }
     });
-  </script>
-</body>
-</html>
+  });
+  // close button behavior
+  document.getElementById('close-btn').addEventListener('click', function () {
+    if (window.opener) { window.close(); return; }
+    if (window.history.length > 1) { window.history.back(); }
+    else { alert('You can now close this tab or return to your previous page.'); }
+  });
+});
+</script>
+{% endblock %}

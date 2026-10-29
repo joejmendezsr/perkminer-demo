@@ -1,0 +1,38 @@
+{# Small form helpers shared by the login / register / password pages #}
+{% macro errs(f) %}{% for e in f.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}{% endmacro %}
+
+{# a normal text-style field. label=True shows the WTForms label; placeholder/required/autofocus optional #}
+{% macro field(f, label=True, placeholder=none, required=False, autofocus=False, ac=none, cls='form-control', inputmode=none, maxlength=none, center=False) %}
+  {% set kw = {'class': cls ~ (' text-center' if center else '')} %}
+  {% if placeholder %}{% set _ = kw.update({'placeholder': placeholder}) %}{% endif %}
+  {% if required %}{% set _ = kw.update({'required': True}) %}{% endif %}
+  {% if autofocus %}{% set _ = kw.update({'autofocus': True}) %}{% endif %}
+  {% if ac %}{% set _ = kw.update({'autocomplete': ac}) %}{% endif %}
+  {% if inputmode %}{% set _ = kw.update({'inputmode': inputmode}) %}{% endif %}
+  {% if maxlength %}{% set _ = kw.update({'maxlength': maxlength}) %}{% endif %}
+  {% if label %}{{ f.label(class="form-label fw-semibold") }}{% endif %}
+  {{ f(**kw) }}
+  {{ errs(f) }}
+{% endmacro %}
+
+{# password field with show/hide eye button #}
+{% macro pw(f, id='password-field', label=True, placeholder=none, required=False, ac='current-password') %}
+  {% set kw = {'class': 'form-control', 'id': id, 'autocomplete': ac} %}
+  {% if placeholder %}{% set _ = kw.update({'placeholder': placeholder}) %}{% endif %}
+  {% if required %}{% set _ = kw.update({'required': True}) %}{% endif %}
+  {% if label %}{{ f.label(class="form-label fw-semibold") }}{% endif %}
+  <div class="input-group">
+    {{ f(**kw) }}
+    <button type="button" class="btn btn-outline-secondary" data-pw-toggle="#{{ id }}" tabindex="-1" aria-label="Show or hide password"><i class="bi bi-eye"></i></button>
+  </div>
+  {{ errs(f) }}
+{% endmacro %}
+
+{% macro recaptcha(form) %}
+  {% if form.recaptcha %}
+  <div class="mb-3">
+    {{ form.recaptcha }}
+    {% for err in form.recaptcha.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+  </div>
+  {% endif %}
+{% endmacro %}

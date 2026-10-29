@@ -1,201 +1,110 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Member Service Requests</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-<style>
-  .dashboard-card {
-    max-width: 660px;
-    margin: 32px auto;
-    border-radius: 16px;
-    box-shadow: 0 4px 16px #e3e9ef;
-    background: #f9fafd;
-    padding: 2em 1.4em;
-  }
+{% extends "pm_base.html" %}
+{% from 'pm_macros.html' import status_badge %}
+{% block title %}Member Service Requests – PerkMiner{% endblock %}
 
-  .session-list {
-    max-height: none;
-    min-height: 1px;
-    overflow-y: visible;
-  }
+{% block content %}
+<div class="container pb-3" style="max-width: 980px;">
 
-  /* spacing between sessions */
-  .session-list .list-group-item {
-    margin-bottom: 10px;
-    border-radius: 10px;
-  }
-
-  /* right-side vertical button column */
-  .button-col {
-    min-width: 200px;
-  }
-
-  /* shared fixed-width, touch-friendly buttons */
-  .session-btn {
-    width: 200px;
-    text-align: center;
-    white-space: nowrap;
-
-    padding-top: 0.4rem;
-    padding-bottom: 0.4rem;
-    font-size: 1.05rem;
-  }
-
-  .session-btn i {
-    font-size: 1.1em;
-    margin-right: 4px;
-  }
-
-  @media (max-width: 650px) {
-    .dashboard-card {
-      margin: 12px auto;
-      padding: 1em 6px;
-    }
-
-    .button-col {
-      width: 100%;
-      align-items: stretch;
-    }
-
-    .session-btn {
-      width: 100%;
-    }
-  }
-</style>
-</head>
-<body class="bg-light">
-<div class="container">
-  <div class="dashboard-card">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <h3 class="mb-0">
-        Member Service Requests
-        {% if interactions %}
-          ({{ interactions|length }})
-        {% endif %}
-      </h3>
-      <a href="{{ url_for('business_dashboard') }}" class="btn btn-outline-primary">
-        Return to Dashboard
-      </a>
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-people"></i></div>
+    <div class="pm-hero-body">
+      <div class="pm-hero-sub">Business</div>
+      <h1>Member Service Requests <span id="session-count">{% if interactions %}({{ interactions|length }}){% endif %}</span></h1>
     </div>
-
-    <input type="text" id="searchInput" class="form-control mb-3" placeholder="Filter by member name...">
-
-    <h5 class="mt-2 mb-2">Active Sessions</h5>
-    <div id="interaction-list">
-      {% if interactions %}
-        <ul class="list-group session-list">
-          {% for i in interactions %}
-          <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-            <div class="py-1">
-              <strong>{{ i.user.name or i.user.email }}</strong><br>
-              <small class="text-muted">{{ i.service_type }}</small><br>
-              {% if i.assigned_staff %}
-                <small class="text-success">
-                  Assigned to: {{ i.assigned_staff.name }} ({{ i.assigned_staff.email }})
-                </small>
-              {% else %}
-                <small class="text-muted">Not assigned</small>
-              {% endif %}
-
-              {% if i.provider_status %}
-                {% set status_label = "Assigned" %}
-                {% if i.provider_status == 'on_the_way' %}
-                  {% set status_label = "On the way" %}
-                {% elif i.provider_status == 'arrived' %}
-                  {% set status_label = "Arrived" %}
-                {% elif i.provider_status == 'no show - charge fee - no finalization' %}
-                  {% set status_label = "No Show - Charge Fee - No Finalization" %}
-                {% elif i.provider_status == 'no show - charge fee - finalization' %}
-                  {% set status_label = "No Show - Charge Fee - Finalization" %}
-                {% elif i.provider_status == 'no show - no fee' %}
-                  {% set status_label = "No Show - No Fee" %}
-                {% elif i.provider_status == 'contract_initial_paid' %}
-                  {% set status_label = "Contract signed - initial fee paid" %}
-                {% elif i.provider_status == 'contract_full_paid' %}
-                  {% set status_label = "Contract signed - full fee paid" %}
-                {% elif i.provider_status == 'service_fee_only' %}
-                  {% set status_label = "Service call fee only paid" %}
-                {% elif i.provider_status == 'rejected_no_contract' %}
-                  {% set status_label = "Rejected quote - no contract or fee" %}
-                {% elif i.provider_status == 'estimate_only' %}
-                  {% set status_label = "Estimate only" %}
-                {% endif %}
-
-                <small class="d-block mt-1">
-                  <span class="badge bg-primary">
-                    Status: {{ status_label }}
-                  </span>
-                </small>
-              {% endif %}
-
-              {% if service_providers %}
-              <form method="post"
-                    action="{{ url_for('assign_interaction', interaction_id=i.id) }}"
-                    class="mt-2">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="input-group input-group-sm" style="max-width: 320px;">
-                  <select name="staff_id" class="form-select form-select-sm">
-                    <option value="">Assign to...</option>
-                    {% for sp in service_providers %}
-                      <option value="{{ sp.id }}"
-                        {% if i.assigned_staff_id == sp.id %}selected{% endif %}>
-                        {{ sp.name }} ({{ sp.email }})
-                      </option>
-                    {% endfor %}
-                  </select>
-                  <button type="submit" class="btn btn-primary btn-sm">
-                    Save
-                  </button>
-                </div>
-              </form>
-              {% else %}
-                <small class="text-muted mt-2 d-block">
-                  No service providers yet.
-                </small>
-              {% endif %}
-            </div>
-
-<div class="mt-2 mt-md-0 d-flex flex-column align-items-stretch button-col">
-  <a href="{{ url_for('biz_interaction_details', interaction_id=i.id) }}"
-     class="btn btn-info btn-sm session-btn mb-1">
-    View Details
-  </a>
-  <a href="{{ url_for('biz_active_session', interaction_id=i.id) }}"
-     class="btn btn-primary btn-sm session-btn mb-1">
-    Open Active Session
-  </a>
-  <a href="{{ url_for('finalize_transaction', interaction_id=i.id) }}"
-     class="btn btn-outline-primary btn-sm session-btn mb-1">
-    Finalize Manually
-  </a>
-  <form method="post"
-        action="{{ url_for('end_session', interaction_id=i.id) }}"
-        class="d-inline">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit"
-            class="btn btn-danger btn-sm session-btn mb-0">
-      End Session
-    </button>
-  </form>
-</div>
-          </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <div class="alert alert-info text-center mt-4">No active user requests yet.</div>
-      {% endif %}
+    <div class="pm-hero-actions">
+      <a href="{{ url_for('business_dashboard') }}" class="btn btn-light"><i class="bi bi-speedometer2"></i> Return to Dashboard</a>
     </div>
   </div>
+
+  <div class="pm-search mb-3">
+    <i class="bi bi-search"></i>
+    <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Filter by member name...">
+  </div>
+
+  <div class="card-title-row"><i class="bi bi-chat-square-text"></i><h5>Active Sessions</h5><span class="pm-live-dot ms-auto">Live</span></div>
+
+  <div id="interaction-list" data-live="list">
+    {% if interactions %}
+      {% for i in interactions %}
+      <div class="card pm-list-item">
+        <div class="pm-list-main">
+          <div class="pm-avatar">
+            {% if i.user.profile_photo %}<img src="{{ i.user.profile_photo }}" alt="">{% else %}{{ ((i.user.name or i.user.email or '?')[:1])|upper }}{% endif %}
+          </div>
+          <div class="min-w-0">
+            <strong>{{ i.user.name or i.user.email }}</strong><br>
+            <small class="text-muted">{{ i.service_type }}</small><br>
+            {% if i.assigned_staff %}
+              <small class="text-success"><i class="bi bi-person-check"></i> Assigned to: {{ i.assigned_staff.name }} ({{ i.assigned_staff.email }})</small>
+            {% else %}
+              <small class="text-muted"><i class="bi bi-person-dash"></i> Not assigned</small>
+            {% endif %}
+
+            {% if i.provider_status %}
+              <div class="mt-2">{{ status_badge(i.provider_status) }}</div>
+            {% endif %}
+
+            {% if service_providers %}
+              <form method="post" action="{{ url_for('assign_interaction', interaction_id=i.id) }}" class="mt-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="input-group input-group-sm" style="max-width: 340px;">
+                  <select name="staff_id" class="form-select form-select-sm" aria-label="Assign to">
+                    <option value="">Assign to...</option>
+                    {% for sp in service_providers %}
+                      <option value="{{ sp.id }}" {% if i.assigned_staff_id == sp.id %}selected{% endif %}>{{ sp.name }} ({{ sp.email }})</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                </div>
+              </form>
+            {% else %}
+              <small class="text-muted mt-2 d-block">No service providers yet.</small>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="pm-list-actions">
+          <a href="{{ url_for('biz_active_session', interaction_id=i.id) }}" class="btn btn-primary"><i class="bi bi-chat-dots"></i> Open Active Session</a>
+          <a href="{{ url_for('biz_interaction_details', interaction_id=i.id) }}" class="btn btn-info"><i class="bi bi-card-text"></i> View Details</a>
+          <a href="{{ url_for('finalize_transaction', interaction_id=i.id) }}" class="btn btn-outline-primary">Finalize Manually</a>
+          <form method="post" action="{{ url_for('end_session', interaction_id=i.id) }}"
+                onsubmit="return confirm('End this session? This ends the connection.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-octagon"></i> End Session</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="card"><div class="pm-empty"><i class="bi bi-inbox"></i>No active user requests yet.</div></div>
+    {% endif %}
+  </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
 <script>
-document.getElementById('searchInput').addEventListener('keyup', function () {
-    var filter = this.value.toLowerCase();
-    document.querySelectorAll('#interaction-list li').forEach(function(item) {
-        var name = item.textContent || item.innerText;
-        item.style.display = name.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+(function () {
+  var input = document.getElementById('searchInput');
+  function applyFilter() {
+    var filter = input.value.toLowerCase();
+    document.querySelectorAll('#interaction-list .pm-list-item').forEach(function (item) {
+      item.style.display = (item.textContent || item.innerText).toLowerCase().indexOf(filter) > -1 ? '' : 'none';
     });
-});
+  }
+  input.addEventListener('keyup', applyFilter);
+  input.addEventListener('input', applyFilter);
+
+  /* new requests and status changes appear without a refresh (paused while you use the Assign menu) */
+  window.pmLive({
+    interval: 10000,
+    skip: function (name, el) { return el.contains(document.activeElement) && /^(SELECT|INPUT|BUTTON)$/.test(document.activeElement.tagName); },
+    onSwap: function () {
+      applyFilter();
+      var n = document.querySelectorAll('#interaction-list .pm-list-item').length;
+      document.getElementById('session-count').textContent = n ? '(' + n + ')' : '';
+    }
+  });
+})();
 </script>
-</body>
-</html>
+{% endblock %}

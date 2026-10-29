@@ -1,0 +1,71 @@
+{% extends "pm_base.html" %}
+{% block title %}Scan User QR Code - PerkMiner{% endblock %}
+
+{% block head_extra %}
+<style>
+  .scan-icon { font-size: 3rem; color: var(--pm-primary); background: #e0f1f1; border-radius: 50%; width: 110px; height: 110px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+  #reader { width: 100%; max-width: 360px; margin: 0 auto; display: none; border-radius: 14px; overflow: hidden; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pb-3" style="max-width: 520px;">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-upc-scan"></i></div>
+    <div class="pm-hero-body">
+      <div class="pm-hero-sub">Business</div>
+      <h1>Scan User's QR Code</h1>
+    </div>
+    <div class="pm-hero-actions">
+      <a href="{{ url_for('business_dashboard') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    </div>
+  </div>
+
+  <div class="card p-3 p-md-4 text-center">
+    <div class="scan-icon" id="scan-icon"><i class="bi bi-upc-scan"></i></div>
+    <p class="mb-3" id="scan-help">Tap the button below and point your device at the user's QR code.<br>Allow camera access if prompted.</p>
+    <button id="scan-btn" type="button" class="btn btn-success btn-lg w-100 mb-3"><i class="bi bi-camera"></i> Scan QR Code</button>
+    <div id="reader"></div>
+    <div id="scan-message" class="pm-note text-center mt-3" style="display:none"></div>
+    <a href="{{ url_for('business_dashboard') }}" class="btn btn-outline-primary mt-3 w-100">Return to Dashboard</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+  var html5QrcodeCamera = null;
+  function showMsg(t, cls) {
+    var m = document.getElementById('scan-message');
+    m.className = 'pm-note text-center mt-3 ' + (cls || ''); m.style.display = 'block'; m.textContent = t;
+  }
+  document.getElementById('scan-btn').onclick = function () {
+    document.getElementById('scan-btn').style.display = 'none';
+    document.getElementById('scan-icon').style.display = 'none';
+    document.getElementById('reader').style.display = 'block';
+    Html5Qrcode.getCameras().then(function (cameras) {
+      var back = cameras && cameras.find(function (c) { return c.label && c.label.toLowerCase().includes('back'); });
+      var id = back ? back.id : (cameras && cameras[0] ? cameras[0].id : null);
+      runHtml5Scan(id);
+    }).catch(function () { runHtml5Scan(null); });
+  };
+  function runHtml5Scan(cameraId) {
+    html5QrcodeCamera = new Html5Qrcode("reader");
+    html5QrcodeCamera.start(
+      cameraId || { facingMode: "environment" },
+      { fps: 12, qrbox: 250 },
+      function (decodedText) {
+        showMsg('QR scanned! Redirecting…', 'ok');
+        setTimeout(function () { window.location.href = decodedText; }, 800);
+        html5QrcodeCamera.stop().catch(function () {});
+      },
+      function () {}
+    ).catch(function () {
+      showMsg('Could not start the camera. Check camera permission and try again.', 'bad');
+      document.getElementById('scan-btn').style.display = 'block';
+      document.getElementById('reader').style.display = 'none';
+    });
+  }
+</script>
+{% endblock %}

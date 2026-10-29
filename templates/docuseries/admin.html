@@ -25,6 +25,7 @@ table.people td.email{text-align:left;color:var(--muted)}
   <div class="wrap-wide">
     <a href="{{ admin_roles_url }}">← Back to Admin Roles</a>
     <a href="{{ url_for('docuseries.live_locations') }}">Live Locations</a>
+    <a href="{{ url_for('docuseries.admin_episodes') }}">Manage Episodes</a>
     <a href="{{ url_for('docuseries.episodes') }}" target="_blank" rel="noopener">Episodes ↗</a>
   </div>
 </div>
@@ -36,6 +37,50 @@ table.people td.email{text-align:left;color:var(--muted)}
 </section>
 
 <div class="wrap-wide section">
+  <div class="callout {{ 'ok' if storage in ('r2', 'cloudinary') else ('info' if storage_ok else 'err') }}">
+    <span class="ic" aria-hidden="true">{{ '✅' if storage_ok else '⚠️' }}</span>
+    <p>
+      {% if storage == 'cloudinary' %}
+        <strong>File storage:</strong> Cloudinary (private "authenticated" assets in the <code>docuseries/</code> folder). Release forms and videos are kept permanently.
+      {% elif storage == 'r2' %}
+        <strong>File storage:</strong> Cloudflare R2 (private bucket). Release forms and videos are kept permanently.
+      {% elif storage_ok %}
+        <strong>File storage:</strong> a folder on the server's disk. Make sure it is a persistent disk, or files will be lost when the server redeploys.
+      {% else %}
+        <strong>File storage isn't configured.</strong> Uploads are turned off so nothing gets lost. Set <code>DOCUSERIES_STORAGE=cloudinary</code> (or the R2_* environment variables); see README.
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="card" id="challenge">
+    <h2>Challenge</h2>
+    <p style="margin:0 0 12px">
+      {% if challenge.start %}
+        Day 1 is <strong>{{ challenge.start|ds_date }}</strong> and day {{ challenge.days }} is <strong>{{ challenge.end|ds_date }}</strong>.
+        {% if challenge.finished %}<span class="badge">Finished</span>
+        {% elif challenge.started %}<span class="badge ok">Running: day {{ challenge.day }} of {{ challenge.days }}</span>
+        {% else %}<span class="badge">Not started yet</span>{% endif %}
+      {% else %}
+        The challenge has no start date yet. Participants see "To be announced", and milestone videos stay locked.
+      {% endif %}
+    </p>
+    <form method="post" action="{{ url_for('docuseries.admin_set_challenge') }}" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+      {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+      <div><label for="start_date" class="small"><strong>Start date (day 1)</strong></label><br>
+        <input type="date" id="start_date" name="start_date" value="{{ challenge.start.isoformat() if challenge.start else '' }}" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit"></div>
+      <button class="btn btn-teal" type="submit">Save start date</button>
+    </form>
+    <p class="muted small" style="margin:10px 0 0">Milestone videos (#3 to #17) unlock for participants once this date arrives and they reach each milestone. Leave the date empty and save to go back to "To be announced".</p>
+    {% if milestone_error %}
+    <div class="callout err" style="margin:14px 0 0"><span class="ic" aria-hidden="true">⚠️</span>
+      <div><p><strong>The milestone check failed</strong>, so milestone videos can't unlock yet. Your database said:</p>
+      <p><code>{{ milestone_error }}</code></p>
+      <p class="small">This usually means a table name in the CONFIG block of docuseries_routes.py (<code>TX_TABLE</code>, <code>BIZ_TABLE</code>) or a column name doesn't match your database.</p></div></div>
+    {% else %}
+    <p class="small" style="margin:10px 0 0;color:var(--ok)">✔ The milestone check ran successfully against your database.</p>
+    {% endif %}
+  </div>
+
   <div class="grid grid-3" style="margin-bottom:24px">
     <div class="fact"><div class="k">Participants</div><div class="v">{{ people|length }}</div></div>
     <div class="fact"><div class="k">Videos uploaded</div><div class="v">{{ total_videos }}</div></div>
@@ -61,7 +106,7 @@ table.people td.email{text-align:left;color:var(--muted)}
           <tr>
             <td><strong>{{ p.full_name or '(no name)' }}</strong></td>
             <td class="email">{{ p.email }}</td>
-            <td>{% if p.release_form %}<a class="dl" href="{{ url_for('docuseries.admin_download_release', user_id=p.id) }}">⬇</a>{% else %}<span class="none">—</span>{% endif %}</td>
+            <td>{% if p.release_form %}<a class="dl" href="{{ url_for('docuseries.admin_download_release', user_id=p.id, view=1) }}" target="_blank" rel="noopener" title="View form · stored as {{ p.release_form }}">View</a> <a class="dl" href="{{ url_for('docuseries.admin_download_release', user_id=p.id) }}" title="Download form">⬇</a>{% else %}<span class="none">—</span>{% endif %}</td>
             {% for n in slots %}
               {% set v = vids.get(p.id, {}).get(n) %}
               <td>{% if v %}<a class="dl" href="{{ url_for('docuseries.admin_download_video', video_id=v.id) }}" title="Video #{{ n }} · {{ v.duration_seconds if v.duration_seconds else '?' }}s · {{ v.size_bytes|ds_mb }}">⬇</a>{% else %}<span class="none">—</span>{% endif %}</td>

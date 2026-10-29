@@ -1,46 +1,63 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Investor Earnings Report</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-  <style>
-    @media print { .noprint { display: none; } }
-    table { font-size: 1em; }
-  </style>
-</head>
-<body>
-<div class="container py-4">
-  <h2>Investor Earnings Report</h2>
-  <div class="mb-3">Account: <b>{{ user.email }}</b></div>
-  <div class="mb-4">Total Earnings: <b>${{ '{:,.2f}'.format(user.investor_total_earnings or 0) }}</b><br>
-    Withdrawn: <b>${{ '{:,.2f}'.format(user.investor_withdrawn_total or 0) }}</b><br>
-    Available to Withdraw: <b>${{ '{:,.2f}'.format(user.investor_earnings_balance or 0) }}</b>
+{% extends "pm_base.html" %}
+{% block title %}Investor Earnings Report - PerkMiner{% endblock %}
+
+{% block head_extra %}
+<style>
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .8rem; }
+  .stat-box { padding: 1rem 1.1rem; }
+  .stat-box .k { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--pm-muted); }
+  .stat-box .v { font-size: 1.6rem; font-weight: 800; color: var(--pm-primary-dark); }
+  .stat-box.avail .v { color: #146c43; }
+  .rep-table { width: 100%; border-collapse: collapse; }
+  .rep-table th { font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; color: var(--pm-muted); text-align: left; padding: .55rem .6rem; border-bottom: 2px solid #e1eeee; }
+  .rep-table td { padding: .6rem; border-bottom: 1px dashed #e3eceb; }
+  .rep-table .num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .rep-table tbody tr:hover { background: var(--pm-hover); }
+  @media print {
+    nav, footer, .noprint, .alert { display: none !important; }
+    body { background: #fff !important; }
+    .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+    .pm-hero { background: #fff !important; color: #000 !important; border: 1px solid #ccc !important; }
+    .pm-hero * { color: #000 !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pb-3">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-graph-up-arrow"></i></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">Account: {{ user.email }}</div><h1>Investor Earnings Report</h1></div>
+    <div class="pm-hero-actions noprint"><a href="{{ url_for('dashboard') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back to Dashboard</a></div>
   </div>
-  <div class="noprint mb-3 d-flex gap-2">
-    <button onclick="window.print()" class="btn btn-outline-secondary">
-      <i class="bi bi-printer"></i> Print / Save as PDF
-    </button>
-    <a href="{{ url_for('export_investor_earnings_csv') }}" class="btn btn-outline-success">
-      <i class="bi bi-cloud-arrow-down"></i> Export CSV
-    </a>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+
+  <div class="stat-row mb-3">
+    <div class="card stat-box"><div class="k">Total Earnings</div><div class="v">${{ '{:,.2f}'.format(user.investor_total_earnings or 0) }}</div></div>
+    <div class="card stat-box"><div class="k">Withdrawn</div><div class="v">${{ '{:,.2f}'.format(user.investor_withdrawn_total or 0) }}</div></div>
+    <div class="card stat-box avail"><div class="k">Available to Withdraw</div><div class="v">${{ '{:,.2f}'.format(user.investor_earnings_balance or 0) }}</div></div>
   </div>
-  <table class="table table-bordered">
-    <thead><tr>
-      <th>Year</th><th>Month</th><th>Amount</th><th>Date Added</th>
-    </tr></thead>
-    <tbody>
-      {% for row in earnings %}
-      <tr>
-        <td>{{ row.year }}</td>
-        <td>{{ "%02d"|format(row.month) }}</td>
-        <td>${{ '{:,.6f}'.format(row.amount) }}</td>
-        <td>{{ row.created_at.strftime('%Y-%m-%d') if row.created_at else "" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+
+  <div class="noprint mb-3 d-flex flex-wrap gap-2">
+    <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer"></i> Print / Save as PDF</button>
+    <a href="{{ url_for('export_investor_earnings_csv') }}" class="btn btn-outline-success"><i class="bi bi-cloud-arrow-down"></i> Export CSV</a>
+  </div>
+
+  <div class="card p-3 p-md-4" style="overflow-x:auto;">
+    <table class="rep-table">
+      <thead><tr><th>Year</th><th>Month</th><th style="text-align:right;">Amount</th><th>Date Added</th></tr></thead>
+      <tbody>
+        {% for row in earnings %}
+        <tr>
+          <td>{{ row.year }}</td>
+          <td>{{ "%02d"|format(row.month) }}</td>
+          <td class="num">${{ '{:,.6f}'.format(row.amount) }}</td>
+          <td>{{ row.created_at.strftime('%Y-%m-%d') if row.created_at else "" }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted py-4">No earnings recorded yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
-</body>
-</html>
+{% endblock %}

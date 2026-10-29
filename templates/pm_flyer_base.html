@@ -1,0 +1,171 @@
+{# Shared printable-flyer page with Download PDF / Print.
+   Child pages set:
+     fl_title, fl_back_url, fl_back_label, fl_bg (image url), fl_eyebrow, fl_headline, fl_subtitle (html ok),
+     fl_qr_url (the link the QR code opens), fl_qr_caption, fl_left (list), fl_right (list), fl_footer, fl_generated_for, fl_filename #}
+{% extends "pm_base.html" %}
+{% block title %}{{ fl_title }}{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* The flyer is a fixed 816 x 1056 px "stage" (exactly 8.5 x 11 in). On screen a script scales the whole stage to fit the
+     page width, so it looks identical on a phone, a laptop, in the PDF and in print. */
+  .fl-wrap { max-width: 780px; margin: 0 auto; }
+  .fx-fit { width: 100%; position: relative; overflow: hidden; border-radius: 14px; box-shadow: 0 16px 40px rgba(15,23,42,.18); background:#0f172a; }
+  .fx-stage {
+    position: relative; width: 816px; height: 1056px; overflow: hidden; background: #0f172a; color: #fff;
+    transform-origin: top left; font-family: inherit;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .fx-stage, .fx-stage * { box-sizing: border-box; }
+  .fx-bg { position: absolute; left: 0; top: 0; width: 816px; height: 1056px; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; }
+
+  /* top of the flyer: headline (left) and QR code (right). The artwork keeps the middle. */
+  .fx-qr { position: absolute; top: 30px; right: 30px; width: 150px; text-align: center; }
+  .fx-qr img { width: 130px; height: 130px; display: block; margin: 0 auto; border-radius: 12px; background: rgba(15,23,42,.78); padding: 6px; box-shadow: 0 4px 12px rgba(15,23,42,.55); }
+  .fx-qr-cap { font-size: 12px; line-height: 1.2; color: #fff; margin-top: 6px; font-weight: 700; text-shadow: 0 1px 3px rgba(15,23,42,.9); }
+  .fx-title { position: absolute; top: 34px; left: 34px; width: 560px; }
+  .fx-eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: 12px; color: #e5e7eb; margin-bottom: 5px; text-shadow: 0 1px 3px rgba(15,23,42,.9); }
+  .fx-h1 { margin: 0 0 8px; font-size: 32px; font-weight: 800; color: #fff; line-height: 1.15; text-shadow: 0 2px 6px rgba(15,23,42,.85); }
+  .fx-sub { font-size: 15px; line-height: 1.3; color: #f3f4f6; text-shadow: 0 1px 3px rgba(15,23,42,.9); }
+
+  /* ALL of the descriptive text lives in the bottom 20% of the flyer (211 of 1056 px), below the artwork. */
+  .fx-panel {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 211px; overflow: hidden;
+    background: linear-gradient(180deg, #0f1f2e 0%, #0b1622 100%);
+    border-top: 3px solid #ffd66b;
+    padding: 12px 28px 8px; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .fx-cols { display: grid; grid-template-columns: 1fr 1fr; column-gap: 26px; font-size: 13.6px; line-height: 1.3; color: #f9fafb; }
+  .fx-list { list-style: none; padding: 0; margin: 0; }
+  .fx-list li { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 5px; }
+  .fx-dot { margin-top: 5px; width: 7px; height: 7px; border-radius: 50%; background: #facc15; flex: 0 0 7px; }
+  .fx-foot { padding-top: 6px; border-top: 1px solid rgba(209,213,219,.35); font-size: 11px; line-height: 1.25; color: #e5e7eb; display: flex; justify-content: space-between; gap: 6px 18px; }
+  .fx-foot > span:first-child { flex: 1 1 auto; }
+  .fx-foot > span:last-child { flex: 0 0 auto; white-space: nowrap; }
+
+  /* used only while building the PDF */
+  .pdf-holder { position: fixed; left: -10000px; top: 0; width: 816px; height: 1056px; }
+  .pdf-holder .fx-stage { transform: none !important; }
+
+  @media print {
+    @page { size: letter; margin: 0; }
+    nav, footer, .no-print, .pm-hero, .alert, .navbar, .pm-toast { display: none !important; }
+    html, body { background: #fff !important; padding: 0 !important; margin: 0 !important; }
+    .container, .fl-wrap { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+    .fx-fit { width: 816px !important; height: 1056px !important; border-radius: 0 !important; box-shadow: none !important; }
+    .fx-stage { transform: none !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pb-3 fl-wrap">
+  <div class="card pm-hero mb-3 no-print">
+    <div class="pm-hero-icon"><i class="bi bi-file-earmark-image"></i></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">Your referral flyer</div><h1>{{ fl_title }}</h1></div>
+    <div class="pm-hero-actions">
+      <a href="{{ fl_back_url }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> {{ fl_back_label }}</a>
+    </div>
+  </div>
+  <div class="d-flex flex-wrap gap-2 mb-3 no-print">
+    <button type="button" id="pdf-btn" class="btn btn-primary"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
+    <button type="button" class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> Print Flyer</button>
+    <span id="pdf-status" class="text-muted small align-self-center"></span>
+  </div>
+
+  <div class="fx-fit" id="fx-fit">
+    <div class="fx-stage" id="flyer">
+      <div class="fx-bg" style="background-image:url('{{ fl_bg }}');"></div>
+
+      <div class="fx-title">
+        <div class="fx-eyebrow">{{ fl_eyebrow }}</div>
+        <h1 class="fx-h1">{{ fl_headline }}</h1>
+        <div class="fx-sub">{{ fl_subtitle|safe }}</div>
+      </div>
+
+      <div class="fx-qr">
+        <img id="qr-img" alt="Scan to register on PerkMiner"
+             src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={{ fl_qr_url|urlencode }}">
+        <div class="fx-qr-cap">{{ fl_qr_caption }}</div>
+      </div>
+
+      <div class="fx-panel">
+        <div class="fx-cols">
+          <ul class="fx-list">
+            {% for b in fl_left %}<li><span class="fx-dot"></span><span>{{ b|safe }}</span></li>{% endfor %}
+          </ul>
+          <ul class="fx-list">
+            {% for b in fl_right %}<li><span class="fx-dot"></span><span>{{ b|safe }}</span></li>{% endfor %}
+          </ul>
+        </div>
+        <div class="fx-foot">
+          <span>{{ fl_footer }}</span>
+          <span>Generated for <strong>{{ fl_generated_for }}</strong></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+  var qrUrl = {{ fl_qr_url|tojson }};
+  var fileName = {{ (fl_filename|default('PerkMiner_Referral_Flyer'))|tojson }} + '.pdf';
+  var status = document.getElementById('pdf-status');
+
+  // Draw the QR code locally (no third-party image needed, and it can be saved into the PDF).
+  // If the library can't load, the page keeps the image from the QR service as a fallback.
+  try {
+    if (window.QRious) {
+      var q = new QRious({ value: qrUrl, size: 440, level: 'M' });
+      document.getElementById('qr-img').src = q.toDataURL('image/png');
+    }
+  } catch (e) {}
+
+  function say(t) { if (status) status.textContent = t || ''; }
+
+  // Scale the fixed 816x1056 flyer to fit the width of the page.
+  var fit = document.getElementById('fx-fit'), stage = document.getElementById('flyer');
+  function fitFlyer() {
+    var w = fit.parentNode.clientWidth || 816;
+    var k = Math.min(1, w / 816);
+    stage.style.transform = 'scale(' + k + ')';
+    fit.style.width = (816 * k) + 'px';
+    fit.style.height = (1056 * k) + 'px';
+  }
+  fitFlyer();
+  window.addEventListener('resize', fitFlyer);
+  window.addEventListener('beforeprint', function () { stage.style.transform = 'none'; });
+  window.addEventListener('afterprint', fitFlyer);
+
+  document.getElementById('pdf-btn').addEventListener('click', function () {
+    var btn = this;
+    if (!(window.html2canvas && window.jspdf)) { say('PDF tools did not load, opening print instead (choose "Save as PDF").'); window.print(); return; }
+    btn.disabled = true; say('Building your PDF…');
+    var holder = document.createElement('div');
+    holder.className = 'pdf-holder';
+    var clone = document.getElementById('flyer').cloneNode(true);
+    clone.removeAttribute('id'); clone.style.transform = 'none';
+    holder.appendChild(clone);
+    document.body.appendChild(holder);
+    // let the cloned images/background finish painting
+    setTimeout(function () {
+      window.html2canvas(clone, { scale: 2, useCORS: true, backgroundColor: '#000000', width: 816, height: 1056, windowWidth: 1000 })
+        .then(function (canvas) {
+          var pdf = new window.jspdf.jsPDF({ unit: 'in', format: 'letter', orientation: 'portrait' });
+          pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 8.5, 11);
+          pdf.save(fileName);
+          say('Downloaded.');
+        })
+        .catch(function () { say('Could not build the PDF here, opening print instead (choose "Save as PDF").'); window.print(); })
+        .then(function () { holder.remove(); btn.disabled = false; });
+    }, 350);
+  });
+})();
+</script>
+{% endblock %}

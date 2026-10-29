@@ -17,8 +17,9 @@ body.theater{background:#0d1b1c;color:#e8f3f3}
 .now .meta{color:#9bb8b8;font-size:.92rem;margin-bottom:12px}
 .now p{color:#d3e4e4;max-width:75ch}
 .who h2{font-size:1rem;text-transform:uppercase;letter-spacing:.08em;color:#9bb8b8;margin:22px 0 10px}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{background:#173133;border:1px solid #2a4c4e;color:#e8f3f3;padding:6px 12px;border-radius:999px;font-size:.9rem}
+.names{margin:0;color:#e8f3f3;line-height:1.7;max-width:75ch}
+.linkbtn{background:none;border:0;padding:0 0 0 4px;color:#9fd3d3;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.linkbtn:hover{color:#fff}
 .list{background:#122426;border:1px solid #223c3e;border-radius:14px;padding:10px;max-height:78vh;overflow:auto}
 @media (max-width:1000px){.list{max-height:none}}
 .list h2{font-size:1rem;margin:8px 10px 10px;color:#fff}
@@ -66,15 +67,21 @@ body.theater{background:#0d1b1c;color:#e8f3f3}
       {% if selected.description %}<p>{{ selected.description }}</p>{% endif %}
       <div class="who">
         <h2>Participants in this episode</h2>
-        {% if selected.participants %}
-          <div class="chips">{% for name in selected.participants %}<span class="chip">{{ name }}</span>{% endfor %}</div>
+        {% if selected.names_full %}
+          <p class="names">
+            <span id="names-short">{{ selected.names_short }}{% if selected.names_truncated %}…{% endif %}</span>
+            {% if selected.names_truncated %}
+            <span id="names-full" hidden>{{ selected.names_full }}</span>
+            <button type="button" class="linkbtn" id="names-toggle" aria-expanded="false" aria-controls="names-full">Show more</button>
+            {% endif %}
+          </p>
         {% else %}
           <p class="muted">Participant names will be listed here when the episode is released.</p>
         {% endif %}
       </div>
       {% else %}
       <h1>The Perk Miner Docuseries</h1>
-      <p>Follow everyday Las Vegas members on the 45-Day Perk Miner Challenge. New episodes will appear here every week once the series begins.</p>
+      <p>Follow everyday members on the 45-Day Perk Miner Challenge. New episodes will appear here every week once the series begins.</p>
       <p><a href="{{ url_for('docuseries.landing') }}">Learn about the docuseries</a> · <a href="{{ url_for('docuseries.pre_register') }}">Join the challenge</a></p>
       {% endif %}
       <p class="protect">Episodes are streamed for viewing only.</p>
@@ -102,6 +109,16 @@ body.theater{background:#0d1b1c;color:#e8f3f3}
   var v=document.getElementById('pv'); if(!v)return;
   v.addEventListener('contextmenu',function(e){e.preventDefault();});
   v.addEventListener('dragstart',function(e){e.preventDefault();});
+})();
+(function(){
+  var t=document.getElementById('names-toggle'); if(!t)return;
+  var shortEl=document.getElementById('names-short'), fullEl=document.getElementById('names-full');
+  t.addEventListener('click',function(){
+    var open=t.getAttribute('aria-expanded')==='true';
+    shortEl.hidden=!open; fullEl.hidden=open;
+    t.setAttribute('aria-expanded',open?'false':'true');
+    t.textContent=open?'Show more':'Show less';
+  });
 })();
 </script>
 {% endblock %}

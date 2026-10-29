@@ -1,68 +1,74 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Transaction Receipt - PerkMiner</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <style>
-      .receipt-card { max-width: 500px; margin: 0 auto; }
-      .receipt-summary { font-size: 1.12em; padding: 16px 12px; border-radius: 14px; background: #f9fafb; box-shadow: 0 2px 10px #e1e8ed; margin: 22px 0;}
-      .receipt-summary b { min-width: 130px; display: inline-block;}
-      @media (max-width: 600px) {
-        .btn, .btn-primary, .btn-secondary { width: 100% !important; margin-bottom: 12px; }
-        .receipt-card, .card { padding: 1rem !important;}
-      }
-    </style>
-</head>
-<body>
-<div class="container py-4">
-  <div class="card shadow-sm p-4 receipt-card">
-    <h4 class="mb-4 text-center">Transaction Receipt</h4>
-    <div class="receipt-summary">
-      <div>
-        <b>Date/Time:</b>
-        <span id="local-receipt-time" data-utc="{{ transaction.date_time.strftime('%Y-%m-%dT%H:%M:%S') }}Z"></span>
-      </div>
-      <div><b>Business:</b> {{ interaction.business.business_name }}</div>
-      <div><b>Total Paid:</b> ${{ '%.2f' % transaction.amount }}</div>
-      <div class="text-success fw-bold mt-2">
-        <b>Your Cashback (2% cap $50):</b> ${{ '%.2f' % transaction.cash_back }}
-        {% if transaction.cash_back|float >= 49.99 %}
-          <span class="badge bg-warning text-dark ms-1">Max Reached</span>
-        {% endif %}
-      </div>
-    <div class="alert alert-success text-center">
-      Thank you for your purchase! Your cashback has been credited.
+{% extends "pm_base.html" %}
+{% block title %}Transaction Receipt - PerkMiner{% endblock %}
+
+{% block head_extra %}
+<style>
+  .rc-wrap { max-width: 560px; margin: 0 auto; }
+  .rc-row { display: flex; justify-content: space-between; gap: 1rem; padding: .6rem 0; border-bottom: 1px dashed #e3eceb; }
+  .rc-row:last-child { border-bottom: 0; }
+  .rc-row .k { color: var(--pm-muted); }
+  .rc-row .v { font-weight: 700; text-align: right; }
+  .rc-row.total .k, .rc-row.total .v { font-size: 1.3rem; font-weight: 800; color: var(--pm-primary-dark); }
+  .rc-cash { background: linear-gradient(145deg, #e9f7ef 0%, #f3fbf6 100%); border: 1px solid #bfe3cf; border-radius: 14px; padding: .8rem 1rem; margin-top: .8rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .rc-cash .k { font-weight: 700; color: #146c43; }
+  .rc-cash .v { font-size: 1.4rem; font-weight: 800; color: #146c43; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pb-3 rc-wrap">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-receipt"></i></div>
+    <div class="pm-hero-body">
+      <div class="pm-hero-sub">Purchase complete</div>
+      <h1>Transaction Receipt</h1>
     </div>
+    <div class="pm-hero-actions">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    </div>
+  </div>
 
+  <div class="pm-note ok text-center mb-3"><i class="bi bi-check-circle-fill"></i> Thank you for your purchase! Your cashback has been credited.</div>
+
+  <div class="card p-3 p-md-4 mb-3">
+    <div class="rc-row"><span class="k">Date/Time</span>
+      <span class="v" id="local-receipt-time" data-utc="{{ transaction.date_time.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ transaction.date_time.strftime('%b %d, %Y %I:%M %p') }} UTC</span></div>
+    <div class="rc-row"><span class="k">Business</span><span class="v">{{ interaction.business.business_name }}</span></div>
+    <div class="rc-row total"><span class="k">Total Paid</span><span class="v">${{ '%.2f' % transaction.amount }}</span></div>
+    <div class="rc-cash">
+      <span class="k"><i class="bi bi-cash-coin"></i> Your Cashback (2% cap $50)</span>
+      <span class="v">${{ '%.2f' % transaction.cash_back }}
+        {% if transaction.cash_back|float >= 49.99 %}<span class="badge bg-warning text-dark ms-1 align-middle" style="font-size:.7rem;">Max Reached</span>{% endif %}
+      </span>
+    </div>
+  </div>
+
+  <div class="d-grid gap-2">
     {% if transaction.status == "available" %}
-      <form action="{{ url_for('process_return', txn_id=transaction.id) }}" method="post" style="display:inline;">
-        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to return/refund this transaction?');">Return / Refund</button>
-      </form>
+    <form action="{{ url_for('process_return', txn_id=transaction.id) }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to return/refund this transaction?');"><i class="bi bi-arrow-return-left"></i> Return / Refund</button>
+    </form>
     {% endif %}
-
     <form method="post" action="{{ url_for('end_session', interaction_id=interaction.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-danger w-100 mb-2">End Session</button>
+      <button type="submit" class="btn btn-danger btn-lg w-100"><i class="bi bi-x-octagon"></i> End Session</button>
     </form>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-primary w-100">Back to Dashboard</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary w-100"><i class="bi bi-house"></i> Back to Dashboard</a>
   </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+
+{% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   var elem = document.getElementById('local-receipt-time');
   if (elem && elem.dataset.utc) {
-    // Parse the UTC time and format for user's locale
-    var utc = elem.dataset.utc;
-    var dt = new Date(utc);
+    var dt = new Date(elem.dataset.utc);
     if (!isNaN(dt)) {
-      var opts = { year: 'numeric', month: 'short', day: 'numeric',
-                   hour: '2-digit', minute: '2-digit', hour12: true };
-      elem.textContent = dt.toLocaleString(undefined, opts);
+      elem.textContent = dt.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
     }
   }
 });
 </script>
-</body>
-</html>
+{% endblock %}

@@ -1,76 +1,276 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{% if is_user %}View Quote{% else %}Send Quote{% endif %} - PerkMiner</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <style>
-        .card { max-width: 500px; margin: 0 auto; }
-        @media (max-width: 600px) {
-            .btn { width: 100% !important; margin-bottom: 10px; }
-            .card { padding: 1.1rem !important; }
-        }
-    </style>
-</head>
-<body>
-<div class="container py-4">
-    <div class="card shadow-sm p-4">
-        {% if is_user %}
-            <h4 class="mb-3 text-center">Quote from {{ interaction.business.business_name }}</h4>
-        {% else %}
-            <h4 class="mb-3 text-center">{% if quote %}Edit{% else %}Send{% endif %} Quote to {{ interaction.user.name or interaction.user.email }}</h4>
-        {% endif %}
+{% extends "pm_base.html" %}
+{% block title %}{% if is_user %}View Quote{% else %}Send Quote{% endif %} - PerkMiner{% endblock %}
 
-        {# Show error messages from the route #}
-        {% if error_message %}
-          <div class="alert alert-danger text-center">{{ error_message }}</div>
-        {% endif %}
+{% block head_extra %}
+<style>
+  .quote-wrap { max-width: 780px; margin: 0 auto; }
+  .li-head, .li-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px 120px 110px 40px; gap: .5rem; align-items: center; }
+  .li-head { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--pm-muted); padding: 0 .1rem .35rem; }
+  .li-row { padding: .45rem 0; border-top: 1px dashed #e3eceb; }
+  .li-row .li-total { text-align: right; font-weight: 700; color: var(--pm-primary-dark); white-space: nowrap; }
+  .li-row .li-del { border: 0; background: #fdecec; color: #a12828; border-radius: 10px; height: 38px; width: 38px; }
+  .li-row .li-del:hover { background: #bf3636; color: #fff; }
+  .li-row .lbl { display: none; font-size: .75rem; font-weight: 700; color: var(--pm-muted); text-transform: uppercase; margin-bottom: 2px; }
+  @media (max-width: 640px) {
+    .li-head { display: none; }
+    .li-row { grid-template-columns: 1fr 1fr 40px; background: #f6fafa; border: 1px solid #e1eeee; border-radius: 14px; padding: .7rem; margin-bottom: .6rem; }
+    .li-row .li-desc { grid-column: 1 / -1; }
+    .li-row .li-total { grid-column: 1 / 3; text-align: left; }
+    .li-row .lbl { display: block; }
+  }
+  .totals { margin-left: auto; max-width: 340px; }
+  .totals .row-t { display: flex; justify-content: space-between; gap: 1rem; padding: .4rem 0; }
+  .totals .row-t.grand { border-top: 2px solid var(--pm-primary); margin-top: .3rem; padding-top: .7rem; font-size: 1.35rem; font-weight: 800; color: var(--pm-primary-dark); }
+  .inv-table { width: 100%; border-collapse: collapse; }
+  .inv-table th { font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; color: var(--pm-muted); text-align: left; padding: .4rem .3rem; border-bottom: 2px solid #e1eeee; }
+  .inv-table td { padding: .6rem .3rem; border-bottom: 1px dashed #e3eceb; vertical-align: top; }
+  .inv-table .num { text-align: right; white-space: nowrap; }
+  .inv-notes { white-space: pre-line; background: #f6fafa; border: 1px solid #e1eeee; border-radius: 12px; padding: .8rem 1rem; }
+  .money-in { position: relative; }
+  .money-in span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--pm-muted); pointer-events: none; }
+  .money-in input { padding-left: 1.4rem; }
+</style>
+{% endblock %}
 
-        {# Warn and disable forms on finalized session #}
-        {% if is_finalized %}
-          <div class="alert alert-warning text-center mb-3">
-            This transaction is finalized. No new quotes can be created or edited.
-          </div>
-          <a href="{{ url_for('staff_active_session', interaction_id=interaction.id) if is_staff else url_for('biz_active_session', interaction_id=interaction.id) if is_biz else url_for('active_session', interaction_id=interaction.id) }}" class="btn btn-outline-secondary mt-2 w-100">
-            <i class="bi bi-arrow-left"></i> Back to Session
-          </a>
-        {% else %}
-          {% if quote %}
-            <div class="alert alert-info text-center">A quote has already been sent for this session.</div>
-            <div class="mb-2"><b>Amount:</b> ${{ quote.amount }}</div>
-            <div><b>Details:</b> {{ quote.details }}</div>
-            <div class="text-muted mt-3">Sent on: {{ quote.created_at.strftime('%Y-%m-%d %I:%M %p') }}</div>
-            <form method="post" class="mt-3">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <div class="mb-3">
-                  <label class="form-label">Edit Amount</label>
-                  <input type="number" name="amount" step="0.01" min="0" required class="form-control" placeholder="Enter quote amount" value="{{ quote.amount }}">
-              </div>
-              <div class="mb-3">
-                  <label class="form-label">Edit Quote Details</label>
-                  <textarea name="details" class="form-control" rows="4" required placeholder="Enter quote details">{{ quote.details }}</textarea>
-              </div>
-              <button type="submit" class="btn btn-success w-100">Update Quote</button>
-            </form>
-          {% else %}
-            <form method="post">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <div class="mb-3">
-                  <label class="form-label">Amount</label>
-                  <input type="number" name="amount" step="0.01" min="0" required class="form-control" placeholder="Enter quote amount">
-              </div>
-              <div class="mb-3">
-                  <label class="form-label">Quote Details</label>
-                  <textarea name="details" class="form-control" rows="4" required placeholder="Enter quote details"></textarea>
-              </div>
-              <button type="submit" class="btn btn-success w-100">Send Quote</button>
-            </form>
-          {% endif %}
-          <a href="{{ url_for('staff_active_session', interaction_id=interaction.id) if is_staff else url_for('biz_active_session', interaction_id=interaction.id) if is_biz else url_for('active_session', interaction_id=interaction.id) }}" class="btn btn-outline-secondary mt-3 w-100">
-            <i class="bi bi-arrow-left"></i> Back to Session
-          </a>
-        {% endif %}
+{% block content %}
+{# ----- where "Back to Session" goes (unchanged logic) ----- #}
+{% set back_url = url_for('staff_active_session', interaction_id=interaction.id) if is_staff else url_for('biz_active_session', interaction_id=interaction.id) if is_biz else url_for('active_session', interaction_id=interaction.id) %}
+
+{# ----- optional itemized data: quote_items (list of {desc, qty, price, total}) passed by the route ----- #}
+{% set items = quote_items if (quote_items is defined and quote_items) else [] %}
+{% set tax_rate = (quote.tax_rate|float) if (quote and quote.tax_rate is defined and quote.tax_rate is not none) else 0 %}
+{% set total_amt = (quote.amount|float) if quote else 0 %}
+{% set sub_amt = (quote.subtotal|float) if (quote and quote.subtotal is defined and quote.subtotal is not none) else (items|sum(attribute='total') if items else total_amt) %}
+{% set tax_amt = (quote.tax_amount|float) if (quote and quote.tax_amount is defined and quote.tax_amount is not none) else (total_amt - sub_amt) %}
+
+<div class="container pb-3 quote-wrap">
+
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-receipt"></i></div>
+    <div class="pm-hero-body">
+      <div class="pm-hero-sub">{% if is_user %}Itemized quote{% else %}{% if quote %}Edit{% else %}Send{% endif %} a quote{% endif %}</div>
+      {% if is_user %}
+        <h1>Quote from {{ interaction.business.business_name }}</h1>
+      {% else %}
+        <h1>{% if quote %}Edit{% else %}Send{% endif %} Quote to {{ interaction.user.name or interaction.user.email }}</h1>
+      {% endif %}
     </div>
+    <div class="pm-hero-actions"><a href="{{ back_url }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back to Session</a></div>
+  </div>
+
+  {# Show error messages from the route #}
+  {% if error_message %}
+    <div class="alert alert-danger text-center">{{ error_message }}</div>
+  {% endif %}
+
+  {# ---------- quote summary (read-only) ---------- #}
+  {% macro quote_summary() %}
+    <div class="card p-3 p-md-4">
+      <div class="card-title-row"><i class="bi bi-list-check"></i><h5>{% if is_user %}Your quote{% else %}Current quote{% endif %}</h5>
+        <span class="ms-auto text-muted small">Sent {{ quote.created_at.strftime('%Y-%m-%d %I:%M %p') }}</span></div>
+      {% if items %}
+        <div class="table-responsive">
+        <table class="inv-table">
+          <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            {% for it in items %}
+              <tr><td>{{ it.desc }}</td><td class="num">{{ it.qty }}</td><td class="num">${{ '{:,.2f}'.format(it.price) }}</td><td class="num">${{ '{:,.2f}'.format(it.total) }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        </div>
+        <div class="totals mt-3">
+          <div class="row-t"><span>Subtotal</span><span>${{ '{:,.2f}'.format(sub_amt) }}</span></div>
+          {% if tax_amt and tax_amt > 0 %}
+            <div class="row-t"><span>Tax{% if tax_rate %} ({{ '%g'|format(tax_rate) }}%){% endif %}</span><span>${{ '{:,.2f}'.format(tax_amt) }}</span></div>
+          {% endif %}
+          <div class="row-t grand"><span>Total</span><span>${{ '{:,.2f}'.format(total_amt) }}</span></div>
+        </div>
+        {% if quote.notes is defined and quote.notes %}
+          <h3 class="h6 fw-bold mt-3" style="color:var(--pm-primary-dark);">Notes</h3>
+          <div class="inv-notes">{{ quote.notes }}</div>
+        {% endif %}
+      {% else %}
+        {# older quotes: a single amount and a text description #}
+        <div class="summary-row"><span class="s-label"><i class="bi bi-cash-stack"></i> Amount</span><span class="s-value" style="font-size:1.3rem;">${{ quote.amount }}</span></div>
+        <h3 class="h6 fw-bold mt-3" style="color:var(--pm-primary-dark);">Details</h3>
+        <div class="inv-notes">{{ quote.details }}</div>
+      {% endif %}
+    </div>
+  {% endmacro %}
+
+  {# Warn and disable forms on finalized session #}
+  {% if is_finalized %}
+    <div class="alert alert-warning text-center mb-3">
+      This transaction is finalized. No new quotes can be created or edited.
+    </div>
+    {% if quote %}{{ quote_summary() }}{% endif %}
+    <a href="{{ back_url }}" class="btn btn-outline-secondary w-100"><i class="bi bi-arrow-left"></i> Back to Session</a>
+
+  {% elif is_user %}
+    {% if quote %}
+      {{ quote_summary() }}
+      <div class="pm-note ok"><i class="bi bi-qr-code"></i> To pay, go back to your session and tap <strong>Accept &amp; Pay</strong>.</div>
+      <a href="{{ back_url }}" class="btn btn-primary btn-lg w-100 mt-3"><i class="bi bi-arrow-left"></i> Back to Session</a>
+    {% else %}
+      <div class="card"><div class="pm-empty"><i class="bi bi-receipt"></i>No quote has been sent yet.</div></div>
+      <a href="{{ back_url }}" class="btn btn-outline-secondary w-100"><i class="bi bi-arrow-left"></i> Back to Session</a>
+    {% endif %}
+
+  {% else %}
+    {% if quote %}
+      <div class="alert alert-info text-center">A quote has already been sent for this session. You can update it below.</div>
+      {{ quote_summary() }}
+    {% endif %}
+
+    <!-- ===================== itemized quote form ===================== -->
+    <form method="post" id="quote-form" class="card p-3 p-md-4" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {# kept for compatibility: the page fills these in from the line items when you submit #}
+      <input type="hidden" name="amount" id="amount">
+      <input type="hidden" name="details" id="details">
+
+      <div class="card-title-row"><i class="bi bi-pencil-square"></i><h5>{% if quote %}Update the line items{% else %}Line items{% endif %}</h5></div>
+
+      <div class="li-head d-none d-sm-grid"><span>Description</span><span>Qty</span><span>Price each</span><span style="text-align:right;">Amount</span><span></span></div>
+      <div id="li-rows"></div>
+
+      <button type="button" class="btn btn-outline-primary mt-2" id="add-line"><i class="bi bi-plus-circle"></i> Add line item</button>
+
+      <hr class="my-4">
+      <div class="row g-3 align-items-start">
+        <div class="col-12 col-md-6">
+          <label class="form-label" for="tax_rate">Tax rate (%) <span class="text-muted small">(leave 0 if no tax)</span></label>
+          <input type="number" class="form-control" id="tax_rate" name="tax_rate" min="0" max="100" step="0.001" value="{{ '%g'|format(tax_rate or 0) }}" inputmode="decimal">
+          <label class="form-label mt-3" for="notes">Notes or terms <span class="text-muted small">(optional)</span></label>
+          <textarea class="form-control" id="notes" name="notes" rows="4" maxlength="2000" placeholder="Scope of work, timing, warranty, payment terms...">{% if quote %}{% if quote.notes is defined and quote.notes %}{{ quote.notes }}{% elif not items %}{{ quote.details }}{% endif %}{% endif %}</textarea>
+        </div>
+        <div class="col-12 col-md-6">
+          <div class="totals" aria-live="polite">
+            <div class="row-t"><span>Subtotal</span><span id="t-sub">$0.00</span></div>
+            <div class="row-t"><span id="t-tax-label">Tax</span><span id="t-tax">$0.00</span></div>
+            <div class="row-t grand"><span>Total</span><span id="t-total">$0.00</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="form-error" class="alert alert-danger mt-3 mb-0" style="display:none;" role="alert"></div>
+      <button type="submit" class="btn btn-success btn-lg w-100 mt-3" id="submit-btn">
+        <i class="bi bi-send"></i> {% if quote %}Update Quote{% else %}Send Quote{% endif %}
+      </button>
+    </form>
+
+    <a href="{{ back_url }}" class="btn btn-outline-secondary mt-3 w-100"><i class="bi bi-arrow-left"></i> Back to Session</a>
+
+    {# existing line items (or one legacy line) used to pre-fill the form #}
+    <script id="prefill" type="application/json">{{ (
+      items if items else
+      ([{'desc': 'Quoted amount', 'qty': 1, 'price': quote.amount|float}] if quote else [{'desc': '', 'qty': 1, 'price': ''}])
+    )|tojson }}</script>
+  {% endif %}
 </div>
-</body>
-</html>
+{% endblock %}
+
+{% block scripts %}
+{% if not is_user and not is_finalized %}
+<script>
+(function () {
+  var rowsEl = document.getElementById('li-rows');
+  var form = document.getElementById('quote-form');
+  var taxInput = document.getElementById('tax_rate');
+  var MAX_ROWS = 50;
+
+  function cents(n) { return Math.round((n + Number.EPSILON) * 100); }
+  function money(c) { return '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function num(v) { var n = parseFloat(v); return isFinite(n) ? n : 0; }
+
+  function addRow(d) {
+    d = d || {};
+    var row = document.createElement('div');
+    row.className = 'li-row';
+    row.innerHTML =
+      '<div class="li-desc"><span class="lbl">Description</span><input type="text" name="item_desc" class="form-control" maxlength="200" placeholder="e.g. Labor, parts, service call"></div>' +
+      '<div><span class="lbl">Qty</span><input type="number" name="item_qty" class="form-control" min="0.01" step="any" value="1" inputmode="decimal"></div>' +
+      '<div class="money-in"><span class="lbl" style="position:static;transform:none;">Price each</span><div style="position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#5c6b73;">$</span><input type="number" name="item_price" class="form-control" min="0" step="0.01" placeholder="0.00" inputmode="decimal" style="padding-left:1.4rem;"></div></div>' +
+      '<div class="li-total">$0.00</div>' +
+      '<button type="button" class="li-del" aria-label="Remove line item"><i class="bi bi-trash"></i></button>';
+    row.querySelector('[name=item_desc]').value = d.desc || '';
+    row.querySelector('[name=item_qty]').value = (d.qty !== undefined && d.qty !== '') ? d.qty : 1;
+    row.querySelector('[name=item_price]').value = (d.price !== undefined && d.price !== '') ? Number(d.price).toFixed(2) : '';
+    row.querySelector('.li-del').addEventListener('click', function () {
+      if (rowsEl.children.length > 1) { row.remove(); } else { row.querySelectorAll('input').forEach(function (i, ix) { i.value = ix === 1 ? 1 : ''; }); }
+      recalc();
+    });
+    rowsEl.appendChild(row);
+    recalc();
+    return row;
+  }
+
+  function lines() {
+    return Array.prototype.map.call(rowsEl.children, function (row) {
+      var desc = row.querySelector('[name=item_desc]').value.trim();
+      var qty = num(row.querySelector('[name=item_qty]').value);
+      var priceRaw = row.querySelector('[name=item_price]').value;
+      var price = num(priceRaw);
+      return { row: row, desc: desc, qty: qty, price: price, hasPrice: priceRaw !== '', total: cents(qty * price) };
+    });
+  }
+
+  function recalc() {
+    var sub = 0;
+    lines().forEach(function (l) { l.row.querySelector('.li-total').textContent = money(l.total); sub += l.total; });
+    var rate = Math.min(Math.max(num(taxInput.value), 0), 100);
+    var tax = Math.round((sub * rate) / 100);
+    document.getElementById('t-sub').textContent = money(sub);
+    document.getElementById('t-tax').textContent = money(tax);
+    document.getElementById('t-tax-label').textContent = rate > 0 ? 'Tax (' + rate + '%)' : 'Tax';
+    document.getElementById('t-total').textContent = money(sub + tax);
+    return { sub: sub, tax: tax, total: sub + tax, rate: rate };
+  }
+
+  document.getElementById('add-line').addEventListener('click', function () {
+    if (rowsEl.children.length >= MAX_ROWS) { return; }
+    addRow().querySelector('[name=item_desc]').focus();
+  });
+  rowsEl.addEventListener('input', recalc);
+  taxInput.addEventListener('input', recalc);
+
+  var prefill = [];
+  try { prefill = JSON.parse(document.getElementById('prefill').textContent) || []; } catch (e) {}
+  if (!prefill.length) prefill = [{}];
+  prefill.forEach(addRow);
+
+  form.addEventListener('submit', function (e) {
+    var err = document.getElementById('form-error');
+    err.style.display = 'none';
+    var ls = lines().filter(function (l) { return l.desc || l.hasPrice; });
+    var problem = '';
+    if (!ls.length) problem = 'Add at least one line item with a description and a price.';
+    ls.forEach(function (l) {
+      if (!problem && !l.desc) problem = 'Each line item needs a description.';
+      if (!problem && !l.hasPrice) problem = 'Enter a price for "' + l.desc + '".';
+      if (!problem && !(l.qty > 0)) problem = 'Quantity must be more than 0 for "' + l.desc + '".';
+    });
+    if (!problem && recalc().total <= 0) problem = 'The total must be more than $0.00.';
+    if (problem) { e.preventDefault(); err.textContent = problem; err.style.display = 'block'; err.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+
+    var t = recalc();
+    /* empty rows are not sent */
+    lines().forEach(function (l) { if (!(l.desc || l.hasPrice)) l.row.remove(); });
+
+    /* keep the original fields filled in: amount = total, details = readable summary */
+    var text = ['Itemized quote:'];
+    ls.forEach(function (l) { text.push('- ' + l.desc + ': ' + l.qty + ' x ' + money(cents(l.price)) + ' = ' + money(l.total)); });
+    text.push('Subtotal: ' + money(t.sub));
+    if (t.tax > 0) text.push('Tax (' + t.rate + '%): ' + money(t.tax));
+    text.push('Total: ' + money(t.total));
+    var notes = document.getElementById('notes').value.trim();
+    if (notes) text.push('', 'Notes: ' + notes);
+    document.getElementById('amount').value = (t.total / 100).toFixed(2);
+    document.getElementById('details').value = text.join('\n');
+    document.getElementById('submit-btn').disabled = true;
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

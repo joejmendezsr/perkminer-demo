@@ -1,0 +1,260 @@
+<!-- =====================================================================================
+     LISTING PREVIEW (business_dashboard.html)
+     Makes the "Preview Listing" popup use the SAME markup + styles as the real search-result card
+     (pm_listing_card.html) and the real large listing page (view_listing.html).
+
+     HOW TO INSTALL (3 steps):
+       1. At the very TOP of business_dashboard.html (line 1, above <!DOCTYPE html>) add:
+              {%- from 'partials/_trust_badges.html' import trust_badges -%}
+       2. Paste PART A (the <style>) just before </head>.
+          (You can delete the old .small-listing-modern / .listing-pic-wrap / .large-profile-pic / .biz-category-badge /
+           .main-info-row / .about-block / .perks-block / .listing-photo-strip CSS, but it is harmless to leave it.)
+       3. DELETE the whole old  "PREVIEW LISTING SCRIPT" <script> block
+          (from  <!-- ===== PREVIEW LISTING SCRIPT ===== -->  down to its closing </script>)  and paste PART B + PART C in its place.
+     ===================================================================================== -->
+
+<!-- ============================== PART A: styles ============================== -->
+<style>
+.pv-scope .lc-link { text-decoration: none; color: inherit; display: block; height: 100%; }
+.pv-scope .lc-link:hover { color: inherit; }
+.pv-scope .lc { height: 100%; margin: 0; overflow: hidden; text-align: center; transition: box-shadow .18s, transform .18s; }
+.pv-scope .lc-link:hover .lc { box-shadow: 0 10px 28px rgba(42,88,89,.2); transform: translateY(-3px); }
+.pv-scope .lc-top { background: linear-gradient(160deg, #e6f6f5, #f6fafa); padding: 1.1rem 1rem .9rem; border-bottom: 1px solid #e1eeee; }
+.pv-scope .lc-logo { width: 104px; height: 104px; border-radius: 18px; object-fit: cover; background: #fff; border: 3px solid #fff; box-shadow: 0 6px 18px rgba(30,74,75,.2); display: block; margin: 0 auto; }
+.pv-scope .lc-logo.ph { display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: var(--pm-primary); background: #fff; }
+.pv-scope .lc-body { padding: .9rem 1rem 1.1rem; display: flex; flex-direction: column; gap: .5rem; }
+.pv-scope .lc-title { font-weight: 800; font-size: 1.15rem; color: var(--pm-primary-dark); line-height: 1.25; }
+.pv-scope .lc-chips { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; }
+.pv-scope .lc-chip { display: inline-flex; align-items: center; gap: .3rem; border-radius: 999px; padding: .2rem .7rem; font-size: .82rem; font-weight: 600; background: #e6f6f5; color: var(--pm-primary); }
+.pv-scope .lc-chip.mi { background: #fff; border: 1px solid #d9ece7; color: #35576b; white-space: nowrap; }
+.pv-scope .lc-chip.live { background: #e0f3fb; color: #0b5d7a; }
+.pv-scope .lc-line { font-size: .92rem; color: #374759; }
+.pv-scope .lc-line i { color: var(--pm-primary); }
+.pv-scope .lc-services { font-size: .92rem; color: #345; line-height: 1.4; text-align: left; }
+.pv-scope .lc-perks { background: #fff8e1; border: 1px dashed #e0b84a; color: #6b4a00; border-radius: 12px; padding: .5rem .75rem; font-size: .92rem; line-height: 1.4; text-align: left; }
+.pv-scope .trust-badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0; }
+.pv-scope .trust-badge { display: inline-flex; align-items: center; gap: 5px; font-size: .82rem; font-weight: 600; line-height: 1.3; border: 1px solid; border-radius: 999px; padding: 3px 10px; background: #fff; }
+.pv-scope .trust-lic { color: #0b5ed7; border-color: #b6d4fe; background: #eef5ff; }
+.pv-scope .trust-bond { color: #146c43; border-color: #a3cfbb; background: #edf8f2; }
+.pv-scope .trust-ins { color: #8a5a00; border-color: #ffe08a; background: #fff8e1; }
+.pv-scope button.trust-badge { cursor: pointer; font-family: inherit; }
+.pv-scope button.trust-badge:hover { text-decoration: underline; filter: brightness(.97); }
+.pv-scope .lh-card { overflow: hidden; border-radius: 22px; }
+.pv-scope .lh-banner { height: 92px; background: var(--pm-grad); }
+.pv-scope .lh-body { padding: 0 1.5rem 1.6rem; text-align: center; }
+.pv-scope .lh-pic { width: 168px; height: 168px; border-radius: 20px; object-fit: cover; background: #f4f9fa;
+    border: 4px solid #fff; outline: 3px solid var(--pm-accent); box-shadow: 0 8px 24px rgba(30,74,75,.22);
+    margin: -84px auto 1rem; display: block; }
+.pv-scope .lh-pic.placeholder { display: flex; align-items: center; justify-content: center; background: #eef6f6; color: #9ab8b7; font-size: 4rem; }
+.pv-scope .lh-title { font-size: clamp(1.5rem, 5vw, 2.1rem); font-weight: 800; color: var(--pm-primary-dark); margin: .2rem 0 .5rem; line-height: 1.2; }
+.pv-scope .lh-chips { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: center; margin-bottom: .7rem; }
+.pv-scope .lh-chip { display: inline-flex; align-items: center; gap: .35rem; border-radius: 999px; padding: .3rem .85rem; font-size: .9rem; font-weight: 600; background: #e6f6f5; color: var(--pm-primary); }
+.pv-scope .lh-chip.dist { background: #fff; border: 1px solid #d9ece7; }
+.pv-scope .lh-chip.live { background: #e0f3fb; color: #0b5d7a; }
+.pv-scope .lh-final { display: inline-block; background: #fff3cf; border: 1px solid #f0dd9c; color: #6b4a00; border-radius: 14px; padding: .55rem 1rem; font-size: .95rem; margin-bottom: .6rem; }
+.pv-scope .action-panel { padding: 1.2rem; }
+.pv-scope .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+.pv-scope .action-grid .full { grid-column: 1 / -1; }
+.pv-scope .action-grid form { margin: 0; display: contents; }
+.pv-scope .act { display: flex; align-items: center; justify-content: center; gap: .55rem; width: 100%;
+    min-height: 56px; padding: .8rem 1rem; border-radius: 16px; border: 2px solid transparent;
+    font-weight: 700; font-size: 1.05rem; text-decoration: none; text-align: center; line-height: 1.2;
+    transition: transform .08s, box-shadow .15s, background .15s; cursor: pointer; }
+.pv-scope .act:active { transform: translateY(1px); }
+.pv-scope .act i { font-size: 1.35rem; }
+.pv-scope .act-qr { background: linear-gradient(145deg, #198754, #146c43); color: #fff !important; box-shadow: 0 6px 16px rgba(25,135,84,.28); }
+.pv-scope .act-qr:hover { background: linear-gradient(145deg, #1ea062, #198754); }
+.pv-scope .act-service { background: var(--pm-primary); color: #fff !important; box-shadow: 0 6px 16px rgba(42,88,89,.28); }
+.pv-scope .act-service:hover { background: var(--pm-primary-dark); }
+.pv-scope .act-line { background: #fff; border-color: var(--pm-primary); color: var(--pm-primary) !important; }
+.pv-scope .act-line:hover { background: var(--pm-hover); }
+.pv-scope .act-gold { background: var(--pm-accent); color: #3b2a00 !important; }
+.pv-scope .act-gold:hover { background: #f3c85a; }
+@media (max-width: 480px) {
+.pv-scope .action-grid { grid-template-columns: 1fr; }
+.pv-scope .action-grid form { display: contents; }
+}
+.pv-scope .info-rows { padding: 1.1rem 1.3rem; }
+.pv-scope .info-row { display: flex; gap: .7rem; align-items: flex-start; padding: .65rem 0; border-bottom: 1px dashed #e3eceb; color: #314655; }
+.pv-scope .info-row:last-child { border-bottom: 0; }
+.pv-scope .info-row i { color: var(--pm-primary); font-size: 1.2rem; margin-top: 1px; width: 24px; text-align: center; flex-shrink: 0; }
+.pv-scope .info-row strong { color: var(--pm-primary-dark); }
+.pv-scope .info-row a { word-break: break-all; }
+.pv-scope .block-card { padding: 1.1rem 1.3rem; }
+.pv-scope .block-card h2 { font-size: 1.05rem; font-weight: 800; color: var(--pm-primary-dark); margin: 0 0 .6rem; display: flex; align-items: center; gap: .5rem; }
+.pv-scope .block-card h2 i { color: var(--pm-primary); }
+.pv-scope .block-card.perks { background: #fff4ef; border-color: #f6d9cf; }
+.pv-scope .block-card.perks h2 i { color: #d9622b; }
+.pv-scope .block-card p, .pv-scope .block-card .txt { margin: 0; color: #374759; white-space: pre-line; }
+.pv-scope .service-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+.pv-scope .service-list li { background: #eef6f6; border: 1px solid #d9ece7; color: var(--pm-primary-dark); border-radius: 999px; padding: .35rem .9rem; font-weight: 600; font-size: .95rem; }
+.pv-scope .map-wrap { width: 100%; height: 260px; border-radius: 16px; overflow: hidden; background: #fafcff; box-shadow: 0 2px 10px #dfe8e8; margin-bottom: .8rem; }
+@media (max-width: 700px) {
+.pv-scope .map-wrap { height: 200px; }
+.pv-scope .lh-pic { width: 140px; height: 140px; margin-top: -70px; }
+.pv-scope .lh-body { padding: 0 1rem 1.3rem; }
+}
+.pv-scope .gallery-img { width: 100%; height: 300px; border-radius: 14px; object-fit: cover; box-shadow: 0 4px 12px rgba(15,23,42,.18); background: #f3f4f6; }
+@media (min-width: 768px) {
+.pv-scope .gallery-img { height: 520px; }
+}
+.pv-scope .stat-tile { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: .6rem; padding: 1rem; font-weight: 600; color: #314655; }
+.pv-scope .stat-tile .n { font-size: 1.4rem; font-weight: 800; color: var(--pm-primary-dark); }
+
+.pv-scope { --pm-primary:#2a5859; --pm-primary-dark:#1e4a4b; --pm-accent:#ffd66b; --pm-hover:#e6f6f5; --pm-muted:#5c6b73; --pm-shadow:0 2px 16px #e3eee9; --pm-grad:linear-gradient(145deg,#1e4a4b 0%,#2a5859 70%,#3a6d6e 100%); }
+.pv-scope .card { background:#fff; border-radius:16px; border:1px solid #e8f0f2; box-shadow:var(--pm-shadow); margin-bottom:1.1rem; transform:none; }
+.pv-scope .card:hover { transform:none; }
+.pv-scope .lc-link { pointer-events:none; }                 /* preview only: not clickable */
+.pv-scope .pv-actions-note { pointer-events:none; }
+.pv-scope .pv-actions-note .act { pointer-events:none; }
+.pv-scope .pv-small { max-width:380px; margin:0 auto 1rem; }
+.pv-scope .pv-large { max-width:700px; margin:0 auto; }
+.pv-scope .pv-label { text-align:center; font-weight:800; color:#1e4a4b; margin:.2rem 0 0; }
+.pv-scope .pv-sub { text-align:center; color:#5c6b73; font-size:.9rem; margin-bottom:.8rem; }
+.pv-scope .service-list { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:.5rem; background:transparent; border:0; }
+</style>
+
+<!-- ============================== PART B: saved trust badges (licensed / bonded / insured) ============================== -->
+<!-- Rendered by your real trust_badges macro, so they look exactly like the live listing. They show what is SAVED on the profile. -->
+<template id="pv-trust-small">{{ trust_badges(business, false) }}</template>
+<template id="pv-trust-large">{{ trust_badges(business, true) }}</template>
+
+<!-- ============================== PART C: preview script ============================== -->
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  var previewBtn = document.getElementById('previewListingBtn');
+  var modal = document.getElementById('listingPreviewModal');
+  var modalContent = document.getElementById('listing-preview-content');
+  var previewModal = modal && window.bootstrap ? new bootstrap.Modal(modal) : null;
+
+  // escape anything typed into the form before it goes into the preview
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function nl2br(s) { return esc(s).replace(/\n/g, '<br>'); }
+  function safeUrl(u) { return /^https?:\/\//i.test(u || '') ? u : ''; }
+  function tpl(id) { var t = document.getElementById(id); return t ? t.innerHTML : ''; }
+  function val(id, fallback) { var el = document.getElementById(id); return (el && el.value) || fallback || ''; }
+
+  previewBtn && previewBtn.addEventListener('click', function () {
+    var nameEl = document.querySelector('[name="business_name"]');
+    var name = (nameEl && nameEl.value) || {{ business.business_name | tojson }} || '';
+    var address = val('address-autocomplete', {{ (business.address or '') | tojson }});
+    var category = val('business_category', {{ (business.category or '') | tojson }});
+    var finalization = val('business_finalization', {{ (business.finalization or '') | tojson }});
+    var perks = val('perks', {{ (business.perks or '') | tojson }});
+    var phone = val('us-phone', {{ (business.phone_number or '') | tojson }});
+    var website = safeUrl(val('website_url', {{ (business.website_url or '') | tojson }}));
+    var about = val('about_us', {{ (business.about_us or '') | tojson }});
+    var hours = val('hours_of_operation', {{ (business.hours_of_operation or '') | tojson }});
+    var reviews = safeUrl(val('google_reviews_url', {{ (business.google_reviews_url or '') | tojson }}));
+    var email = {{ (business.business_email or '') | tojson }};
+    var services = [];
+    document.querySelectorAll('#services-list input').forEach(function (input) { if (input.value.trim() !== '') services.push(input.value.trim()); });
+    var img = {{ (profile_img_url if profile_img_url else "") | tojson }} || '';
+    var gallery = {{ preview_photos | tojson }} || [];
+    var lat = val('latitude', ''), lng = val('longitude', '');
+    if (isNaN(Number(lat))) lat = ''; if (isNaN(Number(lng))) lng = '';
+    var balance = {{ (business.account_balance or 0) | float | tojson }};
+    var txCount = {{ (finalized_tx_count or 0) | tojson }};
+
+    var logo = img
+      ? '<img src="' + esc(img) + '" class="lc-logo" alt="' + esc(name) + ' logo">'
+      : '<div class="lc-logo ph"><i class="bi bi-shop"></i></div>';
+
+    /* ---------- SMALL LISTING: identical markup to pm_listing_card.html ---------- */
+    var small =
+      '<a class="lc-link"><div class="card lc">' +
+        '<div class="lc-top">' + logo + '</div>' +
+        '<div class="lc-body">' +
+          '<div class="lc-title">' + esc(name) + '</div>' +
+          '<div class="lc-chips"><span class="lc-chip">' + esc(category || 'N/A') + '</span></div>' +
+          (address ? '<div class="lc-line"><i class="bi bi-geo-alt"></i> ' + esc(address) + '</div>' : '') +
+          (reviews ? '<div class="lc-line"><i class="bi bi-star-fill" style="color:#f5a623;"></i> Google reviews available</div>' : '') +
+          tpl('pv-trust-small') +
+          '<div class="lc-services"><b>Services:</b> ' + (services.length ? esc(services.join(', ')) : 'N/A') + '</div>' +
+          '<div class="lc-perks"><b>Perks Offered:</b> ' + (perks ? esc(perks) : 'N/A') + '</div>' +
+        '</div>' +
+      '</div></a>';
+
+    /* ---------- LARGE LISTING: identical markup to view_listing.html ---------- */
+    var bigPic = img
+      ? '<img src="' + esc(img) + '" alt="Logo" class="lh-pic">'
+      : '<div class="lh-pic placeholder"><i class="bi bi-buildings"></i></div>';
+    var finalNote = balance >= 250
+      ? '(Has enough to finalize any transaction)'
+      : '(Has enough to finalize $' + (balance * 10).toFixed(2) + ' in sales)';
+
+    var actions =
+      '<div class="card action-panel pv-actions-note"><div class="action-grid">' +
+        '<a class="act act-qr"><i class="bi bi-qr-code"></i> Show My QR</a>' +
+        '<a class="act act-service"><i class="bi bi-tools"></i> Request Service</a>' +
+        '<a class="act act-line"><i class="bi bi-heart"></i> Add to Favorites</a>' +
+        (reviews ? '<a class="act act-line"><i class="bi bi-star-fill" style="color:#e0a800;"></i> See Google reviews</a>' : '') +
+      '</div></div>';
+
+    function row(icon, label, html) { return '<div class="info-row"><i class="bi bi-' + icon + '"></i><span><strong>' + label + ':</strong> ' + html + '</span></div>'; }
+    var info =
+      '<div class="card info-rows">' +
+        row('pin-map', 'Address', address ? esc(address) : '-') +
+        row('telephone', 'Phone', phone ? esc(phone) : '-') +
+        row('envelope', 'Email', email ? esc(email) : '-') +
+        row('globe', 'Website', website ? '<a href="' + esc(website) + '" target="_blank" rel="noopener">' + esc(website) + '</a>' : '-') +
+      '</div>';
+
+    var svc = '<ul class="service-list">' + (services.length ? services.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') : '<li>N/A</li>') + '</ul>';
+
+    var map = (lat && lng)
+      ? '<div class="map-wrap"><iframe width="100%" height="100%" style="border:0" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" ' +
+        'src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDo-AojTUQUwwvvywrSiDRcF-oVpw9m_w4&q=' + encodeURIComponent(lat + ',' + lng) + '"></iframe></div>' +
+        '<a class="act act-line" style="pointer-events:none;"><i class="bi bi-sign-turn-right"></i> Driving directions</a>'
+      : '<div class="text-muted">Map unavailable</div>';
+
+    var gal = gallery.length
+      ? '<div class="card block-card"><h2 style="justify-content:center;"><i class="bi bi-images"></i> Gallery</h2>' +
+        '<div class="text-center mb-2" style="font-size:.9em;color:#555;">(Click on image to view full size - opens in new window)</div>' +
+        '<div id="pvGalleryCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000"><div class="carousel-inner">' +
+        gallery.map(function (u, i) {
+          return '<div class="carousel-item ' + (i === 0 ? 'active' : '') + '"><img src="' + esc(u) + '" class="d-block w-100 gallery-img" alt="Photo of ' + esc(name) + '"></div>';
+        }).join('') + '</div>' +
+        (gallery.length > 1
+          ? '<button class="carousel-control-prev" type="button" data-bs-target="#pvGalleryCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>' +
+            '<button class="carousel-control-next" type="button" data-bs-target="#pvGalleryCarousel" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>'
+          : '') +
+        '</div></div>'
+      : '';
+
+    var large =
+      '<div class="card lh-card"><div class="lh-banner"></div><div class="lh-body">' + bigPic +
+        '<h1 class="lh-title">' + esc(name) + '</h1>' +
+        '<div class="lh-chips"><span class="lh-chip"><i class="bi bi-tag"></i> ' + esc(category) + '</span></div>' +
+        '<span class="lh-final"><b>Finalization: ' + esc(finalization) + '</b><br>' + finalNote + '</span>' +
+        tpl('pv-trust-large') +
+      '</div></div>' +
+      actions + info +
+      '<div class="card block-card"><h2><i class="bi bi-info-circle"></i> About Us</h2><div class="txt">' + (about ? nl2br(about) : '—') + '</div></div>' +
+      '<div class="card block-card perks"><h2><i class="bi bi-gift"></i> Perks Offered</h2><div class="txt">' + (perks ? nl2br(perks) : '—') + '</div></div>' +
+      '<div class="card block-card"><h2><i class="bi bi-clock"></i> Hours of Operation</h2><div class="txt">' + (hours ? nl2br(hours) : '—') + '</div></div>' +
+      '<div class="card block-card"><h2><i class="bi bi-list-check"></i> Products or Services Offered</h2>' + svc + '</div>' +
+      '<div class="card block-card"><h2><i class="bi bi-map"></i> Location Map</h2>' + map + '</div>' +
+      gal +
+      '<div class="card stat-tile"><i class="bi bi-patch-check" style="font-size:1.5rem;color:var(--pm-primary);"></i><span>Finalized transactions:</span><span class="n">' + (txCount ? txCount : 'New Business') + '</span></div>';
+
+    var html =
+      '<div class="pv-scope">' +
+        '<div class="pv-label">Small listing (search results)</div><div class="pv-sub">This is how your card looks in search results.</div>' +
+        '<div class="pv-small">' + small + '</div>' +
+        '<hr>' +
+        '<div class="pv-label">Large listing</div><div class="pv-sub">This is the page members see when they open your listing. Buttons are shown for reference.</div>' +
+        '<div class="pv-large">' + large + '</div>' +
+      '</div>';
+
+    // keep the "Submit for Review" form that sits at the top of the modal
+    var modalForm = modalContent.querySelector('form');
+    modalContent.innerHTML = (modalForm ? modalForm.outerHTML : '') + html;
+    previewModal && previewModal.show && previewModal.show();
+  });
+});
+</script>

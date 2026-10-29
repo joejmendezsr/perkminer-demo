@@ -1,0 +1,74 @@
+{% extends "pm_base.html" %}
+{% block title %}Transaction Receipt - PerkMiner{% endblock %}
+
+{% block head_extra %}
+<style>
+  .rc-wrap { max-width: 560px; margin: 0 auto; }
+  .rc-row { display: flex; justify-content: space-between; gap: 1rem; padding: .6rem 0; border-bottom: 1px dashed #e3eceb; }
+  .rc-row:last-child { border-bottom: 0; }
+  .rc-row .k { color: var(--pm-muted); }
+  .rc-row .v { font-weight: 700; text-align: right; }
+  .rc-row.total .k, .rc-row.total .v { font-size: 1.3rem; font-weight: 800; color: var(--pm-primary-dark); }
+  .rc-cash { background: linear-gradient(145deg, #e9f7ef 0%, #f3fbf6 100%); border: 1px solid #bfe3cf; border-radius: 14px; padding: .8rem 1rem; margin-top: .8rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .rc-cash .k { font-weight: 700; color: #146c43; }
+  .rc-cash .v { font-size: 1.4rem; font-weight: 800; color: #146c43; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pb-3 rc-wrap">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-receipt"></i></div>
+    <div class="pm-hero-body">
+      <div class="pm-hero-sub">Purchase complete</div>
+      <h1>Transaction Receipt</h1>
+    </div>
+    <div class="pm-hero-actions">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    </div>
+  </div>
+
+  <div class="pm-note ok text-center mb-3"><i class="bi bi-check-circle-fill"></i> Thank you for your purchase! Your cashback has been credited.</div>
+
+  <div class="card p-3 p-md-4 mb-3">
+    <div class="rc-row"><span class="k">Date/Time</span>
+      <span class="v" id="local-receipt-time" data-utc="{{ transaction.date_time.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ transaction.date_time.strftime('%b %d, %Y %I:%M %p') }} UTC</span></div>
+    <div class="rc-row"><span class="k">Business</span><span class="v">{{ interaction.business.business_name }}</span></div>
+    <div class="rc-row total"><span class="k">Total Paid</span><span class="v">${{ '%.2f' % transaction.amount }}</span></div>
+    <div class="rc-cash">
+      <span class="k"><i class="bi bi-cash-coin"></i> Your Cashback (2% cap $50)</span>
+      <span class="v">${{ '%.2f' % transaction.cash_back }}
+        {% if transaction.cash_back|float >= 49.99 %}<span class="badge bg-warning text-dark ms-1 align-middle" style="font-size:.7rem;">Max Reached</span>{% endif %}
+      </span>
+    </div>
+  </div>
+
+  <div class="d-grid gap-2">
+    {% if transaction.status == "available" %}
+    <form action="{{ url_for('process_return', txn_id=transaction.id) }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to return/refund this transaction?');"><i class="bi bi-arrow-return-left"></i> Return / Refund</button>
+    </form>
+    {% endif %}
+    <form method="post" action="{{ url_for('end_session', interaction_id=interaction.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-danger btn-lg w-100"><i class="bi bi-x-octagon"></i> End Session</button>
+    </form>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary w-100"><i class="bi bi-house"></i> Back to Dashboard</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var elem = document.getElementById('local-receipt-time');
+  if (elem && elem.dataset.utc) {
+    var dt = new Date(elem.dataset.utc);
+    if (!isNaN(dt)) {
+      elem.textContent = dt.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+  }
+});
+</script>
+{% endblock %}

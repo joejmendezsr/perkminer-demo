@@ -6,60 +6,268 @@
 <div class="submenu">
   <div class="wrap">
     <a href="{{ url_for('docuseries.admin') }}">← Docuseries Admin</a>
+    <a href="{{ url_for('docuseries.admin_episodes') }}">Manage Episodes</a>
     <a href="/admin_roles_landing">Admin Roles</a>
   </div>
 </div>
 {% endblock %}
 
+{% block head %}
+<style>
+.fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.fgrid .full{grid-column:1/-1}
+@media (max-width:700px){.fgrid{grid-template-columns:1fr}}
+.fgrid label{display:block;font-weight:700;font-size:.9rem;margin-bottom:4px}
+.fgrid input,.fgrid textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.btn-sm{padding:8px 14px;font-size:.88rem;border-radius:10px}
+.btn-danger{background:#fff;color:var(--err);border-color:#e7b4af}
+.btn-danger:hover{background:var(--err-bg)}
+/* address suggestions */
+.addr-wrap{position:relative}
+.ac-list{position:absolute;left:0;right:0;top:100%;z-index:40;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(22,41,42,.18);margin:4px 0 0;padding:4px;list-style:none;max-height:320px;overflow:auto}
+.ac-list li{padding:9px 10px;border-radius:8px;cursor:pointer;line-height:1.3}
+.ac-list li[role=option]:hover,.ac-list li.on{background:var(--teal-l)}
+.ac-list .sec{display:block;font-size:.85rem;color:var(--muted)}
+.ac-list .attr{cursor:default;font-size:.72rem;color:var(--muted);text-align:right;padding:4px 8px 2px}
+.hint{font-size:.85rem;color:var(--muted);margin:5px 0 0}
+.hint.bad{color:var(--err)}
+/* status + members */
+.counts{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.linkbtn{background:none;border:0;padding:0 2px;color:var(--teal);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.members{margin-top:10px;padding:10px 12px;background:var(--teal-l);border-radius:10px}
+.members ul{margin:0;padding:0;list-style:none}
+.members li{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:6px 0;border-bottom:1px solid #c9dddd}
+.members li:last-child{border-bottom:0}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;font-weight:700}
+.st-arrived{background:var(--ok-bg);color:var(--ok)}
+.st-on_the_way{background:var(--warn-bg);color:var(--warn)}
+.st-going{background:#fff;color:var(--teal-d);border:1px solid #b9d3d3}
+.st-not_going{background:#eef1f1;color:var(--muted)}
+.dir-text{white-space:pre-line}
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="page-head">
-  <div class="wrap"><h1>Live locations</h1><p>On-site recordings with participants and business owners</p></div>
+  <div class="wrap"><h1>Live locations</h1><p>Schedule on-site recordings. Upcoming ones appear on every participant's dashboard, where they can set their status.</p></div>
 </section>
 
 <div class="wrap section">
-  <div class="callout warn">
-    <span class="ic" aria-hidden="true">🚧</span>
-    <p><strong>Sample page.</strong> More live-location features are coming. The cards below show how scheduled recordings will look.</p>
-  </div>
 
-  <div class="grid grid-2">
-    {% for l in locations %}
-    <div class="card">
-      <span class="badge ok">Scheduled</span>
-      <h2 style="margin-top:10px">{{ l.title }}</h2>
-      <p style="margin-bottom:4px"><strong>{{ l.starts_at|ds_dt }}</strong></p>
-      <p style="margin-bottom:4px">📍 {{ l.location_name }}</p>
-      {% if l.address %}<p class="muted small">{{ l.address }}</p>{% endif %}
-      {% if l.notes %}<p>{{ l.notes }}</p>{% endif %}
-    </div>
-    {% else %}
-    <div class="card">
-      <span class="badge sample">Sample</span>
-      <h2 style="margin-top:10px">Live invitation: local coffee shop</h2>
-      <p style="margin-bottom:4px"><strong>Sat, Dec 5, 2026 · 10:00 AM PT</strong></p>
-      <p style="margin-bottom:4px">📍 Sample Coffee Co.</p>
-      <p class="muted small">123 Fremont St, Las Vegas, NV</p>
-      <p>A participant invites the owner to become an advertiser while we record the full conversation.</p>
-    </div>
-    <div class="card">
-      <span class="badge sample">Sample</span>
-      <h2 style="margin-top:10px">Milestone recording: $1,000 earned</h2>
-      <p style="margin-bottom:4px"><strong>Sat, Dec 12, 2026 · 2:00 PM PT</strong></p>
-      <p style="margin-bottom:4px">📍 Participant's choice of location</p>
-      <p class="muted small">Las Vegas, NV</p>
-      <p>One-on-one recording of a member hitting a major milestone.</p>
-    </div>
-    {% endfor %}
+  <div class="card">
+    <h2>{% if edit %}Edit live recording{% else %}Add a live recording{% endif %}</h2>
+    <form method="post" action="{{ url_for('docuseries.live_location_save') }}">
+      {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+      {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+      <input type="hidden" name="place_id" id="place_id" value="{{ edit.place_id if edit and edit.place_id else '' }}">
+      <input type="hidden" name="latitude" id="latitude" value="{{ edit.latitude if edit and edit.latitude is not none else '' }}">
+      <input type="hidden" name="longitude" id="longitude" value="{{ edit.longitude if edit and edit.longitude is not none else '' }}">
+      <div class="fgrid">
+        <div class="full"><label for="title">Title *</label>
+          <input id="title" name="title" required maxlength="200" value="{{ edit.title if edit else '' }}" placeholder="Live invitation: coffee shop"></div>
+
+        <div class="full"><label for="address">Address</label>
+          <div class="addr-wrap">
+            <input id="address" name="address" maxlength="300" autocomplete="off" role="combobox" aria-expanded="false"
+                   aria-controls="addr-list" aria-autocomplete="list" value="{{ edit.address if edit and edit.address else '' }}"
+                   placeholder="Start typing the address or business name">
+            <ul class="ac-list" id="addr-list" role="listbox" hidden></ul>
+          </div>
+          <p class="hint" id="addr-hint">
+            {% if maps_key %}Loading address suggestions…
+            {% else %}Address suggestions are off because no Google Maps key was found in the environment (looked for GOOGLE_MAPS_API_KEY). You can still type the address.{% endif %}
+          </p></div>
+
+        <div class="full"><label for="location_name">Location name *</label>
+          <input id="location_name" name="location_name" required maxlength="200" value="{{ edit.location_name if edit else '' }}" placeholder="Sample Coffee Co. (filled in automatically for businesses)"></div>
+
+        <div><label for="starts_at">Starts * <span class="muted small">(Pacific Time)</span></label>
+          <input id="starts_at" name="starts_at" type="datetime-local" required value="{{ edit.starts_at|ds_input if edit else '' }}"></div>
+        <div><label for="ends_at">Ends <span class="muted small">(optional)</span></label>
+          <input id="ends_at" name="ends_at" type="datetime-local" value="{{ edit.ends_at|ds_input if edit and edit.ends_at else '' }}"></div>
+
+        <div class="full"><label for="directions">Driving directions for participants</label>
+          <textarea id="directions" name="directions" rows="4" maxlength="2000" placeholder="From the 15, take the Charleston exit. Park behind the building and use the side entrance.">{{ edit.directions if edit and edit.directions else '' }}</textarea>
+          <p class="hint">Participants see this text plus a <strong>Get driving directions</strong> button that opens Google Maps with turn-by-turn directions from wherever they are.</p></div>
+
+        <div class="full"><label for="notes">Notes for participants</label>
+          <textarea id="notes" name="notes" rows="3" maxlength="1000" placeholder="Meet 15 minutes early.">{{ edit.notes if edit and edit.notes else '' }}</textarea></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn btn-teal" type="submit">{% if edit %}Save changes{% else %}Add live recording{% endif %}</button>
+        {% if edit %}<a class="btn btn-outline" href="{{ url_for('docuseries.live_locations') }}">Cancel</a>{% endif %}
+      </div>
+      <p class="muted small" style="margin:12px 0 0">Everything in this form is shown to participants, so don't put private details in it.</p>
+    </form>
   </div>
 
   <div class="card">
-    <h2>Coming next</h2>
-    <ul>
-      <li>Add, edit and cancel recordings from this page</li>
-      <li>Assign participants and business contacts to each location</li>
-      <li>Map view and participant notifications</li>
-    </ul>
-    <div style="border:2px dashed var(--line);border-radius:12px;padding:40px;text-align:center;color:var(--muted)">🗺️ Map placeholder</div>
+    <h2>All live recordings</h2>
+    {% for l in locations %}
+      {% set listed = l.counts.arrived + l.counts.on_the_way + l.counts.going %}
+      <div style="padding:14px 0;border-bottom:1px solid var(--line)">
+        <strong>{{ l.title }}</strong>
+        <span class="muted small"> · {{ l.starts_at|ds_dt }}{% if l.ends_at %} to {{ l.ends_at|ds_dt }}{% endif %}</span><br>
+        📍 {{ l.location_name }}{% if l.address %} <span class="muted small">· {{ l.address }}</span>{% endif %}
+        {% if l.directions_url %} <a class="small" href="{{ l.directions_url }}" target="_blank" rel="noopener">Open in Google Maps ↗</a>{% endif %}
+        {% if l.directions %}<div class="small muted dir-text">Directions: {{ l.directions }}</div>{% endif %}
+        {% if l.notes %}<div class="small muted">{{ l.notes }}</div>{% endif %}
+
+        <div class="counts">
+          <span class="pill st-arrived">{{ l.counts.arrived }} arrived</span>
+          <span class="pill st-on_the_way">{{ l.counts.on_the_way }} on the way</span>
+          <span class="pill st-going">{{ l.counts.going }} plan on going</span>
+          <span class="pill st-not_going">{{ l.counts.not_going }} not going</span>
+          <button type="button" class="linkbtn js-members" aria-expanded="false" aria-controls="members-{{ l.id }}">View members ({{ listed }})</button>
+        </div>
+        <div class="members" id="members-{{ l.id }}" hidden>
+          {% if l.members %}
+          <ul>
+            {% for m in l.members %}
+            <li><strong>{{ m.full_name or '(no name)' }}</strong>
+              <span class="pill st-{{ m.status }}">{{ statuses[m.status] }}</span>
+              <span class="muted small">updated {{ m.updated_at|ds_dt }}</span></li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p class="muted small" style="margin:0">No members have set "I plan on going", "On the way" or "Arrived" yet.</p>
+          {% endif %}
+        </div>
+
+        <div class="row-actions">
+          <a class="btn btn-outline btn-sm" href="{{ url_for('docuseries.live_locations', edit=l.id) }}">Edit</a>
+          <form method="post" action="{{ url_for('docuseries.live_location_delete', loc_id=l.id) }}" onsubmit="return confirm('Delete this live recording?');">
+            {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+            <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <p class="muted">Nothing scheduled yet. Add your first live recording above.</p>
+    {% endfor %}
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* View members / hide members */
+document.querySelectorAll('.js-members').forEach(function(b){
+  b.addEventListener('click',function(){
+    var box=document.getElementById(b.getAttribute('aria-controls')), open=b.getAttribute('aria-expanded')==='true';
+    box.hidden=open; b.setAttribute('aria-expanded',open?'false':'true');
+    b.textContent=b.textContent.replace(/^(View|Hide) members/,open?'View members':'Hide members');
+  });
+});
+</script>
+
+{% if maps_key %}
+<script>
+/* Address suggestions (Google Places). Falls back to the older widget if "Places API (New)" isn't enabled. */
+(function(){
+  var addr=document.getElementById('address'), list=document.getElementById('addr-list'), hint=document.getElementById('addr-hint');
+  var fld={place:document.getElementById('place_id'),lat:document.getElementById('latitude'),lng:document.getElementById('longitude'),name:document.getElementById('location_name')};
+  var BIAS={{ maps_bias|tojson }};
+  var lib=null, token=null, items=[], active=-1, timer=null, seq=0, picked=addr.value, legacy=false, hasBias=true;
+
+  function say(t,bad){hint.textContent=t;hint.className='hint'+(bad?' bad':'');}
+  function close(){list.hidden=true;list.innerHTML='';items=[];active=-1;addr.setAttribute('aria-expanded','false');addr.removeAttribute('aria-activedescendant');}
+  function clearPlace(){fld.place.value='';fld.lat.value='';fld.lng.value='';}
+  function num(v){return typeof v==='function'?v.call(null):v;}
+  function setPlace(address,id,loc,name,types){
+    addr.value=address; picked=address; fld.place.value=id||'';
+    if(loc){var la=typeof loc.lat==='function'?loc.lat():loc.lat, ln=typeof loc.lng==='function'?loc.lng():loc.lng; fld.lat.value=la; fld.lng.value=ln;} else {fld.lat.value='';fld.lng.value='';}
+    var isBiz=(types||[]).some(function(t){return t==='establishment'||t==='point_of_interest';});
+    if(name&&isBiz&&!fld.name.value.trim()){fld.name.value=name;}
+    close();
+  }
+  function text(x){return x?(x.text||String(x)):'';}
+
+  function render(){
+    list.innerHTML='';
+    items.forEach(function(it,i){
+      var li=document.createElement('li'); li.setAttribute('role','option'); li.id='ac-opt-'+i;
+      var main=text(it.placePrediction.mainText)||text(it.placePrediction.text), sec=text(it.placePrediction.secondaryText);
+      var b=document.createElement('strong'); b.textContent=main; li.appendChild(b);
+      if(sec){var s=document.createElement('span'); s.className='sec'; s.textContent=sec; li.appendChild(s);}
+      li.addEventListener('mousedown',function(e){e.preventDefault();choose(i);});
+      list.appendChild(li);
+    });
+    var at=document.createElement('li'); at.className='attr'; at.setAttribute('aria-hidden','true'); at.textContent='Powered by Google'; list.appendChild(at);
+    list.hidden=!items.length; addr.setAttribute('aria-expanded',items.length?'true':'false');
+  }
+  function mark(i){
+    [].forEach.call(list.querySelectorAll('li[role=option]'),function(li,k){li.classList.toggle('on',k===i);});
+    active=i; if(i>=0){addr.setAttribute('aria-activedescendant','ac-opt-'+i);var el=document.getElementById('ac-opt-'+i);if(el&&el.scrollIntoView)el.scrollIntoView({block:'nearest'});}
+  }
+
+  function fetchSuggestions(q){
+    var req={input:q,sessionToken:token,includedRegionCodes:['us']};
+    if(hasBias){req.locationBias={center:{lat:BIAS.lat,lng:BIAS.lng},radius:BIAS.radius};}
+    return lib.AutocompleteSuggestion.fetchAutocompleteSuggestions(req).catch(function(err){
+      if(hasBias){hasBias=false;return fetchSuggestions(q);}   // retry once without the location bias
+      throw err;
+    });
+  }
+  function search(q){
+    var id=++seq;
+    fetchSuggestions(q).then(function(res){
+      if(id!==seq)return;
+      items=(res.suggestions||[]).filter(function(s){return s.placePrediction;}).slice(0,5); active=-1; render();
+    }).catch(function(){ if(id===seq) startLegacy(); });
+  }
+  function choose(i){
+    var pred=items[i]&&items[i].placePrediction; if(!pred)return;
+    var fallback=text(pred.text);
+    try{
+      var place=pred.toPlace();
+      place.fetchFields({fields:['displayName','formattedAddress','location','id']}).then(function(){
+        setPlace(place.formattedAddress||fallback,place.id||pred.placeId,place.location,text(place.displayName)||place.displayName,pred.types);
+      }).catch(function(){setPlace(fallback,pred.placeId,null,'',pred.types);});
+    }catch(e){setPlace(fallback,pred.placeId,null,'',pred.types);}
+    token=new lib.AutocompleteSessionToken();
+  }
+
+  function startLegacy(){
+    if(legacy)return; legacy=true; close();
+    var Ctor=(lib&&lib.Autocomplete)||(window.google&&google.maps.places&&google.maps.places.Autocomplete);
+    if(!Ctor){say('Address suggestions are unavailable. Check that the Places API is enabled for your Google Maps key. You can still type the address.',true);return;}
+    var ac=new Ctor(addr,{componentRestrictions:{country:'us'},fields:['formatted_address','name','geometry','place_id','types']});
+    try{ac.setBounds(new google.maps.Circle({center:{lat:BIAS.lat,lng:BIAS.lng},radius:BIAS.radius}).getBounds());}catch(e){}
+    ac.addListener('place_changed',function(){
+      var p=ac.getPlace(); if(!p||!p.geometry)return;
+      setPlace(p.formatted_address||addr.value,p.place_id,p.geometry.location,p.name,p.types);
+    });
+    say('Start typing the address and pick a suggestion.');
+  }
+
+  addr.addEventListener('input',function(){
+    if(addr.value!==picked){clearPlace();}            // typed over a picked address: drop the stale place details
+    if(legacy||!lib)return;
+    clearTimeout(timer); var q=addr.value.trim();
+    if(q.length<3){close();return;}
+    timer=setTimeout(function(){search(q);},200);
+  });
+  addr.addEventListener('keydown',function(e){
+    if(list.hidden||!items.length)return;
+    if(e.key==='ArrowDown'){e.preventDefault();mark((active+1)%items.length);}
+    else if(e.key==='ArrowUp'){e.preventDefault();mark((active-1+items.length)%items.length);}
+    else if(e.key==='Enter'&&active>=0){e.preventDefault();choose(active);}
+    else if(e.key==='Escape'){close();}
+  });
+  addr.addEventListener('blur',function(){setTimeout(close,150);});
+
+  window.gm_authFailure=function(){say('Google rejected the Maps key. Check its website restrictions and that Maps JavaScript API and Places API are enabled. You can still type the address.',true);};
+  window.dsMapsReady=function(){
+    google.maps.importLibrary('places').then(function(l){
+      lib=l; token=new l.AutocompleteSessionToken();
+      if(!l.AutocompleteSuggestion){startLegacy();return;}
+      say('Start typing the address and pick a suggestion.');
+    }).catch(function(){say('Address suggestions are unavailable. You can still type the address.',true);});
+  };
+})();
+</script>
+<script async src="https://maps.googleapis.com/maps/api/js?key={{ maps_key|urlencode }}&loading=async&libraries=places&v=weekly&callback=dsMapsReady"></script>
+{% endif %}
 {% endblock %}

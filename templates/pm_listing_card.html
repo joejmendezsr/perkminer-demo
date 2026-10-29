@@ -1,0 +1,87 @@
+{# One business result card, used by the search and category result pages. #}
+{# Styles for the small listing card and the results pages. Self-contained, so the cards look right even if pm_base.html is an older copy. #}
+{% macro listing_card_styles() %}
+<style>
+    .pm-results-hero { text-align: center; display: block; }
+    .pm-results-hero h1 { font-size: clamp(1.5rem, 4.5vw, 2.1rem); }
+    .pm-stats { display: inline-flex; align-items: center; gap: .45rem; margin-top: .6rem; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3); border-radius: 999px; padding: .3rem .95rem; font-weight: 600; font-size: .92rem; }
+    .pm-stats:empty { display: none; }
+    .pm-crumbs { font-size: .9rem; margin: 0 0 .8rem; padding: 0; list-style: none; display: flex; gap: .5rem; flex-wrap: wrap; color: var(--pm-muted,#5b6b73); }
+    .pm-crumbs li + li::before { content: '›'; margin-right: .5rem; color: #9ab8b7; }
+    .pm-crumbs a { color: var(--pm-primary,#2a5859); text-decoration: none; font-weight: 600; }
+    .lc-link { text-decoration: none; color: inherit; display: block; height: 100%; }
+    .lc-link:hover { color: inherit; }
+    .lc { height: 100%; margin: 0; overflow: hidden; text-align: center; transition: box-shadow .18s, transform .18s; }
+    .lc-link:hover .lc { box-shadow: 0 10px 28px rgba(42,88,89,.2); transform: translateY(-3px); }
+    .lc-top { background: linear-gradient(160deg, #e6f6f5, #f6fafa); padding: 1.1rem 1rem .9rem; border-bottom: 1px solid #e1eeee; }
+    .lc-logo { width: 104px; height: 104px; border-radius: 18px; object-fit: cover; background: #fff; border: 3px solid #fff; box-shadow: 0 6px 18px rgba(30,74,75,.2); display: block; margin: 0 auto; }
+    .lc-logo.ph { display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: var(--pm-primary,#2a5859); background: #fff; }
+    .lc-body { padding: .9rem 1rem 1.1rem; display: flex; flex-direction: column; gap: .5rem; }
+    .lc-title { font-weight: 800; font-size: 1.15rem; color: var(--pm-primary-dark,#1e4a4b); line-height: 1.25; }
+    .lc-chips { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; }
+    .lc-chip { display: inline-flex; align-items: center; gap: .3rem; border-radius: 999px; padding: .2rem .7rem; font-size: .82rem; font-weight: 600; background: #e6f6f5; color: var(--pm-primary,#2a5859); }
+    .lc-chip.mi { background: #fff; border: 1px solid #d9ece7; color: #35576b; white-space: nowrap; }
+    .lc-chip.live { background: #e0f3fb; color: #0b5d7a; }
+    .lc-line { font-size: .92rem; color: #374759; }
+    .lc-line i { color: var(--pm-primary,#2a5859); }
+    .lc-services { font-size: .92rem; color: #345; line-height: 1.4; text-align: left; }
+    .lc-perks { background: #fff8e1; border: 1px dashed #e0b84a; color: #6b4a00; border-radius: 12px; padding: .5rem .75rem; font-size: .92rem; line-height: 1.4; text-align: left; }
+    .pagination { gap: .25rem; flex-wrap: wrap; }
+    .pagination .page-link { color: var(--pm-primary,#2a5859); border: 1px solid #d9ece7; border-radius: 10px !important; font-weight: 600; background: #fff; }
+    .pagination .page-link:hover { background: var(--pm-hover,#eef7f6); }
+    .pagination .page-item.disabled .page-link { color: #8da3a6; background: #f4f8f9; }
+    .pm-noresults { text-align: center; padding: 2rem 1.2rem; }
+    .pm-noresults .big-ic { font-size: 3rem; color: var(--pm-accent,#ffd66b); }
+    /* trust badges (used by partials/_trust_badges.html) */
+    .trust-badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0; }
+    .trust-badge { display: inline-flex; align-items: center; gap: 5px; font-size: .82rem; font-weight: 600; line-height: 1.3; border: 1px solid; border-radius: 999px; padding: 3px 10px; background: #fff; }
+    .trust-lic { color: #0b5ed7; border-color: #b6d4fe; background: #eef5ff; }
+    .trust-bond { color: #146c43; border-color: #a3cfbb; background: #edf8f2; }
+    .trust-ins { color: #8a5a00; border-color: #ffe08a; background: #fff8e1; }
+    button.trust-badge { cursor: pointer; font-family: inherit; }
+</style>
+{% endmacro %}
+
+{% from 'partials/_trust_badges.html' import trust_badges %}
+{% macro listing_card(biz, href, perks_label='Perks Offered', online=False) %}
+<a href="{{ href }}" class="lc-link">
+  <div class="card lc">
+    <div class="lc-top">
+      {% if biz.profile_photo %}
+        <img src="{{ biz.profile_photo }}" class="lc-logo" alt="{{ biz.business_name }} logo" loading="lazy">
+      {% else %}
+        <div class="lc-logo ph"><i class="bi bi-shop"></i></div>
+      {% endif %}
+    </div>
+    <div class="lc-body">
+      <div class="lc-title">{{ biz.business_name }}</div>
+      <div class="lc-chips">
+        {% if online %}<span class="lc-chip" style="background:#e3f4ea;color:#146c43;"><i class="bi bi-bag-check"></i> Online Marketplace</span>{% endif %}
+        <span class="lc-chip">{{ biz.category or 'N/A' }}</span>
+        {% if not online and biz.distance_mi is defined and biz.distance_mi is not none %}
+          <span class="lc-chip mi"><i class="bi bi-geo-alt-fill"></i> {{ biz.distance_mi|round(2) }} mi away</span>
+          {% if biz.location_varies and biz.live_gps_lat and biz.live_gps_long %}
+            <span class="lc-chip live"><i class="bi bi-broadcast"></i> live location</span>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      {% if not online and biz.address %}
+        <div class="lc-line"><i class="bi bi-geo-alt"></i> {{ biz.address }}</div>
+      {% endif %}
+      {% if not online and biz.google_reviews_url %}
+        <div class="lc-line"><i class="bi bi-star-fill" style="color:#f5a623;"></i> Google reviews available</div>
+      {% endif %}
+
+      {% if not online %}{{ trust_badges(biz, false) }}{% endif %}
+
+      {% set services = [biz.service_1, biz.service_2, biz.service_3, biz.service_4, biz.service_5, biz.service_6, biz.service_7, biz.service_8, biz.service_9, biz.service_10] %}
+      <div class="lc-services">
+        <b>Services:</b>
+        {{ services|select|reject('equalto','')|join(', ') if services|select|reject('equalto','')|list else 'N/A' }}
+      </div>
+      <div class="lc-perks"><b>{{ perks_label }}:</b> {{ biz.perks or 'N/A' }}</div>
+    </div>
+  </div>
+</a>
+{% endmacro %}

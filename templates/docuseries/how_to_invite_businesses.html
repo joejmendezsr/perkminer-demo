@@ -1,0 +1,288 @@
+{% extends "docuseries/base_docuseries.html" %}
+{% block title %}How to Invite Businesses – Perk Miner 45-Day Challenge{% endblock %}
+{% block robots %}<meta name="robots" content="noindex,nofollow">{% endblock %}
+
+{% block head %}
+<style>
+.script{background:var(--teal-l);border-left:5px solid var(--gold);border-radius:12px;padding:18px 20px;margin:0 0 14px;white-space:pre-line;line-height:1.6}
+.script-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 22px}
+.script-bar .copied{font-weight:700;color:var(--teal-d);min-height:1.4em}
+.steps{counter-reset:step;list-style:none;padding-left:0!important}
+.steps li{counter-increment:step;position:relative;padding:4px 0 4px 46px;margin:12px 0}
+.steps li::before{content:counter(step);position:absolute;left:0;top:2px;width:32px;height:32px;border-radius:50%;background:var(--teal);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.qa dt{font-weight:700;color:var(--teal-d);margin-top:14px}
+.qa dd{margin:4px 0 0}
+.linkrow{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.linkrow input,.invite-form input[type=email]{flex:1 1 240px;min-width:0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:1rem;background:#fff}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 6px}
+.promo{background:#fff8e6;border:2px dashed var(--gold);border-radius:14px;padding:18px 20px;margin:0 0 14px}
+.promo .code{display:inline-block;font-size:1.5rem;font-weight:800;letter-spacing:.06em;background:var(--gold);color:#201400;padding:4px 16px;border-radius:10px;margin:2px 0 8px}
+</style>
+{% endblock %}
+
+{% block submenu %}
+<div class="submenu">
+  <div class="wrap">
+    <a href="{{ url_for('docuseries.member') }}">← Docuseries dashboard</a>
+    <a href="#approach">Best approach</a>
+    <a href="#share">Flyer &amp; link</a>
+    <a href="#promo">Promo code</a>
+    <a href="#scripts">Scripts</a>
+    <a href="#answers">Common questions</a>
+    <a href="#dos">Do &amp; don't</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="wrap">
+    <h1>How to invite businesses to advertise</h1>
+    <p>Your flyer, your link and the words to use: in person, by phone, by text, by email or on social media.</p>
+  </div>
+</section>
+
+<div class="wrap section">
+
+  <div class="card" id="share">
+    <h2>Your flyer and your business invite link</h2>
+    <p>Every message on this page already includes <strong>your own link</strong>, so when a business registers through it, you get the credit and the referral commissions.</p>
+    <label class="small" for="biz-link"><strong>Your business invite link</strong></label>
+    <div class="linkrow">
+      <input id="biz-link" type="text" readonly value="{{ business_share_url }}">
+      <button type="button" class="btn btn-teal js-copy-value" data-source="biz-link">Copy link</button>
+    </div>
+    <p class="copied small" id="link-copied" aria-live="polite" style="min-height:1.4em;margin:0 0 10px"></p>
+    <div class="actions">
+      {% if flyer_download_url %}<a class="btn btn-gold" href="{{ flyer_download_url }}" download>⬇ Download the flyer image</a>{% endif %}
+      {% if flyer_url %}<a class="btn btn-outline" href="{{ flyer_url }}">View flyer with my QR code</a>{% endif %}
+    </div>
+    {% if flyer_download_url or flyer_url %}
+    <p class="muted small">The downloaded image has no QR code, so it works well in social posts and texts. Always send your link with it. For printing or showing in person, open the flyer with your QR code and take a screenshot on your phone.</p>
+    {% endif %}
+  </div>
+
+  <div class="card" id="promo">
+    <h2>Offer them the Challenge10 promo code</h2>
+    <div class="promo">
+      <span class="code">{{ promo_code }}</span>
+      <p style="margin:0">A business that enters <strong>{{ promo_code }}</strong> when it registers can list with <strong>zero up-front cost</strong>. The code covers their <strong>first $10 in sales at no charge</strong>.</p>
+    </div>
+    <h3>What to say if their smallest sale is more than $10</h3>
+    <p>If the smallest sale they usually make is more than $10, they add funds to their account balance to cover the advertising fee. Be clear that this is <strong>not an advertising fee</strong>. It is <strong>pre-funded advertising dollars</strong> that stay in their account balance until they make a sale or close a deal. Fees are taken from that balance only when a sale is finalized, and unused money stays in their balance.</p>
+    <p class="muted small">Tip: mention the code in the first message. "Zero up-front cost" is what makes most owners agree to look.</p>
+  </div>
+
+  <div class="card" id="approach">
+    <h2>The best approach</h2>
+    <p>Business owners say yes when they see that there is no risk. Keep it short, lead with that and the 1,000% Return on Ad Spend, give them the code and invite them to look at the page themselves.</p>
+    <ol class="steps">
+      <li><strong>Start with businesses you already know.</strong> Places where you are a regular customer, or people you already buy from, are the easiest first conversations. Your 5 purchases during the challenge are a natural way to meet owners.</li>
+      <li><strong>Be upfront.</strong> Say you are a Perk Miner member taking part in the 45-Day Challenge. Honesty builds trust and it is the whole point of the series.</li>
+      <li><strong>Lead with the risk-free part.</strong> They pay only 10% of a sale (capped at $250 per transaction) and only when a sale closes. That is a 1,000% Return on Ad Spend or higher. No sale means $0 in fees.</li>
+      <li><strong>Give them the code.</strong> {{ promo_code }} means zero up-front cost and their first $10 in sales is covered.</li>
+      <li><strong>Talk to the decision maker.</strong> Ask for the owner or manager: "Who handles your advertising?"</li>
+      <li><strong>Send them your link.</strong> Don't try to explain everything yourself. Send your link so they can read it and register.</li>
+      <li><strong>Follow up once, within 2 or 3 days.</strong> A short message is enough.</li>
+    </ol>
+  </div>
+
+  <div class="card" id="scripts">
+    <h2>Messages you can copy and send</h2>
+    <p class="muted small">Change anything so it sounds like you, and replace the words in [brackets]. Your link is already filled in.</p>
+
+    <h3>1. Text message or direct message</h3>
+    <div class="script" id="s-text">Hi [name], this is [your name]. I'm a customer of [business] and a member of Perk Miner. I'm taking part in a 45-day challenge with them, and advertisers are needed, which helps both members and advertisers.
+
+You only pay 10% of a sale (capped at $250 per transaction), and only when you make a sale. That's a 1,000% Return on Ad Spend or higher. No sale = $0, and no contracts.
+
+Use promo code {{ promo_code }} for zero up-front cost. It covers your first $10 in sales.
+
+Details and sign up: {{ business_share_url }}</div>
+    <div class="script-bar">
+      <button type="button" class="btn btn-gold js-sms" data-target="s-text">💬 Open in my text app</button>
+      <button type="button" class="btn btn-teal js-copy" data-target="s-text">Copy message</button>
+      <span class="copied" aria-live="polite"></span>
+    </div>
+
+    <h3>2. Email</h3>
+    <div class="script" id="s-email">Hi [name],
+
+I'm [your name], a customer of [business] and a member of Perk Miner. I'm participating in a 45-day challenge with Perk Miner and advertisers are needed, which benefits both members and advertisers. Here are the benefits of becoming an advertiser:
+
+• Free listing with your own public business page.
+• 1,000% Return on Ad Spend or higher: you pay only 10% of the total sale, capped at $250 per transaction. No sale = $0 in fees.
+• No contracts, membership fees or hidden fees.
+• Exclusive leads, website and foot traffic, phone calls, appointments and meet-ups cost you nothing.
+• Real-time metrics: sales, fees paid and your return on ad spend.
+• You earn 1% cash back when you finalize a sale, plus commissions when you refer other businesses.
+
+Use promo code {{ promo_code }} to list with zero up-front cost. It covers your first $10 in sales at no charge. If your smallest sale is more than $10, you add funds to your account balance to cover the fee. That is not an advertising fee: it is pre-funded advertising dollars that stay in your balance until you make a sale or close a deal.
+
+You can read the details and register here:
+{{ business_share_url }}
+
+Happy to answer any questions.
+
+Thanks,
+[your name]</div>
+    <div class="script-bar">
+      <button type="button" class="btn btn-gold js-mailto" data-target="s-email" data-subject="A no-risk way to get more customers at [business]">✉ Open in my email app</button>
+      <button type="button" class="btn btn-teal js-copy" data-target="s-email">Copy email</button>
+      <span class="copied" aria-live="polite"></span>
+    </div>
+    {% if invite_post_url %}
+    <form class="invite-form" method="post" action="{{ invite_post_url }}" style="margin:0 0 22px">
+      {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+      <input type="hidden" name="invitee_type" value="business">
+      <label class="small" for="invitee-business-email"><strong>Or let Perk Miner email the business an invitation from you:</strong></label>
+      <div class="linkrow" style="margin-top:6px">
+        <input type="email" id="invitee-business-email" name="invitee_email" placeholder="Business email address" required>
+        <button type="submit" class="btn btn-teal">Send business invite</button>
+      </div>
+      <p class="muted small" style="margin:0">Make sure your name is in your profile so the business knows who invited them.</p>
+    </form>
+    {% endif %}
+
+    <h3>3. Social media post (use with the downloaded flyer)</h3>
+    <div class="script" id="s-social">Attention Business Owners:
+
+I'm taking part in a 45-day challenge with Perk Miner, and advertisers are needed. It benefits both members and advertisers.
+
+• 1,000% Return on Ad Spend or higher: you pay only 10% of the total sale (capped at $250 per transaction). No sale = $0
+• No contracts, no monthly fees, no subscriptions
+• Exclusive leads, calls, appointments and foot traffic at no cost
+• Earn 1% cash back on finalized sales, plus commissions for inviting other businesses
+• Use promo code {{ promo_code }}: zero up-front cost, and your first $10 in sales is covered
+
+It's low risk and focused on real results. Happy to answer any questions.
+
+Join as an advertiser through my link:
+{{ business_share_url }}</div>
+    <div class="script-bar">
+      <button type="button" class="btn btn-teal js-copy" data-target="s-social">Copy caption + link</button>
+      <button type="button" class="btn btn-outline js-share" data-target="s-social" style="display:none">Share…</button>
+      <span class="copied" aria-live="polite"></span>
+    </div>
+
+    <h3>4. In person or on the phone</h3>
+    <div class="script" id="s-main">Hi [name], I'm [your name]. I'm a Perk Miner member and I'm participating in a 45-day challenge with them. Advertisers are needed, and it helps both members and advertisers.
+
+Here's why it's worth a look. You pay only 10% of a sale, capped at $250 per transaction, and only when a sale closes. That's a 1,000% Return on Ad Spend or higher. No sale means $0 in fees. There are no contracts, and leads, calls and foot traffic cost you nothing.
+
+If you use the code {{ promo_code }}, there's zero up-front cost, and your first $10 in sales is covered.
+
+Can I text you my link so you can look at it when you have a minute?</div>
+    <div class="script-bar"><button type="button" class="btn btn-teal js-copy" data-target="s-main">Copy script</button><span class="copied" aria-live="polite"></span></div>
+
+    <h3>5. Follow-up (2 to 3 days later)</h3>
+    <div class="script" id="s-follow">Hi [name], it's [your name] again. I wanted to check whether you had a chance to look at the Perk Miner advertiser page. With code {{ promo_code }} there's zero up-front cost, and you only pay 10% of a sale (a 1,000% Return on Ad Spend or higher). Here's my link again: {{ business_share_url }}. Do you have any questions I can help with?</div>
+    <div class="script-bar">
+      <button type="button" class="btn btn-gold js-sms" data-target="s-follow">💬 Open in my text app</button>
+      <button type="button" class="btn btn-teal js-copy" data-target="s-follow">Copy message</button>
+      <span class="copied" aria-live="polite"></span>
+    </div>
+  </div>
+
+  <div class="card" id="answers">
+    <h2>Answers to common questions</h2>
+    <dl class="qa">
+      <dt>"What does it cost?"</dt>
+      <dd>Listing is free. They pay 10% of the total sale, capped at $250 per transaction, and only when a sale is finalized. That is a 1,000% Return on Ad Spend or higher. With code {{ promo_code }} there is zero up-front cost and their first $10 in sales is covered.</dd>
+      <dt>"What if my sales are bigger than $10?"</dt>
+      <dd>They add funds to their account balance to cover the fee. It is not an advertising fee. It is pre-funded advertising dollars that stay in their balance until they make a sale or close a deal, and unused funds stay in the balance.</dd>
+      <dt>"What if I don't get any sales?"</dt>
+      <dd>Then there are no fees. No sale means $0.</dd>
+      <dt>"Is there a contract?"</dt>
+      <dd>No. There are no contracts, commitments, membership fees or hidden fees.</dd>
+      <dt>"How do I know a sale came from Perk Miner?"</dt>
+      <dd>Members pay the business directly, and the business finalizes each transaction by scanning a QR code (it takes seconds) or remotely. Fees are charged only at that point.</dd>
+      <dt>"What do I get besides customers?"</dt>
+      <dd>A public business page, real-time metrics, 1% cash back on finalized sales, and referral and mutual commissions.</dd>
+      <dt>"Where do I sign up?"</dt>
+      <dd>Through your link: <a href="{{ business_share_url }}">{{ business_share_url }}</a>. If they have questions, they can email support@perkminer.com.</dd>
+      <dt>Anything you can't answer?</dt>
+      <dd>It's fine to say, "Good question, let me find out," and send them to support@perkminer.com.</dd>
+    </dl>
+  </div>
+
+  <div class="card" id="dos">
+    <h2>Do &amp; don't</h2>
+    <div class="grid grid-2">
+      <div>
+        <h3>Do</h3>
+        <ul>
+          <li>Say you are a Perk Miner member in the 45-Day Challenge.</li>
+          <li>Mention the 1,000% Return on Ad Spend along with the 10% fee, and mention {{ promo_code }}.</li>
+          <li>Explain that pre-funded balance is not an advertising fee.</li>
+          <li>Always send your own link.</li>
+          <li>Accept "no" or "not now" politely and follow up only once.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Don't</h3>
+        <ul>
+          <li>Promise sales or earnings. The return applies to finalized sales, and results vary.</li>
+          <li>Pressure anyone or keep contacting after a "no".</li>
+          <li>Film anyone without their clear permission.</li>
+          <li>Make up details. If you don't know, point them to support@perkminer.com.</li>
+          <li>Say you are an employee of Perk Miner. You are a member taking part in the challenge.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <p><a class="btn btn-outline" href="{{ url_for('docuseries.member') }}">← Back to my docuseries dashboard</a></p>
+</div>
+
+<script>
+(function () {
+  function flash(node, ok) {
+    if (!node) return;
+    node.textContent = ok ? 'Copied!' : 'Press and hold to select the text, then copy.';
+    setTimeout(function () { node.textContent = ''; }, 3000);
+  }
+  function copyText(text, el, node) {
+    function legacy() {
+      var r = document.createRange(); r.selectNodeContents(el);
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+      flash(node, ok);
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () { flash(node, true); }, legacy);
+    } else { legacy(); }
+  }
+  function msgText(id) { return document.getElementById(id).innerText.trim(); }
+  function note(btn) { return btn.parentNode.querySelector('.copied'); }
+
+  document.querySelectorAll('.js-copy').forEach(function (b) {
+    b.addEventListener('click', function () { copyText(msgText(b.dataset.target), document.getElementById(b.dataset.target), note(b)); });
+  });
+  document.querySelectorAll('.js-copy-value').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var inp = document.getElementById(b.dataset.source);
+      inp.select();
+      var n = document.getElementById('link-copied');
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(inp.value).then(function () { flash(n, true); }, function () { flash(n, false); });
+      } else { var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} flash(n, ok); }
+    });
+  });
+  document.querySelectorAll('.js-sms').forEach(function (b) {
+    b.addEventListener('click', function () { window.location.href = 'sms:?&body=' + encodeURIComponent(msgText(b.dataset.target)); });
+  });
+  document.querySelectorAll('.js-mailto').forEach(function (b) {
+    b.addEventListener('click', function () {
+      window.location.href = 'mailto:?subject=' + encodeURIComponent(b.dataset.subject) + '&body=' + encodeURIComponent(msgText(b.dataset.target));
+    });
+  });
+  if (navigator.share) {
+    document.querySelectorAll('.js-share').forEach(function (b) {
+      b.style.display = '';
+      b.addEventListener('click', function () { navigator.share({ text: msgText(b.dataset.target) }).catch(function () {}); });
+    });
+  }
+})();
+</script>
+{% endblock %}

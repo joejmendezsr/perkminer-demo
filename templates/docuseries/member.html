@@ -6,9 +6,61 @@
 <div class="submenu">
   <div class="wrap">
     <a href="/dashboard">Dashboard</a>
+    <a href="#live">Live recordings</a>
+    <a href="#milestones">Milestone videos</a>
+    <a href="{{ url_for('docuseries.how_to_invite_businesses') }}">Invite businesses</a>
     <a href="{{ url_for('docuseries.episodes') }}" target="_blank" rel="noopener">Episodes ↗</a>
   </div>
 </div>
+{% endblock %}
+
+{% macro slot_card(s, max_mb) %}
+<div class="card upload-card{% if s.status == 'locked' %} locked{% endif %}" data-slot="{{ s.number }}" data-max="{{ s.max_seconds }}" data-max-mb="{{ max_mb }}">
+  <h2>{{ s.title }}</h2>
+  {% if s.hint %}<p class="muted small" style="margin-top:-6px">{{ s.hint }}</p>{% endif %}
+  <p class="muted small" style="margin-top:-4px">Video #{{ s.number }} · limited to {{ s.max_seconds }} seconds · allowed once</p>
+
+  {% if s.status == 'uploaded' %}
+    <div class="callout ok" style="margin:0">
+      <span class="ic" aria-hidden="true">✅</span>
+      <div><p><strong>Uploaded</strong></p>
+      <p class="small">{{ s.video.completed_at|ds_dt }}{% if s.video.duration_seconds %} · {{ '%.0f'|format(s.video.duration_seconds) }}s{% endif %}</p></div>
+    </div>
+  {% elif s.status == 'locked' %}
+    <div class="callout info" style="margin:0">
+      <span class="ic" aria-hidden="true">🔒</span>
+      <p class="small">{{ s.unlock }}</p>
+    </div>
+  {% else %}
+    {% if s.number > 2 %}<p style="margin:0 0 10px"><span class="badge ok">🎉 Unlocked: record yours now</span></p>{% endif %}
+    <div class="filebox">
+      <label for="file-{{ s.number }}" class="small"><strong>Choose a video</strong> (MP4, MOV or WebM, up to {{ max_mb }} MB)</label><br>
+      <input type="file" id="file-{{ s.number }}" accept="video/*,.mp4,.mov,.webm">
+    </div>
+    <progress class="js-bar" value="0" max="100" style="width:100%;margin-top:12px;display:none" aria-label="Upload progress"></progress>
+    <p class="js-msg small" style="min-height:1.4em;margin:10px 0" aria-live="polite"></p>
+    <button type="button" class="btn btn-teal js-upload" disabled>Upload video</button>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% block head %}
+<style>
+.upload-card.locked{opacity:.78;background:#f3f7f7}
+.upload-card.locked h2{color:var(--muted)}
+.live-item{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+.live-item:last-child{border-bottom:0}
+.live-date{flex:none;min-width:150px;font-weight:700;color:var(--teal-d)}
+.live-body{flex:1;min-width:0}
+.dirs{margin-top:10px;padding:10px 12px;background:var(--teal-l);border-radius:10px}
+.dirs .btn-sm{margin-top:8px}
+.dir-text{white-space:pre-line;margin-top:2px}
+.btn-sm{padding:8px 14px;font-size:.88rem;border-radius:10px}
+.status-row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-top:12px}
+.status-row select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;min-width:170px}
+.status-msg{min-width:90px}
+@media (max-width:560px){.live-item{flex-direction:column;gap:4px}}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -28,20 +80,69 @@
   </div>
   {% endif %}
 
+  {% if not challenge.started %}
   <div class="callout warn">
     <span class="ic" aria-hidden="true">⛔</span>
     <div>
-      <p><strong>Important:</strong> Do not make any purchases from any advertisers until day one of the challenge! On day one, your earnings must be $0.</p>
-      <p>Do not invite any other people to become members or businesses to advertise until day one of the challenge.</p>
+      <p><strong>Important:</strong> Do not make any new purchases from any advertisers until day one of the challenge! On day one, if your earnings are not $0, you must document your beginning earnings before starting the challenge.</p>
+      <p>If you have already invited people to become members or businesses to advertise, you must document how many members and businesses you have in your network before starting the challenge.</p>
     </div>
   </div>
+  {% endif %}
 
   <div class="card">
     <h2>Challenge start date</h2>
-    {% if start_date %}
-      <p style="font-size:1.2rem;margin:0"><strong>{{ start_date|ds_date }}</strong></p>
+    {% if challenge.start %}
+      <p style="font-size:1.2rem;margin:0 0 6px"><strong>{{ challenge.start|ds_date }}</strong>
+        {% if challenge.day %}<span class="badge ok" style="margin-left:8px">Day {{ challenge.day }} of {{ challenge.days }}</span>
+        {% elif challenge.finished %}<span class="badge" style="margin-left:8px">Challenge complete</span>
+        {% else %}<span class="badge" style="margin-left:8px">Starting soon</span>{% endif %}</p>
+      <p class="muted small" style="margin:0">Day {{ challenge.days }} is {{ challenge.end|ds_date }}.</p>
     {% else %}
       <p style="margin:0"><span class="badge">To be announced</span></p>
+    {% endif %}
+  </div>
+
+  <div class="card" id="invite-businesses">
+    <h2>Invite businesses to advertise</h2>
+    <p>Part of the challenge is talking to business owners. We wrote the words for you: a short script, answers to common questions and a simple plan.</p>
+    <a class="btn btn-gold" href="{{ url_for('docuseries.how_to_invite_businesses') }}">See how to invite businesses →</a>
+  </div>
+
+  <div class="card" id="live">
+    <h2>Upcoming live recordings - when posted, you must update your status</h2>
+    {% if live_locations %}
+      {% for l in live_locations %}
+      <div class="live-item" data-loc="{{ l.id }}">
+        <div class="live-date">{{ l.starts_at|ds_dt }}</div>
+        <div class="live-body">
+          <strong>{{ l.title }}</strong><br>
+          📍 {{ l.location_name }}{% if l.address %}<br><span class="muted small">{{ l.address }}</span>{% endif %}
+          {% if l.notes %}<p class="small" style="margin:6px 0 0">{{ l.notes }}</p>{% endif %}
+
+          {% if l.directions_url or l.directions %}
+          <div class="dirs">
+            {% if l.directions %}<div class="small"><strong>Driving directions</strong><div class="dir-text">{{ l.directions }}</div></div>{% endif %}
+            {% if l.directions_url %}<a class="btn btn-outline btn-sm" href="{{ l.directions_url }}" target="_blank" rel="noopener">🚗 Get driving directions</a>{% endif %}
+          </div>
+          {% endif %}
+
+          <div class="status-row">
+            <label for="status-{{ l.id }}" class="small"><strong>Your status</strong></label>
+            <select id="status-{{ l.id }}" class="js-status" data-loc="{{ l.id }}" data-prev="{{ l.my_status }}">
+              <option value="">Select one</option>
+              {% for key, label in location_statuses.items() %}
+              <option value="{{ key }}" {{ 'selected' if l.my_status == key }}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <span class="status-msg small" aria-live="polite"></span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      <p class="muted small" style="margin:12px 0 0">Want us to record your experience of you talking to a new business (we will record your experience afterwards - outside of the business unless the business has given us permission to record inside) or a milestone (recording your reaction of reaching any)? Email <a href="mailto:support@perkminer.com?subject=Live%20Recording%20Request">support@perkminer.com</a> with the subject "Live Recording Request".  Note:  These recordings are in addition to your self-recorded uploads and are guaranteed air time in an episode.</p>
+    {% else %}
+      <p class="muted" style="margin:0">No live recordings are scheduled yet. You'll see the date, time and location here as soon as one is added.</p>
     {% endif %}
   </div>
 
@@ -49,33 +150,18 @@
   <p class="muted" style="margin-top:-6px">Each video can be uploaded <strong>once</strong>, so take a moment to make sure it's the one you want. Record in good light, speak clearly, and don't show your email address.</p>
 
   <div class="grid grid-2">
-    {% for s in slots %}
-    <div class="card upload-card" data-slot="{{ s.number }}" data-max="{{ s.max_seconds }}" data-max-mb="{{ max_video_mb }}">
-      <h2>{% if s.number == 1 %}Upload your intro video{% else %}Upload your pre-registration / post-registration video{% endif %}</h2>
-      <p class="muted small" style="margin-top:-4px">Video #{{ s.number }} · limited to {{ s.max_seconds }} seconds · allowed once</p>
-
-      {% if s.video %}
-        <div class="callout ok" style="margin:0">
-          <span class="ic" aria-hidden="true">✅</span>
-          <div><p><strong>Uploaded</strong></p>
-          <p class="small">{{ s.video.completed_at|ds_dt }}{% if s.video.duration_seconds %} · {{ '%.0f'|format(s.video.duration_seconds) }}s{% endif %}</p></div>
-        </div>
-      {% else %}
-        <div class="filebox">
-          <label for="file-{{ s.number }}" class="small"><strong>Choose a video</strong> (MP4, MOV or WebM, up to {{ max_video_mb }} MB)</label><br>
-          <input type="file" id="file-{{ s.number }}" accept="video/*,.mp4,.mov,.webm">
-        </div>
-        <progress class="js-bar" value="0" max="100" style="width:100%;margin-top:12px;display:none" aria-label="Upload progress"></progress>
-        <p class="js-msg small" style="min-height:1.4em;margin:10px 0" aria-live="polite"></p>
-        <button type="button" class="btn btn-teal js-upload" disabled>Upload video</button>
-      {% endif %}
-    </div>
-    {% endfor %}
+    {% for s in slots if s.number <= 2 %}{{ slot_card(s, max_video_mb) }}{% endfor %}
   </div>
 
-  <div class="callout info">
-    <span class="ic" aria-hidden="true">🔓</span>
-    <p>Videos #3–#17 (up to 15 more 60-second experience videos) unlock when the challenge begins.</p>
+  <h2 id="milestones" style="margin:34px 0 14px">Milestone videos</h2>
+  <p class="muted" style="margin-top:-6px">Each of these unlocks when you reach the milestone during the challenge. When one unlocks, record your experience while it's fresh and upload it here.
+    {% if not challenge.started %}<strong>They unlock once the challenge begins.</strong>{% endif %}</p>
+  {% if milestone_error %}
+  <div class="callout warn"><span class="ic" aria-hidden="true">⏳</span><p>We couldn't check your milestone progress just now. Please refresh in a few minutes.</p></div>
+  {% endif %}
+
+  <div class="grid grid-2">
+    {% for s in slots if s.number > 2 %}{{ slot_card(s, max_video_mb) }}{% endfor %}
   </div>
 </div>
 {% endblock %}
@@ -114,6 +200,18 @@
     });
   }
 
+  document.querySelectorAll('.js-status').forEach(function(sel){
+    var msg=sel.parentNode.querySelector('.status-msg'), timer=null;
+    function say(t,bad){msg.textContent=t;msg.style.color=bad?'#b42318':'#1f8a5b';clearTimeout(timer);if(t&&!bad){timer=setTimeout(function(){msg.textContent='';},2500);}}
+    sel.addEventListener('change',function(){
+      var want=sel.value; sel.disabled=true; say('Saving…');
+      api('/docuseries/api/location/'+sel.dataset.loc+'/status',{status:want})
+        .then(function(){sel.dataset.prev=want;say('Saved ✓');})
+        .catch(function(e){sel.value=sel.dataset.prev||'';say(e.message,true);})
+        .then(function(){sel.disabled=false;});
+    });
+  });
+
   document.querySelectorAll('.upload-card[data-slot]').forEach(function(card){
     var input=card.querySelector('input[type=file]'); if(!input)return;
     var n=+card.dataset.slot, max=+card.dataset.max, maxBytes=+card.dataset.maxMb*1048576;
@@ -141,6 +239,13 @@
       api('/docuseries/api/video/init',{video_number:n,filename:file.name,content_type:file.type,size:file.size,duration:duration})
       .then(function(init){
         say('Uploading… please keep this page open.');
+        if(init.mode==='cloudinary'){
+          var cf=new FormData();
+          Object.keys(init.fields).forEach(function(k){cf.append(k,init.fields[k]);});
+          cf.append('file',file);
+          return xhrSend('POST',init.upload_url,cf,{},function(p){bar.value=p;})
+            .then(function(){return api('/docuseries/api/video/'+init.video_id+'/complete');});
+        }
         if(init.mode==='direct'){
           return xhrSend('PUT',init.upload_url,file,{'Content-Type':init.content_type},function(p){bar.value=p;})
             .then(function(){return api('/docuseries/api/video/'+init.video_id+'/complete');});

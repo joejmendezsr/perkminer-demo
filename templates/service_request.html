@@ -1,50 +1,93 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Service Request - {{ business.business_name }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-  <style>
-    @media (max-width: 600px) {
-      .btn, .btn-primary, .btn-secondary { width: 100% !important; margin-bottom: 10px; }
-      .card { padding: 1rem !important; }
-    }
-    .card { max-width: 520px; margin: 0 auto; }
-  </style>
-</head>
-<body>
-<div class="container py-4">
-  <div class="card shadow p-4">
-    <h3 class="mb-3 text-center">Request Service from {{ business.business_name }}</h3>
-    <form method="post">
+{% extends "pm_base.html" %}
+{% block title %}Service Request - {{ business.business_name }} - PerkMiner{% endblock %}
+
+{% block head_extra %}
+<style>
+  .sr-wrap { max-width: 620px; margin: 0 auto; }
+  .money-in { position: relative; }
+  .money-in .cur { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--pm-muted); pointer-events: none; font-weight: 600; }
+  .money-in input { padding-left: 1.6rem; }
+  .sr-counter { text-align: right; }
+  .sr-field-err { color: #a12828; font-size: .85rem; margin-top: .25rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pb-3 sr-wrap">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-tools"></i></div>
+    <div class="pm-hero-body">
+      <div class="pm-hero-sub">Request service from</div>
+      <h1>{{ business.business_name }}</h1>
+    </div>
+    <div class="pm-hero-actions">
+      <a href="{{ url_for('view_listing', biz_id=business.id) }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back to Listing</a>
+    </div>
+  </div>
+
+  <div class="card p-3 p-md-4">
+    <form method="post" novalidate>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <div class="mb-3">
-        {{ form.service_type.label(class="form-label") }}
+        {{ form.service_type.label(class="form-label fw-semibold") }}
         {{ form.service_type(class="form-select") }}
+        {% for e in form.service_type.errors %}<div class="sr-field-err">{{ e }}</div>{% endfor %}
       </div>
+
       <div class="mb-3">
-        {{ form.details.label(class="form-label") }}
-        {{ form.details(class="form-control", rows=4, maxlength=1000, placeholder="Describe the work needed...") }}
-        <div class="form-text">Max: 1000 characters.</div>
+        {{ form.details.label(class="form-label fw-semibold") }}
+        {{ form.details(class="form-control", rows=5, maxlength=1000, placeholder="Describe the work needed...") }}
+        <div class="d-flex justify-content-between form-text">
+          <span>Max: 1000 characters.</span><span class="sr-counter" id="sr-count">0 / 1000</span>
+        </div>
+        {% for e in form.details.errors %}<div class="sr-field-err">{{ e }}</div>{% endfor %}
       </div>
-      <div class="row mb-3">
-        <div class="col-12 col-md-6 mb-3 mb-md-0">
-          {{ form.budget_low.label(class="form-label") }}
-          {{ form.budget_low(class="form-control", placeholder="Low end") }}
+
+      <div class="fw-semibold mb-1">Your budget <span class="text-muted fw-normal">(optional)</span></div>
+      <div class="row g-3 mb-3">
+        <div class="col-12 col-md-6">
+          {# value="" when the stored value is empty/0 so members can type right away #}
+          {% set low_val = form.budget_low.data if form.budget_low.data not in (none, 0, 0.0, '0', '0.00') else '' %}
+          {% set high_val = form.budget_high.data if form.budget_high.data not in (none, 0, 0.0, '0', '0.00') else '' %}
+          <div class="money-in">
+            <span class="cur">$</span>
+            {{ form.budget_low(class="form-control", placeholder="Realistic low", value=low_val, inputmode="decimal", autocomplete="off", **{"aria-label": "Realistic low"}) }}
+          </div>
+          {% for e in form.budget_low.errors %}<div class="sr-field-err">{{ e }}</div>{% endfor %}
         </div>
         <div class="col-12 col-md-6">
-          {{ form.budget_high.label(class="form-label") }}
-          {{ form.budget_high(class="form-control", placeholder="High end") }}
+          <div class="money-in">
+            <span class="cur">$</span>
+            {{ form.budget_high(class="form-control", placeholder="Realistic high", value=high_val, inputmode="decimal", autocomplete="off", **{"aria-label": "Realistic high"}) }}
+          </div>
+          {% for e in form.budget_high.errors %}<div class="sr-field-err">{{ e }}</div>{% endfor %}
         </div>
       </div>
+
       <div class="d-flex flex-wrap gap-2">
-        {{ form.submit(class="btn btn-primary flex-grow-1") }}
-        <a href="{{ url_for('view_listing', biz_id=business.id) }}" class="btn btn-secondary flex-grow-1">Cancel</a>
+        {{ form.submit(class="btn btn-primary btn-lg flex-grow-1") }}
+        <a href="{{ url_for('view_listing', biz_id=business.id) }}" class="btn btn-outline-secondary btn-lg flex-grow-1">Cancel</a>
       </div>
     </form>
   </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  // budget boxes: select any leftover "0" / "0.00" on focus so typing replaces it
+  ['budget_low', 'budget_high'].forEach(function (n) {
+    var el = document.getElementById(n) || document.querySelector('[name="' + n + '"]');
+    if (!el) return;
+    if (/^0*\.?0*$/.test(el.value.trim())) el.value = '';
+    el.addEventListener('focus', function () { if (/^0*\.?0*$/.test(el.value.trim())) el.value = ''; else el.select(); });
+  });
+  // character counter
+  var d = document.getElementById('details') || document.querySelector('[name="details"]');
+  var c = document.getElementById('sr-count');
+  if (d && c) { var u = function () { c.textContent = d.value.length + ' / 1000'; }; d.addEventListener('input', u); u(); }
+})();
+</script>
+{% endblock %}
