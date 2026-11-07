@@ -1,6 +1,6 @@
 {% extends "pm_base.html" %}
 {% from 'pm_macros.html' import status_badge %}
-{% block title %}Active Session – PerkMiner{% endblock %}
+{% block title %}Active Session – Perk Miner{% endblock %}
 
 {% block head_extra %}
 <style>
@@ -33,6 +33,8 @@
     <div class="pm-hero-actions">
       {% if is_user %}
         <a href="{{ url_for('user_biz_interactions') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back</a>
+      {% elif is_biz and business.owner_user_id %}
+        <a href="{{ url_for('freelance_console') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back</a>
       {% elif is_biz %}
         <a href="{{ url_for('biz_user_interactions') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back</a>
       {% endif %}
@@ -155,6 +157,12 @@
         {% if is_biz %}
           <div class="card p-3">
             <div class="card-title-row"><i class="bi bi-cash-coin"></i><h5>Payment &amp; quote</h5></div>
+            {% if business.owner_user_id %}
+              {% if interaction.awaiting_finalization %}<div class="pm-note ok mb-3"><i class="bi bi-qr-code"></i> The member is ready to pay.</div>{% endif %}
+              <a href="{{ url_for('freelance_finalize', interaction_id=interaction.id) }}" class="btn btn-warning btn-lg w-100">
+                <i class="bi bi-check2-circle"></i> Finalize Payment
+              </a>
+            {% else %}
             {% if interaction.awaiting_finalization %}
               <div class="pm-note ok mb-3"><i class="bi bi-qr-code"></i> The member is showing their QR code and is ready to pay.</div>
               <a href="{{ url_for('scan_qr', interaction_id=interaction.id) }}" class="btn btn-warning btn-lg w-100 mb-2">
@@ -164,6 +172,7 @@
             <a href="{{ url_for('create_quote', interaction_id=interaction.id) }}" class="btn btn-warning w-100">
               <i class="bi bi-receipt"></i> Send Quote
             </a>
+            {% endif %}
           </div>
         {% endif %}
         </div>

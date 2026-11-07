@@ -1,263 +1,106 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>About Us — PerkMiner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <style>
-    :root {
-      --pm-primary: #214d4e;
-      --pm-accent: #ffd66b;
-      --pm-bg: #f9fbfa;
-      --pm-text: #1a3132;
-      --pm-muted: #6a8690;
-      --pm-shadow: 0 4px 28px rgba(33,77,78,0.07);
-    }
-    body { background: var(--pm-bg); color: var(--pm-text); font-family: 'Segoe UI',sans-serif; }
+{% extends "pm_public_base.html" %}
+{% block title %}About Us — Perk Miner{% endblock %}
 
-    .navbar-light.bg-light {
-      background: #fff !important;
-      border-bottom: 1px solid #e1e7ea;
-      box-shadow: 0 2px 12px #e0e7eb22;
-    }
-    .navbar-brand img.nav-logo { height: 54px; width: auto; max-width: 130px; }
+{% block head_extra %}
+{{ super() }}
+<style>
+  .ab-founder { display: flex; gap: .9rem; align-items: center; flex-wrap: wrap; margin-bottom: .5rem; }
+  .ab-founder img { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid var(--pm-accent); background: #fff; flex-shrink: 0; }
+  .ab-founder .nm { font-weight: 800; font-size: 1.15rem; color: var(--pm-primary-dark); }
+  .ab-linkedin { display: inline-flex; align-items: center; gap: .4rem; color: #0A66C2 !important; font-weight: 600; text-decoration: none; padding: .2rem .8rem; border: 1.5px solid #0A66C2; border-radius: 999px; font-size: .92rem; }
+  .ab-linkedin:hover { background: #0A66C2; color: #fff !important; }
+  .ab-goals { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; list-style: none; margin: 0; padding: 0; }
+  .ab-goals li { background: var(--pm-hover); border: 1px solid #cfe5e4; border-radius: 12px; padding: .55rem .8rem; display: flex; gap: .5rem; align-items: center; font-size: .95rem; }
+  @media (max-width: 576px) { .ab-goals { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
 
-    .about-hero {
-      background: linear-gradient(120deg, var(--pm-primary) 85%, var(--pm-accent) 100%);
-      color: #fff; text-align: center; padding: 2.8rem 1.2rem 2rem 1.2rem; box-shadow: var(--pm-shadow);
-      border-radius: 0 0 30px 30px;
-    }
-    .about-hero h1 { font-size: 2.6rem; font-weight: 900; letter-spacing: -1px; }
+{% block content %}
+<div class="pp-wrap">
 
-    /* All content sections share the same width, centering and side gutters */
-    .about-section,
-    .founder-section {
-      width: calc(100% - 1.5rem);
-      max-width: 750px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .about-section {
-      margin-top: 2.3rem; margin-bottom: 2.6rem;
-      background: #fff; border-radius: 20px; box-shadow: var(--pm-shadow);
-      padding: 2.2rem 1.5rem 1.7rem 1.5rem;
-    }
-    .about-title { font-size: 1.5rem; font-weight: 700; color: var(--pm-primary); margin-bottom: 1rem; }
-    .about-text { font-size: 1.13rem; color: var(--pm-text); line-height: 1.65; }
-    .about-text p { margin-bottom: 1.1rem; }
-
-    .about-subhead {
-      font-size: 1.1rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
-      color: var(--pm-primary);
-      border-bottom: 2px solid var(--pm-accent);
-      padding-bottom: .35rem;
-      margin: 1.8rem 0 1rem 0;
-    }
-    .about-subhead:first-child { margin-top: 0; }
-
-    .closing-statement {
-      background: #f6f8fa;
-      border-left: 4px solid var(--pm-accent);
-      border-radius: 10px;
-      padding: 1rem 1.2rem;
-      font-weight: 700;
-      margin-top: 1.8rem;
-      margin-bottom: 0;
-    }
-
-    .team-grid { display: flex; flex-wrap: wrap; gap:1.6rem; justify-content: center; }
-    .team-card {
-      background: #f8f8fc; border-radius: 15px; box-shadow: 0 2px 12px #dee9e8; max-width:190px;
-      padding: 1.1rem 1rem 1.2rem 1rem; text-align: center;
-    }
-    .team-image {
-      width: 76px; height:76px; border-radius: 50%;
-      object-fit: cover; margin-bottom: 0.7rem; border:3px solid var(--pm-primary); background: #fff;
-    }
-    .team-name { font-weight: 700; color: var(--pm-primary); font-size:1.11rem; }
-    .team-role { color: var(--pm-muted); font-size:0.98em; margin-bottom: 0.56em; }
-
-    /* Founder */
-    .founder-section {
-      background: linear-gradient(97deg, #f5f8fa 65%, #f9f5e6 100%);
-      padding: 2.1rem 1.5rem 1.7rem 1.5rem;
-      border-radius: 24px;
-      margin-top: 2.6rem; margin-bottom: 2.1rem;
-      text-align: center;
-      box-shadow: 0 2px 12px #dde7e4;
-    }
-    .founder-img {
-      width: 110px; height: 110px; border-radius: 50%;
-      object-fit: cover; border: 3px solid var(--pm-accent);
-      margin-bottom: 0.7rem; background: #fff;
-    }
-    .founder-name {
-      font-size: 1.3rem; font-weight: 700; color: var(--pm-primary); margin-bottom: 0.3rem;
-    }
-    .founder-linkedin {
-      display: inline-flex; align-items: center; gap: 8px;
-      color: #0A66C2; font-weight: 600; text-decoration: none;
-      padding: 0.35rem 0.9rem; border: 1.5px solid #0A66C2; border-radius: 999px;
-      margin-bottom: 1.2rem;
-      transition: background .15s ease, color .15s ease;
-    }
-    .founder-linkedin:hover { background: #0A66C2; color: #fff; }
-    .founder-linkedin i { font-size: 1.4rem; line-height: 1; }
-    .founder-bio { text-align: left; font-size: 1.08rem; line-height: 1.7; }
-    .founder-bio p { margin-bottom: 1.1rem; }
-    .founder-bio p:last-child { margin-bottom: 0; }
-
-    /* Goals */
-    .future-goals-list { margin: 1.2rem 0 0 0; padding: 0; list-style: none; }
-    .future-goal-item {
-      font-size: 1.09em;
-      margin-bottom: 0.8em;
-      background: #f6f8fa;
-      padding: 0.9em 1.2em;
-      border-radius: 12px;
-      color: #305a5b;
-      box-shadow: 0 1px 6px #e8eeea;
-      display: flex; align-items: center; gap: 0.7em;
-    }
-    .future-goal-icon { color: var(--pm-accent); font-size: 1.2em; }
-
-    @media (max-width: 600px) {
-      .about-hero h1 { font-size: 1.6rem; }
-      .about-section { padding: 1.4rem 1rem; }
-      .about-text { font-size: 1.05rem; }
-      .founder-section { padding: 1.6rem 1rem 1.4rem 1rem; }
-      .team-grid { gap: 0.6rem; }
-      .team-card { max-width: 95vw; }
-    }
-
-    /* Footer */
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
-
-  </style>
-</head>
-<body>
-  <!-- Navigation Bar -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-0">
-    <div class="container">
-      <a class="navbar-brand d-flex align-items-center" href="/">
-        <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="nav-logo">
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <div class="navbar-nav ms-auto">
-          <a class="nav-link" href="/">Home</a>
-          <a class="nav-link" href="/login">Member Login</a>
-          <a class="nav-link" href="/register">Member Register</a>
-          <a class="nav-link" href="/business">Advertise with Us</a>
-          <a class="nav-link" href="/news">News</a>
-          <a class="nav-link" href="/faq">FAQ</a>
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  <div class="about-hero">
-    <h1>About PerkMiner</h1>
-    <div style="font-size:1.14rem; font-weight:500; margin-top:0.9em;">
-      Pay-Per-Sale Advertising Platform Built Around Consumer Privacy, Cash Rewards and Word-of-Mouth.
+  <div class="card pm-hero">
+    <div class="pm-hero-icon"><i class="bi bi-info-circle"></i></div>
+    <div class="pm-hero-body">
+      <div class="pm-hero-sub">About us</div>
+      <h1>About Perk Miner</h1>
+      <div class="pm-hero-sub">Pay-per-sale advertising built around consumer privacy, cash rewards and word-of-mouth.</div>
     </div>
   </div>
 
-  <!-- Mission Statement -->
-  <section class="about-section" id="mission">
-    <div class="about-title">Our Mission</div>
-    <div class="about-text">
-
-      <div class="about-subhead">For Our Members</div>
-
-      <p><b>Free Membership:</b> To create the best no-cost online marketplace that connects members to businesses. Members join for free and will never pay a fee to join or remain as a member. There are no contracts, subscription fees, membership fees or commitment.</p>
-
-      <p><b>Protecting Member Privacy:</b> To give members control over their personal data by providing a clean, ad-free and privacy-first experience when searching for a business, product or service. At PerkMiner, member privacy is not an option ... it is our absolute standard. We believe that a member's personal data belongs to our members. Unlike traditional networks that collect, harvest and sell user data to the highest bidder as a lead, Perk Miner LLC will never collect more than your name and email address for account creation. We connect members with businesses (through secure messaging), where members can search for a business, product or service without having to worry about their data and contact information being compromised, sold, exploited or shared. Members decide to whom and when they disclose any contact information to any advertiser and even then, they share that information with one business at a time since we connect one member to one business at a time. Members will never receive spam email, unsolicited phone calls or uninvited sales people showing up at their door.</p>
-
-      <p><b>Real Cash Rewards:</b> To generously reward our members and give them the opportunity to earn more than what they spend with our advertisers. Members can enjoy the benefits of earning cashback and referral commissions. Members earn 2% cash back on up to $2,500 of their purchase and earn referral commissions when people and businesses they refer generate qualifying purchases or sales (paid by Perk Miner LLC). We believe that Word of Mouth advertising is the most powerful and trusted form of advertising, which is why up to 6 members (when all applicable payouts are active) earn up to 56% of the advertising revenue Perk Miner receives from every finalized transaction. Members earn additional revenue when people they refer make purchases from any advertiser and they also earn commissions when businesses they refer generate sales and finalize those transactions. We heavily invest in our members, which is why we re-invest our advertising revenue back into the ecosystem.</p>
-
-      <p><b>Live GPS Tracking:</b> To give our members peace of mind when interacting with any of our service-related advertisers. We believe that time is money and know that many service-providers leave their members in the dark when it comes to scheduled appointments for in-person service requests or meet-ups. We allow our members to receive up-to-date statuses from service providers and when the service provider changes the status to “on the way”, our members can see the exact location of the service provider and see the Estimated Time of Arrival. We also allow our members to confirm the destination address and if needed, input the correct destination address if it is incorrect to make sure that the service provider has the correct address.</p>
-
-      <div class="about-subhead">For Our Advertisers</div>
-
-      <p><b>Zero Wasted Advertising Dollars:</b> To provide a true Pay-Per-Sale / Pay-Per-Close model with total transparency. Just like we value our members, we value our advertisers, which is why business owners are able to advertise and grow their business without experiencing the frustration of wasted advertising dollars. This is a true Pay Per Sale (PPS) / Pay Per Close (PPC) model: no sale or closed deal = no fee.</p>
-
-      <p><b>Minimum 10x - 1,000% Return on Advertising Spend (ROAS):</b> To provide a high ROAS for all advertisers and eliminate the guessing game of trying to figure out what’s working and not working when trying to grow your business. Advertisers only pay 10% of the total sale, capped at $250 with no hidden fees, contract, membership or subscription fees and no commitment. We want businesses to succeed without paying a large fee that affects their profit margins.</p>
-
-      <p><b>No Cost For Exclusive Leads, PPC, SEO, Website or Foot Traffic, Appointments, Phone Calls or Meet-Ups:</b> To provide a worry-free marketing experience for our advertisers by giving our advertisers all the tools they need to grow their business without charging any additional fees. Unlike many other marketing agencies that solely rely on generating their revenue from oversold leads to as many competitors as possible, expensive Pay-Per-Click campaigns, ineffective Search Engine Optimization techniques and more, we provide all of this and more for our advertisers at zero cost. Not only are our leads exclusive (one member to one business at a time), any website or foot traffic, any phone calls, appointments and meet-ups are also free-of-charge. If our advertisers don’t make a sale or close a deal, they pay zero dollars.</p>
-
-      <p><b>Real Cash Rewards:</b> To generously reward our advertisers and give them the opportunity to earn additional revenue for their business. Advertisers can enjoy the benefits of earning cashback and referral commissions. Advertisers earn 1% cash back on up to $2,500 of every sale they make (finalized transactions) in exchange for offering at-least one perk to our members and earn referral commissions when businesses they refer generate qualifying sales (paid by Perk Miner LLC). We believe that Word of Mouth advertising is the most powerful and trusted form of advertising, which is why up to 6 advertisers (when all applicable payouts are active) earn up to 28% of the advertising revenue Perk Miner receives from every finalized transaction. Advertisers earn additional revenue when businesses they refer generate qualifying sales and finalize those transactions. We heavily invest in our advertisers, which is why we re-invest our advertising revenue back into the ecosystem.</p>
-
-      <p><b>Free Listing – Low Start Up:</b> To allow our advertisers to get started for as little as $25 in pre-funded advertising dollars (this is not an advertising fee and is dependent on the advertiser's lowest sale amount). Our advertisers are never charged to list their business, however, they are required to pre-fund their account to cover the cost of the advertising fees associated with every finalized transaction. Any unused funds remain in the advertiser's account balance. The advertising fee itself is deducted from the account balance upon successful finalization of a completed sale or closed deal.</p>
-
-      <p><b>Live GPS Tracking:</b> To give our advertisers peace of mind when there’s a team of service providers in the field by providing real-time status updates of the service call and being able to track their location when “on the way”. We understand that not knowing the status of a call or knowing where your employees are when in the field not only wastes time, but can cost unnecessary expenses, especially when the destination address is incorrect. Think about the added fuel costs, the added wear-and-tear on vehicles, but even worse, what about the frustrated client that’s been waiting for their arrival. We allow our members to confirm and if necessary, correct the incorrect destination address. Our advertisers can see where the service provider is in real-time when their status is set to “on the way”.</p>
-
-      <p class="closing-statement">Perkminer.com is a platform where everyone (members and business owners) wins — no gimmicks, no membership fees, no contracts, no commitment, honest rewards, real results for businesses, and a trusted digital marketplace for everyone to enjoy. All cashback and commissions are paid by Perk Miner LLC (from the advertising revenue received) and is real cash that you can withdraw to your bank account (you don't earn points or gift cards). Perk Miner LLC pays out up to 84% of the advertising revenue received from every finalized transaction <a href="https://www.perkminer.com/full_payout_sample" target="_blank" rel="noopener">(See full payout sample)</a>. This is how we prove that we value our members and our advertisers ... by giving you a sense of ownership. Together, we all win.</p>
+  <!-- Mission -->
+  <div class="row g-2" id="mission">
+    <div class="col-md-6 d-flex">
+      <div class="card p-3 w-100">
+        <div class="pp-h"><i class="bi bi-person-heart"></i> For our members</div>
+        <ul class="pp-list">
+          <li><b>Always free.</b> No membership or subscription fees, no contracts, no commitment.</li>
+          <li><b>Privacy first.</b> We only collect your name and email to create your account. We never sell, share or harvest your data as a lead.</li>
+          <li><b>One business at a time.</b> You connect through secure messaging and decide who gets your contact info, and when. No spam, no unsolicited calls, no uninvited salespeople.</li>
+          <li><b>Real cash rewards.</b> 2% cash back on up to $2,500 of each purchase, plus referral commissions when people and businesses you refer make qualifying purchases or sales.</li>
+          <li><b>Word of mouth pays.</b> Up to 6 members (when all payouts are active) earn up to 56% of the ad revenue from every finalized transaction.</li>
+          <li><b>Live GPS tracking.</b> For service calls, see the provider's status, their exact location and ETA once "on the way", and confirm or correct the destination address.</li>
+        </ul>
+      </div>
     </div>
-  </section>
 
-  <!-- About the Founder -->
-  <section class="founder-section" id="founder">
-    <img class="founder-img" src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1777423493/IMG_0505_dhvf6h.jpg" alt="Joe Mendez, Founder of PerkMiner">
-    <div class="founder-name">Joe Mendez, Founder</div>
-
-    <a class="founder-linkedin"
-       href="https://www.linkedin.com/in/Joe-Mendez-PerkMiner"
-       target="_blank" rel="noopener noreferrer"
-       aria-label="Joe Mendez on LinkedIn (opens in a new tab)">
-      <i class="bi bi-linkedin" aria-hidden="true"></i>
-      <span>Connect with Joe on LinkedIn</span>
-    </a>
-
-    <div class="founder-bio">
-      <p>Joe is passionate about building honest, results-driven connections between members and businesses, with privacy as a top priority (it's our standard). Member data is protected in a way that business owners do not have access to a member's contact information until the member decides to whom and when they want to disclose that information, and even then, only one business gets that information at a time (not sold to multiple competing businesses who are trying to earn a member's business). Drawing on decades of experience in business, tech, and advertising agencies, he knows the frustration of wasted ad dollars (paying for leads, PPC, SEO, etc.) and getting <b>Zero Sales</b> or having ad fees that drastically reduce your profit margins.</p>
-
-      <p>As a consumer, Joe understands what it's like having your personal data sold to other companies as a lead (non-stop phone calls, your mailbox getting filled with spam emails, etc.). That's why Joe incorporated secure messaging as a way for members and businesses to connect without ever compromising a member's contact information.</p>
-
-      <p>In 2007, Joe created a Pay-Per-Sale/Pay-Per-Close model to help businesses achieve real results without high costs—obtaining a program copyright in 2008. With PerkMiner, he flipped the script: businesses earn cashback from making sales, not purchases, enjoying a minimum 900% ROI, which is a 1000% Return on Ad Spend (paying $1 or less in fees for every $10 sold - max $250), plus cash back and referral commissions.</p>
-
-      <p>Joe knows real WORD-OF-MOUTH is the best advertising. That’s why PerkMiner pays out up to 84% of its ad revenue to reward members and business owners who spread the word and complete sales—so everyone wins.</p>
-
-      <p>Joe is also a U.S. Navy (naval intelligence) and law enforcement (police sergeant) veteran. PerkMiner is his vision for helping businesses grow—with trust and transparency at the center, while providing peace of mind to members that interact with businesses.</p>
+    <div class="col-md-6 d-flex">
+      <div class="card p-3 w-100">
+        <div class="pp-h"><i class="bi bi-shop"></i> For our advertisers</div>
+        <ul class="pp-list">
+          <li><b>Zero wasted ad dollars.</b> True Pay-Per-Sale / Pay-Per-Close: no sale or closed deal means no fee.</li>
+          <li><b>Predictable, sale-based cost.</b> Pay 10% of the sale, capped at $250 &mdash; about $1 in fees per $10 sold, before your own costs. No hidden fees, contracts or subscriptions.</li>
+          <li><b>Exclusive leads, free.</b> One member to one business at a time. Leads, PPC, SEO, website and foot traffic, calls, appointments and meet-ups all cost nothing.</li>
+          <li><b>Real cash rewards.</b> 1% cash back on up to $2,500 of every finalized sale (for offering at least one perk to members), plus referral commissions on businesses you refer.</li>
+          <li><b>Word of mouth pays.</b> Up to 6 advertisers (when all payouts are active) earn up to 28% of the ad revenue from every finalized transaction.</li>
+          <li><b>Free listing, low start-up.</b> Start with as little as $25 in pre-funded ad dollars (not a fee). Unused funds stay in your balance, and the ad fee is deducted only when a sale is finalized.</li>
+          <li><b>Live GPS tracking.</b> Real-time status and location of your field team when "on the way", and members can correct a wrong address before anyone drives there.</li>
+        </ul>
+      </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Future Goals -->
-  <section class="about-section" id="goals">
-    <div class="about-title">Our Future Goals</div>
-    <ul class="future-goals-list">
-      <li class="future-goal-item">
-        <span class="future-goal-icon">🚀</span>
-        Expand the platform nationwide and beyond.
-      </li>
-      <li class="future-goal-item">
-        <span class="future-goal-icon">🔒</span>
-        Set new standards in member privacy and data security.
-      </li>
-      <li class="future-goal-item">
-        <span class="future-goal-icon">🤝</span>
-        Build deeper partnerships with ethical businesses.
-      </li>
-      <li class="future-goal-item">
-        <span class="future-goal-icon">💡</span>
-        Launch more perks and clear, user-first features in 2026.
-      </li>
+  <div class="pm-note ok mb-2">
+    <b>Everyone wins.</b> No gimmicks, no fees to join, no contracts. All cash back and commissions are paid by Perk Miner LLC from the ad revenue received, and it is real cash you can withdraw to your bank (no points or gift cards). Perk Miner LLC pays out up to <b>84%</b> of the ad revenue from every finalized transaction.
+    <a href="/full_payout_sample">See the full payout sample</a>.
+  </div>
+
+  <!-- Founder -->
+  <div class="card p-3" id="founder">
+    <div class="ab-founder">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1777423493/IMG_0505_dhvf6h.jpg" alt="Joe Mendez, Founder of Perk Miner">
+      <div>
+        <div class="nm">Joe Mendez, Founder</div>
+        <a class="ab-linkedin mt-1" href="https://www.linkedin.com/in/Joe-Mendez-PerkMiner" target="_blank" rel="noopener noreferrer" aria-label="Joe Mendez on LinkedIn (opens in a new tab)">
+          <i class="bi bi-linkedin" aria-hidden="true"></i> Connect on LinkedIn
+        </a>
+      </div>
+    </div>
+    <ul class="pp-list">
+      <li><b>Privacy is the standard.</b> Businesses never see a member's contact info until the member chooses to share it, and then only one business at a time (never sold to competing businesses).</li>
+      <li><b>Decades of experience</b> in business, tech and advertising agencies. He knows the pain of paying for leads, PPC and SEO and getting <b>zero sales</b>, or of ad fees that crush profit margins.</li>
+      <li><b>Built from a consumer's view.</b> Joe knows what it is like to have your data sold as a lead, which is why Perk Miner LLC uses secure messaging.</li>
+      <li><b>Pay-Per-Sale pioneer.</b> He created a Pay-Per-Sale / Pay-Per-Close model in 2007 (program copyright obtained in 2008). Businesses earn cash back from making sales, with a simple fee of $1 or less per $10 sold (max $250).</li>
+      <li><b>Word of mouth is the best advertising,</b> so up to 84% of ad revenue is paid out to the members and businesses who spread the word and complete sales.</li>
+      <li><b>U.S. Navy (naval intelligence) and law enforcement (police sergeant) veteran.</b> Perk Miner LLC is his vision for helping businesses grow with trust and transparency, and giving members peace of mind.</li>
     </ul>
-  </section>
+  </div>
 
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
+  <!-- Goals -->
+  <div class="card p-3" id="goals">
+    <div class="pp-h"><i class="bi bi-flag"></i> Our future goals</div>
+    <ul class="ab-goals">
+      <li><span>🚀</span> Expand the platform nationwide and beyond.</li>
+      <li><span>🔒</span> Set new standards in member privacy and data security.</li>
+      <li><span>🤝</span> Build deeper partnerships with ethical businesses.</li>
+      <li><span>💡</span> Launch more perks and clear, user-first features in 2026.</li>
+    </ul>
+  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+  <div class="pp-actions mb-2">
+    <a class="btn btn-primary" href="/register">Members - Join For Free</a>
+    <a class="btn btn-outline-primary" href="/business">Advertise With Us</a>
+    <a class="btn btn-outline-primary" href="/faq">Read the FAQ</a>
+  </div>
+
+</div>
+{% endblock %}

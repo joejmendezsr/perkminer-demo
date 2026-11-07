@@ -1,0 +1,178 @@
+{# ==========================================================================
+   THE ONE listing design. Every page that shows a listing uses these macros:
+     listing_small(b, href)      search, category, favorites, admin preview
+     listing_hero(b)             top of the full listing page and its previews
+     listing_details(b, ...)     everything under the hero on the full listing page
+   `b` can be a Business row or a plain dict (admin previews build a dict from the draft).
+   The dashboard preview (JavaScript) writes the same markup — keep them in step.
+   Styles: static/styles/pm-listing.css
+   ========================================================================== #}
+{% from 'partials/_trust_badges.html' import trust_badges %}
+{% from 'partials/_reviews.html' import rating_stars %}
+
+{% macro listing_styles() %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-listing.css') }}">
+<script defer src="{{ url_for('static', filename='js/pm-listing.js') }}"></script>
+{% endmacro %}
+
+{# ---------- SMALL LISTING ---------- #}
+{% macro listing_small(b, href=None, perks_label='Perks Offered', online=False, cta='View listing', preview=False) %}
+{% set svc = [b.service_1, b.service_2, b.service_3, b.service_4, b.service_5, b.service_6, b.service_7, b.service_8, b.service_9, b.service_10]|select|reject('equalto','')|list %}
+{% if href %}<a href="{{ href }}" class="pml-link">{% endif %}
+<div class="pml-card{% if preview %} is-preview{% endif %}">
+  <div class="pml-card-banner">
+    {% if online %}<span class="pml-flag online"><i class="bi bi-bag-check"></i> Online</span>{% endif %}
+  </div>
+  {% if b.profile_photo %}
+    <img src="{{ b.profile_photo }}" class="pml-logo" alt="{{ b.business_name }} logo" loading="lazy">
+  {% else %}
+    <div class="pml-logo ph"><i class="bi bi-shop"></i></div>
+  {% endif %}
+  <div class="pml-card-body">
+    {{ rating_stars(b.rating_avg, b.rating_count) }}
+    <h3 class="pml-name">{{ b.business_name }}</h3>
+    <div class="pml-chips">
+      <span class="pml-chip"><i class="bi bi-tag"></i> {{ b.category or 'Local business' }}</span>
+      {% if b.price_display %}<span class="pml-chip price"><i class="bi bi-currency-dollar"></i> {{ b.price_display }}</span>{% endif %}
+      {% if not online and b.distance_mi is defined and b.distance_mi is not none %}
+        <span class="pml-chip dist"><i class="bi bi-geo-alt-fill"></i> {{ b.distance_mi|round(2) }} mi away</span>
+        {% if b.location_varies and b.live_gps_lat and b.live_gps_long %}
+          <span class="pml-chip live"><i class="bi bi-broadcast"></i> live location</span>
+        {% endif %}
+      {% endif %}
+    </div>
+    {% set sa = service_area_info(b) %}
+    {% if sa.expanded %}<div class="pml-line"><i class="bi bi-globe-americas"></i><span>Serves {{ sa.short }}</span></div>
+    {% elif not online and b.address %}<div class="pml-line"><i class="bi bi-geo-alt"></i><span>{{ b.address }}</span></div>{% endif %}
+    {% if not online and b.google_reviews_url %}<div class="pml-line"><i class="bi bi-star-fill" style="color:#e0a800;"></i><span>Google reviews available</span></div>{% endif %}
+    {% if not online %}<div class="pml-badges">{{ trust_badges(b, false) }}</div>{% endif %}
+    <div class="pml-services">
+      {% for s in svc[:4] %}<span>{{ s }}</span>{% else %}<span class="more">Services listed on profile</span>{% endfor %}
+      {% if svc|length > 4 %}<span class="more">+{{ svc|length - 4 }} more</span>{% endif %}
+    </div>
+    <div class="pml-perk"><i class="bi bi-gift-fill"></i><span><b>{{ perks_label }}</b>{{ b.perks or 'Member perks available' }}</span></div>
+    {% if href %}<div class="pml-cta"><span>{{ cta }}</span><i class="bi bi-arrow-right"></i></div>{% endif %}
+  </div>
+</div>
+{% if href %}</a>{% endif %}
+{% endmacro %}
+
+{# ---------- LARGE LISTING: hero ---------- #}
+{% macro listing_hero(b, show_final=True, interactive=True, balance=None) %}
+{% set bal = balance if balance is not none else (b.account_balance or 0) %}
+<div class="pml-hero">
+  <div class="pml-hero-banner"></div>
+  <div class="pml-hero-body">
+    {% if b.profile_photo %}
+      <img src="{{ b.profile_photo }}" alt="{{ b.business_name }} logo" class="pml-hero-pic">
+    {% else %}
+      <div class="pml-hero-pic ph"><i class="bi bi-buildings"></i></div>
+    {% endif %}
+    <h1 class="pml-hero-title">{{ b.business_name }}</h1>
+    {{ rating_stars(b.rating_avg, b.rating_count, '1.3rem') }}
+    <div class="pml-chips">
+      <span class="pml-chip"><i class="bi bi-tag"></i> {{ b.category or 'Local business' }}</span>
+      {% if b.distance_mi is defined and b.distance_mi is not none %}
+        <span class="pml-chip dist"><i class="bi bi-geo-alt"></i> {{ b.distance_mi|round(2) }} mi away</span>
+      {% endif %}
+      {% if b.location_varies and b.live_gps_lat and b.live_gps_long %}
+        <span class="pml-chip live"><i class="bi bi-broadcast"></i> live location enabled</span>
+      {% endif %}
+    </div>
+    {% if show_final and b.finalization %}
+    <span class="pml-final">
+      <b>Finalization: {{ b.finalization }}</b><br>
+      {% if bal >= 250 %}(Has enough to finalize any transaction){% else %}(Has enough to finalize ${{ '%.2f' % (bal * 10) }} in sales){% endif %}
+    </span>
+    {% endif %}
+    {{ trust_badges(b, interactive) }}
+  </div>
+</div>
+{% endmacro %}
+
+{# ---------- LARGE LISTING: everything under the hero ---------- #}
+{% macro listing_details(b, photos=[], area_text='', faqs=[], animate=False, lat=None, lng=None, autoplay=False) %}
+{% set sa = service_area_info(b) %}
+{% set anim = ' animate-on-scroll' if animate else '' %}
+{% set svc = [b.service_1, b.service_2, b.service_3, b.service_4, b.service_5, b.service_6, b.service_7, b.service_8, b.service_9, b.service_10]|select|reject('equalto','')|list %}
+{% set has_social = b.facebook_url or b.instagram_url or b.x_url or b.linkedin_url or b.tiktok_url or b.youtube_url %}
+{% if has_social %}
+<div class="pml-block{{ anim }}">
+  <h2><i class="bi bi-share-fill"></i> Follow {{ b.business_name }}</h2>
+  <div class="pml-social">
+    {% if b.facebook_url %}<a href="{{ b.facebook_url }}" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook"><i class="bi bi-facebook"></i></a>{% endif %}
+    {% if b.instagram_url %}<a href="{{ b.instagram_url }}" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram"><i class="bi bi-instagram"></i></a>{% endif %}
+    {% if b.x_url %}<a href="{{ b.x_url }}" target="_blank" rel="noopener noreferrer" aria-label="X" title="X"><i class="bi bi-twitter-x"></i></a>{% endif %}
+    {% if b.linkedin_url %}<a href="{{ b.linkedin_url }}" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn"><i class="bi bi-linkedin"></i></a>{% endif %}
+    {% if b.tiktok_url %}<a href="{{ b.tiktok_url }}" target="_blank" rel="noopener noreferrer" aria-label="TikTok" title="TikTok"><i class="bi bi-tiktok"></i></a>{% endif %}
+    {% if b.youtube_url %}<a href="{{ b.youtube_url }}" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="YouTube"><i class="bi bi-youtube"></i></a>{% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="pml-info{{ anim }}">
+  <div class="pml-info-row"><i class="bi bi-signpost-2"></i><span><strong>Area served:</strong> {% if sa.expanded %}{{ sa.label }}{% elif area_text %}{{ area_text }}{% if b.location_varies %} · Mobile / on-location{% endif %}{% elif b.location_varies %}Mobile / on-location{% else %}Not set{% endif %}</span></div>
+  <div class="pml-info-row"><i class="bi bi-pin-map"></i><span><strong>{% if sa.expanded %}Address (HQ):{% else %}Address:{% endif %}</strong> {% if b.address %}{{ b.address }}{% elif b.location_varies %}No fixed address · mobile / on-location{% else %}-{% endif %}</span></div>
+  <div class="pml-info-row"><i class="bi bi-telephone"></i><span><strong>Phone:</strong> {% if b.phone_number %}<a href="tel:{{ b.phone_number }}">{{ b.phone_number }}</a>{% else %}-{% endif %}</span></div>
+  <div class="pml-info-row"><i class="bi bi-envelope"></i><span><strong>Email:</strong> {% if b.business_email %}<a href="mailto:{{ b.business_email }}">{{ b.business_email }}</a>{% else %}-{% endif %}</span></div>
+  <div class="pml-info-row"><i class="bi bi-globe"></i><span><strong>Website:</strong> {% if b.website_url %}<a href="{{ b.website_url }}" target="_blank" rel="noopener">{{ b.website_url }}</a>{% else %}-{% endif %}</span></div>
+</div>
+
+<div class="pml-block{{ anim }}">
+  <h2><i class="bi bi-info-circle"></i> About Us</h2>
+  {% if b.about_us %}
+    <div class="txt"><span class="about-text" data-full="{{ b.about_us|e }}">{{ b.about_us }}</span>
+    <a href="#" class="about-toggle-link" style="display:none; font-size:.9em; margin-left:4px;">read more</a></div>
+  {% else %}<div class="txt">&mdash;</div>{% endif %}
+</div>
+
+<div class="pml-block perks{{ anim }}">
+  <h2><i class="bi bi-gift-fill"></i> Perks Offered</h2>
+  <div class="txt">{{ b.perks or '—' }}</div>
+</div>
+
+<div class="pml-block{{ anim }}">
+  <h2><i class="bi bi-clock"></i> Hours of Operation</h2>
+  <div class="txt">{{ b.hours_of_operation or '—' }}</div>
+</div>
+
+<div class="pml-block{{ anim }}">
+  <h2><i class="bi bi-list-check"></i> Products or Services Offered</h2>
+  <ul class="pml-svc">{% for s in svc %}<li>{{ s }}</li>{% else %}<li>N/A</li>{% endfor %}</ul>
+</div>
+
+<div class="pml-block{{ anim }}">
+  <h2><i class="bi bi-map"></i> Location Map</h2>
+  {% if lat and lng %}
+    <div class="pml-map"><iframe width="100%" height="100%" style="border:0" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDo-AojTUQUwwvvywrSiDRcF-oVpw9m_w4&q={{ lat }},{{ lng }}"></iframe></div>
+    <a id="directions-link" class="pml-btn-line" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination={{ lat }},{{ lng }}&travelmode=driving"><i class="bi bi-sign-turn-right"></i> Driving directions</a>
+  {% else %}<div class="txt" style="color:#5b6f75;">Map unavailable</div>{% endif %}
+</div>
+
+{% if photos %}
+<div class="pml-block pml-gallery-wrap{{ anim }}">
+  <h2><i class="bi bi-images"></i> Gallery</h2>
+  <div class="pml-gallery-note">Swipe or use the arrows &middot; tap a photo to open it full size</div>
+  <div class="pml-slider{% if photos|length < 2 %} single{% endif %}" data-pml-slider{% if autoplay %} data-autoplay{% endif %} tabindex="0" aria-roledescription="carousel" aria-label="Photos of {{ b.business_name }}">
+    <div class="pml-slides">
+      {% for url in photos %}<a class="pml-slide" href="{{ url }}" target="_blank" rel="noopener noreferrer"><img src="{{ url }}" alt="Photo {{ loop.index }} of {{ b.business_name }}" {% if not loop.first %}loading="lazy"{% endif %}></a>{% endfor %}
+    </div>
+    <button type="button" class="pml-nav prev" aria-label="Previous photo"><i class="bi bi-chevron-left"></i></button>
+    <button type="button" class="pml-nav next" aria-label="Next photo"><i class="bi bi-chevron-right"></i></button>
+    <span class="pml-count">1 / {{ photos|length }}</span>
+    <div class="pml-dots">{% for url in photos %}<button type="button" class="{% if loop.first %}on{% endif %}" aria-label="Go to photo {{ loop.index }}"></button>{% endfor %}</div>
+  </div>
+  {% if photos|length > 1 %}
+  <div class="pml-thumbs">{% for url in photos %}<button type="button" class="{% if loop.first %}on{% endif %}" aria-label="Show photo {{ loop.index }}"><img src="{{ url }}" alt="" loading="lazy"></button>{% endfor %}</div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if faqs %}
+<div class="pml-block pml-faq{{ anim }}">
+  <h2><i class="bi bi-question-circle"></i> Frequently Asked Questions</h2>
+  {% for f in faqs %}<details><summary>{{ f.question }}</summary><p>{{ f.answer }}</p></details>{% endfor %}
+</div>
+{% endif %}
+{% endmacro %}

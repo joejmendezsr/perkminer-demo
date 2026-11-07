@@ -1,5 +1,5 @@
 {% extends "pm_base.html" %}
-{% block title %}My Requests &amp; Sessions – PerkMiner{% endblock %}
+{% block title %}My Requests &amp; Sessions – Perk Miner{% endblock %}
 
 {% block content %}
 <div class="container pb-3" style="max-width: 980px;">
@@ -15,6 +15,16 @@
       <a href="{{ url_for('dashboard') }}" class="btn btn-light"><i class="bi bi-speedometer2"></i> Return to Dashboard</a>
     </div>
   </div>
+
+  {% for _rv in review_edits_for_user() %}
+  <div class="card p-3 mb-3" style="border:2px solid #198754;border-radius:16px;">
+    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+      <div><b><i class="bi bi-check-circle-fill text-success"></i> You can now revise your review</b><br>
+        <small class="text-muted">{{ _rv.business.business_name }} &middot; currently {{ _rv.rating }} star{{ '' if _rv.rating == 1 else 's' }}</small></div>
+      <a href="{{ url_for('review_modify', rid=_rv.id) }}" class="btn btn-success"><i class="bi bi-star-half"></i> Modify your review</a>
+    </div>
+  </div>
+  {% endfor %}
 
   <div class="pm-search mb-3">
     <i class="bi bi-search"></i>
@@ -33,11 +43,15 @@
             <strong>{{ i.business.business_name }}</strong>
             {% if i.service_type == "Support" %}
               <span class="badge bg-warning text-dark ms-2">Customer Support</span>
+            {% elif i.service_type == "Feedback" %}
+              <span class="badge bg-danger ms-2">Feedback Resolution</span>
             {% endif %}
             <br>
             <small class="text-muted">
               {% if i.service_type == "Support" %}
                 Customer Support Session
+              {% elif i.service_type == "Feedback" %}
+                Private chat with the business and Perk Miner support about your review
               {% else %}
                 {{ i.business.category }} | {{ i.business.address }}
               {% endif %}
@@ -45,7 +59,7 @@
           </div>
         </div>
         <div class="pm-list-actions">
-          <a href="{{ url_for('active_session', interaction_id=i.id) }}" class="btn btn-primary"><i class="bi bi-chat-dots"></i> Open Active Session</a>
+          <a href="{{ url_for('support_session' if i.service_type == 'Feedback' else 'active_session', interaction_id=i.id) }}" class="btn btn-primary"><i class="bi bi-chat-dots"></i> Open Active Session</a>
           <form method="post" action="{{ url_for('end_session', interaction_id=i.id) }}"
                 onsubmit="return confirm('End this session? This ends the connection.');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

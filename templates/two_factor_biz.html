@@ -3,10 +3,10 @@
 {% set auth_title = 'Business Two-Factor Authentication' %}
 {% set auth_sub = 'Enter the 6-digit code sent to your business email.' %}
 {% set auth_width = 420 %}
-{% block title %}Business Two-Factor Authentication - PerkMiner{% endblock %}
+{% block title %}Business Two-Factor Authentication - Perk Miner{% endblock %}
 
 {% block auth_body %}
-<div class="pm-note bad mb-3"><b><i class="bi bi-exclamation-triangle"></i> Warning:</b> Never provide this code to anyone (Perk Miner will never ask for it). Protect yourself from fraudulent activity.</div>
+<div class="pm-note bad mb-3"><b><i class="bi bi-exclamation-triangle"></i> Warning:</b> Never provide this code to anyone (Perk Miner LLC will never ask for it). Protect yourself from fraudulent activity.</div>
 <form method="post">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="mb-3">{{ form.code(class="form-control form-control-lg text-center code-input", maxlength="6", autocomplete="one-time-code", inputmode="numeric", autofocus=True) }}</div>

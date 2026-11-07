@@ -1,0 +1,28 @@
+{% if not total and first %}
+  <p class="text-muted mb-0">No reviews yet. Only members with a completed, finalized purchase can leave one.</p>
+{% else %}
+  {% if first %}<div style="margin-bottom:.7rem;">
+    {% for s in [5,4,3,2,1] %}
+      {% set c = dist.get(s, 0) %}
+      <div style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;">
+        <span style="width:2.2rem;">{{ s }} &#9733;</span>
+        <span style="flex:1;height:8px;background:#e8eef0;border-radius:6px;overflow:hidden;"><span style="display:block;height:100%;width:{{ (c / total * 100)|round(0) }}%;background:#e0a800;"></span></span>
+        <span style="width:1.8rem;text-align:right;color:#5c6b73;">{{ c }}</span>
+      </div>
+    {% endfor %}
+  </div>{% endif %}
+  {% for r in reviews %}
+  <div style="border-top:1px solid #e3eceb;padding:.7rem 0;">
+    <div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:center;">
+      <span aria-label="{{ r.rating }} out of 5 stars" style="color:#e0a800;font-size:1.05rem;letter-spacing:1px;">{{ '&#9733;'|safe * r.rating }}<span style="color:#d3dcdf;">{{ '&#9733;'|safe * (5 - r.rating) }}</span></span>
+      <span style="font-size:.8rem;color:#5c6b73;">{{ r.reviewer }} &middot; {{ r.created_at.strftime('%b %d, %Y') }}</span>
+    </div>
+    {% if r.comment %}<p style="margin:.3rem 0 0;white-space:pre-line;word-break:break-word;">{{ r.comment }}</p>{% endif %}
+    <div style="margin-top:.25rem;display:flex;gap:.4rem;flex-wrap:wrap;">
+      <span class="badge bg-success-subtle text-success-emphasis border" style="font-weight:600;"><i class="bi bi-patch-check"></i> Verified purchase</span>
+      {% if r.previous_rating %}<span class="badge bg-info-subtle text-info-emphasis border" style="font-weight:600;">Updated after issue resolved (was {{ r.previous_rating }}&#9733;)</span>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% if next_url %}<a href="#" class="rv-more" data-next="{{ next_url }}" style="display:inline-block;margin-top:.5rem;font-weight:700;">Show more reviews ({{ remaining }} more) <i class="bi bi-chevron-down"></i></a>{% endif %}
+{% endif %}

@@ -29,3 +29,6 @@ pillow
 stripe
 pyotp
 flask_simple_captcha
+authlib
+cryptography
+requests

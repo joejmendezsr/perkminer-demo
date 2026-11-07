@@ -154,7 +154,7 @@ def _complete_external_sale(biz, token, amount, order_ref, source):
         app.logger.warning("external sale failed (business %s, order %s): %s", biz.id, order_ref, e)
         if "Insufficient funds" in str(e):
             return {"error": "insufficient_balance",
-                    "message": "Add funds to your PerkMiner advertising balance, then retry."}, 402
+                    "message": "Add funds to your Perk Miner advertising balance, then retry."}, 402
         if "already been finalized" in str(e):
             return {"error": "this member session already has a recorded sale"}, 409
         return {"error": "could not record sale"}, 400

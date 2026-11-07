@@ -1,19 +1,32 @@
 {% extends "auth_base.html" %}
 {% from "pm_auth_macros.html" import field, pw, recaptcha %}
 {% set auth_icon = 'person-plus' %}
-{% set auth_title = 'Create Your Account Today!' %}
-{% set auth_sub = 'Free to Join - Always Free<br>Register in 4 easy steps (enter a valid email and password for future log in, click on captcha, click on register and verify your email).' %}
+{% set auth_title = 'Join Perk Miner free' %}
+{% set auth_sub = 'Create your free member account and start earning 2% real cash back.' %}
+{% set auth_chips = ['Free, always', '2% cash back', 'Private by design'] %}
 {% set auth_width = 480 %}
-{% block title %}Register - PerkMiner{% endblock %}
+{% block title %}Join Free - Perk Miner{% endblock %}
 
 {% block auth_body %}
+{% set kind = 'member' %}{% set mode = 'register' %}{% set ref_input_id = form.referral_code.id %}
+{% include 'partials/_social_buttons.html' %}
 <form method="post">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="mb-3">{{ field(form.email, ac='email') }}</div>
-  <div class="mb-3">{{ pw(form.password, ac='new-password') }}</div>
-  <div class="mb-3">{{ field(form.referral_code) }}</div>
+  <div class="mb-3">
+    {{ pw(form.password, ac='new-password') }}
+    <div class="form-text">At least 8 characters.</div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="{{ form.referral_code.id }}">Referral code <span class="text-muted fw-normal">(optional)</span></label>
+    {{ field(form.referral_code, label=False, placeholder='Enter a code if someone invited you') }}
+    {% if form.referral_code.data and request.method == 'GET' %}
+    <div class="form-text text-success"><i class="bi bi-check-circle-fill"></i> Added automatically from your invitation.</div>
+    {% endif %}
+  </div>
   {{ recaptcha(form) }}
-  <button type="submit" class="btn btn-success btn-lg w-100"><i class="bi bi-person-plus"></i> {{ form.submit.label.text }}</button>
+  <button type="submit" class="btn btn-success btn-lg w-100"><i class="bi bi-person-plus"></i> Create my free account</button>
+  <p class="form-text text-center mt-3 mb-0">By registering you agree to our <a href="{{ url_for('terms') }}">Terms</a> and <a href="{{ url_for('privacy') }}">Privacy Policy</a>. Next, we&rsquo;ll email you a code to confirm your address.</p>
 </form>
 <div class="auth-links"><a href="{{ url_for('login') }}">Already have an account? Log in</a></div>
 {% endblock %}

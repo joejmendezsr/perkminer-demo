@@ -1,0 +1,50 @@
+{%- from 'partials/_freelance_views.html' import freelance_small, freelance_hero, freelance_details, freelance_styles -%}
+{% extends "pm_base.html" %}
+{% block title %}Review Freelancer Listing - Perk Miner Admin{% endblock %}
+{% block head_extra %}{{ freelance_styles() }}{% endblock %}
+{% block content %}
+<div class="container pb-4" style="max-width:760px;">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-person-check"></i></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">{{ fb.status_label }}</div><h1>Review Freelancer Listing</h1></div>
+    <div class="pm-hero-actions"><a href="{{ url_for('admin_freelancers') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Queue</a></div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <div><b>Member:</b> {{ fb.user.name or '' }} &lt;{{ fb.user.email }}&gt; &middot; referral code <code>{{ fb.user.referral_code }}</code></div>
+    <div><b>Advertising balance:</b> ${{ '%.2f' % balance }} {% if balance < 25 %}<span class="badge bg-warning text-dark">below $25</span>{% endif %}
+      &middot; <b>Terms accepted:</b> {{ fb.terms_agreed_at.strftime('%b %d, %Y') if fb.terms_agreed_at else 'NO' }}</div>
+    {% if changed %}<div class="pm-note warn mt-2">This member's listing is already live. You are reviewing a proposed update; the live version stays up until you approve.</div>{% endif %}
+    {% if missing %}<div class="pm-note bad mt-2">Incomplete: {{ missing|join(', ') }}.</div>{% endif %}
+    {% if fb.rejection_reason %}<div class="small text-muted mt-2">Last note: {{ fb.rejection_reason }}</div>{% endif %}
+  </div>
+
+  <h6 class="text-muted">Small listing preview</h6>
+  <div class="mb-4" style="max-width:380px;">{{ freelance_small(fl, None, preview=True) }}</div>
+
+  <h6 class="text-muted">Large listing preview</h6>
+  <div class="pml-wrap pml-admin">
+    {{ freelance_hero(fl) }}
+    {{ freelance_details(fl, false, false) }}
+  </div>
+
+  <div class="card p-3 mt-4">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="form-label fw-semibold" for="reason">Reason (required to reject, optional for suspend)</label>
+      <textarea id="reason" name="reason" class="form-control mb-3" rows="3" maxlength="1000"></textarea>
+      <div class="d-flex flex-wrap gap-2">
+        {% if fb.status == 'pending' %}
+          <button class="btn btn-success" name="action" value="approve" {{ 'disabled' if missing }}><i class="bi bi-check-circle"></i> Approve &amp; publish</button>
+          <button class="btn btn-danger" name="action" value="reject"><i class="bi bi-x-circle"></i> Reject / request changes</button>
+        {% endif %}
+        {% if fb.status == 'suspended' %}
+          <button class="btn btn-primary" name="action" value="reinstate"><i class="bi bi-arrow-counterclockwise"></i> Reinstate</button>
+        {% else %}
+          <button class="btn btn-outline-danger" name="action" value="suspend" onclick="return confirm('Suspend this listing and remove it from the directory?');"><i class="bi bi-slash-circle"></i> Suspend</button>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

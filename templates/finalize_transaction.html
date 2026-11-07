@@ -1,5 +1,5 @@
 {% extends "pm_base.html" %}
-{% block title %}Finalize Transaction - PerkMiner{% endblock %}
+{% block title %}Finalize Transaction - Perk Miner{% endblock %}
 
 {% block head_extra %}
 <style>
@@ -34,6 +34,10 @@
     </div>
   </div>
 
+  {% if error_message and not summary %}
+  <div class="pm-note bad mb-3"><i class="bi bi-exclamation-octagon"></i> {{ error_message }}</div>
+  {% endif %}
+
   {% if not summary %}
   <div class="card p-3 p-md-4">
     <form method="post" id="finalize-form">
@@ -60,7 +64,7 @@
         <strong>Please note:</strong> Finalized transactions cannot be changed or refunded, because multiple members and advertisers may earn cash back or referral commissions from this transaction. <b>If your business accepts returns, you understand that the advertising fee is not refundable in the event that a return is later processed.</b>
       </div>
 
-      <button type="submit" class="btn btn-success btn-lg w-100"><i class="bi bi-check2-circle"></i> Finalize Transaction</button>
+      <button type="submit" id="finalize-btn" class="btn btn-success btn-lg w-100"><i class="bi bi-check2-circle"></i> Finalize Transaction</button>
     </form>
   </div>
   {% endif %}
@@ -74,12 +78,16 @@
     {% set marketing_roi = (net_gross / ad_fee * 100) if ad_fee else 0 %}
     {% set marketing_ratio = (amt / ad_fee) if ad_fee else 0 %}
 
+    {% if summary.already_finalized %}
+    <div class="pm-note warn text-center mb-3"><i class="bi bi-info-circle-fill"></i> This transaction was already finalized. The business was not charged again.</div>
+    {% else %}
     <div class="pm-note ok text-center mb-3"><i class="bi bi-check-circle-fill"></i> Transaction recorded! Rewards credited.</div>
+    {% endif %}
 
     <div class="card p-3 p-md-4 mb-3">
       <div class="fin-row total"><span class="k">Total Transaction</span><span class="v">${{ '%.2f' % amt }}</span></div>
-      <div class="fin-row"><span class="k">Member Earned (Paid by Perk Miner)</span><span class="v member">${{ '%.2f' % user_cash_back }}</span></div>
-      <div class="fin-row"><span class="k">Your Business Earned (Paid by Perk Miner)</span><span class="v biz">${{ '%.2f' % business_cash_back }}</span></div>
+      <div class="fin-row"><span class="k">Member Earned (Paid by Perk Miner LLC)</span><span class="v member">${{ '%.2f' % user_cash_back }}</span></div>
+      <div class="fin-row"><span class="k">Your Business Earned (Paid by Perk Miner LLC)</span><span class="v biz">${{ '%.2f' % business_cash_back }}</span></div>
       <div class="fin-row"><span class="k">Ad Fee Paid (10% - max $250)</span><span class="v">${{ '%.2f' % ad_fee }}</span></div>
       <div class="fin-row"><span class="k">Net Gross (Sale - Ad Fee)</span><span class="v">${{ '%.2f' % net_gross }}</span></div>
       <div class="fin-row"><span class="k">Marketing ROI</span><span class="v">{{ marketing_roi|round(0) }}%</span></div>
@@ -87,7 +95,9 @@
       <div class="text-muted small mt-2">Your business paid $1 for every ${{ marketing_ratio|round(2) }} sold.</div>
     </div>
 
-    <form method="post" action="{{ back_url }}">
+    {# staff end the session through the same route their dashboard uses; business owners keep the existing behavior #}
+    {% set end_url = url_for('end_session', interaction_id=interaction.id) if session.get('staff_id') else back_url %}
+    <form method="post" action="{{ end_url }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-danger btn-lg w-100"><i class="bi bi-x-octagon"></i> End Session</button>
     </form>
@@ -112,6 +122,9 @@ document.addEventListener('DOMContentLoaded', function () {
   var hidden = document.getElementById('local-datetime');
   if (form && hidden) {
     form.addEventListener('submit', function () {
+      // stop double clicks from sending the form twice
+      var btn = document.getElementById('finalize-btn');
+      if (btn) { setTimeout(function () { btn.disabled = true; btn.textContent = 'Finalizing...'; }, 0); }
       var n = new Date();
       hidden.value = n.getFullYear() + '-' + pad(n.getMonth() + 1) + '-' + pad(n.getDate()) + ' ' + pad(n.getHours()) + ':' + pad(n.getMinutes()) + ':' + pad(n.getSeconds());
     });

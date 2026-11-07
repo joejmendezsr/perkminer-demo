@@ -1,0 +1,64 @@
+{# Shared public header.  Set before including (all optional):
+     ps_active   = 'how' | 'biz' | 'faq' | 'about'     highlights a nav link
+     ps_audience = 'business'                          swaps the buttons to business wording #}
+{% set _member_in = current_user is defined and current_user.is_authenticated %}
+{% set _biz_in = (not _member_in) and session.get('business_id') %}
+<a class="ps-skip" href="#main">Skip to content</a>
+<header class="ps-header">
+  <div class="container">
+    <div class="ps-header-in">
+      <a class="ps-logo" href="{{ url_for('home') }}" aria-label="Perk Miner home">
+        <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner">
+      </a>
+      <nav class="ps-nav" aria-label="Main">
+        <a href="{{ url_for('how_it_works') }}" class="{{ 'is-active' if ps_active == 'how' }}">How it works</a>
+        <a href="{{ url_for('business_home') }}" class="{{ 'is-active' if ps_active == 'biz' }}">For businesses</a>
+        <a href="{{ url_for('faq') }}" class="{{ 'is-active' if ps_active == 'faq' }}">FAQ</a>
+        <a href="{{ url_for('about') }}" class="{{ 'is-active' if ps_active == 'about' }}">About</a>
+        <div class="dropdown">
+          <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">More</button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{ url_for('intro') }}">Videos</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('news') }}">News</a></li>
+            <li><a class="dropdown-item" href="/testimonials">Testimonials</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('public_profiles_directory') }}">Public profiles</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('freelance_directory') }}">Freelancer directory</a></li>
+          </ul>
+        </div>
+      </nav>
+      <div class="ps-header-cta">
+        {% if _member_in %}
+          <a class="ps-btn ps-btn-gold ps-btn-sm" href="{{ url_for('dashboard') }}">My dashboard</a>
+        {% elif _biz_in %}
+          <a class="ps-btn ps-btn-gold ps-btn-sm" href="{{ url_for('business_dashboard') }}">My dashboard</a>
+        {% elif ps_audience == 'business' %}
+          <a class="ps-btn ps-btn-ghost-dark ps-btn-sm" href="{{ url_for('business_login') }}">Business login</a>
+          <a class="ps-btn ps-btn-gold ps-btn-sm" href="{{ url_for('business_register') }}">List free</a>
+        {% else %}
+          <a class="ps-btn ps-btn-ghost-dark ps-btn-sm" href="{{ url_for('login') }}">Log in</a>
+          <a class="ps-btn ps-btn-gold ps-btn-sm" href="{{ url_for('register') }}">Join free</a>
+        {% endif %}
+        <button class="ps-burger d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#psDrawer" aria-controls="psDrawer" aria-expanded="false" aria-label="Open menu"><i class="bi bi-list"></i></button>
+      </div>
+    </div>
+  </div>
+  <div class="collapse ps-drawer" id="psDrawer">
+    <div class="container">
+      <a href="{{ url_for('how_it_works') }}"><i class="bi bi-signpost-split"></i> How it works</a>
+      <a href="{{ url_for('business_home') }}"><i class="bi bi-shop"></i> For businesses</a>
+      <a href="{{ url_for('intro') }}"><i class="bi bi-camera-reels"></i> Videos</a>
+      <a href="{{ url_for('faq') }}"><i class="bi bi-question-circle"></i> FAQ</a>
+      <a href="{{ url_for('about') }}"><i class="bi bi-info-circle"></i> About us</a>
+      <a href="{{ url_for('news') }}"><i class="bi bi-newspaper"></i> News</a>
+      <a href="/testimonials"><i class="bi bi-chat-heart"></i> Testimonials</a>
+      <a href="{{ url_for('public_profiles_directory') }}"><i class="bi bi-people"></i> Public profiles</a>
+      <a href="{{ url_for('freelance_directory') }}"><i class="bi bi-person-workspace"></i> Freelancer directory</a>
+      {% if not _member_in and not _biz_in %}
+      <div class="ps-drawer-cta">
+        <a class="ps-btn ps-btn-ghost-dark" href="{{ url_for('login') }}">Log in</a>
+        <a class="ps-btn ps-btn-gold" href="{{ url_for('register') }}">Join free</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</header>

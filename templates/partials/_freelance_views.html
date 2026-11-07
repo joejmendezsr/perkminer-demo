@@ -1,0 +1,163 @@
+{# ==========================================================================
+   Freelancer / network-marketing listing markup. Same look as the business listings
+   (static/styles/pm-listing.css, `pml-` classes) but with no map, address or hours.
+   `f` is the dict built by freelance.view() — the same dict is used for the directory,
+   the live page, the member's own preview and the admin review.
+   ========================================================================== #}
+{% from 'partials/_listing_views.html' import listing_styles %}
+{% from 'partials/_reviews.html' import rating_stars %}
+
+{% macro freelance_small(f, href=None, cta='View listing', preview=False) %}
+{% if href %}<a href="{{ href }}" class="pml-link">{% endif %}
+<div class="pml-card{% if preview %} is-preview{% endif %}">
+  <div class="pml-card-banner"><span class="pml-flag online"><i class="bi bi-person-workspace"></i> Freelancer</span></div>
+  {% if f.profile_photo %}
+    <img src="{{ f.profile_photo }}" class="pml-logo" alt="{{ f.business_name }} photo" loading="lazy">
+  {% else %}
+    <div class="pml-logo ph"><i class="bi bi-person-workspace"></i></div>
+  {% endif %}
+  <div class="pml-card-body">
+    {{ rating_stars(f.rating_avg, f.rating_count) }}
+    <h3 class="pml-name">{{ f.business_name }}</h3>
+    <div class="pml-chips">
+      <span class="pml-chip"><i class="bi bi-tag"></i> {{ f.category or 'Freelancer' }}</span>
+      {% if f.link_count %}<span class="pml-chip"><i class="bi bi-link-45deg"></i> {{ f.link_count }} link{{ '' if f.link_count == 1 else 's' }}</span>{% endif %}
+    </div>
+    {% if f.tagline %}<div class="pml-line"><i class="bi bi-chat-quote"></i><span>{{ f.tagline }}</span></div>{% endif %}
+    {% if f.region %}<div class="pml-line"><i class="bi bi-globe-americas"></i><span>Serves {{ f.region }}</span></div>{% endif %}
+    <div class="pml-services">
+      {% for s in (f.offerings or [])[:4] %}<span>{{ s }}</span>{% else %}<span class="more">Offerings listed on profile</span>{% endfor %}
+      {% if (f.offerings or [])|length > 4 %}<span class="more">+{{ f.offerings|length - 4 }} more</span>{% endif %}
+    </div>
+    <div class="pml-perk"><i class="bi bi-gift-fill"></i><span><b>Member Perk</b>{{ f.perks or 'Ask about member perks' }}</span></div>
+    {% if href %}<div class="pml-cta"><span>{{ cta }}</span><i class="bi bi-arrow-right"></i></div>{% endif %}
+  </div>
+</div>
+{% if href %}</a>{% endif %}
+{% endmacro %}
+
+{% macro freelance_hero(f) %}
+{% set bal = f.account_balance or 0 %}
+<div class="pml-hero">
+  <div class="pml-hero-banner"></div>
+  <div class="pml-hero-body">
+    {% if f.profile_photo %}
+      <img src="{{ f.profile_photo }}" alt="{{ f.business_name }} photo" class="pml-hero-pic">
+    {% else %}
+      <div class="pml-hero-pic ph"><i class="bi bi-person-workspace"></i></div>
+    {% endif %}
+    <h1 class="pml-hero-title">{{ f.business_name }}</h1>
+    {{ rating_stars(f.rating_avg, f.rating_count, '1.3rem') }}
+    {% if f.tagline %}<p style="margin:.2rem 0 .6rem;color:#4a5f66;font-weight:600;">{{ f.tagline }}</p>{% endif %}
+    <div class="pml-chips">
+      <span class="pml-chip"><i class="bi bi-tag"></i> {{ f.category or 'Freelancer' }}</span>
+      <span class="pml-chip"><i class="bi bi-person-workspace"></i> Freelancer / network business</span>
+    </div>
+    <span class="pml-final">
+      <b>Finalization: Manual / in person</b><br>
+      {% if bal >= 250 %}(Has enough to finalize any transaction){% else %}(Has enough to finalize ${{ '%.2f' % (bal * 10) }} in sales){% endif %}
+    </span>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro freelance_details(f, animate=False, autoplay=False) %}
+{% set anim = ' animate-on-scroll' if animate else '' %}
+{% set soc = f.socials or {} %}
+{% set has_social = soc.facebook or soc.instagram or soc.x or soc.linkedin or soc.tiktok or soc.youtube %}
+{% set has_contact = f.email or f.phone or f.website %}
+{% if has_social %}
+<div class="pml-block{{ anim }}">
+  <h2><i class="bi bi-share-fill"></i> Follow {{ f.business_name }}</h2>
+  <div class="pml-social">
+    {% if soc.facebook %}<a href="{{ soc.facebook }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="Facebook" title="Facebook"><i class="bi bi-facebook"></i></a>{% endif %}
+    {% if soc.instagram %}<a href="{{ soc.instagram }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="Instagram" title="Instagram"><i class="bi bi-instagram"></i></a>{% endif %}
+    {% if soc.x %}<a href="{{ soc.x }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="X" title="X"><i class="bi bi-twitter-x"></i></a>{% endif %}
+    {% if soc.linkedin %}<a href="{{ soc.linkedin }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="LinkedIn" title="LinkedIn"><i class="bi bi-linkedin"></i></a>{% endif %}
+    {% if soc.tiktok %}<a href="{{ soc.tiktok }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="TikTok" title="TikTok"><i class="bi bi-tiktok"></i></a>{% endif %}
+    {% if soc.youtube %}<a href="{{ soc.youtube }}" target="_blank" rel="noopener noreferrer nofollow" aria-label="YouTube" title="YouTube"><i class="bi bi-youtube"></i></a>{% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if f.region or has_contact %}
+<div class="pml-info{{ anim }}">
+  {% if f.region %}<div class="pml-info-row"><i class="bi bi-signpost-2"></i><span><strong>Area served:</strong> {{ f.region }}</span></div>{% endif %}
+  {% if f.phone %}<div class="pml-info-row"><i class="bi bi-telephone"></i><span><strong>Phone:</strong> <a href="tel:{{ f.phone }}">{{ f.phone }}</a></span></div>{% endif %}
+  {% if f.email %}<div class="pml-info-row"><i class="bi bi-envelope"></i><span><strong>Email:</strong> <a href="mailto:{{ f.email }}">{{ f.email }}</a></span></div>{% endif %}
+  {% if f.website %}<div class="pml-info-row"><i class="bi bi-globe"></i><span><strong>Website:</strong> <a href="{{ f.website }}" target="_blank" rel="noopener nofollow">{{ f.website }}</a></span></div>{% endif %}
+</div>
+{% endif %}
+
+<div class="pml-block{{ anim }}">
+  <h2><i class="bi bi-info-circle"></i> About</h2>
+  {% if f.about_us %}<div class="txt" style="white-space:pre-line;">{{ f.about_us }}</div>{% else %}<div class="txt">&mdash;</div>{% endif %}
+</div>
+
+{% if f.perks %}
+<div class="pml-block perks{{ anim }}">
+  <h2><i class="bi bi-gift-fill"></i> Member Perk</h2>
+  <div class="txt">{{ f.perks }}</div>
+</div>
+{% endif %}
+
+{% if f.offerings %}
+<div class="pml-block{{ anim }}">
+  <h2><i class="bi bi-list-check"></i> What I Offer</h2>
+  <ul class="pml-svc">{% for s in f.offerings %}<li>{{ s }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+{% if f.links %}
+<div class="pml-block{{ anim }}">
+  <h2><i class="bi bi-link-45deg"></i> My Referral Links</h2>
+  <div class="fl-links">
+    {% for l in f.links if l.url %}
+    <a class="fl-link" href="{{ l.url }}" target="_blank" rel="noopener noreferrer nofollow sponsored">
+      {% if l.image %}<img src="{{ l.image }}" alt="{{ l.title }}" loading="lazy">{% else %}<span class="fl-link-ph"><i class="bi bi-box-arrow-up-right"></i></span>{% endif %}
+      <span class="fl-link-txt"><b>{{ l.title }}</b>{% if l.desc %}<small>{{ l.desc }}</small>{% endif %}</span>
+      <i class="bi bi-chevron-right fl-link-go"></i>
+    </a>
+    {% endfor %}
+  </div>
+  <p class="fl-disc"><i class="bi bi-info-circle"></i> These are this member's personal referral links to outside companies. Perk Miner LLC does not own, endorse or guarantee them or any results.</p>
+</div>
+{% endif %}
+
+{% if f.gallery %}
+<div class="pml-block pml-gallery-wrap{{ anim }}">
+  <h2><i class="bi bi-images"></i> Gallery</h2>
+  <div class="pml-gallery-note">Swipe or use the arrows &middot; tap a photo to open it full size</div>
+  <div class="pml-slider{% if f.gallery|length < 2 %} single{% endif %}" data-pml-slider{% if autoplay %} data-autoplay{% endif %} tabindex="0" aria-roledescription="carousel" aria-label="Photos of {{ f.business_name }}">
+    <div class="pml-slides">
+      {% for url in f.gallery %}<a class="pml-slide" href="{{ url }}" target="_blank" rel="noopener noreferrer"><img src="{{ url }}" alt="Photo {{ loop.index }} of {{ f.business_name }}" {% if not loop.first %}loading="lazy"{% endif %}></a>{% endfor %}
+    </div>
+    <button type="button" class="pml-nav prev" aria-label="Previous photo"><i class="bi bi-chevron-left"></i></button>
+    <button type="button" class="pml-nav next" aria-label="Next photo"><i class="bi bi-chevron-right"></i></button>
+    <span class="pml-count">1 / {{ f.gallery|length }}</span>
+    <div class="pml-dots">{% for url in f.gallery %}<button type="button" class="{% if loop.first %}on{% endif %}" aria-label="Go to photo {{ loop.index }}"></button>{% endfor %}</div>
+  </div>
+  {% if f.gallery|length > 1 %}
+  <div class="pml-thumbs">{% for url in f.gallery %}<button type="button" class="{% if loop.first %}on{% endif %}" aria-label="Show photo {{ loop.index }}"><img src="{{ url }}" alt="" loading="lazy"></button>{% endfor %}</div>
+  {% endif %}
+</div>
+{% endif %}
+{% endmacro %}
+
+{# extra styles for the referral-link cards (kept next to the markup) #}
+{% macro freelance_styles() %}
+{{ listing_styles() }}
+<style>
+  .fl-links { display: grid; gap: .65rem; }
+  .fl-link { display: flex; align-items: center; gap: .85rem; padding: .7rem; border: 1px solid #dfebe9; border-radius: 16px; background: #fff; text-decoration: none; color: inherit; transition: box-shadow .15s, transform .08s, border-color .15s; }
+  .fl-link:hover { box-shadow: 0 6px 18px rgba(30,74,75,.12); border-color: #9ab8b7; }
+  .fl-link:active { transform: translateY(1px); }
+  .fl-link img, .fl-link-ph { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; flex: 0 0 64px; background: #eef6f5; }
+  .fl-link-ph { display: flex; align-items: center; justify-content: center; color: #2a5859; font-size: 1.5rem; }
+  .fl-link-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .fl-link-txt b { color: #1e4a4b; overflow-wrap: anywhere; }
+  .fl-link-txt small { color: #5b6f75; overflow-wrap: anywhere; line-height: 1.35; margin-top: .15rem; }
+  .fl-link-go { color: #9ab8b7; }
+  .fl-disc { font-size: .82rem; color: #5b6f75; margin: .8rem 0 0; }
+</style>
+{% endmacro %}

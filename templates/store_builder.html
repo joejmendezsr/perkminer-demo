@@ -64,6 +64,7 @@
     @media (max-width:1000px) { #builder-main-row { flex-direction:column; gap:13px;} #gjs-sidebar {width:100%;margin-bottom:12px;} #gjs {min-height:42vh;} }
     @media (max-width:600px) { .builder-toolbar {flex-direction:column;gap:6px;padding:1em 0.5em;} #gjs-sidebar{padding:14px 2px;} }
   </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
 </head>
 <body>
 <div class="builder-toolbar">
@@ -425,30 +426,7 @@ document.getElementById('save-html-form').addEventListener('submit', function(e)
   document.getElementById('contact_js').value = pages.contact.js;
 });
 
-// ----- Autosave logic -----
-let saveTimeout;
-editor.on('component:update', () => {
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => {
-    const html = editor.getHtml();
-    const css = editor.getCss();
-    fetch('/save_homepage', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value,
-      },
-      body: JSON.stringify({
-        homepage_html: html,
-        homepage_css: css,
-        homepage_js: js,
-      })
-    })
-    .then(res => res.ok ? console.log("Auto-saved!") : console.error("Save failed"))
-    .catch(err => console.error("Error:", err));
-  }, 2000);
-});
-
+// Changes are saved using the main Save button. Avoid silently saving to a different model.
 // Swiper auto-initializer for both .mySwiper and .myCarousel blocks AND dropdown support
 function addBlock(html) {
   editor.addComponents(html);
@@ -1018,7 +996,10 @@ function openThemePreview(themeId) {
       <head>
         <title>Theme Preview</title>
         <style id="active-css">${data.home_css || ""}</style>
-      </head>
+        <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-theme.css') }}">
+</head>
       <body style="margin:0; font-family:sans-serif; background:#f9f9fb;">
         <nav style="margin-bottom:1em;background:#eee;padding:.5em;">
           <button onclick="setPage('home')">Home</button>

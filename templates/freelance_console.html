@@ -1,0 +1,126 @@
+{% extends "pm_public_base.html" %}
+{% block title %}Freelancer Console - Perk Miner{% endblock %}
+{% block head_extra %}
+{{ super() }}
+<style>
+  .fc-wrap { max-width: 980px; margin: 0 auto; }
+  .fc-stat { text-align: center; padding: 1rem; }
+  .fc-stat .n { font-size: 1.7rem; font-weight: 800; color: var(--pm-primary-dark); }
+  .fc-stat .l { color: var(--pm-muted); font-size: .9rem; }
+  .fc-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem 0; border-bottom: 1px dashed #e3eceb; flex-wrap: wrap; }
+  .fc-row:last-child { border-bottom: 0; }
+  .copybox { display: flex; gap: .5rem; }
+  .copybox input { flex: 1; min-width: 0; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container pb-4 fc-wrap">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-person-workspace"></i></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">Freelancer / network business</div><h1>Freelancer Console</h1></div>
+    <div class="pm-hero-actions"><a href="{{ url_for('dashboard') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Member Dashboard</a></div>
+  </div>
+
+  {% set rv_biz_id = fb.shadow_business_id %}
+  {% include "partials/_review_alerts.html" %}
+
+  {% if request.args.get('fund_success') %}
+    <div class="pm-note ok mb-3"><i class="bi bi-check-circle-fill"></i> Payment received. Your balance updates as soon as the payment is confirmed (usually a few seconds).</div>
+  {% endif %}
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-6">
+      <div class="card p-3 h-100">
+        <h5><i class="bi bi-card-checklist"></i> Your listing</h5>
+        <p class="mb-2">Status: <b>{{ fb.status_label }}</b>{% if fb.is_live %} <span class="badge bg-success">Live</span>{% endif %}</p>
+        {% if fb.status == 'rejected' and fb.rejection_reason %}
+          <div class="pm-note bad mb-2"><b>Changes requested:</b> {{ fb.rejection_reason }}</div>
+        {% elif fb.status == 'suspended' %}
+          <div class="pm-note bad mb-2">Your listing is suspended. {% if fb.rejection_reason %}{{ fb.rejection_reason }}{% endif %} Please contact support.</div>
+        {% endif %}
+        {% if missing %}<div class="pm-note warn mb-2">Still needed: {{ missing|join(', ') }}.</div>{% endif %}
+        <div class="copybox mb-2">
+          <input class="form-control form-control-sm" id="fl-pub" readonly value="{{ public_url }}">
+          <button class="btn btn-sm btn-outline-primary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('fl-pub').value);this.textContent='Copied';"><i class="bi bi-clipboard"></i> Copy</button>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-primary" href="{{ url_for('dashboard') }}#profileCollapse"><i class="bi bi-pencil-square"></i> Edit listing</a>
+          <a class="btn btn-outline-secondary" href="{{ url_for('freelance_listing', fid=fb.id) }}"><i class="bi bi-eye"></i> {{ 'View live' if fb.is_live else 'Preview' }}</a>
+          {% if fb.status in ('draft', 'rejected') %}
+            <form method="post" action="{{ url_for('freelance_submit') }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-success" type="submit" {{ '' if ready else 'title="Complete the checklist first"' }}><i class="bi bi-send-check"></i> Submit for review</button>
+            </form>
+          {% endif %}
+        </div>
+        {% if not fb.terms_agreed_at %}<div class="small text-muted mt-2">You will also need to agree to the <a href="{{ url_for('freelance_terms') }}">Freelancer Terms</a> in the last step of your profile.</div>{% endif %}
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="card p-3 h-100">
+        <h5><i class="bi bi-wallet2"></i> Advertising balance</h5>
+        <div class="fc-stat"><div class="n">${{ '{:,.2f}'.format(balance) }}</div><div class="l">Covers the 10% advertising fee (max $250) on a member's <b>first</b> purchase</div></div>
+        <a class="btn btn-warning w-100" href="{{ url_for('freelance_fund') }}"><i class="bi bi-credit-card"></i> Add funds (minimum ${{ '%.0f' % min_deposit }})</a>
+        {% if balance < min_deposit %}<div class="small text-muted mt-2">You need at least ${{ '%.0f' % min_deposit }} in your balance before your listing can be submitted.</div>{% endif %}
+        {% from 'partials/_reviews.html' import rating_stars %}
+        <div class="d-flex align-items-center flex-wrap gap-2 mt-3" id="my-star-rating">
+          <span class="fw-semibold">Your current star rating is</span>
+          {{ rating_stars(sb.rating_avg, sb.rating_count, '1.3rem') }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h5><i class="bi bi-cash-coin"></i> Freelancer earnings <span class="text-muted small fw-normal">(separate from member purchase earnings)</span></h5>
+    <div class="row text-center g-2">
+      <div class="col-4"><div class="fc-stat"><div class="n">${{ '{:,.2f}'.format(total) }}</div><div class="l">Lifetime</div></div></div>
+      <div class="col-4"><div class="fc-stat"><div class="n">${{ '{:,.2f}'.format(pending) }}</div><div class="l">Pending (7 days)</div></div></div>
+      <div class="col-4"><div class="fc-stat"><div class="n">${{ '{:,.2f}'.format(avail) }}</div><div class="l">Cleared</div></div></div>
+    </div>
+    <div class="small text-muted mt-1">These earnings are included in your member earnings and withdrawn the same way, from your member dashboard.</div>
+    <a href="{{ url_for('dashboard') }}#earnings" class="btn btn-outline-success mt-2 align-self-start"><i class="bi bi-bank"></i> Go to earnings &amp; withdrawals</a>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h5><i class="bi bi-qr-code-scan"></i> Finalize a sale (in person or manual)</h5>
+    <p class="text-muted mb-2">Ask the member to show their Perk Miner QR code and scan it with your phone camera while logged in, or type their referral code here.</p>
+    <form method="post" action="{{ url_for('freelance_find_member') }}" class="copybox">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input class="form-control" name="member_code" placeholder="Member referral code" required>
+      <button class="btn btn-primary" type="submit">Find member</button>
+    </form>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h5><i class="bi bi-chat-dots"></i> Secure conversations</h5>
+    {% for c in convos %}
+      <div class="fc-row">
+        <div><b>{{ c.user.name or c.user.email.split('@')[0] }}</b>
+          <div class="small text-muted">{{ c.service_type }} &middot; updated {{ c.updated_at.strftime('%b %d, %H:%M') if c.updated_at }}
+            {% if c.awaiting_finalization %}<span class="badge bg-warning text-dark ms-1">ready to pay</span>{% endif %}</div></div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('active_session', interaction_id=c.id) }}"><i class="bi bi-chat-text"></i> Open chat</a>
+          <a class="btn btn-sm btn-success" href="{{ url_for('freelance_finalize', interaction_id=c.id) }}"><i class="bi bi-check2-circle"></i> Finalize</a>
+        </div>
+      </div>
+    {% else %}
+      <div class="text-muted">No active conversations yet. Messages from members appear here.</div>
+    {% endfor %}
+  </div>
+
+  <div class="card p-3 mb-3">
+    <h5><i class="bi bi-diagram-3"></i> Grow your network</h5>
+    <p class="text-muted mb-2">Your member invite link. Members who join through it become part of your network. When they also become freelancers, you earn the same referral commissions as a business advertiser (0.2% on each of their finalized sales for 3 tiers, then 1% on tier 5, all capped per transaction).</p>
+    <div class="copybox">
+      <input class="form-control" id="fl-ref" readonly value="{{ ref_link }}">
+      <button class="btn btn-outline-primary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('fl-ref').value);this.textContent='Copied';"><i class="bi bi-clipboard"></i> Copy</button>
+    </div>
+  </div>
+
+  <div class="small text-muted">
+    <i class="bi bi-info-circle"></i> You are responsible for finalizing every purchase a Perk Miner member makes with you, keeping enough balance to cover the advertising fee,
+    and for the products, services and claims you promote. <a href="{{ url_for('freelance_terms') }}">Freelancer Terms</a>
+  </div>
+</div>
+{% endblock %}

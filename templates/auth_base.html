@@ -1,29 +1,59 @@
 {# Shared shell for login / register / password / small form pages.
-   Child pages set:  auth_icon (bootstrap icon name), auth_title, auth_sub (optional), auth_width (optional, px)
+   Child pages set:  auth_icon (bootstrap icon name), auth_title, auth_sub (optional), auth_width (optional, px),
+   auth_chips (optional list of short benefit labels shown under the title)
    and fill  {% block auth_body %}  (inside the card)  and optionally  {% block auth_after %} (below the card).
    Set  {% set flash_safe = true %}  only on pages whose flash messages intentionally contain links. #}
 {% extends "pm_base.html" %}
 
+{% block body_class %}ps-body ps-auth-bg{% endblock %}
+
 {% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-site.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   .auth-wrap { margin: 0 auto; }
-  .auth-head { text-align: center; margin-bottom: 1rem; }
-  .auth-head .auth-ic { width: 64px; height: 64px; border-radius: 18px; background: var(--pm-grad); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: .6rem; box-shadow: var(--pm-shadow); }
-  .auth-head h1 { font-size: clamp(1.4rem, 4.5vw, 1.8rem); font-weight: 800; color: var(--pm-primary-dark); margin: 0; }
-  .auth-head .auth-sub { color: var(--pm-muted); margin-top: .35rem; font-size: .98rem; }
-  .auth-links { text-align: center; display: flex; flex-direction: column; gap: .4rem; margin-top: 1.1rem; }
-  .auth-links a { font-weight: 600; text-decoration: none; color: var(--pm-primary); }
-  .auth-links a:hover { text-decoration: underline; }
-  .input-group .btn { border-color: #cfe0e2; }
-  .code-input { font-size: 1.6rem; letter-spacing: .35rem; font-weight: 700; }
+  .auth-head { text-align: center; margin: 1.6rem 0 1.2rem; }
+  .auth-head .auth-ic { width: 68px; height: 68px; border-radius: 22px; background: linear-gradient(150deg, #0a2d2e, #2a5859); color: var(--ps-gold); display: inline-flex; align-items: center; justify-content: center; font-size: 1.9rem; margin-bottom: .8rem; box-shadow: 0 14px 30px rgba(11,49,50,.28); }
+  .auth-head h1 { font-size: clamp(1.55rem, 4.6vw, 2.05rem); font-weight: 800; color: var(--ps-ink); margin: 0; letter-spacing: -.02em; }
+  .auth-head .auth-sub { color: var(--ps-muted); margin-top: .45rem; font-size: 1rem; line-height: 1.5; }
+  .auth-wrap .card { border-radius: 26px; border: 1px solid var(--ps-line); box-shadow: 0 24px 60px rgba(11,49,50,.12); padding: 1.5rem !important; }
+  @media (min-width: 768px) { .auth-wrap .card { padding: 2rem !important; } }
+  .auth-wrap .form-label { color: var(--ps-ink); font-weight: 700; font-size: .92rem; }
+  .auth-wrap .form-control { border: 1.5px solid var(--ps-line); padding: .75rem .95rem; font-size: 1rem; border-radius: 14px !important; background: #fcfefe; }
+  .auth-wrap .form-control:focus { border-color: var(--ps-teal-600); box-shadow: 0 0 0 4px rgba(42,88,89,.12); background: #fff; outline: none; }
+  .auth-wrap .input-group > .form-control { border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; }
+  .auth-wrap .input-group > .btn { border-radius: 0 14px 14px 0 !important; border: 1.5px solid var(--ps-line); border-left: 0; background: #fff; }
+  .auth-wrap .btn-lg, .auth-wrap button[type=submit].btn { border-radius: 999px; padding: .95rem 1.4rem; font-weight: 800; font-size: 1.05rem; }
+  .auth-wrap .btn-success, .auth-wrap .btn-primary { background: var(--ps-gold); color: #17393a !important; box-shadow: 0 10px 24px rgba(242,189,58,.35); }
+  .auth-wrap .btn-success:hover, .auth-wrap .btn-primary:hover { background: #ffe08c; color: #17393a !important; transform: translateY(-1px); }
+  .auth-links { text-align: center; display: flex; flex-direction: column; gap: .5rem; margin-top: 1.2rem; }
+  .auth-links a { font-weight: 700; text-decoration: none; color: var(--ps-teal-700); }
+  .auth-links a:hover { text-decoration: underline; color: var(--ps-teal-900); }
+  .code-input { font-size: 1.7rem; letter-spacing: .4rem; font-weight: 800; text-align: center; }
+  .auth-wrap .alert { border-radius: 14px; }
+  .ps-safe { display: flex; align-items: center; justify-content: center; gap: .45rem; margin: 1rem 0 0; font-size: .82rem; color: var(--ps-muted); }
 </style>
 {% block auth_head_extra %}{% endblock %}
+{% endblock %}
+
+{% block navbar %}
+<div class="ps-auth-top">
+  <div class="container" style="max-width: {{ (auth_width|default(460)) + 120 }}px;">
+    <a class="ps-logo" href="{{ url_for('home') }}" aria-label="Perk Miner home">
+      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:42px;width:auto;">
+    </a>
+    <a class="ps-back" href="{{ url_for('home') }}"><i class="bi bi-arrow-left"></i> Back to home</a>
+  </div>
+</div>
 {% endblock %}
 
 {% block flashes %}
 {% with flashed = get_flashed_messages(with_categories=true) %}
   {% if flashed %}
-    <div class="container auth-wrap" style="max-width: {{ (auth_width|default(460)) + 24 }}px;">
+    <div class="container auth-wrap" style="max-width: {{ (auth_width|default(460)) + 24 }}px; padding-top: 1rem;">
       {% for category, flash_msg in flashed %}
         {% set cls = {'error':'danger','message':'info','success':'success','danger':'danger','warning':'warning','info':'info'}.get(category, 'info') %}
         <div class="alert alert-{{ cls }} mb-2 text-center" role="alert">{% if flash_safe is defined and flash_safe %}{{ flash_msg|safe }}{% else %}{{ flash_msg }}{% endif %}</div>
@@ -34,18 +64,24 @@
 {% endblock %}
 
 {% block content %}
-<div class="container pb-4 auth-wrap" style="max-width: {{ (auth_width|default(460)) + 24 }}px;">
+<div class="container pb-5 auth-wrap" style="max-width: {{ (auth_width|default(460)) + 24 }}px;">
   <div class="auth-head">
     <div class="auth-ic"><i class="bi bi-{{ auth_icon|default('person-circle') }}"></i></div>
     <h1>{{ auth_title }}</h1>
     {% if auth_sub is defined and auth_sub %}<div class="auth-sub">{{ auth_sub|safe }}</div>{% endif %}
+    {% if auth_chips is defined and auth_chips %}
+    <div class="ps-auth-chips">{% for c in auth_chips %}<span><i class="bi bi-check2-circle"></i> {{ c }}</span>{% endfor %}</div>
+    {% endif %}
   </div>
   <div class="card p-3 p-md-4">
     {% block auth_body %}{% endblock %}
   </div>
   {% block auth_after %}{% endblock %}
+  <p class="ps-safe"><i class="bi bi-lock-fill"></i> Secure sign-in &middot; We never sell or share your contact info</p>
 </div>
 {% endblock %}
+
+{% block footer %}{% endblock %}
 
 {% block scripts %}
 <script>

@@ -62,6 +62,7 @@
   letter-spacing: .01em;
 }
   </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
 </head>
 <body>
 <div class="container my-5">
@@ -76,12 +77,12 @@
         <b>Subscription Fee:</b> $9.99/month, billed automatically until cancelled.<br>
         <b>Fee:</b> 10% of each transaction, automatically deducted.<br>
         <b>Merchant Payments:</b> You must connect your own Stripe account. You are responsible for maintaining your payment info.<br>
-        <b>Compliance:</b> You are responsible for your own product quality, shipment, and customer service. PerkMiner is not liable for issues with your orders.<br>
+        <b>Compliance:</b> You are responsible for your own product quality, shipment, and customer service. Perk Miner LLC is not liable for issues with your orders.<br>
         <b>Cancellation:</b> You may cancel your subscription at any time from your dashboard. No partial refund. Your store will be disabled at end of period.<br>
         <b>Other terms:</b> [List any additional terms here...]
       </p>
       <p>
-        Use of this service means you agree to all rules and PerkMiner’s privacy policy.<br>
+        Use of this service means you agree to all rules and Perk Miner LLC’s privacy policy.<br>
         Contact support@perkminer.com for any questions.
       </p>
     </div>
@@ -135,7 +136,10 @@
     if (themePreviewData[selected]) {
       previewDiv.innerHTML = `
         <div class="mb-2"><b>Preview: ${selected}</b></div>
-        <iframe srcdoc='<html><head><style>${themePreviewData[selected].css || ""}</style></head><body style="margin:0;padding:0;">${themePreviewData[selected].html || ""}</body></html>' style="width:100%;min-height:240px;" sandbox></iframe>
+        <iframe srcdoc='<html><head><style>${themePreviewData[selected].css || ""}</style>  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-theme.css') }}">
+</head><body style="margin:0;padding:0;">${themePreviewData[selected].html || ""}</body></html>' style="width:100%;min-height:240px;" sandbox></iframe>
       `;
     } else {
       previewDiv.innerHTML = '<div class="text-danger">No preview available for this theme.</div>';

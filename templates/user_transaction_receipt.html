@@ -1,5 +1,5 @@
 {% extends "pm_base.html" %}
-{% block title %}Transaction Receipt - PerkMiner{% endblock %}
+{% block title %}Transaction Receipt - Perk Miner{% endblock %}
 
 {% block head_extra %}
 <style>
@@ -42,6 +42,9 @@
       </span>
     </div>
   </div>
+
+  {% set rv_biz_id = interaction.business_id %}
+  {% include "partials/_review_form.html" %}
 
   <div class="d-grid gap-2">
     {% if transaction.status == "available" %}

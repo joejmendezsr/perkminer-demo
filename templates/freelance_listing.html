@@ -1,0 +1,102 @@
+{%- from 'partials/_freelance_views.html' import freelance_hero, freelance_details, freelance_styles -%}
+{%- from 'partials/_reviews.html' import reviews_block -%}
+{% extends "pm_public_base.html" %}
+{% block title %}{{ fl.business_name }} - Freelancer Listing{% endblock %}
+{% block viewport %}<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">{% endblock %}
+{% block meta %}
+<meta name="description" content="{{ (fl.tagline or fl.about_us or 'Freelancer listing on Perk Miner')|truncate(150) }}">
+<meta name="robots" content="noindex, nofollow">
+{% if canonical %}<link rel="canonical" href="{{ canonical }}">
+<meta property="og:url" content="{{ canonical }}">
+<meta property="og:title" content="{{ fl.business_name }} - Freelancer on Perk Miner">{% endif %}
+<meta name="theme-color" content="#2a5859">
+{% endblock %}
+{% block head_extra %}
+{{ super() }}
+{{ freelance_styles() }}
+<style>
+  .animate-on-scroll { opacity: 0; transform: translateY(26px); transition: opacity .6s ease, transform .6s ease; }
+  .animate-on-scroll.visible { opacity: 1; transform: none; }
+  .top-bar { position: sticky; top: 0; z-index: 1000; background: rgba(255,255,255,.96); backdrop-filter: blur(12px); border-bottom: 1px solid #e8eef0; box-shadow: 0 2px 12px rgba(30,74,75,.08); padding: calc(.5rem + env(safe-area-inset-top)) .75rem .5rem; }
+  .top-bar .inner { max-width: 700px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .top-bar .brand { font-weight: 800; color: var(--pm-primary-dark); text-decoration: none; }
+  .listing-wrap { max-width: 700px; margin: 1rem auto 2rem; padding: 0 .75rem; }
+  .action-panel { padding: 1.2rem; }
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+  .action-grid .full { grid-column: 1 / -1; }
+  .act { display: flex; align-items: center; justify-content: center; gap: .55rem; width: 100%; min-height: 56px; padding: .8rem 1rem; border-radius: 16px; border: 2px solid transparent; font-weight: 700; font-size: 1.05rem; text-decoration: none; text-align: center; line-height: 1.2; cursor: pointer; }
+  .act i { font-size: 1.35rem; }
+  .act-qr { background: linear-gradient(145deg, #198754, #146c43); color: #fff !important; box-shadow: 0 6px 16px rgba(25,135,84,.28); }
+  .act-service { background: var(--pm-primary); color: #fff !important; box-shadow: 0 6px 16px rgba(42,88,89,.28); }
+  .act-line { background: #fff; border-color: var(--pm-primary); color: var(--pm-primary) !important; }
+  @media (max-width: 480px) { .action-grid { grid-template-columns: 1fr; } }
+  .fl-note { font-size: .84rem; color: #5b6f75; }
+</style>
+<noscript><style>.animate-on-scroll { opacity: 1 !important; transform: none !important; }</style></noscript>
+{% endblock %}
+
+
+{% block content %}
+<div class="listing-wrap">
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <a href="{{ url_for('freelance_directory') }}" class="btn btn-outline-secondary btn-sm">&larr; Back to directory</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-speedometer2"></i> Back to dashboard</a>
+  </div>
+  {% if preview %}
+    <div class="alert alert-warning"><i class="bi bi-eye"></i> Preview of your latest draft - not public yet. {{ fb.status_label }}.
+      <a href="{{ url_for('freelance_console') if is_owner else url_for('admin_freelance_review', fid=fb.id) }}">Back</a></div>
+  {% endif %}
+
+  {{ freelance_hero(fl) }}
+
+  <div class="card action-panel" id="actions">
+    {% if is_owner %}
+      <div class="fl-note mb-2">This is how members see your listing.</div>
+      <div class="action-grid">
+        <a href="{{ url_for('freelance_console') }}" class="act act-service"><i class="bi bi-speedometer2"></i> Freelancer Console</a>
+        <a href="{{ url_for('dashboard') }}#profileCollapse" class="act act-line"><i class="bi bi-pencil-square"></i> Edit listing</a>
+      </div>
+    {% elif not preview %}
+      <div class="action-grid">
+        <a href="{{ url_for('freelance_purchase', fid=fb.id) }}" class="act act-qr"><i class="bi bi-qr-code"></i> Show My QR</a>
+        <a href="#message" class="act act-service" onclick="document.getElementById('message_text').focus();"><i class="bi bi-chat-dots"></i> Send a Message</a>
+      </div>
+      <form method="post" action="{{ url_for('freelance_contact', fid=fb.id) }}" id="message" class="mt-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="form-label fw-semibold" for="message_text">Message {{ fl.business_name }} (private &amp; secure)</label>
+        <textarea id="message_text" name="message_text" class="form-control mb-2" rows="3" maxlength="2000" placeholder="Hi! I'd like to learn more about what you offer."></textarea>
+        <button class="btn btn-primary w-100" type="submit"><i class="bi bi-send"></i> Start secure conversation</button>
+      </form>
+    {% endif %}
+  </div>
+
+  {{ freelance_details(fl, true, true) }}
+
+  {{ reviews_block(fl.biz_id, fl.rating_avg, fl.rating_count) }}
+
+  <div class="pml-stat animate-on-scroll">
+    <i class="bi bi-patch-check"></i><span>Finalized transactions:</span>
+    <span class="n">{% if not finalized_count %}New Listing{% else %}{{ finalized_count }}{% endif %}</span>
+  </div>
+
+  <div class="card p-3 mt-3 fl-note">
+    <b>Please note:</b> This listing belongs to an individual Perk Miner member, not a registered Perk Miner advertiser. Perk Miner LLC is not responsible for
+    products or services sold, referral links to third-party companies, or any results or income claims, and cannot guarantee that any member or business will
+    select this freelancer. Show your Perk Miner QR code (or give your referral code) when you buy so the purchase can be finalized and cash back credited.
+    <a href="{{ url_for('freelance_terms') }}">Read the freelancer terms.</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var items = document.querySelectorAll('.animate-on-scroll');
+  if (!('IntersectionObserver' in window)) { items.forEach(function (el) { el.classList.add('visible'); }); return; }
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } });
+  }, { threshold: 0.08 });
+  items.forEach(function (el) { observer.observe(el); });
+});
+</script>
+{% endblock %}

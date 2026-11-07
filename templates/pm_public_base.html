@@ -1,0 +1,41 @@
+{% extends "pm_base.html" %}
+{# Shared base for public pages (about, faq, how it works, news, payout pages, testimonials).
+   Same look as the home page: shared header and footer from partials/_site_header.html and _site_footer.html. Child pages call {{ super() }}
+   inside head_extra to keep the shared styles below. #}
+
+{% block body_class %}ps-body ps-inner{% endblock %}
+
+{% block navbar %}
+{# the stylesheet link lives here (not in head_extra) so pages that forget {{ super() }} still get the new look #}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-site.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
+{% include 'partials/_site_header.html' %}
+<div style="height:.6rem"></div>
+{% endblock %}
+
+{% block footer %}
+{% include 'partials/_site_footer.html' %}
+{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* ===== shared public-page building blocks ===== */
+  .pp-wrap { max-width: 860px; margin: 0 auto; padding: 0 .75rem .5rem; }
+  .pp-wrap.wide { max-width: 1040px; }
+  .pp-h { display: flex; align-items: center; gap: .5rem; margin: 0 0 .45rem; font-weight: 800; font-size: 1.15rem; color: var(--pm-primary-dark); }
+  .pp-h i { color: var(--pm-primary); font-size: 1.25rem; }
+  .pp-lede { color: var(--pm-muted); margin: 0 0 .5rem; }
+  .pp-sub { font-size: .8rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--pm-primary); border-bottom: 2px solid var(--pm-accent); padding-bottom: .2rem; margin: .7rem 0 .4rem; }
+  .pp-sub:first-child { margin-top: 0; }
+  .pp-list { list-style: none; margin: 0; padding: 0; }
+  .pp-list > li { position: relative; padding: .3rem 0 .3rem 1.15rem; line-height: 1.4; }
+  .pp-list > li::before { content: ""; position: absolute; left: .1rem; top: .82rem; width: .45rem; height: .45rem; border-radius: 50%; background: var(--pm-primary); }
+  .pp-list > li + li { border-top: 1px dashed #e3eceb; }
+  .pp-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .pp-actions .btn { flex: 1 1 200px; }
+  .pp-fine { color: var(--pm-muted); font-size: .85rem; padding: .1rem .25rem .4rem; }
+  .pp-num { font-variant-numeric: tabular-nums; }
+  .pm-hero .pm-hero-sub + .pm-hero-sub { margin-top: .15rem; }
+  @media (max-width: 576px) { .pp-wrap { padding: 0 .5rem .4rem; } }
+</style>
+{% endblock %}

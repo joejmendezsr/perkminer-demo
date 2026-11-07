@@ -1,0 +1,15 @@
+{% extends "pm_base.html" %}
+{% block title %}Modify your review - Perk Miner{% endblock %}
+{% block content %}
+<div class="container pb-4" style="max-width:560px;">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-star-half"></i></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">{{ rv.business.business_name }}</div><h1>Modify your review</h1></div>
+    <div class="pm-hero-actions"><a href="{{ url_for('user_biz_interactions') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Active sessions</a></div>
+  </div>
+  <p class="text-muted small">Your current review: {{ rv.rating }} star{{ '' if rv.rating == 1 else 's' }}. You can change it once, until {{ rv.edit_until.strftime('%b %d, %Y') }}.</p>
+  {% set rv_biz_id = rv.business_id %}
+  {% set rv_next = url_for('user_biz_interactions') %}
+  {% include "partials/_review_form.html" %}
+</div>
+{% endblock %}

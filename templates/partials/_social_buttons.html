@@ -1,0 +1,44 @@
+{# "Continue with Google / Facebook / Microsoft / Apple" buttons.
+   Include with:  {% set kind='member' %}{% set mode='register' %}{% include 'partials/_social_buttons.html' %}
+     kind = 'member' | 'business'      mode = 'register' | 'login'
+   Optional: set ref_input_id to the id of the Referral Code input so a typed code travels with the click.
+   Renders nothing until at least one provider is configured (see social_auth.py). #}
+{% if social_providers %}
+{% set _verb = 'Sign up' if mode == 'register' else 'Sign in' %}
+<div class="social-auth mb-3">
+  <div class="d-grid gap-2">
+    {% for p in social_providers %}
+    <a class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2 social-btn"
+       rel="nofollow"
+       href="{{ url_for('social_auth.start', provider=p.key, kind=kind, mode=mode) }}"
+       {% if ref_input_id %}data-ref-input="#{{ ref_input_id }}"{% endif %}>
+      <i class="bi bi-{{ p.icon }}"></i> {{ _verb }} with {{ p.label }}
+    </a>
+    {% endfor %}
+  </div>
+  {% if kind == 'business' and mode == 'register' %}
+  <div class="form-text text-center mt-2">You'll enter your business name on the next step.</div>
+  {% endif %}
+  <div class="form-text text-center mt-2">
+    By continuing you agree to our <a href="{{ url_for('terms') }}">Terms</a> and <a href="{{ url_for('privacy') }}">Privacy Policy</a>.
+  </div>
+  <div class="d-flex align-items-center gap-2 text-muted small my-3">
+    <hr class="flex-grow-1 m-0"><span>or use your email</span><hr class="flex-grow-1 m-0">
+  </div>
+</div>
+<script>
+(function () {
+  // a referral code typed (or auto-filled) in the form is sent along when a social button is clicked
+  document.querySelectorAll('.social-auth .social-btn').forEach(function (a) {
+    a.addEventListener('click', function () {
+      var sel = a.getAttribute('data-ref-input');
+      var el = sel ? document.querySelector(sel) : null;
+      var v = el ? el.value.trim() : '';
+      var u = new URL(a.getAttribute('href'), window.location.origin);
+      if (v) { u.searchParams.set('ref', v); } else { u.searchParams.delete('ref'); }
+      a.setAttribute('href', u.pathname + u.search);
+    });
+  });
+})();
+</script>
+{% endif %}

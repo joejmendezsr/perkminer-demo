@@ -1,121 +1,96 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perkminer Terms of Service</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+{% extends "pm_public_base.html" %}
+{% block title %}Terms of Service | Perk Miner{% endblock %}
 
-        body {
-            font-family: 'Inter', system_ui, sans-serif;
-        }
+{% block head_extra %}
+{{ super() }}
+<meta name="description" content="Perk Miner LLC Terms of Service and Network Program Agreement: how members and businesses are paid, advertising fees, Stripe onboarding, and tax compliance.">
+<link rel="canonical" href="https://www.perkminer.com/terms">
+<style>
+  .ps-leg { max-width: 860px; margin: 0 auto; }
+  .ps-leg-doc { background: #fff; border: 1px solid var(--ps-line); border-radius: 28px; box-shadow: var(--ps-shadow); padding: clamp(1.3rem, 4vw, 3rem); color: var(--ps-text); line-height: 1.65; }
+  .ps-leg-doc h2 { font-size: clamp(1.15rem, 2.4vw, 1.45rem); font-weight: 800; color: var(--ps-ink); margin: 0 0 1rem; padding-bottom: .5rem; border-bottom: 3px solid var(--ps-gold); text-wrap: balance; }
+  .ps-leg-doc h3 { font-size: 1.02rem; font-weight: 800; color: var(--ps-teal-700); margin: 0 0 .7rem; }
+  .ps-leg-doc ul { list-style: none; padding: 0; margin: 0; }
+  .ps-leg-doc ul > li { position: relative; padding: .55rem 0 .55rem 1.4rem; }
+  .ps-leg-doc ul > li::before { content: ""; position: absolute; left: .15rem; top: 1.12rem; width: .5rem; height: .5rem; border-radius: 50%; background: var(--ps-teal-600); }
+  .ps-leg-doc ul > li + li { border-top: 1px dashed var(--ps-line); }
+  .ps-leg-lead { font-size: 1.08rem; margin: 0 0 1rem; }
+  .ps-leg-call { background: var(--ps-gold-100); border: 1px solid #f2dc95; border-radius: 20px; padding: 1.1rem 1.3rem; margin: 1.4rem 0 2.2rem; text-align: center; color: #5b4300; }
+  .ps-leg-sec { margin-bottom: 2.6rem; }
+  .ps-leg-box { background: var(--ps-teal-50); border: 1px solid var(--ps-line); border-radius: 18px; padding: 1.1rem 1.2rem; font-size: .95rem; }
+  .ps-leg-box + .ps-leg-box { margin-top: 1rem; }
+  .ps-leg-box ul > li { padding-top: .4rem; padding-bottom: .4rem; }
+  .ps-leg-box ul > li::before { top: .95rem; }
+  .ps-leg-two { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .ps-leg-two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .ps-leg-stack > * + * { margin-top: 1rem; }
+  .ps-leg-rest > div { margin-bottom: 1.8rem; }
+  .ps-leg-rest p { color: var(--ps-muted); margin: 0; }
+  .ps-leg-guar { background: linear-gradient(135deg, var(--ps-teal-800), var(--ps-teal-600)); color: #fff; border-radius: 24px; padding: 1.6rem 1.5rem; margin-top: 2.6rem; }
+  .ps-leg-guar h2 { color: var(--ps-gold); border-color: rgba(255,255,255,.2); text-align: center; }
+  .ps-leg-guar ul > li { color: rgba(255,255,255,.92); }
+  .ps-leg-guar ul > li::before { background: var(--ps-gold); }
+  .ps-leg-guar ul > li + li { border-color: rgba(255,255,255,.18); }
+  .ps-leg-sum { background: #fff; border: 2px solid var(--ps-teal-300); border-radius: 22px; padding: 1.2rem 1.3rem; margin-bottom: 1.4rem; }
+  .ps-leg-sum table { width: 100%; border-collapse: collapse; font-size: .9rem; margin: .8rem 0; }
+  .ps-leg-sum th { text-align: left; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ps-teal-600); padding: .4rem .5rem; border-bottom: 2px solid var(--ps-line); }
+  .ps-leg-sum td { padding: .5rem; border-bottom: 1px solid var(--ps-line); vertical-align: top; }
+  .ps-leg-sum tr.tot td { background: var(--ps-teal-50); font-weight: 800; color: var(--ps-teal-900); }
+  .ps-leg-sum tr.all td { background: var(--ps-gold-100); }
+  .ps-leg-sum .small { font-size: .84rem; color: var(--ps-muted); margin: 0; }
+  .ps-leg-sumwrap { overflow-x: auto; }
+  .ps-leg-foot { margin-top: 2.2rem; padding-top: 1.2rem; border-top: 1px solid var(--ps-line); text-align: center; color: var(--ps-muted); font-size: .88rem; }
+  @media (max-width: 600px) { .ps-leg-doc { padding: 1.1rem .95rem; border-radius: 22px; } .ps-leg-sum { padding: .9rem .7rem; } .ps-leg-sum table { font-size: .8rem; } .ps-leg-sum td, .ps-leg-sum th { padding: .4rem .3rem; } }
+  @media print { .ps-header, .ps-footer, .ps-crumb, .ps-bottom { display: none !important; } .ps-leg-doc { border: 0; box-shadow: none; padding: 0; } .ps-hero { display: none; } }
+</style>
+{% endblock %}
 
-        .heading-font {
-            font-family: 'Space Grotesk', sans-serif;
-        }
+{% block content %}
+<main id="main">
+<section class="ps-hero ps-hero-sm ps-dhero">
+  <div class="container">
+    <a class="ps-crumb" href="{{ url_for('home') }}"><i class="bi bi-arrow-left"></i> Home</a><br>
+    <span class="ps-pill"><i class="bi bi-file-earmark-text"></i> Last updated Nov. 4, 2026</span>
+    <h1>Terms of <em>Service</em></h1>
+    <p class="ps-lead">And Network Program Agreement &mdash; the rules for members and businesses, written down plainly.</p>
+  </div>
+</section>
 
-        .policy-container {
-            max-width: 860px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            position: relative;
-        }
-
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -6px;
-            left: 0;
-            width: 48px;
-            height: 3px;
-            background: linear-gradient(to right, #0ea5e9, #3b82f6);
-            border-radius: 9999px;
-        }
-
-        .subsection {
-            background-color: #18181b;
-            border-left: 4px solid #0ea5e9;
-        }
-
-    /* Footer */
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
-
-    </style>
-</head>
-<body class="bg-zinc-950 text-zinc-200 min-h-screen">
-    <div class="flex flex-col min-h-screen">
-        <!-- Top Bar -->
-        <div class="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50">
-            <div class="max-w-screen-xl mx-auto px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl">P</div>
-                    <div>
-                        <span class="heading-font text-2xl font-semibold tracking-tighter">Perkminer</span>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    <div class="text-sm text-zinc-400 hidden sm:block">
-                        Last Updated: October 10, 2026
-                    </div>
-                    <button onclick="window.close()"
-                            class="flex items-center gap-2 px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-2xl text-sm font-medium border border-zinc-700 hover:border-zinc-600">
-                        <i class="fa-solid fa-xmark"></i>
-                        <span>Close Window</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <main class="flex-1 policy-container mx-auto px-6 py-12">
-            <div class="max-w-3xl mx-auto">
-                <h1 class="heading-font text-5xl font-semibold tracking-tighter text-white mb-3 text-center">
-                    Terms of Service
-                </h1>
-                <p class="text-center text-amber-400 text-lg mb-2">AND NETWORK PROGRAM AGREEMENT</p>
-                <p class="text-center text-zinc-400 mb-12">
-                    Last Updated: May 16, 2026
-                </p>
-
-                <div class="prose prose-invert max-w-none text-zinc-300">
-                    <p class="text-lg leading-relaxed mb-10">
-                        Welcome to our platform (“Perk Miner," "Company," "we," "us," or "our"). This Terms of Service and Network Program Agreement ("Agreement") forms a legally binding contract between the Company, a Nevada corporation, and you. This Agreement governs your access to and use of our mobile application, website, and related multi-tier cashback and advertising services.
+<section class="ps-section">
+  <div class="container">
+    <div class="ps-leg">
+      <div class="ps-leg-doc">
+                    <p class="ps-leg-lead">
+                        Welcome to our platform (“Perk Miner LLC," "Perk Miner," "Company," "we," "us," or "our"). This Terms of Service and Network Program Agreement ("Agreement") forms a legally binding contract between Perk Miner LLC, a Nevada registered business (the "Company"), and you. This Agreement governs your access to and use of our mobile application, website, and related multi-tier cashback and advertising services.
                     </p>
 
-                    <p class="mb-8">
+                    <p>
                         <strong>"You"</strong> or <strong>"Your"</strong> refers to any individual registering as a <strong>"Member"</strong> or any commercial business entity registering as a <strong>"Business Advertiser"</strong> (collectively referred to as "Participants").
                     </p>
 
-                    <div class="bg-amber-500/10 border border-amber-500/30 rounded-3xl p-8 mb-12 text-center">
-                        <strong class="text-amber-400">BY REGISTERING AN ACCOUNT, COMPLETING THE STRIPE ONBOARDING PROCESS, OR PARTICIPATING IN THE NETWORK, YOU AGREE TO BE BOUND BY THIS AGREEMENT. IF YOU DO NOT AGREE, DO NOT USE THE PLATFORM.</strong>
+                    <div class="ps-leg-call">
+                        <strong>BY REGISTERING AN ACCOUNT, COMPLETING THE STRIPE ONBOARDING PROCESS, OR PARTICIPATING IN THE NETWORK, YOU AGREE TO BE BOUND BY THIS AGREEMENT. IF YOU DO NOT AGREE, DO NOT USE THE PLATFORM.</strong>
                     </div>
 
                     <!-- Section 1 -->
-                    <div class="mb-16">
-                        <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">1. NATURE OF THE SERVICE &amp; REGULATORY DISCLOSURE</h2>
-                        <ul class="space-y-6">
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Advertising Network Only:</strong> The Platform acts exclusively as a commercial advertising directory and transaction-tracking network. The Platform does not process, receive, or host primary consumer payments for products or services sold by Business Advertisers.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>No Investment or Joining Fees:</strong> Membership and registration on the Platform are 100% free for all Members. No purchase, inventory loading, or sign-up fee is required to participate or earn commissions.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>FTC Compliance &amp; Anti-Pyramid Protection:</strong> All rewards, cashback, and multi-tier commissions paid within this network originate entirely from real, verified, post-purchase advertising fees paid by Business Advertisers for actual, completed commercial transactions. No compensation is paid for the mere recruitment of other Participants.</li>
+                    <div class="ps-leg-sec">
+                        <h2>1. NATURE OF THE SERVICE &amp; REGULATORY DISCLOSURE</h2>
+                        <ul>
+                            <li><strong>Advertising Network Only:</strong> The Platform acts exclusively as a commercial advertising directory and transaction-tracking network. The Platform does not process, receive, or host primary consumer payments for products or services sold by Business Advertisers.</li>
+                            <li><strong>No Investment or Joining Fees:</strong> Membership and registration on the Platform are 100% free for all Members. No purchase, inventory loading, or sign-up fee is required to participate or earn commissions.</li>
+                            <li><strong>FTC Compliance &amp; Anti-Pyramid Protection:</strong> All rewards, cashback, and multi-tier commissions paid within this network originate entirely from real, verified, post-purchase advertising fees paid by Business Advertisers for actual, completed commercial transactions. No compensation is paid for the mere recruitment of other Participants.</li>
                         </ul>
                     </div>
 
                     <!-- Section 2 -->
-                    <div class="mb-16">
-                        <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">2. STRIPE ONBOARDING &amp; TAX COMPLIANCE (W-9)</h2>
-                        <ul class="space-y-6">
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Mandatory Stripe Onboarding:</strong> To receive payouts, all Members and Business Advertisers must successfully complete onboarding via Stripe Connect. You agree to comply with all Stripe terms and provide accurate identity and banking information.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>W-9/TIN Submission:</strong> To ensure absolute compliance with IRS guidelines, all Participants are required to submit digital tax verification once your commission earnings reach $600 (you will be contacted by Stripe via email and will have a limited amount of time to submit the form).  Failure to submit the required document will result in blocked access to withdrawing future funds owed even though your available funds will remain in your account until the end of the year.  If you fail to provide a W-9 within 30 days of the new year, you risk your account being suspended and/or deleted.</li>
+                    <div class="ps-leg-sec">
+                        <h2>2. STRIPE ONBOARDING &amp; TAX COMPLIANCE (W-9)</h2>
+                        <ul>
+                            <li><strong>Mandatory Stripe Onboarding:</strong> To receive payouts, all Members and Business Advertisers must successfully complete onboarding via Stripe Connect. You agree to comply with all Stripe terms and provide accurate identity and banking information.</li>
+                            <li><strong>W-9/TIN Submission:</strong> To ensure absolute compliance with IRS guidelines, all Participants are required to submit digital tax verification once your commission earnings reach $600 (you will be contacted by Stripe via email and will have a limited amount of time to submit the form).  Failure to submit the required document will result in blocked access to withdrawing future funds owed even though your available funds will remain in your account until the end of the year.  If you fail to provide a W-9 within 30 days of the new year, you risk your account being suspended and/or deleted.</li>
                             <li>
-                                <strong class="block mb-3">Tax Classification of Payouts:</strong>
-                                <div class="subsection p-6 rounded-2xl space-y-4 text-sm">
+                                <strong>Tax Classification of Payouts:</strong>
+                                <div class="ps-leg-box">
                                     <p><strong>Post-Purchase Rebates:</strong> Direct cashback received by a Participant on their own purchases is legally treated as a post-purchase price discount and is generally non-taxable, but may be included as income by Stripe.</p>
                                     <p><strong>Referral Income:</strong> All Tier 2 through Tier 5 commissions and network referral payouts constitute taxable non-employee compensation.</p>
                                     <p><strong>Form 1099-NEC:</strong> The Platform, via Stripe, will track cumulative annual referral earnings and issue IRS Form 1099-NEC where applicable.</p>
@@ -125,58 +100,79 @@
                     </div>
 
                     <!-- Section 3 -->
-                    <div class="mb-16">
-                        <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">3. ADVERTISER PREPAID ACCOUNT &amp; THE 10% ADVERTISING FEE</h2>
-                        <ul class="space-y-6">
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>The Advertising Fee:</strong> 10% of the total gross transaction amount (capped at $250.00 per transaction).</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Prepaid Account Funding:</strong> Business Advertisers must fund an in-app prepaid advertising account via Stripe.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Hard Account Balance Restrictions:</strong> Transactions are blocked if account balance is insufficient.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Refundability and Escheatment:</strong> The 10% ad fees are final and cannot be refunded or modified due to multiple payouts from each finalized transaction.  Escheatment is governed by Nevada unclaimed property laws.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> <strong>Discontinued Business Account:</strong> A $25 fee applies.  Any remaining funds in the advertiser's account balance over $25 will be refunded to the advertiser.  Advertiser is responsible for the $25 fee if account balance is below $25.</li>
+                    <div class="ps-leg-sec">
+                        <h2>3. ADVERTISER PREPAID ACCOUNT &amp; THE 10% ADVERTISING FEE</h2>
+                        <ul>
+                            <li><strong>The Advertising Fee:</strong> 10% of the total gross transaction amount (capped at $250.00 per transaction).</li>
+                            <li><strong>Prepaid Account Funding:</strong> Business Advertisers must fund an in-app prepaid advertising account via Stripe.</li>
+                            <li><strong>Hard Account Balance Restrictions:</strong> Transactions are blocked if account balance is insufficient.</li>
+                            <li><strong>Refundability and Escheatment:</strong> The 10% ad fees are final and cannot be refunded or modified due to multiple payouts from each finalized transaction.  Escheatment is governed by Nevada unclaimed property laws.</li>
+                            <li><strong>Discontinued Business Account:</strong> A $25 fee applies.  Any remaining funds in the advertiser's account balance over $25 will be refunded to the advertiser.  Advertiser is responsible for the $25 fee if account balance is below $25.</li>
                         </ul>
                     </div>
 
                     <!-- Section 4 -->
-                    <div class="mb-16">
-                        <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">4. TRANSACTION FINALIZATION &amp; DELAYED CLAUSE</h2>
-                        <ul class="space-y-6 text-zinc-300">
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> Mandatory in-app finalization by Business Advertisers.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> In-Person QR Code Verification for fraud protection or manual finalization by the business as needed.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> Delayed finalization option with mandatory disclosure.</li>
-                            <li class="flex gap-4"><span class="text-sky-400 font-medium">•</span> Standard withdrawals via Stripe (minimum $10) - A Perk Miner transfer fees applies (2.9% of the withdrawal amount + $0.50).</li>
+                    <div class="ps-leg-sec">
+                        <h2>4. TRANSACTION FINALIZATION &amp; DELAYED CLAUSE</h2>
+                        <ul>
+                            <li>Mandatory in-app finalization by Business Advertisers.</li>
+                            <li>In-Person QR Code Verification for fraud protection or manual finalization by the business as needed.</li>
+                            <li>Delayed finalization option with mandatory disclosure.</li>
+                            <li>Standard withdrawals via Stripe (minimum $10). A Perk Miner LLC transfer fee applies (2.9% of the withdrawal amount + $0.50).</li>
                         </ul>
                     </div>
 
                     <!-- Section 5 -->
-                    <div class="mb-16">
-                        <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">5. COMPENSATION PLAN &amp; MULTI-TIER REWARD STRUCTURES (THE TREE OF OPPORTUNITY)</h2>
-                        <p class="mb-6 text-zinc-400">All calculations based on gross transaction volume up to $2,500 per transaction.</p>
+                    <div class="ps-leg-sec">
+                        <h2>5. COMPENSATION PLAN &amp; MULTI-TIER REWARD STRUCTURES (THE TREE OF OPPORTUNITY)</h2>
+                        <p>All calculations based on gross transaction volume up to $2,500 per transaction.</p>
+                        <div class="ps-leg-sum">
+                            <h3>At a glance: who can be paid on one finalized transaction</h3>
+                            <p>On any single finalized transaction, Perk Miner LLC can pay <strong>up to 6 members</strong> and <strong>up to 6 businesses</strong>, with total payouts of up to 84% of the advertising fee. Everyone is paid by Perk Miner LLC from the advertising fee &mdash; never by the buyer and never by the advertiser on top of the fee. Example: a $1,000 sale carries a $100 advertising fee.</p>
+                            <div class="ps-leg-sumwrap"><table>
+                                <thead><tr><th>Who is paid</th><th>How many</th><th>Rate</th><th>On a $1,000 sale</th></tr></thead>
+                                <tbody>
+                                <tr><td>Member who made the purchase (cash back)</td><td>1 member</td><td>2.00%</td><td>$20.00</td></tr>
+                                <tr><td>Member sponsors of the buyer, Tiers 2&ndash;4</td><td>up to 3 members</td><td>0.2% each</td><td>up to $6.00</td></tr>
+                                <tr><td>Member sponsor, Tier 5</td><td>1 member</td><td>2.00%</td><td>$20.00</td></tr>
+                                <tr><td>Member who referred the business (one tier applies)</td><td>1 member</td><td>1.00% or 0.2%</td><td>up to $10.00</td></tr>
+                                <tr class="tot"><td>Members total</td><td>up to 6</td><td></td><td>up to $56.00</td></tr>
+                                <tr><td>The business itself (cash back for finalizing)</td><td>1 business</td><td>1.00%</td><td>$10.00</td></tr>
+                                <tr><td>Sponsoring businesses, Tiers 2&ndash;4</td><td>up to 3 businesses</td><td>0.2% each</td><td>up to $6.00</td></tr>
+                                <tr><td>Sponsoring business, Tier 5</td><td>1 business</td><td>1.00%</td><td>$10.00</td></tr>
+                                <tr><td>Split mutual commission (businesses you directly sponsor share it)</td><td>1 business pool</td><td>0.2%</td><td>up to $2.00</td></tr>
+                                <tr class="tot"><td>Businesses total</td><td>up to 6</td><td></td><td>up to $28.00</td></tr>
+                                <tr class="tot all"><td>All payouts</td><td>6 members + 6 businesses</td><td></td><td>up to $84.00 of the $100 fee</td></tr>
+                                </tbody>
+                            </table></div>
+                            <p class="small">Each payout is capped per transaction (for example, $50 for 2% payouts and $25 for 1% payouts) and applies to the first $2,500 of a purchase. One person can hold more than one role on the same transaction. Where a tier has no sponsor, that payout is not made to a member or business. Examples are illustrative; no sale or earnings are guaranteed.</p>
+                        </div>
 
-                        <div class="grid md:grid-cols-2 gap-8">
+                        <div class="ps-leg-two">
                             <!-- A -->
-                            <div class="subsection p-7 rounded-3xl">
-                                <h3 class="font-semibold mb-4 text-white">A. Member and Member-Referred Purchases</h3>
-                                <ul class="space-y-3 text-sm">
+                            <div class="ps-leg-box">
+                                <h3>A. Member and Member-Referred Purchases</h3>
+                                <ul>
                                     <li><strong>Tier 1 - Tree Trunk - (Your purchases):</strong> 2.00% Cashback (max $50)</li>
                                     <li><strong>Tier 2 - 1st Set of Branches - (Purchases by directly Sponsored Member):</strong> 0.2% Commission (max $5)</li>
                                     <li><strong>Tier 3 - 2nd Set of Branches - (Purchases by Member Sponsored by Tier 2 Member):</strong> 0.2% Commission (max $5)</li>
                                     <li><strong>Tier 4 - 3rd Set of Branches - (Purchases by Member Sponsored by Tier 3 Member):</strong> 0.2% Commission (max $5)</li>
                                     <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Purchases by Member Sponsored by Tier 4 Member):</strong> 2.00% Commission (max $50)</li>
-                                </ul></br></br>
-                                <h3 class="font-semibold mb-4 text-white">Sample Payout ($3,000 Purchase by Tier 5 Member):</h3>
-                                <ul class="space-y-3 text-sm">
+                                </ul><br><br>
+                                <h3>Sample Payout ($3,000 Purchase by Tier 5 Member):</h3>
+                                <ul>
                                     <li><strong>Tier 1 (Your Commission):</strong> 2.00% Commission ($50)</li>
                                     <li><strong>Tier 2 Member Commission:</strong> 0.2% Commission ($5)</li>
-                                    <li><strong>Tier 3 Member Commission):</strong> 0.2% Commission ($5)</li>
-                                    <li><strong>Tier 4 Member Commission):</strong> 0.2% Commission ($5)</li>
+                                    <li><strong>Tier 3 Member Commission:</strong> 0.2% Commission ($5)</li>
+                                    <li><strong>Tier 4 Member Commission:</strong> 0.2% Commission ($5)</li>
                                     <li><strong>Tier 5 Member Cash Back <b>(Member who made the purchase)</b>:</strong> 2.00% Cash Back ($50)</li>
                                 </ul>
                             </div>
                             <!-- B & C -->
-                            <div class="space-y-8">
-                                <div class="subsection p-7 rounded-3xl">
-                                    <h3 class="font-semibold mb-4 text-white">B. Member-Referred Businesses</h3>
-                                    <ul class="space-y-3 text-sm">
+                            <div class="ps-leg-stack">
+                                <div class="ps-leg-box">
+                                    <h3>B. Member-Referred Businesses</h3>
+                                    <ul>
                                         <li><strong>Tier 1 - Tree Trunk - (Sales by business you directly sponsor):</strong> 1.00% Commission (max $25)</li>
                                         <li><strong>Tier 2 - 1st Set of Branches - (Sales by businesses referred by Tier 1 business):</strong> 0.2% Commission (max $5)</li>
                                         <li><strong>Tier 3 - 2nd Set of Branches - (Sales by businesses referred by Tier 2 business):</strong> 0.2% Commission (max $5)</li>
@@ -184,9 +180,9 @@
                                         <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Sales by business referred by Tier 4 business):</strong> 1.00% Commission (max $25)</li>
                                     </ul>
                                 </div>
-                                <div class="subsection p-7 rounded-3xl">
-                                    <h3 class="font-semibold mb-4 text-white">C. Business-to-Business Referrals</h3>
-                                    <ul class="space-y-3 text-sm">
+                                <div class="ps-leg-box">
+                                    <h3>C. Business-to-Business Referrals</h3>
+                                    <ul>
                                         <li><strong>Tier 1 - Tree Trunk - (Sales by your business):</strong> 1.00% (max $25)</li>
                                         <li><strong>Tier 2 - 1st Set of Branches - (Sales by directly Sponsored Business):</strong> 0.2% (max $5)</li>
                                         <li><strong>Tier 3 - 2nd Set of Branches - (Sales by Business Sponsored by Tier 2 Business):</strong> 0.2% (max $5)</li>
@@ -194,22 +190,22 @@
                                         <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Sales by Business Sponsored by Tier 4 Business):</strong> 1.00% (max $25)</li>
                                     </ul>
                                 </div>
-                                <div class="subsection p-7 rounded-3xl">
-                                    <h3 class="font-semibold mb-4 text-white">D. Split Mutual Commission (Amount businesses you directly sponsor earn from your sales)</h3>
-                                    <ul class="space-y-3 text-sm">
+                                <div class="ps-leg-box">
+                                    <h3>D. Split Mutual Commission (Amount businesses you directly sponsor earn from your sales)</h3>
+                                    <ul>
                                         <li><strong>Tier 2 Businesses sponsored by Your Business:</strong> 0.2% of your sales (max $5) divided by number of Total Number of Businesses directly sponsored by Your Business</li>
                                     </ul>
                                 </div>
-                                <div class="subsection p-7 rounded-3xl">
-                                    <h3 class="font-semibold mb-4 text-white">E. Maximum Payout by Perk Miner LLC On Finalized Transactions (when all payouts are active with 6 members and 6 advertisers)</h3>
-                                    <ul class="space-y-3 text-sm">
+                                <div class="ps-leg-box">
+                                    <h3>E. Maximum Payout by Perk Miner LLC On Finalized Transactions (when all payouts are active with up to 6 members and up to 6 businesses)</h3>
+                                    <ul>
                                         <li><strong>84% of the advertising revenue re-invested back into the ecosystem:</strong> If Perk Miner LLC receives $100 in advertising fees from one finalized transaction, with every payout active, Perk Miner LLC pays out $84, keeping $16 of the advertising fee paid.<br><br>One member can earn from multiple payouts.<br><br>Member refers their own business, member also refers other members, and their business refers another business.<br><br>If a purchase is made from a Tier 5 business by a Tier 5 Member:<br><br>Member earns Tier 5 Member Referral Commissions for the purchase and Tier 5 Member to Business Commissions for the sale.<br><br>Their business earns Tier 5 Business to Business Commissions for the sale.</li>
                                     </ul>
                                 </div>
-                                <div class="subsection p-7 rounded-3xl">
-                                    <h3 class="font-semibold mb-4 text-white">F. Earnings are withdrawable earnings to a bank account (upon successful onboarding with Stripe through the platform)</h3>
-                                    <ul class="space-y-3 text-sm">
-                                        <li><strong>All payouts are real money deposited to bank account:</strong> Once members and advertisers have earned a minimum of $10, they are able to complete a standard withdrawal for their earnings (minum applicable Perk Miner transfer fees) deposited into the bank account setup through Stripe.  All earnings are real cash and not coupons, gift cards or points.</li>
+                                <div class="ps-leg-box">
+                                    <h3>F. Earnings are withdrawable earnings to a bank account (upon successful onboarding with Stripe through the platform)</h3>
+                                    <ul>
+                                        <li><strong>All payouts are real money deposited to bank account:</strong> Once members and advertisers have earned a minimum of $10, they are able to complete a standard withdrawal for their earnings (minus applicable Perk Miner LLC transfer fees) deposited into the bank account setup through Stripe.  All earnings are real cash and not coupons, gift cards or points.</li>
                                     </ul>
                                 </div>
                             </div>
@@ -217,54 +213,41 @@
                     </div>
 
                     <!-- Remaining Sections -->
-                    <div class="space-y-16">
+                    <div class="ps-leg-rest">
                         <div>
-                            <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">6. DISPUTE RESOLUTION, MEDIATION, &amp; SECURE CHAT</h2>
-                            <p class="text-zinc-400">In-app dispute system with secure three-way messaging (between the member, the advertiser and Perk Miner LLC) and good-faith resolution.</p>
+                            <h2>6. DISPUTE RESOLUTION, MEDIATION, &amp; SECURE CHAT</h2>
+                            <p>In-app dispute system with secure three-way messaging (between the member, the advertiser and Perk Miner LLC) and good-faith resolution.</p>
                         </div>
 
                         <div>
-                            <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">7. LEGAL PROTECTION AGAINST COLLUSION &amp; FRAUD</h2>
-                            <p class="text-zinc-400">Zero tolerance for fake transactions. Audit rights and account termination for violations.</p>
+                            <h2>7. LEGAL PROTECTION AGAINST COLLUSION &amp; FRAUD</h2>
+                            <p>Zero tolerance for fake transactions. Audit rights and account termination for violations.</p>
                         </div>
 
                         <div>
-                            <h2 class="section-title text-3xl font-semibold heading-font tracking-tight mb-8 text-white">8. LIMITATION OF LIABILITY &amp; GOVERNING LAW</h2>
-                            <p class="text-zinc-400">Governed by Nevada law. Exclusive jurisdiction in Clark County, Nevada.</p>
+                            <h2>8. LIMITATION OF LIABILITY &amp; GOVERNING LAW</h2>
+                            <p>Governed by Nevada law. Exclusive jurisdiction in Clark County, Nevada.</p>
                         </div>
                     </div>
 
                     <!-- Merchant Guarantee -->
-                    <div class="mt-20 p-10 border border-emerald-500/30 bg-emerald-950/50 rounded-3xl">
-                        <h2 class="heading-font text-3xl font-semibold text-emerald-400 mb-8 text-center">THE PERKMINER MERCHANT GUARANTEE</h2>
-                        <ul class="space-y-6 text-emerald-100">
-                            <li class="flex gap-4"><span class="text-emerald-400">•</span> 100% Free Listing • No monthly fees • $25 minimum account balance deposit required to start</li>
-                            <li class="flex gap-4"><span class="text-emerald-400">•</span> Pay-Per-Sale Model (10% capped at $250) • Minimum 1000% Return on Ad Spend (10:1 Marketing ROI Ratio)</li>
-                            <li class="flex gap-4"><span class="text-emerald-400">•</span> Lead Exclusivity &amp; Strict Privacy Mandates</li>
+                    <div class="ps-leg-guar">
+                        <h2>THE PERK MINER LLC MERCHANT GUARANTEE</h2>
+                        <ul>
+                            <li>100% Free Listing • No monthly fees • $25 minimum account balance deposit required to start</li>
+                            <li>Pay-Per-Sale Model: 10% advertising fee capped at $250 &mdash; about $1 in fees for every $10 sold, charged only when a sale is finalized. Results and sales are not guaranteed.</li>
+                            <li>Lead Exclusivity &amp; Strict Privacy Mandates</li>
                         </ul>
                     </div>
 
-                </div>
-
-                <div class="mt-20 pt-10 border-t border-zinc-800 text-center text-zinc-500 text-sm">
-                    <p>© Perkminer. Nevada Corporation. All rights reserved.</p>
-                </div>
-            </div>
-        </main>
-
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
-
+                
+        <div class="ps-leg-foot">
+          <p class="mb-1">&copy; 2026 Perk Miner LLC. All rights reserved.</p>
+          <p class="mb-0">Questions? <a href="mailto:support@perkminer.com">support@perkminer.com</a> &middot; <a href="{{ url_for('privacy') }}">Privacy Policy</a></p>
+        </div>
+      </div>
     </div>
-
-    <script>
-        document.addEventListener('keydown', function(e) {
-            if (e.key === "Escape") window.close();
-        });
-    </script>
-</body>
-</html>
+  </div>
+</section>
+</main>
+{% endblock %}

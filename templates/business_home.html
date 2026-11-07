@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Advertise With Perk Miner – Pay Only When You Make a Sale</title>
-  <meta name="description" content="Advertise on Perk Miner and pay only when you make a sale or close a deal. No contracts, no membership fees. No sale means $0 in fees.">
-  <meta name="theme-color" content="#2a5859">
+  <meta name="description" content="Advertise on Perk Miner and pay only when you make a sale or close a deal. Free listing, no monthly advertising fee, no contracts. No sale means $0 in fees.">
+  <meta name="theme-color" content="#123f40">
   <link rel="canonical" href="https://www.perkminer.com/business">
 
   <meta property="og:type" content="website">
@@ -21,196 +21,260 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-site.css') }}">
+  <script>document.documentElement.classList.remove('no-js');</script>
   <style>
-    :root {
-      --pm-primary: #1e4a4b;
-      --pm-primary-light: #2a5859;
-      --pm-accent: #ffd66b;
-      --pm-bg: #f8fafb;
-      --pm-card: #ffffff;
-      --pm-text: #1a1a1a;
-      --pm-muted: #5c6b73;
-      --pm-radius: 16px;
-      --pm-shadow: 0 4px 20px rgba(30,74,75,0.08);
-    }
-    * { box-sizing: border-box; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: var(--pm-bg); color: var(--pm-text); padding-bottom: 80px; margin: 0; }
-    .app-header { position: sticky; top: 0; z-index: 1000; background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid #e8eef0; padding: 0.6rem 1rem; }
-    .app-header .logo { height: 54px; width: auto; }
-    .header-cta .btn { border-radius: 50px; font-weight: 600; font-size: 0.9rem; padding: 0.4rem 1rem; }
-
-    .hero { background: linear-gradient(145deg, #1e4a4b 0%, #2a5859 60%, #3a6d6e 100%); color: white; padding: 2.5rem 1.25rem 2rem; text-align: center; }
-    .hero h1 { font-weight: 800; font-size: 2.1rem; line-height: 1.15; margin-bottom: 0.6rem; }
-    .hero .sub { font-size: 1.05rem; opacity: 0.95; margin-bottom: 1.2rem; }
-    .hero-cta .btn { border-radius: 50px; font-weight: 700; }
-
-    .detail-card { background: white; border-radius: 20px; padding: 1.4rem 1.2rem; margin-bottom: 1rem; box-shadow: var(--pm-shadow); }
-    .section-title { font-weight: 700; font-size: 1.45rem; text-align: center; margin: 2.2rem 0 1.2rem; color: var(--pm-primary); }
-
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e8eef0; display: flex; justify-content: space-around; padding: 0.55rem 0 calc(0.55rem + env(safe-area-inset-bottom)); z-index: 1000; }
-    .bottom-nav a { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #6b7c82; font-size: 0.7rem; font-weight: 500; }
-    .bottom-nav a i { font-size: 1.35rem; }
-    .bottom-nav a.active, .bottom-nav a:hover { color: var(--pm-primary-light); }
-
-    .animate-on-scroll { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
-    .animate-on-scroll.visible { opacity: 1; transform: translateY(0); }
-
-    .pm-feature-img { width: 100%; height: 100%; object-fit: cover; border-radius: 18px; min-height: 200px; max-height: 420px; }
-    .pm-carousel, .pm-carousel .carousel-inner, .pm-carousel .carousel-item { height: 100%; }
-    .pm-carousel .carousel-inner { border-radius: 18px; }
-
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
-
-    @media (min-width: 992px) {
-      body { padding-bottom: 0; }
-      .bottom-nav { display: none; }
-      .hero h1 { font-size: 2.6rem; }
-    }
+    .ps-fee-card { position: relative; background: #fff; color: var(--ps-text); border-radius: 26px; padding: clamp(1.3rem, 3vw, 1.8rem); box-shadow: var(--ps-shadow-lg); }
+    .ps-fee-card h2 { font-size: 1.05rem; font-weight: 800; color: var(--ps-ink); margin: 0 0 .9rem; display: flex; align-items: center; gap: .5rem; }
+    .ps-fee-card h2 i { color: var(--ps-teal-600); }
+    .ps-fee-rows { display: grid; gap: .6rem; margin-top: 1rem; }
+    .ps-fee-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .75rem 1rem; border-radius: 14px; background: var(--ps-teal-50); }
+    .ps-fee-row span { color: var(--ps-muted); font-weight: 600; font-size: .92rem; }
+    .ps-fee-row b { font-size: 1.35rem; font-variant-numeric: tabular-nums; color: var(--ps-teal-700); }
+    .ps-fee-row.cash { background: linear-gradient(135deg, #fff8e1, #fff3cf); border: 1px solid #f0dd9c; }
+    .ps-fee-row.cash span { color: #6b4a00; font-weight: 700; }
+    .ps-fee-row.cash b { color: #146c43; }
+    .ps-fee-row.keep { background: linear-gradient(135deg, var(--ps-teal-700), var(--ps-teal-600)); }
+    .ps-fee-row.keep span { color: rgba(255,255,255,.85); }
+    .ps-fee-row.keep b { color: var(--ps-gold); font-size: 1.6rem; }
+    .ps-req { display: grid; gap: .9rem; }
+    .ps-req > div { display: flex; gap: .9rem; align-items: flex-start; }
+    .ps-req i { flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px; background: var(--ps-gold-100); color: #a87500; display: inline-flex; align-items: center; justify-content: center; font-size: 1.15rem; }
+    .ps-req b { display: block; color: var(--ps-ink); }
+    .ps-req span { color: var(--ps-muted); font-size: .95rem; line-height: 1.5; }
+    .ps-flyers .carousel-inner { border-radius: 24px; box-shadow: var(--ps-shadow); background: #fff; }
+    .ps-flyers img { width: 100%; height: auto; max-height: 460px; object-fit: contain; background: #fff; display: block; }
+    .ps-flyers .carousel-indicators [data-bs-target] { background-color: var(--ps-teal-700); }
+    .ps-flyers .carousel-control-prev-icon, .ps-flyers .carousel-control-next-icon { filter: invert(1) grayscale(1) brightness(.3); }
+    .ps-callout { display: flex; gap: 1rem; align-items: flex-start; background: var(--ps-gold-100); border: 1px solid #f2dc95; border-radius: 20px; padding: 1.2rem 1.3rem; color: #4d3a08; }
+    .ps-callout i { font-size: 1.6rem; color: #b27d00; flex-shrink: 0; }
+    .ps-callout p { margin: 0; line-height: 1.55; }
   </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
 </head>
-<body>
+<body class="ps-body ps-has-bottom">
+{% set ps_active = 'biz' %}
+{% set ps_audience = 'business' %}
+{% include 'partials/_site_header.html' %}
 
-<header class="app-header">
-  <div class="container d-flex align-items-center justify-content-between">
-    <a href="/" class="d-flex align-items-center text-decoration-none">
-      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="logo">
-    </a>
-    <div class="header-cta d-flex align-items-center gap-2">
-      <div class="dropdown">
-        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">More</button>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="/">Home</a></li>
-          <li><a class="dropdown-item" href="/about">About Us</a></li>
-          <li><a class="dropdown-item" href="/faq">FAQ</a></li>
-          <li><a class="dropdown-item" href="/news">News</a></li>
-          <li><a class="dropdown-item" href="/testimonials">Testimonials</a></li>
-          <li><a class="dropdown-item" href="/intro">Videos</a></li>
-          <li><hr class="dropdown-divider"></li>
+<main id="main">
+
+<!-- ================= HERO ================= -->
+<section class="ps-hero ps-hero-sm">
+  <div class="container">
+    <div class="ps-hero-grid">
+      <div>
+        <span class="ps-pill"><i class="bi bi-shop"></i> Pay-per-sale advertising</span>
+        <h1>Stop paying for clicks.<br><em>Start paying for sales.</em></h1>
+        <p class="ps-lead">List your business free. When a sale is finalized you pay 10%, capped at $250. No sale, no fee &mdash; and no monthly advertising fee or contracts.</p>
+        <div class="ps-cta-row">
+          <a href="{{ url_for('business_register') }}" class="ps-btn ps-btn-gold ps-btn-lg">List your business free <i class="bi bi-arrow-right"></i></a>
+          <a href="{{ url_for('business_login') }}" class="ps-btn ps-btn-ghost-light ps-btn-lg">Business login</a>
+        </div>
+        <ul class="ps-trust">
+          <li><i class="bi bi-check-circle-fill"></i> Free to register and list</li>
+          <li><i class="bi bi-check-circle-fill"></i> No contracts</li>
+          <li><i class="bi bi-check-circle-fill"></i> No hidden fees</li>
         </ul>
       </div>
-      <a href="{{ url_for('staff_login') }}" class="btn btn-outline-secondary btn-sm">Staff Login</a>
-    </div>
-  </div>
-</header>
 
-<section class="hero">
-  <div class="container">
-    <h1>Grow Your Business<br>With Perk Miner</h1>
-    <h1>1,000% Return On Ad Spend or higher</h1>
-    <p class="sub">Spend $1, get $10 or more.<br>No sale = $0 in fees.</p>
-    <div class="hero-cta d-flex flex-column flex-sm-row gap-2 justify-content-center">
-      <a href="{{ url_for('business_register') }}" class="btn btn-warning btn-lg">Register Your Business</a>
-      <a href="{{ url_for('business_login') }}" class="btn btn-outline-light btn-lg">Business Login</a>
+      <div class="ps-fee-card" aria-label="Advertising fee calculator">
+        <h2><i class="bi bi-calculator"></i> See your fee on any sale</h2>
+        <label for="pm-sale-amount" class="form-label fw-semibold mb-1">Sale amount</label>
+        <div class="ps-money"><span>$</span><input id="pm-sale-amount" type="number" min="1" max="100000000" step="1" value="2500" inputmode="decimal"></div>
+        <div class="ps-fee-rows" aria-live="polite">
+          <div class="ps-fee-row"><span>Perk Miner fee (10%, max $250)</span><b id="pm-fee">$250.00</b></div>
+          <div class="ps-fee-row cash"><span><i class="bi bi-piggy-bank-fill"></i> Your cash back (1% of the sale, max $25)</span><b id="pm-cashback">$25.00</b></div>
+          <div class="ps-fee-row keep"><span>Revenue less fee</span><b id="pm-remainder">$2,250.00</b></div>
+          <div class="ps-fee-row"><span>Fee-based ROAS</span><b id="pm-roas">10.0X</b></div>
+        </div>
+        <p class="ps-fine mt-3 mb-0">Illustrative only. Revenue less fee is before the cost of goods, labor, taxes and other expenses. Cash back is the 1% you earn when you finalize a sale (on up to $2,500 of the sale) and is not included in revenue less fee; referral commissions are not included either. Sales and profit are not guaranteed.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<main class="container py-4">
-  <!-- Carousel + CTAs -->
-  <div class="row align-items-center mb-4 animate-on-scroll">
-    <div class="col-lg-6 mb-3 mb-lg-0">
-      <div id="pmFeatureCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
-        <div class="carousel-indicators">
-          <button type="button" data-bs-target="#pmFeatureCarousel" data-bs-slide-to="0" class="active"></button>
-          <button type="button" data-bs-target="#pmFeatureCarousel" data-bs-slide-to="1"></button>
-          <button type="button" data-bs-target="#pmFeatureCarousel" data-bs-slide-to="2"></button>
-        </div>
-        <div class="carousel-inner rounded-4 overflow-hidden">
-          <div class="carousel-item active">
-            <a href="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791505277/updated-biz-flyer-full-no-qr-1200_m4zude.jpg" target="_blank" rel="noopener">
-              <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791505277/updated-biz-flyer-full-no-qr-1200_m4zude.jpg?fit=crop&w=800&q=80" class="pm-feature-img" alt="Grow Your Business Flyer">
-            </a>
-          </div>
-          <div class="carousel-item">
-            <a href="https://res.cloudinary.com/dmrntlcfd/image/upload/v1792475970/Back-of-Flyer-square_glcba5.jpg" target="_blank" rel="noopener">
-              <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1792475970/Back-of-Flyer-square_glcba5.jpg?fit=crop&w=800&q=80" class="pm-feature-img" alt="Advertising Comparison Chart">
-            </a>
-          </div>
-          <div class="carousel-item">
-            <a href="https://res.cloudinary.com/dmrntlcfd/image/upload/v1775719494/List-for-Free_pykazg.jpg" target="_blank" rel="noopener">
-              <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1775719494/List-for-Free_pykazg.jpg?fit=crop&w=800&q=80" class="pm-feature-img" alt="List for Free">
-            </a>
-          </div>
-        </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#pmFeatureCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
-        <button class="carousel-control-next" type="button" data-bs-target="#pmFeatureCarousel" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
-      </div>
+<!-- ================= PRICING ================= -->
+<section class="ps-section">
+  <div class="container">
+    <div class="ps-head ps-reveal">
+      <span class="ps-eyebrow">Simple pricing</span>
+      <h2 class="ps-title">One fee. Only when you sell.</h2>
+      <p class="ps-sub">Pay $1 for every $10 sold, capped at $250 per sale. That&rsquo;s the whole price list.</p>
     </div>
-    <div class="col-lg-6">
-      <div class="detail-card text-center text-lg-start">
-        <h2 class="h4 mb-3">List Your Business Today</h2>
-        <div class="d-flex flex-column gap-2">
-          <a class="btn btn-primary btn-lg" href="{{ url_for('business_login') }}">Business Login</a>
-          <a class="btn btn-success btn-lg" href="{{ url_for('business_register') }}">Register Your Business</a>
-          <a class="btn btn-outline-primary btn-lg" href="{{ url_for('staff_login') }}">Staff Login</a>
+    <div class="ps-metrics ps-reveal">
+      <div class="ps-metric"><b>10%</b><span>of each finalized sale</span></div>
+      <div class="ps-metric"><b>$250</b><span>maximum fee per sale</span></div>
+      <div class="ps-metric"><b>$0</b><span>monthly fee</span></div>
+    </div>
+    <p class="text-center ps-fine mt-3 mb-0">A $25 minimum prepaid advertising balance covers your future transaction fees. Fees are deducted when a sale is finalized, and unused funds stay in your account.</p>
+  </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="ps-section ps-section-alt">
+  <div class="container">
+    <div class="ps-head ps-reveal">
+      <span class="ps-eyebrow">How it works</span>
+      <h2 class="ps-title">From listing to paid in three steps</h2>
+    </div>
+    <div class="ps-grid3">
+      <div class="ps-step ps-reveal"><i class="bi bi-building-add ps-step-ic"></i><div class="ps-step-n">1</div><h3>Create your listing</h3><p>Register and build your free business profile with your services, hours and member perk.</p></div>
+      <div class="ps-step ps-reveal"><i class="bi bi-chat-heart ps-step-ic"></i><div class="ps-step-n">2</div><h3>Connect with members</h3><p>Receive inquiries from members without paying per click, call or lead.</p></div>
+      <div class="ps-step ps-reveal"><i class="bi bi-qr-code-scan ps-step-ic"></i><div class="ps-step-n">3</div><h3>Finalize the sale</h3><p>Your customer pays you directly. Scan a QR code to finalize in seconds, or finalize remotely.</p></div>
+    </div>
+    <p class="text-center mt-4 mb-0 ps-reveal"><a href="{{ url_for('how_it_works') }}" class="ps-btn ps-btn-outline">See the full walkthrough</a></p>
+  </div>
+</section>
+
+<!-- ================= WHAT YOU GET ================= -->
+<section class="ps-section">
+  <div class="container">
+    <div class="ps-head ps-reveal">
+      <span class="ps-eyebrow">Why advertise with us</span>
+      <h2 class="ps-title">Everything you need, nothing you don&rsquo;t</h2>
+    </div>
+    <div class="ps-grid3">
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-cash-coin"></i></div><h3>Pay only for results</h3><p>No contracts, no commitment, no membership fees and no hidden fees. You pay when a sale is finalized &mdash; not for clicks.</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-globe2"></i></div><h3>A free public profile page</h3><p>Your own page with a unique web address, built to be found on major search engines and by AI assistants once your listing is approved (visibility isn&rsquo;t guaranteed).</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-people"></i></div><h3>Leads at no extra cost</h3><p>Exclusive leads, website and foot traffic, phone calls, appointments, meet-ups and live tracking of providers in the field (when status is &ldquo;on the way&rdquo;).</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-piggy-bank"></i></div><h3>Earn as you grow</h3><p>Earn 1% cash back for finalizing transactions (on up to $2,500 of the sale, $25 max), plus referral and mutual commissions from businesses you refer or that referred you.</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-graph-up-arrow"></i></div><h3>Real-time metrics</h3><p>See where every advertising dollar goes: sale amount, ad fee paid, marketing ROI after ad spend, and marketing ratio ROI.</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-megaphone"></i></div><h3>Featured exposure</h3><p>Featured exposure includes a Perk Miner LLC press release, social media and more.</p></div>
+    </div>
+    <div class="ps-callout mt-4 ps-reveal">
+      <i class="bi bi-arrow-repeat"></i>
+      <p><b>Where the fee goes.</b> Perk Miner LLC pays out up to 84% of the ad revenue from every transaction as cash back and commissions to members and business advertisers. Members pay you directly for every sale.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= REQUIREMENTS + FLYERS ================= -->
+<section class="ps-section ps-section-tint">
+  <div class="container">
+    <div class="ps-split">
+      <div class="ps-reveal">
+        <span class="ps-eyebrow">Before you register</span>
+        <h2 class="ps-title">What advertisers need</h2>
+        <p class="ps-sub mb-4">Three simple requirements keep the platform trustworthy for members and fair for every business.</p>
+        <div class="ps-req">
+          <div><i class="bi bi-patch-check"></i><div><b>Legally registered</b><span>Registered in the state where you primarily do business.</span></div></div>
+          <div><i class="bi bi-wallet2"></i><div><b>Funds on account</b><span>Keep enough balance to cover ad fees and finalize transactions.</span></div></div>
+          <div><i class="bi bi-gift"></i><div><b>One exclusive member perk</b><span>For example: a free non-alcoholic drink with any entr&eacute;e over $35, or 10% off during happy hour.</span></div></div>
+        </div>
+        <p class="mt-4 mb-0"><a href="{{ url_for('business_register') }}" class="ps-btn ps-btn-dark">Start my free listing <i class="bi bi-arrow-right"></i></a></p>
+      </div>
+      <div class="ps-reveal">
+        <div id="pmFeatureCarousel" class="carousel slide ps-flyers" data-bs-ride="carousel" data-bs-interval="5000">
+          <div class="carousel-indicators">
+            <button type="button" data-bs-target="#pmFeatureCarousel" data-bs-slide-to="0" class="active" aria-label="Slide 1"></button>
+            <button type="button" data-bs-target="#pmFeatureCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+            <button type="button" data-bs-target="#pmFeatureCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+          </div>
+          <div class="carousel-inner">
+            <div class="carousel-item active">
+              <a href="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791505277/updated-biz-flyer-full-no-qr-1200_m4zude.jpg" target="_blank" rel="noopener">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791505277/updated-biz-flyer-full-no-qr-1200_m4zude.jpg?fit=crop&w=800&q=80" alt="Grow your business flyer" loading="lazy">
+              </a>
+            </div>
+            <div class="carousel-item">
+              <a href="https://res.cloudinary.com/dmrntlcfd/image/upload/v1792475970/Back-of-Flyer-square_glcba5.jpg" target="_blank" rel="noopener">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1792475970/Back-of-Flyer-square_glcba5.jpg?fit=crop&w=800&q=80" alt="Advertising comparison chart" loading="lazy">
+              </a>
+            </div>
+            <div class="carousel-item">
+              <a href="https://res.cloudinary.com/dmrntlcfd/image/upload/v1775719494/List-for-Free_pykazg.jpg" target="_blank" rel="noopener">
+                <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1775719494/List-for-Free_pykazg.jpg?fit=crop&w=800&q=80" alt="List for free" loading="lazy">
+              </a>
+            </div>
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#pmFeatureCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Previous</span></button>
+          <button class="carousel-control-next" type="button" data-bs-target="#pmFeatureCarousel" data-bs-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Next</span></button>
         </div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Why Advertise -->
-  <section class="animate-on-scroll">
-    <h2 class="section-title">Why Advertise With Us?</h2>
-    <div class="detail-card">
-      <ul class="list-unstyled mb-0">
-        <li class="mb-3"><strong>Pay $1 for every $10 sold (capped at $250).  No contracts, no commitment, no membership fees, no hidden fees.</strong></li>
-        <li class="mb-3">Earn 1% cashback for finalizing transactions (on up to $2,500 of the closed sale or deal - $25 max) and earn additional revenue for your business through referral and mutual commissions (from finalized transactions of businesses your business refers or from the business that referred your business).</li>
-        <li class="mb-3"><strong>Perk Miner pays all cash back and commissions to members and business advertisers.  Perk Miner pays out up to 84% of the Ad Revenue paid from every transaction.</strong></li>
-        <li class="mb-3">Only a $25 minimum to fund your account for advertising fees.  Ad fees is deducted upon successful finalization of each transaction.  Unused funds remain in your account balance.</li>
-        <li class="mb-3"><strong>Zero cost for exclusive leads, website or foot traffic, phone calls, appointments, meet-ups and for live tracking of service providers in the field (when status is set to "on the way").</strong></li>
-        <li class="mb-3">Free public business profile page with unique URL and SEO to help your business get more exposure.  Featured exposure includes Perk Miner LLC press release, social media and more.</li>
-        <li class="mb-3"><strong>Real-Time metrics to keep track of where your advertising dollars are going (Sale Amount, Ad Fee Paid, Marketing ROI (after ad spend) and Marketing Ratio ROI).</strong></li>
-        <li>Members pay advertisers directly for all sales and closed deals.  Advertisers scan a QR code to finalize the transaction (takes seconds) or can do remote finalization.</li>
-      </ul>
+<!-- ================= FAQ ================= -->
+<section class="ps-section" id="faq">
+  <div class="container" style="max-width: 820px;">
+    <div class="ps-head ps-reveal">
+      <span class="ps-eyebrow">Questions</span>
+      <h2 class="ps-title">Frequently asked questions</h2>
     </div>
-  </section>
+    <div class="accordion ps-acc" id="pmBusinessFaq">
+      {% set faqs = [
+        ('When do I pay a fee?', 'The advertising fee is deducted when a qualifying transaction is successfully finalized, not for clicks or leads.'),
+        ('Is there a monthly fee?', 'No monthly advertising subscription fee. Registration and your business listing are free.'),
+        ('Why is a $25 balance required?', 'It is the minimum prepaid balance for advertising transaction fees. Unused funds remain in your account; consult the platform terms for withdrawal or refund rules.'),
+        ('Does 10X ROAS mean guaranteed sales?', 'No. It describes the ratio of completed sale revenue to Perk Miner advertising fees under the published pricing formula. Customer acquisition and profitability are not guaranteed.'),
+        ('What are the requirements to become an advertiser?', 'Advertisers must be legally registered in the state where they are primarily conducting business, they must maintain enough funds in their account balance at all times to cover the ad fees and to finalize transactions, and they must offer at least one exclusive perk to our members (free non-alcoholic drink with any entrée over $35, 10% off during happy hour, etc.).'),
+        ('Do I have to do anything to my public profile page for discovery (SEO) on search engines and AI?', 'We have done the hard work for you. Once your listing is approved, your public profile should become visible on major search engines and discoverable by AI agents (not 100% guaranteed).')
+      ] %}
+      {% for q, a in faqs %}
+      <div class="accordion-item">
+        <h3 class="accordion-header">
+          <button class="accordion-button {{ '' if loop.first else 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#pmFaq{{ loop.index }}" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="pmFaq{{ loop.index }}">{{ q }}</button>
+        </h3>
+        <div id="pmFaq{{ loop.index }}" class="accordion-collapse collapse {{ 'show' if loop.first }}" data-bs-parent="#pmBusinessFaq">
+          <div class="accordion-body">{{ a }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="text-center mt-3 mb-0"><a href="{{ url_for('faq') }}">More answers in our full FAQ</a></p>
+  </div>
+</section>
 
-  <!-- How It Works -->
-  <section class="my-4 animate-on-scroll">
-    <div class="position-relative rounded-4 overflow-hidden">
-      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1774196020/purchase_ntjk5q.jpg?fit=crop&w=1200&q=80" alt="How Perk Miner works" class="w-100" style="max-height:320px; object-fit:cover; filter:brightness(0.75);">
-      <div class="position-absolute top-50 start-50 translate-middle">
-        <a href="{{ url_for('how_it_works') }}" class="btn btn-primary btn-lg px-4 py-3 shadow">
-          <i class="bi bi-info-circle me-2"></i> How It Works
-        </a>
+<!-- ================= FOUNDER + CTA ================= -->
+<section class="ps-section pt-0">
+  <div class="container">
+    <p class="text-center mx-auto ps-sub ps-reveal mb-4" style="max-width: 44rem;">Perk Miner LLC was built by a founder with decades of business experience who has owned multiple advertising agencies &mdash; to answer the questions every owner asks: <i>How do I grow without wasting ad dollars, and how do I protect my profit margins?</i></p>
+    <div class="ps-cta ps-reveal">
+      <h2>Ready to advertise on your terms?</h2>
+      <p>Create your free listing today. You only pay when a sale is finalized.</p>
+      <div class="ps-cta-row">
+        <a href="{{ url_for('business_register') }}" class="ps-btn ps-btn-gold ps-btn-lg">List your business free <i class="bi bi-arrow-right"></i></a>
+        <a href="{{ url_for('business_login') }}" class="ps-btn ps-btn-ghost-light ps-btn-lg">Business login</a>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <p class="text-center text-muted px-3 animate-on-scroll">
-    We believe we're the best advertising platform to grow your business. The Founder has decades of experience in business and knows the advertising industry (has owned multiple agencies).  We've answered some of the biggest answers.  How can I grow my business without wasting advertising dollars? What gives me a high Return on Ad Spend and protects my profit margins?
-  </p>
 </main>
 
-<nav class="bottom-nav">
-  <a href="/"><i class="bi bi-house-fill"></i>Home</a>
-  {% if current_user.business_email %}
-    <a href="{{ url_for('business_dashboard') }}"><i class="bi bi-bar-chart-line-fill"></i>Dashboard</a>
-  {% else %}
-    <a href="/business/login"><i class="bi bi-person"></i>Login</a>
-  {% endif %}
-  <a href="/staff/login"><i class="bi bi-person-circle"></i>Staff Login</a>
-  <a href="/intro"><i class="bi bi-camera-reels"></i>Videos</a>
-</nav>
-
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
+{% include 'partials/_site_footer.html' %}
+{% set ps_bottom = 'biz' %}
+{% include 'partials/_site_bottom_nav.html' %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) entry.target.classList.add('visible');
-    });
-  }, { threshold: 0.15 });
-  document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+document.addEventListener('DOMContentLoaded', function () {
+  var els = document.querySelectorAll('.ps-reveal');
+  if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    els.forEach(function (el) { el.classList.add('is-in'); });
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    els.forEach(function (el) { io.observe(el); });
+  }
+
+  var saleInput = document.getElementById('pm-sale-amount');
+  if (saleInput) {
+    var fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+    var update = function () {
+      var sale = Math.max(0, Number(saleInput.value) || 0);
+      var fee = Math.min(sale * 0.10, 250);
+      document.getElementById('pm-fee').textContent = fmt.format(fee);
+      document.getElementById('pm-roas').textContent = fee > 0 ? (sale / fee).toFixed(1) + 'X' : '—';
+      document.getElementById('pm-cashback').textContent = fmt.format(Math.min(sale * 0.01, 25));
+      document.getElementById('pm-remainder').textContent = fmt.format(sale - fee);
+    };
+    saleInput.addEventListener('input', update);
+    update();
+  }
 });
 </script>
 </body>

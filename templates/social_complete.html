@@ -1,0 +1,26 @@
+{% extends "auth_base.html" %}
+{% from "pm_auth_macros.html" import errs %}
+{% set auth_icon = 'shop' %}
+{% set auth_title = 'Almost done' %}
+{% set auth_sub = 'Signed in with ' ~ provider_label ~ ' as <b>' ~ (email|e) ~ '</b>' %}
+{% set auth_width = 520 %}
+{% block title %}Finish Business Registration - Perk Miner{% endblock %}
+
+{% block auth_body %}
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="mb-3">
+    <label class="form-label fw-semibold" for="business_name">Business name <span class="text-muted fw-normal">(will be visible)</span></label>
+    <input class="form-control" id="business_name" name="business_name" maxlength="100" required autofocus
+           value="{{ business_name }}" placeholder="Business Name (will be visible)">
+  </div>
+  <div class="mb-3">
+    <label class="form-label fw-semibold" for="referral_code">Referral code <span class="text-muted fw-normal">(optional)</span></label>
+    <input class="form-control" id="referral_code" name="referral_code" maxlength="40"
+           value="{{ referral_code }}" placeholder="Referral Code (optional)">
+    {% if ref_auto %}<div class="form-text text-success"><i class="bi bi-check-circle"></i> Filled in automatically from your invitation.</div>{% endif %}
+  </div>
+  <button type="submit" class="btn btn-success btn-lg w-100">Create my business account</button>
+</form>
+<div class="auth-links"><a href="{{ url_for('business_register') }}">Cancel</a></div>
+{% endblock %}

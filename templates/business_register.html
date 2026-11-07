@@ -1,31 +1,41 @@
 {% extends "auth_base.html" %}
 {% from "pm_auth_macros.html" import field, pw %}
 {% set auth_icon = 'shop' %}
-{% set auth_title = 'Business Registration' %}
-{% set auth_sub = 'Create your advertiser account' %}
+{% set auth_title = 'List your business free' %}
+{% set auth_sub = 'Create your advertiser account. You only pay when a sale is finalized.' %}
+{% set auth_chips = ['Free listing', 'No monthly fee', 'Pay only on finalized sales'] %}
 {% set auth_width = 520 %}
-{% block title %}Business Register - PerkMiner{% endblock %}
+{% block title %}List Your Business - Perk Miner{% endblock %}
 
 {% block auth_body %}
+{% set kind = 'business' %}{% set mode = 'register' %}{% set ref_input_id = form.referral_code.id %}
+{% include 'partials/_social_buttons.html' %}
 <form method="post">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="mb-3">
-    <label class="form-label fw-semibold" for="{{ form.business_name.id }}">Business name <span class="text-muted fw-normal">(will be visible)</span></label>
-    {{ field(form.business_name, label=False, placeholder='Business Name (will be visible)', required=True) }}
+    <label class="form-label" for="{{ form.business_name.id }}">Business name <span class="text-muted fw-normal">(shown publicly)</span></label>
+    {{ field(form.business_name, label=False, placeholder='Your business name', required=True) }}
   </div>
   <div class="mb-3">
-    <label class="form-label fw-semibold" for="{{ form.business_email.id }}">Business email</label>
-    {{ field(form.business_email, label=False, placeholder='Business Email', required=True, ac='email') }}
+    <label class="form-label" for="{{ form.business_email.id }}">Business email</label>
+    {{ field(form.business_email, label=False, placeholder='you@yourbusiness.com', required=True, ac='email') }}
   </div>
   <div class="mb-3">
-    {{ pw(form.password, placeholder='Password', required=True, ac='new-password') }}
-    <div class="form-text">Minimum 8 characters</div>
+    {{ pw(form.password, placeholder='Create a password', required=True, ac='new-password') }}
+    <div class="form-text">At least 8 characters.</div>
   </div>
   <div class="mb-3">
-    <label class="form-label fw-semibold" for="{{ form.referral_code.id }}">Referral code <span class="text-muted fw-normal">(optional)</span></label>
-    {{ field(form.referral_code, label=False, placeholder='Referral Code (optional)') }}
+    <label class="form-label" for="{{ form.referral_code.id }}">Referral code <span class="text-muted fw-normal">(optional)</span></label>
+    {{ field(form.referral_code, label=False, placeholder='Enter a code if someone invited you') }}
+    {% if form.referral_code.data and request.method == 'GET' %}
+    <div class="form-text text-success"><i class="bi bi-check-circle-fill"></i> Added automatically from your invitation.</div>
+    {% endif %}
   </div>
-  {{ form.submit(class="btn btn-success btn-lg w-100") }}
+  <button type="submit" class="btn btn-success btn-lg w-100"><i class="bi bi-shop"></i> Create my business account</button>
+  <p class="form-text text-center mt-3 mb-0">By registering you agree to our <a href="{{ url_for('terms') }}">Terms</a> and <a href="{{ url_for('privacy') }}">Privacy Policy</a>.</p>
 </form>
-<div class="auth-links"><a href="{{ url_for('business_login') }}">Already have a business account? Login</a></div>
+<div class="pm-note mt-3" style="border-radius:14px;">
+  <b>What happens next:</b> confirm your email, then build your listing. A $25 minimum prepaid advertising balance covers future transaction fees &mdash; unused funds stay in your account.
+</div>
+<div class="auth-links"><a href="{{ url_for('business_login') }}">Already have a business account? Log in</a></div>
 {% endblock %}

@@ -3,21 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2a5859">
+<meta name="theme-color" content="#1e4a4b">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <title>{% block title %}Perk Miner Docuseries{% endblock %}</title>
 <meta name="description" content="{% block meta_desc %}Follow everyday members on the 45-Day Perk Miner Challenge — a filmed docuseries about a free, privacy-first cash back platform.{% endblock %}">
 {% block robots %}{% endblock %}
 <meta name="csrf-token" content="{{ csrf_token() if csrf_token is defined else '' }}">
 <style>
 :root{
-  --teal:#2a5859; --teal-d:#1c3d3e; --teal-l:#e7f0f0; --gold:#e8a93a; --gold-d:#b97f12;
-  --ink:#16292a; --muted:#5b6f70; --bg:#f6f9f9; --card:#fff; --line:#d9e4e4;
+  --teal:#1e4a4b; --teal-d:#0b3132; --teal-l:#e3f1f0; --gold:#ffd66b; --gold-d:#f2bd3a;
+  --ink:#0b2b2c; --muted:#566a6c; --bg:#f6faf9; --card:#fff; --line:#dfebe9;
   --ok:#1f8a5b; --ok-bg:#e6f5ee; --warn:#8a5300; --warn-bg:#fff4dc; --err:#b42318; --err-bg:#fdecea;
-  --r:14px; --shadow:0 6px 24px rgba(22,41,42,.08);
+  --r:22px; --shadow:0 1px 2px rgba(11,49,50,.05),0 10px 30px rgba(11,49,50,.08);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);-webkit-text-size-adjust:100%}
+body{margin:0;font:16px/1.65 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);-webkit-text-size-adjust:100%}
 img{max-width:100%;height:auto}
 a{color:var(--teal)}
 a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible,video:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
@@ -137,8 +139,20 @@ table.rates th{background:var(--teal-l);font-size:.85rem;text-transform:uppercas
 @media (max-width:560px){.card{padding:20px 16px}.hero{padding:40px 0 48px}.btn-lg{width:100%}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 @media print{.site-header,.site-footer,.submenu,.btn{display:none!important}.card{box-shadow:none}}
+
+/* match the main-site header */
+.site-header{background:rgba(255,255,255,.92);color:var(--teal);box-shadow:none;border-bottom:1px solid var(--line);backdrop-filter:saturate(1.5) blur(14px)}
+.brand{color:var(--teal-d)}
+.nav a{color:var(--teal)}
+.nav a:hover{background:var(--teal-l);color:var(--teal-d)}
+.nav .join{background:var(--gold);color:#17393a;font-weight:800;border-radius:999px;box-shadow:0 8px 22px rgba(242,189,58,.3)}
+.nav .join:hover{background:#f2bd3a;color:#17393a}
+.menu-btn{color:var(--teal);border-color:var(--line)}
+@media (max-width:900px){.nav{background:#fff;border-bottom:1px solid var(--line)}}
+h1,h2,h3{font-weight:800;letter-spacing:-.01em}
 </style>
 {% block head %}{% endblock %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
 <a class="skip" href="#main">Skip to content</a>

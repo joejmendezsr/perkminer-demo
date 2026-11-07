@@ -1,4 +1,48 @@
+# Perk Miner robots.txt
+# Public pages, public business profiles and the public directory API are open to search engines
+# and AI assistants. Account, dashboard and admin areas are private.
+
 User-agent: *
+Allow: /
+Allow: /public_profiles/
+Allow: /api/public/
 Disallow: /dashboard
 Disallow: /business/dashboard
-Disallow: /admin/dashboard
+Disallow: /admin/
+Disallow: /staff/
+Disallow: /api/admin/
+Disallow: /api/me/
+
+# Search engines and AI search / assistant crawlers (Siri uses Applebot; Bixby and Copilot rely on Bing/Google)
+User-agent: Googlebot
+User-agent: Google-Extended
+User-agent: Bingbot
+User-agent: Applebot
+User-agent: Applebot-Extended
+User-agent: DuckDuckBot
+User-agent: DuckAssistBot
+User-agent: OAI-SearchBot
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: anthropic-ai
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Amazonbot
+User-agent: Meta-ExternalAgent
+User-agent: MistralAI-User
+User-agent: YouBot
+User-agent: CCBot
+Allow: /
+Allow: /public_profiles/
+Allow: /api/public/
+Disallow: /dashboard
+Disallow: /business/dashboard
+Disallow: /admin/
+Disallow: /staff/
+Disallow: /api/admin/
+Disallow: /api/me/
+
+Sitemap: https://www.perkminer.com/sitemap.xml

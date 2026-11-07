@@ -3,7 +3,7 @@
   {% if b.badge_licensed or b.badge_bonded or b.badge_insured %}
     <div class="trust-badges">
       {% if b.badge_licensed %}
-        <span class="trust-badge trust-lic" title="License verified by Perk Miner">
+        <span class="trust-badge trust-lic" title="License verified by Perk Miner LLC">
           <i class="bi bi-patch-check-fill" aria-hidden="true"></i> Licensed
         </span>
       {% endif %}
@@ -44,7 +44,7 @@
         <div class="modal-body">
           <p class="mb-2"><b>Bonding company:</b> {{ b.bond_company }}</p>
           <p class="mb-2"><b>Bond amount:</b> {{ BOND_AMOUNT_LABELS.get(b.bond_amount, '') }}</p>
-          <p class="small text-muted mb-0">Verified by Perk Miner at the time of listing review. Coverage can change, so please confirm current details directly with the business.</p>
+          <p class="small text-muted mb-0">Verified by Perk Miner LLC at the time of listing review. Coverage can change, so please confirm current details directly with the business.</p>
         </div>
       </div>
     </div>
@@ -62,7 +62,7 @@
         <div class="modal-body">
           <p class="mb-2"><b>Insurance company:</b> {{ b.ins_company }}</p>
           <p class="mb-2"><b>Insurance coverage amount:</b> {{ INS_AMOUNT_LABELS.get(b.ins_amount, '') }}</p>
-          <p class="small text-muted mb-0">Verified by Perk Miner at the time of listing review. Coverage can change, so please confirm current details directly with the business.</p>
+          <p class="small text-muted mb-0">Verified by Perk Miner LLC at the time of listing review. Coverage can change, so please confirm current details directly with the business.</p>
         </div>
       </div>
     </div>

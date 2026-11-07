@@ -1,234 +1,377 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Frequently Asked Questions | PerkMiner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      margin: 0;
-      background: #f8fafb;
-      color: #222;
-    }
-    header {
-      background: #1769aa;
-      color: #fff;
-      padding: 1.5rem 0.5rem;
-      text-align: center;
-    }
-    main {
-      max-width: 650px;
-      margin: 2rem auto;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(23,105,170,0.08);
-      padding: 2rem 1.2rem;
-    }
-    h1 {
-      margin-top: 0;
-      font-size: 2rem;
-    }
-    .faq-list {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-    .faq-q {
-      font-weight: 600;
-      color: #1769aa;
-      margin: 1.2em 0 0.1em 0;
-    }
-    .faq-a {
-      margin-bottom: 1.2em;
-      color: #333;
-    }
-    .back-link {
-      display: inline-block;
-      margin-bottom: 1.4em;
-      color: #1769aa;
-      text-decoration: none;
-      font-size: 1.03em;
-      font-weight: 500;
-      border: 1px solid #d7e8f6;
-      background: #f3f9fc;
-      padding: 0.36em 1.2em;
-      border-radius: 22px;
-      transition: background 0.15s;
-    }
-    .back-link:hover {
-      background: #e3f2fa;
-      text-decoration: underline;
-    }
-    @media (max-width: 700px) {
-      main { margin: 1.2rem 0.3rem; padding: 1.3rem 0.6rem; }
-      h1 { font-size: 1.3rem;}
-    }
-    @media (max-width: 500px) {
-      header { padding: 0.85rem 0.2rem;}
-      main { padding: 1rem 0.3rem; }
-    }
+{% extends "pm_public_base.html" %}
+{% block title %}Frequently Asked Questions | Perk Miner{% endblock %}
 
-    /* Footer */
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
+{# qa(parent_id, id, question) — parent_id ties each accordion to its own tab so only one item per tab is open #}
+{% macro qa(parent, id, question) %}
+<div class="accordion-item faq-item">
+  <h3 class="accordion-header">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-{{ id }}" aria-expanded="false" aria-controls="faq-{{ id }}">{{ question }}</button>
+  </h3>
+  <div id="faq-{{ id }}" class="accordion-collapse collapse" data-bs-parent="#{{ parent }}">
+    <div class="accordion-body">{{ caller() }}</div>
+  </div>
+</div>
+{% endmacro %}
 
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Frequently Asked Questions</h1>
-  </header>
-  <main>
-    <a href="/" class="back-link">&larr; Back to Home</a>
-    <ul class="faq-list">
-      <li>
-        <div class="faq-q">How do I register?</div>
-        <div class="faq-a">
-          You only need a valid email address.  You register in 4 simple steps:  Enter a valid email address and password (for future logins), click the recaptch, click Register and verify your email address.  That's it.  Perk Miner will never ask you for your personal information and only stores your name (for invites) and email address.  All other personal data is securely stored on Stripe's end during the onboarding when you setup your payouts (you are re-directed to Stripe to complete the onboarding process).
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">What is Perk Miner?</div>
-        <div class="faq-a">
-          Perk Miner is a Nevada registered business located in Las Vegas, NV that connects members and businesses (one-member-to-one-business at a time) through it's platform (perkminer.com) that is built around consumer privacy.
-          <br><br><b>For Members:</b>  A safe way for members to search for a business, product or service without every comprimising any member's personal data (we don't share, sell or exploit member contact information or treat our members like a lead).
-          <br><br><b>For Advertisers:</b>  A Pay-Per-Sale Pay-Per-Close Model where advertisers pay a flat 10% advertising fee (capped at $250), which is a 1,000% Return on Ad Spend or higher on completed sales (no hidden fees, contracts or commitment).
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">Why is it called Perk Miner?</div>
-        <div class="faq-a">
-          Inside our company name is exactly what we do for you.
-          <br><br><b>The Perk:</b>  Every advertiser on our platform is required to offer you an exclusive, valuable benefit ("the perk") - like a free drink, a happy hour discount or special pricing.
-          <br><br><b>The Miner:</b>  Traditional search engines mine your data to sell to advertisers.  At Perk Miner, we turn the tables where you become the "miner".  You safely "mine" the excluse perks without comprimising your data on our platform and for service-related type businesses (plumber, contractor, etc.), you can communicate with them through private and secure messaging without ever comprimising your data.
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">How much does it cost to join PerkMiner?</div>
-        <div class="faq-a">
-          It’s free for members — Always Free — with no membership or subscription fees, no contracts, and no commitment!  Business advertisers list their business for as little as $25 (pre-funded advertising dollars that remain in their account balance until they have made a sale or closed a deal).
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">How are businesses charged?</div>
-        <div class="faq-a">
-          Business advertisers only pay a 10% fee (capped at $250) after a completed sale (fee is deducted from the business account balance automatically upon successful finalization of a transaction). There are no fees for exclusive leads (One Member to One Business), calls, phone calls, appointments, meet-ups, website or foot traffic.
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">How are businesses approved?</div>
-        <div class="faq-a">
-          Perk Miner LLC does verify that a business is legally registered in the state in which they are conducting business before approving a listing at the time of submission (advertisers are required to submit documentation and we verify what we can).  If a business is not legally registered in the state where they are conducting business, they cannot advertise on perkminer.com (exception, business that have been grand-fathered in and are a verified business with a real location).<br><br>At this time, we are working on implementing a process to conduct real-time monitoring of business advertisers, but for the time being, <b>our members must do their own research</b> when it pertains to reviews (advertisers are able to add their google reviews link to their listing and public profile page), licensing, bonding and insurance, especially for our service providers.  We simply provide the secure connection and protect our members (advertisers do not have access or receive any member contact details until the member decides when, and to whom to share that information with).
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">Does Perk Miner monitor listings for appropriate content?</div>
-        <div class="faq-a">
-          Yes. Advertisers are required to submit their listing for approval.  Once a listing has been approved, certain details for the listing must be re-submitted for approval before going live on the site.
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">What happens to a listing if it is re-submitted for approval?</div>
-        <div class="faq-a">
-          If an advertiser makes a change to their live listing and is required to re-submit their listing for the new updates to be displayed, the listing goes into a pending approval status (removed from the live site until the re-submitted listing has been reviewed and approved).  Once approved, the listing goes live with the new updates.  This is in order to maintain a safe browsing experience for our members.
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">What if an advertiser has an e-commerce website?</div>
-        <div class="faq-a">
-          Advertisers with an e-commerce website can add their website to the Online Marketplace and all purchases are automatically finalized upon a successful purchase.  Advertisers are required to add a script to their website to their order confirmation /  “thank you” page and kept in place at all times (which is verified prior to approval).  Instructions are provided to the advertiser.<br><br>Members are re-directed to the e-commerce website through perkminer.com and complete the purchase as if they went directly to e-commerce store.
-        </div>
-      </li>
+{% block head_extra %}
+{{ super() }}
+<style>
+  /* ---------- Tabs ---------- */
+  .faq-tabs { display: flex; gap: .5rem; flex-wrap: wrap; padding: .75rem; background: #f6fafb; border-bottom: 1px solid #e8f0f2; }
+  .faq-tabs .nav-link {
+    display: flex; align-items: center; gap: .5rem;
+    font-weight: 700; color: var(--pm-primary-dark);
+    background: #fff; border: 1px solid #e8f0f2; border-radius: 999px;
+    padding: .55rem 1.1rem; font-size: .98rem; transition: all .15s ease;
+  }
+  .faq-tabs .nav-link:hover { background: var(--pm-hover); }
+  .faq-tabs .nav-link.active { background: var(--pm-primary); color: #fff; border-color: var(--pm-primary); box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+  .faq-tabs .badge-count { font-size: .72rem; font-weight: 700; background: rgba(0,0,0,.08); color: inherit; border-radius: 999px; padding: .1rem .5rem; }
+  .faq-tabs .nav-link.active .badge-count { background: rgba(255,255,255,.25); }
 
-      <li>
-        <div class="faq-q">Is my information safe?</div>
-        <div class="faq-a">
-          Yes. PerkMiner never sells, shares, or exploits member data. You control when and to whom you share your contact info.
-        </div>
+  /* ---------- Search ---------- */
+  .faq-search { position: relative; padding: .75rem .75rem 0; }
+  .faq-search i { position: absolute; left: 1.5rem; top: 50%; transform: translateY(-15%); color: #7a9aa3; }
+  .faq-search input { padding-left: 2.4rem; border-radius: 999px; border-color: #e8f0f2; }
+  .faq-search input:focus { border-color: var(--pm-primary); box-shadow: none; }
+  .faq-empty { display: none; text-align: center; color: #6b8790; padding: 1.5rem 1rem; }
+
+  /* ---------- Section intro ---------- */
+  .faq-intro { display: flex; align-items: center; gap: .75rem; padding: 1rem .9rem .25rem; }
+  .faq-intro .ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--pm-hover); color: var(--pm-primary); font-size: 1.35rem; flex: 0 0 auto; }
+  .faq-intro h2 { font-size: 1.15rem; font-weight: 800; color: var(--pm-primary-dark); margin: 0; }
+  .faq-intro p { margin: 0; font-size: .9rem; color: #6b8790; }
+
+  /* ---------- Accordion ---------- */
+  .faq-acc { --bs-accordion-border-color: #e8f0f2; --bs-accordion-btn-focus-box-shadow: none; --bs-accordion-active-bg: var(--pm-hover); --bs-accordion-active-color: var(--pm-primary-dark); padding: .5rem 0; }
+  .faq-acc .accordion-button { font-weight: 700; color: var(--pm-primary-dark); padding: .75rem .9rem; font-size: 1rem; }
+  .faq-acc .accordion-body { padding: .7rem .9rem .9rem; font-size: .97rem; line-height: 1.55; }
+  .faq-acc .accordion-body p { margin-bottom: .5rem; }
+  .faq-acc .accordion-body p:last-child, .faq-acc .accordion-body ol:last-child { margin-bottom: 0; }
+  .faq-acc .accordion-body ol, .faq-acc .accordion-body ul { padding-left: 1.2rem; margin-bottom: .5rem; }
+  .faq-acc a { color: var(--pm-primary); font-weight: 600; }
+
+  /* ---------- Help footer ---------- */
+  .faq-help { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.1rem; background: #f6fafb; border-top: 1px solid #e8f0f2; }
+  .faq-help strong { color: var(--pm-primary-dark); }
+
+  @media (max-width: 575.98px) {
+    .faq-tabs .nav-link { flex: 1 1 100%; justify-content: center; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pp-wrap">
+
+  <div class="card pm-hero">
+    <div class="pm-hero-icon"><i class="bi bi-question-circle"></i></div>
+    <div class="pm-hero-body">
+      <div class="pm-hero-sub">FAQ</div>
+      <h1>Frequently Asked Questions</h1>
+    </div>
+    <div class="pm-hero-actions">
+      <a href="/" class="btn btn-sm btn-end"><i class="bi bi-arrow-left"></i> Back to Home</a>
+    </div>
+  </div>
+
+  <div class="card overflow-hidden">
+
+    <!-- Tabs -->
+    <ul class="nav nav-pills faq-tabs" id="faqTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-members" data-bs-toggle="pill" data-bs-target="#pane-members" type="button" role="tab" aria-controls="pane-members" aria-selected="true">
+          <i class="bi bi-person-heart"></i> For Members <span class="badge-count" data-count-for="pane-members"></span>
+        </button>
       </li>
-      <li>
-        <div class="faq-q">Can I earn rewards?</div>
-        <div class="faq-a">
-          Absolutely! Members get 2% cash back on purchases up to $2,500, paid by PerkMiner — not the business (real cash; not points or gift cards).  Business advertisers earn 1% cash back on closed sales up to $2,500.  Both members and business owners can earn referral commissions by inviting others (members are able to invite people to become members and businesses to become advertisers).  Businesses can only invite other businesses to advertise with Perk Miner LLC.  Real-time earnings are displayed upon the finalization of each individual transaction).</br><br>
-          Advertisers earn 1% cash back on up to $2,500 of every sale (finalized transactions), so instead of earning 1% or 2% of the advertising fee paid, advertisers actually earn 10% cash back of the advertising fee paid (example: ad fee = $50, cash back = $5) in exchange for offering a perk to our members.
-        </div>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-advertisers" data-bs-toggle="pill" data-bs-target="#pane-advertisers" type="button" role="tab" aria-controls="pane-advertisers" aria-selected="false">
+          <i class="bi bi-shop"></i> For Advertisers <span class="badge-count" data-count-for="pane-advertisers"></span>
+        </button>
       </li>
-      <li>
-        <div class="faq-q">How much can I earn in commissions?</div>
-        <div class="faq-a">
-          Members and Advertisers can calculate their earnings from their dashboard (Calculators that provide estimated earnings to registered members and advertisers).  Our generous payout model allows members to earn more than what they spend and it also allows businesses to earn more than what they sell.  Perk Miner pays out up to 84% of the revenue paid by advertisers from every finalized transaction in the form of cash back or referral commissions <a href="https://www.perkminer.com/full_payout_sample" target="_blank" rel="noopener">(See full payout sample)</a>
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">Why does Perk Miner LLC pay the cash back and referral commisions and not the advertiser?</div>
-        <div class="faq-a">
-          Perk Miner LLC considers the cash back and referral commissions paid as advertising fees.  We believe that word of mouth is the most trusted and powerful form of advertising and instead of paying for traditional forms of advertising, we'd rather pay our members and advertisers to tell others about perkminer.com</a>
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">Am I required to invite others?</div>
-        <div class="faq-a">
-          No!  Inviting other people to become members and inviting businesses to become an advertiser is completely optional.  Members and Businesses do not earn commissions from inviting others; earnings are based on the finalization of real purchases and for the payment of real services only.  However, inviting others will multiply your earnings tremendously as your network grows by inviting others.  There is zero-risk and zero cost for everyone (members and businesses) to join.
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">How difficult is it to invite others?</div>
-        <div class="faq-a">
-          Inviting others literally takes seconds.  All you need is the email address of the person you're inviting or the business you're inviting.  From your dashboard, you click on the invite button (members can invite people and businesses and businesses can only invite businesses), enter the email address and click on send.  That's it!  The person or business you invite will receive an email with information about perkminer.com, they will be able to watch some promo videos and when the click on the "Join" button, they are automatically re-directed to the proper registration page and your referral ID is auto-populated on the registration page for you.  Upon successful registration, you will see them in your network at the bottom of you dashboard.  There are also ways to invite others and businesses with flyers you can print out or you can also invite others through social media
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">Can I change sponsors once I've created my account?</div>
-        <div class="faq-a">
-          No!  This is to protect member and business network earnings.  This creates a fair experience to all members and business advertisers.
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">Will I be required to pay taxes on earnings?</div>
-        <div class="faq-a">
-          Yes!  Once a member or a business earns more than $600 during the tax year, all members and businesses will be required to fill out the proper tax form (W9, etc) and will be responsible for taxes on commissioned earnings (payouts onboarding is securely done through Stripe and they send you the 1099).
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">Where is my banking information and other personal information stored?</div>
-        <div class="faq-a">
-          Perk Miner LLC does not store any personal information on perkminer.com's database.  All personal information is collected by Stripe (Merchant) and stored on Stripes website in order to keep your information protected.
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">How are transactions finalized?</div>
-        <div class="faq-a">
-          Business advertisers are required to maintain enough funds in the business account balance, which is used to cover the 10% capped advertising fee.  If a business does not have enough funds (for example, they only have $50 for a $1,000 sale), the system will not allow them to finalize the transaction and they are automatically re-directed to the "Add Funds" page.  This prevents their account from going into the negative.</br></br>FINALIZING THE TRANSACTION:</br>1. The member begins the process by clicking on the "Show QR" button from the listing page of the business where they made the purchase (a QR code is displayed).</br>2. Member shows the QR code to the business owner or staff member.</br>3. The business owner or staff member scans the QR code (they are notified by email and in their dashboard that they have a transaction that needs to be finalized), they enter the amount the member paid and submit.  That's it!  It takes seconds to do.</br></br>MANUAL FINALIZATION:</br>Business owners can also finalize transactions manually (for remote transactions) from their dashboard.
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">What happens if a business is not able to or refuses to finalize a transaction?</div>
-        <div class="faq-a">
-          Members click on "Business unable to finalize transaction" button and this begins a 3-way secure messaging interaction (Member, the business and Perk Miner LLC support) to resolve the finalization process.
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">How do I get my business listing featured?</div>
-        <div class="faq-a">
-          Perk Miner will automatically feature it's founding business advertisers.  All other advertisers get featured based on rank (total transactions finalized, total final sales and ad fees paid, etc.).  Advertisers cannot pay to be featured - this gives every business a fair opportunity to get featured.  Featured advertisers must remain compliant and finalize all transactions to keep their featured status.
-        </div>
-      </li>
-      <li>
-        <div class="faq-q">Where can I get help or ask more questions?</div>
-        <div class="faq-a">
-          Contact support any time at <a href="mailto:support@perkminer.com" style="color:#1769aa;">support@perkminer.com</a>.
-        </div>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-about" data-bs-toggle="pill" data-bs-target="#pane-about" type="button" role="tab" aria-controls="pane-about" aria-selected="false">
+          <i class="bi bi-info-circle"></i> About Perk Miner <span class="badge-count" data-count-for="pane-about"></span>
+        </button>
       </li>
     </ul>
-  </main>
 
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
+    <!-- Search -->
+    <div class="faq-search">
+      <i class="bi bi-search"></i>
+      <input type="search" id="faqSearch" class="form-control" placeholder="Search all questions…" aria-label="Search frequently asked questions">
+    </div>
 
-</body>
-</html>
+    <div class="tab-content" id="faqTabContent">
+
+      <!-- ================= MEMBERS ================= -->
+      <div class="tab-pane fade show active" id="pane-members" role="tabpanel" aria-labelledby="tab-members" tabindex="0">
+        <div class="faq-intro">
+          <div class="ico"><i class="bi bi-person-heart"></i></div>
+          <div>
+            <h2>Member FAQs</h2>
+            <p>Joining, earning cash back, inviting others and keeping your data private.</p>
+          </div>
+        </div>
+        <div class="accordion accordion-flush faq-acc" id="faq-members">
+
+          {% call qa('faq-members', 'm-register', 'How do I register?') %}
+            <p>You only need a valid email address. Registering takes 4 simple steps:</p>
+            <ol>
+              <li>Enter a valid email address and a password (for future logins).</li>
+              <li>Complete the reCAPTCHA.</li>
+              <li>Click Register.</li>
+              <li>Verify your email address.</li>
+            </ol>
+            <p>Perk Miner LLC will never ask you for your personal information and only stores your name (for invites) and email address. All other personal data is securely stored by Stripe when you set up your payouts (you are redirected to Stripe to complete onboarding).</p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-cost', 'How much does it cost to join Perk Miner?') %}
+            <p>It's free for members, always, with no membership or subscription fees, no contracts and no commitment.</p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-safe', 'Is my information safe?') %}
+            <p>Yes. Perk Miner LLC never sells, shares or exploits member data. You control when and to whom you share your contact info.</p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-banking', 'Where is my banking information and other personal information stored?') %}
+            <p>Perk Miner LLC does not store any personal information in perkminer.com's database. All personal information is collected and stored by Stripe (merchant) to keep your information protected.</p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-rewards', 'Can I earn rewards?') %}
+            <p>Absolutely! Members get 2% cash back on purchases up to $2,500, paid by Perk Miner LLC and not the business (real cash, not points or gift cards).</p>
+            <p>Members can also earn referral commissions by inviting people to become members and businesses to become advertisers. Real-time earnings are displayed upon finalization of each transaction.</p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-commissions', 'How much can I earn in commissions?') %}
+            <p>Members can estimate earnings with the calculators in their dashboard. Our payout model allows members to earn more than they spend. Perk Miner LLC pays out up to 84% of the revenue paid by advertisers from every finalized transaction, as cash back or referral commissions.
+            <a href="/full_payout_sample">See the full payout sample</a> or <a href="/how_much_can_i_earn">How much can I earn?</a></p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-required', 'Am I required to invite others?') %}
+            <p>No! Inviting people to become members and businesses to become advertisers is completely optional. Earnings come from finalized real purchases and payment for real services, not from invites alone. However, inviting others can multiply your earnings as your network grows. There is zero risk and zero cost for everyone to join.</p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-invite', 'How difficult is it to invite others?') %}
+            <p>Inviting others takes seconds. All you need is the email address of the person or business you're inviting.</p>
+            <ol>
+              <li>From your dashboard, click the invite button (members can invite people and businesses).</li>
+              <li>Enter the email address and click send.</li>
+              <li>They receive an email about perkminer.com, can watch some promo videos, and when they click "Join" they are redirected to the right registration page with your referral ID auto-populated.</li>
+              <li>Once they register, you will see them in your network at the bottom of your dashboard.</li>
+            </ol>
+            <p>You can also invite others with printable flyers or through social media.</p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-sponsor', "Can I change sponsors once I've created my account?") %}
+            <p>No. This protects member and business network earnings and creates a fair experience for all members and advertisers.</p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-finalize', 'How are my purchases finalized?') %}
+            <ol>
+              <li>Click "Show QR" from the listing page of the business where you made the purchase (a QR code is displayed).</li>
+              <li>Show the QR code to the business owner or staff member.</li>
+              <li>They scan the QR code, enter the amount you paid and submit. It takes seconds.</li>
+            </ol>
+            <p>Members who buy from an e-commerce advertiser are redirected to the store through perkminer.com and complete the purchase as if they went directly to the store; the purchase is finalized automatically.</p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-unable', 'What happens if a business is not able to or refuses to finalize a transaction?') %}
+            <p>Click "Business unable to finalize transaction", which begins a 3-way secure messaging interaction (member, business and Perk Miner LLC support) to resolve the finalization.</p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-research', 'Are the businesses on Perk Miner vetted?') %}
+            <p>Perk Miner LLC verifies that a business is legally registered in the state where it conducts business before approving a listing. We are working on real-time monitoring of advertisers, but for now <b>members must do their own research</b> on reviews (advertisers can add their Google reviews link to their listing and public profile page), licensing, bonding and insurance, especially for service providers. We provide the secure connection and protect members: advertisers do not receive any member contact details until you decide when, and to whom, to share them.</p>
+          {% endcall %}
+
+          {% call qa('faq-members', 'm-taxes', 'Will I be required to pay taxes on earnings?') %}
+            <p>Yes. Once a member earns more than $600 during the tax year, they must fill out the proper tax form (W-9, etc.) and are responsible for taxes on commissioned earnings. Payout onboarding is done securely through Stripe, and Stripe sends you the 1099.</p>
+          {% endcall %}
+
+        </div>
+      </div>
+
+      <!-- ================= ADVERTISERS ================= -->
+      <div class="tab-pane fade" id="pane-advertisers" role="tabpanel" aria-labelledby="tab-advertisers" tabindex="0">
+        <div class="faq-intro">
+          <div class="ico"><i class="bi bi-shop"></i></div>
+          <div>
+            <h2>Advertiser FAQs</h2>
+            <p>Pricing, approval, listings, finalizing sales and getting featured.</p>
+          </div>
+        </div>
+        <div class="accordion accordion-flush faq-acc" id="faq-advertisers">
+
+          {% call qa('faq-advertisers', 'a-cost', 'How much does it cost to list my business?') %}
+            <p>Business advertisers list their business for as little as $25 (pre-funded advertising dollars that remain in their account balance until they make a sale or close a deal).</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-charged', 'How are businesses charged?') %}
+            <p>Business advertisers only pay a 10% fee (capped at $250) after a completed sale. The fee is deducted from the business account balance automatically upon successful finalization of a transaction. There are no fees for exclusive leads (one member to one business), calls, phone calls, appointments, meet-ups, website or foot traffic.</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-requirements', 'What are the requirements to becoming an advertiser?') %}
+            <p>Advertisers must be legally registered in the state where they are primarily conducting business, they must maintain enough funds in their account balance at all times to cover the ad fees and to finalize transactions and they must offer at least one exclusive perk to our members (free non-alcoholic drink with any entree over $35, 10% off during happy hour, etc.).</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-approved', 'How are businesses approved?') %}
+            <p>Perk Miner LLC verifies that a business is legally registered in the state where it conducts business before approving a listing (advertisers submit documentation and we verify what we can). A business that is not legally registered in its state cannot advertise on perkminer.com (exception: grandfathered businesses that are verified and have a real location).</p>
+            <p>We are working on real-time monitoring of advertisers, but for now <b>members must do their own research</b> on reviews (advertisers can add their Google reviews link to their listing and public profile page), licensing, bonding and insurance, especially for service providers. We provide the secure connection and protect members: advertisers do not receive any member contact details until the member decides when, and to whom, to share them.</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-monitor', 'Does Perk Miner LLC monitor listings for appropriate content?') %}
+            <p>Yes. Advertisers must submit their listing for approval. Once approved, certain listing details must be re-submitted for approval before going live on the site.</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-resubmit', 'What happens to a listing if it is re-submitted for approval after making updates?') %}
+            <p>If an advertiser updates their listing after it has been approved, they must re-submit it for the updates to be displayed. The live listing with previously approved data remain live, but the new updates do not take effect until it has been reviewed and approved. Once approved, the new updates are displayed. This maintains a safe browsing experience for members.</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-finalize', 'How are transactions finalized?') %}
+            <p>Advertisers must keep enough funds in their account balance to cover the 10% capped advertising fee. If a business doesn't have enough funds (for example, $50 for a $1,000 sale), the system won't let them finalize and they are redirected to the "Add Funds" page. This prevents the account from going negative.</p>
+            <p><b>Finalizing the transaction:</b></p>
+            <ol>
+              <li>The member clicks "Show QR" from the listing page of the business where they made the purchase (a QR code is displayed).</li>
+              <li>The member shows the QR code to the business owner or staff member.</li>
+              <li>The business owner or staff member scans the QR code (they are notified by email and in their dashboard that a transaction needs to be finalized), enters the amount the member paid and submits. It takes seconds.</li>
+            </ol>
+            <p><b>Manual finalization:</b> business owners can also finalize transactions manually (for remote transactions) from their dashboard.</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-unable', 'What happens if a business is not able to or refuses to finalize a transaction?') %}
+            <p>Members click "Business unable to finalize transaction", which begins a 3-way secure messaging interaction (member, business and Perk Miner LLC support) to resolve the finalization.</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-ecom', 'What if an advertiser has an e-commerce website?') %}
+            <p>Advertisers with an e-commerce website can add it to the Online Marketplace, and all purchases are automatically finalized upon a successful purchase. Advertisers must add code to their website (perkminer.com/online_purchase_instructions.html) and keep it in place at all times (verified before approval).</p>
+            <p>Members are redirected to the e-commerce website through perkminer.com and complete the purchase as if they went directly to the store.</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-rewards', 'Can advertisers earn rewards?') %}
+            <p>Yes. Business advertisers earn 1% cash back on closed sales up to $2,500, and can earn referral commissions by inviting other businesses (businesses can only invite other businesses). Real-time earnings are displayed upon finalization of each transaction.</p>
+            <p>Advertisers earn 1% cash back on up to $2,500 of every finalized sale, so instead of earning 1% or 2% of the advertising fee paid, they actually earn 10% cash back on the fee paid (example: ad fee = $50, cash back = $5) in exchange for offering a perk to our members.</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-commissions', 'How much can my business earn in commissions?') %}
+            <p>Advertisers can estimate earnings with the calculators in their dashboard. Our payout model allows businesses to earn more than they sell. Perk Miner LLC pays out up to 84% of the revenue paid by advertisers from every finalized transaction, as cash back or referral commissions.
+            <a href="/full_payout_sample">See the full payout sample</a> or <a href="/how_much_can_i_earn">How much can I earn?</a></p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-featured', 'How do I get my business listing featured?') %}
+            <p>Perk Miner LLC automatically features its founding business advertisers. All other advertisers are featured based on rank (total transactions finalized, total final sales, ad fees paid, etc.). Advertisers cannot pay to be featured, which gives every business a fair opportunity. Featured advertisers must remain compliant and finalize all transactions to keep their featured status.</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-seo', 'Do I have to do anything to my included public profile page for discovery (SEO) on major search engines and AI?') %}
+            <p>We have done the hard work for you and once your listing is approved, your public profile should become visible on major search engines and discoverable with AI agents (not 100% guaranteed).</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-sponsor', "Can I change sponsors once I've created my account?") %}
+            <p>No. This protects member and business network earnings and creates a fair experience for all members and advertisers.</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-taxes', 'Will I be required to pay taxes on earnings?') %}
+            <p>Yes. Once a business earns more than $600 during the tax year, they must fill out the proper tax form (W-9, etc.) and are responsible for taxes on commissioned earnings. Payout onboarding is done securely through Stripe, and Stripe sends you the 1099.</p>
+          {% endcall %}
+
+        </div>
+      </div>
+
+      <!-- ================= ABOUT ================= -->
+      <div class="tab-pane fade" id="pane-about" role="tabpanel" aria-labelledby="tab-about" tabindex="0">
+        <div class="faq-intro">
+          <div class="ico"><i class="bi bi-info-circle"></i></div>
+          <div>
+            <h2>About Perk Miner</h2>
+            <p>Who we are, what the name means and how we're different.</p>
+          </div>
+        </div>
+        <div class="accordion accordion-flush faq-acc" id="faq-about">
+
+          {% call qa('faq-about', 'g-what', 'What is Perk Miner?') %}
+            <p>Perk Miner LLC is a Nevada registered business located in Las Vegas, NV that connects members and businesses (one member to one business at a time) through its platform (perkminer.com), which is built around consumer privacy.</p>
+            <p><b>For members:</b> a safe way to search for a business, product or service without ever compromising your personal data. We don't share, sell or exploit member contact information or treat members like a lead.</p>
+            <p><b>For advertisers:</b> a Pay-Per-Sale / Pay-Per-Close model with a flat 10% advertising fee (capped at $250), charged only on completed sales &mdash; about $1 in fees per $10 sold, before your own costs (no hidden fees, contracts or commitment).</p>
+          {% endcall %}
+
+          {% call qa('faq-about', 'g-name', 'Why is it called Perk Miner?') %}
+            <p>Inside our company name is exactly what we do for you.</p>
+            <p><b>The Perk:</b> every advertiser on our platform is required to offer you an exclusive, valuable benefit ("the perk"), like a free drink, a happy hour discount or special pricing.</p>
+            <p><b>The Miner:</b> traditional search engines mine your data to sell to advertisers. At Perk Miner, we turn the tables and you become the "miner". You safely "mine" exclusive perks without compromising your data, and for service-related businesses (plumber, contractor, etc.) you can communicate through private and secure messaging.</p>
+          {% endcall %}
+
+          {% call qa('faq-about', 'g-does', 'Does Perk Miner LLC sell any of the products or provide any of the services offered by advertisers?') %}
+            <p>No.  Perk Miner LLC does not sell any products or provide any services other than the one-member-to-one-business connection.</p>
+            <p><b>For members:</b> we provide a safe browsing experience when searching for a business, product or service, but we do not handle any advertiser products or services.  We just make it easier for members to make a better-informed decision.  We do not control product or service quality, handle returns, etc.</p>
+            <p><b>For advertisers:</b> we provide the exclusive leads, website and foot traffic, phone calls, meet-ups and live service-provider tracking at no cost, but advertisers are responsible for the quality of service or quality of products offered and handle everything as if they conducted business outside of perkminer.com.</p>
+          {% endcall %}
+
+          {% call qa('faq-about', 'g-whopays', 'Why does Perk Miner LLC pay the cash back and referral commissions and not the advertiser?') %}
+            <p>Perk Miner LLC treats the cash back and referral commissions as advertising fees. We believe word of mouth is the most trusted and powerful form of advertising, and instead of paying for traditional advertising we would rather pay our members and advertisers to tell others about perkminer.com.</p>
+          {% endcall %}
+
+          {% call qa('faq-about', 'g-help', 'Where can I get help or ask more questions?') %}
+            <p>Contact support any time at <a href="mailto:support@perkminer.com">support@perkminer.com</a>.</p>
+          {% endcall %}
+
+        </div>
+      </div>
+
+      <div class="faq-empty" id="faqEmpty"><i class="bi bi-emoji-neutral"></i> No questions match your search.</div>
+    </div>
+
+    <div class="faq-help">
+      <div><strong>Still have questions?</strong> We're happy to help.</div>
+      <a class="btn btn-sm btn-primary" href="mailto:support@perkminer.com"><i class="bi bi-envelope"></i> Contact Support</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  // Question counts on each tab
+  document.querySelectorAll('[data-count-for]').forEach(function (el) {
+    var pane = document.getElementById(el.getAttribute('data-count-for'));
+    if (pane) el.textContent = pane.querySelectorAll('.faq-item').length;
+  });
+
+  // Deep-link: /faq#advertisers or /faq#about opens that tab
+  var map = { members: 'tab-members', advertisers: 'tab-advertisers', about: 'tab-about' };
+  var hash = (location.hash || '').replace('#', '');
+  if (map[hash]) {
+    var btn = document.getElementById(map[hash]);
+    if (btn && window.bootstrap) bootstrap.Tab.getOrCreateInstance(btn).show();
+  }
+  document.querySelectorAll('#faqTabs button').forEach(function (b) {
+    b.addEventListener('shown.bs.tab', function () {
+      var key = b.id.replace('tab-', '');
+      if (history.replaceState) history.replaceState(null, '', '#' + key);
+    });
+  });
+
+  // Search: filters every question across all tabs, auto-jumps to the first tab with a match
+  var input = document.getElementById('faqSearch');
+  var empty = document.getElementById('faqEmpty');
+  input.addEventListener('input', function () {
+    var q = input.value.trim().toLowerCase();
+    var firstTabWithHit = null, total = 0;
+    document.querySelectorAll('.tab-pane').forEach(function (pane) {
+      var hits = 0;
+      pane.querySelectorAll('.faq-item').forEach(function (item) {
+        var match = !q || item.textContent.toLowerCase().indexOf(q) !== -1;
+        item.style.display = match ? '' : 'none';
+        if (match) hits++;
+      });
+      total += hits;
+      if (q && hits && !firstTabWithHit && !pane.classList.contains('active')) firstTabWithHit = pane;
+      if (q && pane.classList.contains('active') && hits) firstTabWithHit = null;
+    });
+    empty.style.display = (q && total === 0) ? 'block' : 'none';
+    if (firstTabWithHit && window.bootstrap) {
+      var tabBtn = document.querySelector('[data-bs-target="#' + firstTabWithHit.id + '"]');
+      if (tabBtn) bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+    }
+  });
+})();
+</script>
+{% endblock %}

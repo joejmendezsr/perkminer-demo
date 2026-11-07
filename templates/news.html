@@ -1,112 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>News | PerkMiner</title>
-  <style>
-    :root {
-      --accent: #1769aa;
-      --text: #222;
-      --bg: #fff;
-      --radius: 8px;
-    }
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-    header {
-      background: var(--accent);
-      color: #fff;
-      padding: 1rem 0.5rem;
-      text-align: center;
-    }
-    main {
-      max-width: 700px;
-      margin: 2rem auto;
-      padding: 1rem;
-    }
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 0.7em;
-    }
-    .news-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .news-list li {
-      background: #f2f7fa;
-      margin-bottom: 1rem;
-      padding: 1rem;
-      border-radius: var(--radius);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.035);
-      transition: box-shadow 0.2s;
-    }
-    .news-list li:hover {
-      box-shadow: 0 4px 12px rgba(23,105,170,0.13);
-    }
-    .news-link {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 1.12em;
-    }
-    .news-date {
-      font-size: 0.95em;
-      color: #777;
-      display: inline-block;
-      margin-top: 0.3em;
-    }
-    @media (max-width: 700px) {
-      main {
-        margin: 1rem 0.5rem;
-        padding: 0.7rem;
-      }
-    }
-    @media (max-width: 480px) {
-      h1 {
-        font-size: 1.4rem;
-      }
-      .news-list li {
-        padding: 0.7rem;
-      }
-    }
+{% extends "pm_public_base.html" %}
+{% block title %}News | Perk Miner{% endblock %}
 
-    /* Footer */
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
+{% block content %}
+<main id="main">
+<section class="ps-hero ps-hero-sm ps-dhero">
+  <div class="container">
+    <a class="ps-crumb" href="{{ url_for('home') }}"><i class="bi bi-arrow-left"></i> Home</a><br>
+    <span class="ps-pill"><i class="bi bi-newspaper"></i> Newsroom</span>
+    <h1>Perk Miner <em>news</em></h1>
+    <p class="ps-lead">What&rsquo;s new, who&rsquo;s featured, and what&rsquo;s coming next.</p>
+  </div>
+</section>
 
-  </style>
-</head>
-<body>
-  <header>
-    <h1>PerkMiner News</h1>
-    <p>What’s new, featured, and upcoming</p>
-  </header>
-  <main>
-    <a href="/" class="nav">&larr; Back to Home</a>
-    <ul class="news-list">
-      <li>
-        <a href="/press-release" class="news-link">Official Press Release</a>
-        <div class="news-date">October 4, 2026</div>
-      </li>
-      <li>
-        <a href="/new-featured-businesses" class="news-link">PerkMiner Welcomes Newest Featured Businesses</a>
-        <div class="news-date">October 4, 2026</div>
-      </li>
-      <!-- Add more news items as needed -->
-    </ul>
-  </main>
-</body>
+<section class="ps-section">
+  <div class="container">
+    <div class="ps-narrow">
+      <a class="ps-news-item ps-reveal" href="{{ url_for('press_release') }}">
+        <span class="ps-news-ic"><i class="bi bi-megaphone"></i></span>
+        <div>
+          <span class="ps-news-date">November 4, 2026 &middot; Press release</span>
+          <h3>No sale, no fee: a Las Vegas startup is flipping local advertising</h3>
+          <p>Perk Miner LLC charges businesses only when a sale closes and pays shoppers real cash back, without selling their data.</p>
+        </div>
+        <i class="bi bi-arrow-right ps-news-go"></i>
+      </a>
 
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
+      <a class="ps-news-item ps-reveal" href="{{ url_for('new_featured_businesses') }}">
+        <span class="ps-news-ic"><i class="bi bi-star"></i></span>
+        <div>
+          <span class="ps-news-date">November 4, 2026 &middot; Featured</span>
+          <h3>Perk Miner welcomes its newest featured businesses</h3>
+          <p>Meet top-ranked local businesses offering perks to members.</p>
+        </div>
+        <i class="bi bi-arrow-right ps-news-go"></i>
+      </a>
 
-</html>
+      <div class="ps-banner">
+        <div><h3>Covering Perk Miner?</h3><p>Media inquiries go straight to the founder.</p></div>
+        <a href="mailto:support@perkminer.com?subject=Media%20inquiry%20-%20Perk%20Miner" class="ps-btn ps-btn-gold"><i class="bi bi-envelope"></i> Contact us</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+{% endblock %}

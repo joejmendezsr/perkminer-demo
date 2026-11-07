@@ -1,0 +1,30 @@
+{% extends "pm_base.html" %}
+{% block title %}Freelancer Approvals - Perk Miner Admin{% endblock %}
+{% block content %}
+<div class="container pb-4" style="max-width:980px;">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-person-check"></i></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">Admin</div><h1>Freelancer Listing Approvals</h1></div>
+    <div class="pm-hero-actions"><a href="{{ url_for('admin_roles_landing') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Admin</a></div>
+  </div>
+
+  {% macro rows(items, empty) %}
+    {% for fb in items %}
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 py-2 border-bottom">
+        <div>
+          <b>{{ fb.display_name or '(no name)' }}</b> <span class="text-muted small">&middot; {{ fb.category or 'no category' }} &middot; {{ fb.user.email }}</span>
+          <div class="small text-muted">
+            {% if fb.submitted_at %}Submitted {{ fb.submitted_at.strftime('%b %d, %Y %H:%M') }}{% endif %}
+            &middot; Balance ${{ '%.2f' % (fb.shadow.account_balance or 0) if fb.shadow else '0.00' }}
+          </div>
+        </div>
+        <a class="btn btn-sm btn-primary" href="{{ url_for('admin_freelance_review', fid=fb.id) }}">Review</a>
+      </div>
+    {% else %}<div class="text-muted py-2">{{ empty }}</div>{% endfor %}
+  {% endmacro %}
+
+  <div class="card p-3 mb-3"><h5><i class="bi bi-hourglass-split"></i> Waiting for review ({{ pending|length }})</h5>{{ rows(pending, 'Nothing waiting.') }}</div>
+  <div class="card p-3 mb-3"><h5><i class="bi bi-broadcast"></i> Live listings ({{ live|length }})</h5>{{ rows(live, 'No live listings yet.') }}</div>
+  <div class="card p-3 mb-3"><h5><i class="bi bi-slash-circle"></i> Suspended ({{ suspended|length }})</h5>{{ rows(suspended, 'None.') }}</div>
+</div>
+{% endblock %}

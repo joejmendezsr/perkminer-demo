@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin Roles - PerkMiner</title>
+    <title>Admin Roles - Perk Miner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -13,6 +13,10 @@
       .list-group { font-size: 1.05em; }
     }
     </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-theme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
 </head>
 <body>
 <div class="container py-5" style="max-width:600px;">
@@ -51,8 +55,10 @@
         {% endif %}
 
         {% if current_user.has_role('feedback_moderation') %}
-            <a href="{{ url_for('feedback_dashboard') }}" class="list-group-item list-group-item-action">
-                <i class="bi bi-chat-left-text"></i> Feedback Moderation
+            {% set n = pending_counts.get('reviews', 0) %}
+            <a href="{{ url_for('admin_reviews') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-chat-left-text"></i> Feedback Moderation</span>
+                {% if n > 0 %}<span class="badge bg-danger rounded-pill">{{ n }}</span>{% endif %}
             </a>
         {% endif %}
 
@@ -62,11 +68,29 @@
             </a>
         {% endif %}
 
-        {% if current_user.has_role('customer_support') %}
+        {% if current_user.has_role('customer_support') or current_user.has_role('super_admin') %}
             {% set n = pending_counts.get('support', 0) %}
             <a href="{{ url_for('support_dashboard') }}"
                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-headset"></i> Customer Support</span>
+                {% if n > 0 %}<span class="badge bg-danger rounded-pill">{{ n }}</span>{% endif %}
+            </a>
+        {% endif %}
+
+        {% if (current_user.has_role('customer_support') or current_user.has_role('super_admin')) and not current_user.has_role('feedback_moderation') %}
+            {% set n = pending_counts.get('reviews', 0) %}
+            <a href="{{ url_for('admin_reviews') }}"
+               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-star-half"></i> Reviews &amp; Feedback</span>
+                {% if n > 0 %}<span class="badge bg-danger rounded-pill">{{ n }}</span>{% endif %}
+            </a>
+        {% endif %}
+
+        {% if current_user.has_role('approve_reject_freelancers') or current_user.has_role('super_admin') %}
+            {% set n = pending_counts.get('freelancers', 0) %}
+            <a href="{{ url_for('admin_freelancers') }}"
+               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-person-workspace"></i> Freelancer Listing Approvals</span>
                 {% if n > 0 %}<span class="badge bg-danger rounded-pill">{{ n }}</span>{% endif %}
             </a>
         {% endif %}
@@ -97,6 +121,7 @@
         current_user.has_role('feedback_moderation') or
         current_user.has_role('customer_support') or
         current_user.has_role('ecommerce') or
+        current_user.has_role('approve_reject_freelancers') or
         current_user.has_role('super_admin')
     ) %}
         <div class="alert alert-warning mt-4 text-center">

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4" style="max-width:850px">
+<h1>SEO readiness & FAQs</h1><p>Profile completeness: <strong>{{ seo_score }}/100</strong></p>
+<div class="progress mb-3"><div class="progress-bar" style="width:{{ seo_score }}%">{{ seo_score }}%</div></div>
+<p class="text-muted">This is a completeness indicator, not a search ranking prediction.</p>
+<ul class="list-group mb-4">{% set names=['Business name','Category','Description (100+ characters)','Logo','Phone','Address','Services','Member perks','FAQs','Website URL','Primary search phrase / keywords','SEO page title (custom or automatic)','SEO meta description (custom or automatic)'] %}{% for name in names %}<li class="list-group-item">{{ '✓' if seo_checks[loop.index0] else '○' }} {{ name }}</li>{% endfor %}</ul>
+<h2>Frequently asked questions</h2>
+<p>FAQs are optional, but help visitors understand your services. Edit up to 10 questions in Step 15 of your business profile.</p>
+<a class="btn btn-primary" href="{{ url_for('business_dashboard') }}#business-faq-editor">Back to Step 15 — Edit FAQs &amp; Save Profile</a>
+</div>
+{% endblock %}

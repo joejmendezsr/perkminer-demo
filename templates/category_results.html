@@ -1,6 +1,6 @@
 {%- from 'pm_listing_card.html' import listing_card, listing_card_styles -%}
 {% extends "pm_base.html" %}
-{% block title %}{{ category }} Businesses - PerkMiner{% endblock %}
+{% block title %}{{ category }} Businesses - Perk Miner{% endblock %}
 {% block head_extra %}{{ listing_card_styles() }}{% endblock %}
 
 {% block content %}
@@ -80,7 +80,7 @@
         <a href="{{ url_for('business_home') }}" class="btn btn-success mx-1 mb-2">Get Listed</a>
       </div>
       <div class="pm-note warn mt-3 small">
-        Know a business that should be here?<br>1,000% Return On Ad Spend for all advertisers.<br>
+        Know a business that should be here?<br>No monthly fee &mdash; advertisers pay only when a sale is finalized.<br>
         <a href="{{ url_for('dashboard') }}">Invite them to advertise with Perk Miner and earn 1% commissions from every finalized transaction (up to $2,500 of every sale)!</a>
       </div>
     </div>

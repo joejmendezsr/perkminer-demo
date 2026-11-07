@@ -1,98 +1,111 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Submission Disclaimer</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <style>
-      @media (max-width: 600px) {
-        .btn, .btn-primary, .btn-secondary { width: 100% !important; margin-bottom: 10px; }
-        .card { padding: 1.1rem !important; }
-      }
-      .card { max-width: 410px; margin: 0 auto; }
-      .terms-box { max-height:150px; overflow-y:auto; background:#f8f9fa; font-size:0.97em; }
-    </style>
-</head>
-<body>
-<div class="container py-5">
-    <div class="card shadow-sm p-4">
-        <h2 class="mb-4 text-center">Before You Submit</h2>
-        <p class="text-danger small mb-3" aria-label="Funds">
-        <strong>You must have funds in your account balance before submitting your listing for review</strong>
-        </p>
-        <div class="mb-3">
-            <label class="form-label fw-bold">Prohibited Listings & Terms:</label>
-            <div class="border rounded p-2 terms-box" aria-label="Terms and Conditions">
-                <strong>Prohibited Listings:</strong>
-                <ul>
-                    <li>Illegal services or products</li>
-                    <li>Unlicensed or fraudulent business offers</li>
-                    <li>Spam, scams, or misleading content</li>
-                    <li>Adult content and pornographic materials</li>
-                    <li>Any offensive products or services</li>
-                    <li>Politically related products or services with an agenda</li>
-                    <li>Religious products or services with an agenda</li>
-                    <li>Anything related to criminal activity</li>
-                </ul>
-                <hr class="my-2">
-                <div>
-                    <strong>Business Terms:</strong></br></br>
-                    1.) Only businesses located in the U.S. and Puerto Rico are able to list their business with Perk Miner (until we are able to conduct business in other countries).</br></br>
-                    2.) Once you submit your listing for approval and it is approved, any new changes (edits) must be re-submitted for approval. While under review, <b>your live listing will become temporarily unavailable until changes are approved</b>.</br></br>
-                    3.) By submitting, you confirm your listing complies with PerkMiner’s terms and all local laws.</br></br>
-                    4.) If one of our members informs you that they a Perk Miner member and require the transaction to be finalized, <b>YOU AGREE TO MAINTAIN ENOUGH FUNDS IN YOUR ACCOUNT BALANCE TO FINALIZE THE TRANSACTION AND <u>YOU FINALIZE THE TRANSACTION.</u></b></br></br>
-                    5.) <b>Failure to finalize all transactions for our members <font color="#FF0000">will result in immediate suspension of your listing or deletion of your account.</font></b></br></br>
-                    6.) Your company pays 10% of the total sale or closed deal (max of $250) from each transaction with a guaranteed 900% Marketing ROI (10 to 1 ration - you pay $1 for every $10 sold capped at $250).  Transactions over $2,500 provide a Marketing ROI greater than 900%.</br></br>
-                    7.) Finalizing the transaction must be completed from your dashboard using any mobile device.</br></br>
-                    8.) <b>You must enter total amount paid by our members (including taxes, if applicable and tips paid)</b>.  Amount paid applies to manually finalized transactions as well.</br></br>
-                    9.) <b>Delayed Finalization:</b>  You are required to finalize all transactions in your active sessions manually (once the delayed time-frame has lapsed).  <b>YOU CANNOT END THE SESSION FOR PENDING TRANSACTIONS THAT HAVE DELAYED FINALIZATION</B> or your account will be suspended or closed (If closed due to more than one violation, any remaining funds in your account balance and any earnings <font color="#000000">will be forfeited.</font></br></br>
-                    10.) Perk Miner is not responsible for products sold, including products with defects, damage, etc. or for any services rendered.  You as a business owner are responsible for handling product defects and correcting any service-related issues.</br></br>
-                    11.) As an advertiser, <b>you promise to provide the best possible service (in good faith) or sell the best products</b> to our members.</br></br>
-                    12.) You understand that if you choose to temporarily stop or suspend your advertising services, any funds in your account balance will remain in your account.  If you choose to close your account, any remaining funds in your account balance <font color="#000000">will be forfeited.</font></br></br>
-                    13.) Any reported business practices that are <b><u>designed to defraud or scam our members</u></b> will result in <b><font color="#000000">immediate suspension or deletion of your account.</font></b><b><u>If your account is deleted due to fraudulent activity or scamming practices</u></b>, you understand that <font color="#000000">you will forfeit any funds remaining in your account balance and any earnings due.</font></br></br>
-                    14.) As a business advertiser, your business will earn instant cash back for finalizing transactions.</br></br>
-                    15.) If your business refers other businesses to join, your business will earn referral commissions (up to 4 additional Tiers).</br></br>
-                    16.) You understand that all cash back and commissions paid pays up to 5 Members and 6 Businesses (including your business cash back) and is paid from the advertising revenue you pay (ALL CASH BACK AND COMMISSIONS ARE PAID BY PERK MINER ... NOT PAID BY YOUR COMPANY).</br></br>
-                    17.) <b><u>Perk Miner cannot guarantee</u></b> that our members will select your business.  In the event that you add funds to your account balance and you do not generate any sales, funds in your account balance will remain in your account indefinitely.</br></br>
-                    18.) If your business is manually featured, you will remain featured on the homepage for a minimum of 1 year.</br></br>
-                    19.) You cannot pay to become a featured business.  Featured businesses are ranked according to number of transactions, ad revenue paid and number of businesses you directly refer to advertise with Perk Miner.</br></br>
-                    20.) You reserve the right to delay finalizing transactions for a reasonable amount of time to make sure your sale is completed beforehand since Perk Miner cannot and will not refund advertising fees paid once the transaction has been finalized.</br></br>
-                    21.) You are solely responsible for any returned products.  We cannot reverse any advertising fees paid since there are several members and businesses that earn cash back and/or commission.</br></br>
-                    22.) If a member provides you with their contact information, you may not sell or provide that information to another business, third-party or entity as we take our member's privacy seriously.</br></br>
-                    23.) You understand that if your business earns over $600 per year in commissions, you will be required to state it as business income and you will be responsible for the taxes owed.
+{% extends "pm_public_base.html" %}
+{% block title %}Before You Submit | Perk Miner{% endblock %}
 
-                    </br></br><a href="https://www.perkminer.com/terms" target="_blank" rel="noopener noreferrer">SEE FULL TERMS HERE</a>
-                </div>
-            </div>
+{% block head_extra %}
+{{ super() }}
+<style>
+  .ps-terms-box { max-height: 340px; overflow-y: auto; background: var(--ps-teal-50); border: 1px solid var(--ps-line); border-radius: 18px; padding: 1.1rem 1.2rem; font-size: .95rem; line-height: 1.55; }
+  .ps-terms-box ol { padding-left: 1.3rem; margin: 0; }
+  .ps-terms-box li { margin-bottom: .75rem; }
+  .ps-terms-box ul { padding-left: 1.2rem; }
+  .ps-red { color: #c0262d; font-weight: 700; }
+  .ps-must { background: #fff4f4; border: 1px solid #f3c9cc; color: #8a1f26; border-radius: 16px; padding: .8rem 1rem; font-weight: 700; display: flex; gap: .6rem; }
+  .ps-note { background: var(--ps-teal-100); color: var(--ps-teal-900); border-radius: 16px; padding: .85rem 1rem; font-size: .93rem; line-height: 1.5; }
+  .ps-disc { font-size: .93rem; line-height: 1.6; color: var(--ps-text); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set biz = biz or business %}
+<main id="main">
+<section class="ps-section" style="padding-top:2rem;">
+  <div class="container">
+    <div class="ps-narrow" style="max-width:760px;">
+      <div class="ps-head" style="margin-bottom:1.4rem;">
+        <span class="ps-eyebrow">Final step</span>
+        <h1 class="ps-title">Before you submit your listing</h1>
+        <p class="ps-sub">Please read the terms below. After you submit, our team reviews your listing before it goes live.</p>
+      </div>
+
+      <div class="ps-article" style="padding:clamp(1.2rem,3vw,2rem);">
+        {% if biz and biz.status == "approved" %}
+        <div class="ps-note mb-3" role="status"><strong>Submitting changes to your live listing:</strong> Your updates will be reviewed before publication. Your currently approved directory listing and public profile will stay visible and unchanged until the updates are approved. If the updates are rejected, your existing listing will remain as is.</div>
+        {% endif %}
+
+        <div class="ps-must mb-3" aria-label="Funds"><i class="bi bi-exclamation-circle"></i><span>You must have funds in your account balance before submitting your listing for review.</span></div>
+
+        <label class="form-label fw-bold">Prohibited listings &amp; terms <span class="text-muted fw-normal">&mdash; scroll to read all 23 terms</span></label>
+        <div class="ps-terms-box mb-3" tabindex="0" aria-label="Terms and Conditions">
+          <strong>Prohibited listings:</strong>
+          <ul>
+            <li>Illegal services or products</li>
+            <li>Unlicensed or fraudulent business offers</li>
+            <li>Spam, scams, or misleading content</li>
+            <li>Adult content and pornographic materials</li>
+            <li>Any offensive products or services</li>
+            <li>Politically related products or services with an agenda</li>
+            <li>Religious products or services with an agenda</li>
+            <li>Anything related to criminal activity</li>
+          </ul>
+          <hr>
+          <strong>Business terms:</strong>
+          <ol class="mt-2">
+            <li>Only businesses located in the U.S. and Puerto Rico are able to list their business with Perk Miner LLC (until we are able to conduct business in other countries).</li>
+            <li>Once your listing has been approved, any subsequent changes must be re-submitted for review. <b>New changes will not appear publicly until they are approved. During review, your existing approved listing and public profile page will remain live and unchanged. If the updates are rejected, your existing approved information will remain in place.</b></li>
+            <li>By submitting, you confirm your listing complies with Perk Miner LLC’s terms and all local laws.</li>
+            <li>If one of our members informs you that they a Perk Miner LLC member and require the transaction to be finalized, <b>YOU AGREE TO MAINTAIN ENOUGH FUNDS IN YOUR ACCOUNT BALANCE TO FINALIZE THE TRANSACTION AND <u>YOU FINALIZE THE TRANSACTION.</u></b></li>
+            <li><b>Failure to finalize all transactions for our members <span class="ps-red">will result in immediate suspension of your listing or deletion of your account.</span></b></li>
+            <li>Your company pays 10% of the total sale or closed deal (max of $250) from each transaction (about $1 for every $10 sold, capped at $250 per transaction). Fees are charged only when a sale is finalized. Sales and results are not guaranteed.</li>
+            <li>Finalizing the transaction must be completed from your dashboard using any mobile device.</li>
+            <li><b>You must enter total amount paid by our members (including taxes, if applicable and tips paid)</b>.  Amount paid applies to manually finalized transactions as well.</li>
+            <li><b>Delayed Finalization:</b>  You are required to finalize all transactions in your active sessions manually (once the delayed time-frame has lapsed).  <b>YOU CANNOT END THE SESSION FOR PENDING TRANSACTIONS THAT HAVE DELAYED FINALIZATION</b> or your account will be suspended or closed (If closed due to more than one violation, any remaining funds in your account balance and any earnings <span>will be forfeited.</span></li>
+            <li>Perk Miner LLC is not responsible for products sold, including products with defects, damage, etc. or for any services rendered.  You as a business owner are responsible for handling product defects and correcting any service-related issues.</li>
+            <li>As an advertiser, <b>you promise to provide the best possible service (in good faith) or sell the best products</b> to our members.</li>
+            <li>You understand that if you choose to temporarily stop or suspend your advertising services, any funds in your account balance will remain in your account.  If you choose to close your account, any remaining funds in your account balance <span>will be forfeited.</span></li>
+            <li>Any reported business practices that are <b><u>designed to defraud or scam our members</u></b> will result in <b><span>immediate suspension or deletion of your account.</span></b><b><u>If your account is deleted due to fraudulent activity or scamming practices</u></b>, you understand that <span>you will forfeit any funds remaining in your account balance and any earnings due.</span></li>
+            <li>As a business advertiser, your business will earn instant cash back for finalizing transactions.</li>
+            <li>If your business refers other businesses to join, your business will earn referral commissions (up to 4 additional Tiers).</li>
+            <li>You understand that all cash back and commissions paid pays up to 6 Members and 6 Businesses (including your business cash back) and is paid from the advertising revenue you pay (ALL CASH BACK AND COMMISSIONS ARE PAID BY PERK MINER LLC ... NOT PAID BY YOUR COMPANY).</li>
+            <li><b><u>Perk Miner LLC cannot guarantee</u></b> that our members will select your business.  In the event that you add funds to your account balance and you do not generate any sales, funds in your account balance will remain in your account indefinitely.</li>
+            <li>If your business is manually featured, you will remain featured on the homepage for a minimum of 1 year.</li>
+            <li>You cannot pay to become a featured business.  Featured businesses are ranked according to number of transactions, ad revenue paid and number of businesses you directly refer to advertise with Perk Miner LLC.</li>
+            <li>You reserve the right to delay finalizing transactions for a reasonable amount of time to make sure your sale is completed beforehand since Perk Miner LLC cannot and will not refund advertising fees paid once the transaction has been finalized.</li>
+            <li>You are solely responsible for any returned products.  We cannot reverse any advertising fees paid since there are several members and businesses that earn cash back and/or commission.</li>
+            <li>If a member provides you with their contact information, you may not sell or provide that information to another business, third-party or entity as we take our member's privacy seriously.</li>
+            <li>You understand that if your business earns over $600 per year in commissions, you will be required to state it as business income and you will be responsible for the taxes owed.</li>
+          </ol>
+          <p class="mt-3 mb-0"><a href="https://www.perkminer.com/terms" target="_blank" rel="noopener noreferrer">SEE FULL TERMS HERE</a></p>
         </div>
-        <p class="text-danger small mb-3" aria-label="Disclaimer">
-            <strong>Disclaimer:</strong></br>
-            <font color="#000000">Approval or rejection of your listing is at PerkMiner's sole discretion.</br></br>
-            If you re-submit your listing after making any changes, </font><b>your listing will become temporarily unavailable during the re-approval process.</b></br></br>
-            <font color="#000000">IF YOU ACCEPT RETURNS, </font><b>Perk Miner cannot refund advertising fees paid once the transaction has been finalized.</b>.</br>
-            <font color="#000000"><b>Recommendation:</b> Select Delayed Finalization for up to 30 days and for any days after 30, only accept exchanges (no refunds after 30 days).</font></br>
-        </p>
+
+        <div class="ps-disc mb-3" aria-label="Disclaimer">
+          <strong>Disclaimer:</strong>
+          <p class="mb-2 mt-1">Approval or rejection of your listing is at Perk Miner LLC&rsquo;s sole discretion.</p>
+          <p class="mb-2">If you re-submit changes to an already approved listing, <b>the proposed updates will be pending review and will not take effect until approved. Your currently approved directory listing and public profile will remain visible and unchanged during review. If the updates are not approved, the existing listing will remain as is.</b></p>
+          <p class="mb-2">IF YOU ACCEPT RETURNS, <b>Perk Miner LLC cannot refund advertising fees paid once the transaction has been finalized.</b></p>
+          <p class="mb-0"><b>Recommendation:</b> Select Delayed Finalization for up to 30 days and for any days after 30, only accept exchanges (no refunds after 30 days).</p>
+        </div>
+
         <form method="post" action="{{ url_for('send_for_review') }}" enctype="multipart/form-data">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="listing_id" value="{{ listing_id }}">
-            <input type="hidden" name="referral_code" value="{{ referral_code }}">
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="acceptTerms" name="accept_terms" required>
-                <label class="form-check-label" for="acceptTerms">
-                    I accept the terms and conditions for submitting my listing.
-                </label>
-            </div>
-            {% if not biz.business_registration_doc %}
-            <div class="mb-3">
-                <label class="form-label">Business Registration Document <span class="text-danger">*</span></label>
-                <input type="file" class="form-control" name="business_registration_doc" required accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-                <div class="form-text">Upload proof your business is legal to operate in the U.S. (PDF, JPG, PNG, DOC)</div>
-            </div>
-            {% endif %}
-            <button type="submit" class="btn btn-primary w-100">Final Submit for Review</button>
-            <a class="btn btn-secondary w-100 mt-2" href="{{ url_for('business_dashboard') }}">Cancel</a>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="listing_id" value="{{ listing_id }}">
+          <input type="hidden" name="referral_code" value="{{ referral_code }}">
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="acceptTerms" name="accept_terms" required>
+            <label class="form-check-label" for="acceptTerms">I accept the terms and conditions for submitting my listing.</label>
+          </div>
+          {% if not (biz and biz.business_registration_doc) %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Business registration document <span class="text-danger">*</span></label>
+            <input type="file" class="form-control" name="business_registration_doc" required accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+            <div class="form-text">Upload proof your business is legal to operate in the U.S. (PDF, JPG, PNG, DOC)</div>
+          </div>
+          {% endif %}
+          <button type="submit" class="ps-btn ps-btn-gold ps-btn-block">Final submit for review <i class="bi bi-arrow-right"></i></button>
+          <a class="ps-btn ps-btn-ghost-dark ps-btn-block mt-2" href="{{ url_for('business_dashboard') }}">Cancel</a>
         </form>
+      </div>
     </div>
-</div>
-</body>
-</html>
+  </div>
+</section>
+</main>
+{% endblock %}

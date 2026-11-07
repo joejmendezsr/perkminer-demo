@@ -149,11 +149,23 @@ def role_required(role_name):
         return decorated_function
     return decorator
 
+def is_support_staff():
+    """Customer-support agents and super admins can join support and feedback chats."""
+    return bool(current_user.is_authenticated and
+                (current_user.has_role("customer_support") or current_user.has_role("feedback_moderation")
+                 or current_user.has_role("super_admin")))
+
+def is_freelance_owner(interaction):
+    """True when the logged-in member owns the freelancer listing this interaction belongs to."""
+    return bool(current_user.is_authenticated and interaction.business is not None
+                and interaction.business.owner_user_id == current_user.id)
+
 def get_interaction_for_business_and_user(business_id, user_id):
-    return Interaction.query.filter_by(
-        business_id=business_id,
-        user_id=user_id,
-        status="active"
+    return Interaction.query.filter(
+        Interaction.business_id == business_id,
+        Interaction.user_id == user_id,
+        Interaction.status == "active",
+        Interaction.service_type != "Feedback",
     ).first()
 
 def business_login_required(f):
@@ -200,8 +212,10 @@ app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 465))
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
-app.config['RECAPTCHA_PUBLIC_KEY'] = '6LdhAV8sAAAAABwITf0HytcbADISlcMd87NP-i2H'
-app.config['RECAPTCHA_PRIVATE_KEY'] = '6LdhAV8sAAAAAFi9YjxnZqFLUl3SlQjHc1g7IEOq'
+app.config['RECAPTCHA_PUBLIC_KEY'] = os.environ.get('RECAPTCHA_PUBLIC_KEY')
+app.config['RECAPTCHA_PRIVATE_KEY'] = os.environ.get('RECAPTCHA_PRIVATE_KEY')
+if not app.config['RECAPTCHA_PUBLIC_KEY'] or not app.config['RECAPTCHA_PRIVATE_KEY']:
+    logging.error('Google reCAPTCHA keys are missing. Set RECAPTCHA_PUBLIC_KEY and RECAPTCHA_PRIVATE_KEY in Render Environment.')
 app.config['GOOGLE_MAPS_API_KEY'] = os.environ.get('GOOGLE_MAPS_API_KEY')
 
 app.register_blueprint(docuseries_bp)
@@ -332,6 +346,7 @@ class ServiceRequestForm(FlaskForm):
             ("brewery", "Brewery Services"),
             ("butler", "Butler Services"),
             ("callcenter", "Call Center Services"),
+            ("casino", "Casino"),
             ("catering", "Catering Services"),
             ("cellphone", "Cellphone Services"),
             ("childcare", "Childcare services"),
@@ -344,6 +359,7 @@ class ServiceRequestForm(FlaskForm):
             ("contractor", "Contractor Services"),
             ("delivery", "Delivery Services"),
             ("design", "Design Services"),
+            ("dispensary", "Dispensary"),
             ("drink", "Drink Services"),
             ("education", "Education Services"),
             ("electronics", "Electronics Services"),
@@ -374,6 +390,7 @@ class ServiceRequestForm(FlaskForm):
             ("landscaping", "Landscaping Services"),
             ("legal", "Legal Services"),
             ("lessons", "Lessons"),
+            ("liquor", "Liquor Store"),
             ("maintenance", "Maintenance Services"),
             ("marketing", "Marketing Services"),
             ("mortgage", "Mortgage Services"),
@@ -406,6 +423,7 @@ class ServiceRequestForm(FlaskForm):
             ("rv", "RV Services"),
             ("secretarial", "Secretarial Services"),
             ("security", "Security-Protection Services"),
+            ("smoke", "Smoke Shop"),
             ("software", "Software Services"),
             ("sports", "Sports Services"),
             ("storage", "Storage Services"),
@@ -571,6 +589,45 @@ def random_email_code():
     import string, random
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
+
+# ---- login code (2FA) helpers --------------------------------------------------------------------
+# Codes come from the operating system's secure random source (random.randint is predictable) and are
+# compared in constant time. Wrong guesses are counted ON THE SERVER, keyed by account: the login session
+# lives in a browser cookie, so a counter kept there could be bypassed by re-sending the original cookie.
+# (The counter is per web worker, which is plenty: 5 tries per worker against 900,000 possible codes.)
+import threading as _threading
+_TWOFA_FAILS = {}                      # key -> [fail_count, first_fail_time]
+_TWOFA_LOCK = _threading.Lock()
+TWOFA_MAX_FAILS = 5
+TWOFA_LOCK_SECONDS = 15 * 60
+
+def new_2fa_code():
+    return str(secrets.randbelow(900000) + 100000)
+
+def twofa_matches(entered, expected):
+    return bool(expected) and hmac.compare_digest(str(entered).encode(), str(expected).encode())
+
+def twofa_is_locked(key):
+    now = time.time()
+    with _TWOFA_LOCK:
+        for k in [k for k, (_n, t0) in _TWOFA_FAILS.items() if now - t0 > TWOFA_LOCK_SECONDS]:
+            _TWOFA_FAILS.pop(k, None)              # forget old entries so the dict can't grow forever
+        rec = _TWOFA_FAILS.get(key)
+        return bool(rec and rec[0] >= TWOFA_MAX_FAILS)
+
+def twofa_register_fail(key):
+    now = time.time()
+    with _TWOFA_LOCK:
+        rec = _TWOFA_FAILS.get(key)
+        if not rec or now - rec[1] > TWOFA_LOCK_SECONDS:
+            _TWOFA_FAILS[key] = [1, now]
+        else:
+            rec[0] += 1
+
+def twofa_reset(key):
+    with _TWOFA_LOCK:
+        _TWOFA_FAILS.pop(key, None)
+
 def random_referral_code(email):
     base_code = "REF" + (email.split("@")[0].replace(".", "")[:12])
     code = base_code
@@ -613,11 +670,11 @@ def build_invite_email(inviter_name, join_url, video_url):
     <style type="text/css">
         body {{ margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }}
         table, td {{ border-collapse: collapse; }}
-        a {{ color: #0066cc; text-decoration: none; }}
+        a {{ color: #1e4a4b; text-decoration: none; }}
         .button {{
             display: inline-block;
             padding: 16px 36px;
-            background-color: #6366f1;
+            background-color: #1e4a4b;
             color: white !important;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 18px;
@@ -626,13 +683,13 @@ def build_invite_email(inviter_name, join_url, video_url):
             border-radius: 8px;
             line-height: 1;
         }}
-        .button:hover {{ background-color: #4f46e5 !important; }}
+        .button:hover {{ background-color: #1e4a4b !important; }}
     </style>
 </head>
-<body style="margin:0; padding:0; background-color:#f3f4f6;">
+<body style="margin:0; padding:0; background-color:#f6faf9;">
 
     <!-- Main Wrapper -->
-    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f3f4f6;">
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f6faf9;">
         <tr>
             <td align="center" style="padding: 20px 10px;">
 
@@ -650,7 +707,7 @@ def build_invite_email(inviter_name, join_url, video_url):
                     <tr>
                         <td align="center" style="padding: 0 40px 40px;">
                             <a href="{join_url}" class="button" target="_blank" style="font-size:20px; padding:18px 48px;">
-                                Join PerkMiner Now
+                                Join Perk Miner Now
                             </a>
                         </td>
                     </tr>
@@ -659,7 +716,7 @@ def build_invite_email(inviter_name, join_url, video_url):
                     <tr>
                         <td>
                             <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791003112/member_flyer_gncgvf.jpg" width="600"
-                                 alt="PerkMiner Hero Banner"
+                                 alt="Perk Miner Hero Banner"
                                  style="display:block; width:100%; height:auto; border:0;" border="0">
                         </td>
                     </tr>
@@ -681,7 +738,7 @@ def build_invite_email(inviter_name, join_url, video_url):
                     <!-- Members Section -->
                     <tr>
                         <td style="padding: 30px 40px 10px; font-family: Arial, Helvetica, sans-serif; font-size: 18px; color: #374151; line-height: 1.5; text-align:left;">
-                            <p style="margin:0 0 12px; font-size:22px; font-weight:bold; color:#4f46e5;">For Members</p>
+                            <p style="margin:0 0 12px; font-size:22px; font-weight:bold; color:#1e4a4b;">For Members</p>
                             <ul style="margin:0; padding-left:22px;">
                                 <li style="margin-bottom:10px;"><b>Exclusive member perks</b> offered by our advertisers.</li>
                                 <li style="margin-bottom:10px;"><b>2% Cash Back</b> on up to $2,500 of any purchase from our advertisers.</li>
@@ -696,13 +753,13 @@ def build_invite_email(inviter_name, join_url, video_url):
                     <!-- Business Owners Section -->
                     <tr>
                         <td style="padding: 20px 40px 10px; font-family: Arial, Helvetica, sans-serif; font-size: 18px; color: #374151; line-height: 1.5; text-align:left;">
-                            <p style="margin:0 0 12px; font-size:22px; font-weight:bold; color:#4f46e5;">For Business Owners</p>
+                            <p style="margin:0 0 12px; font-size:22px; font-weight:bold; color:#1e4a4b;">For Business Owners</p>
                             <ul style="margin:0; padding-left:22px;">
                                 <li style="margin-bottom:10px;">
                                     <b>ZERO wasted advertising dollars.</b>
                                     <span style="color:#dc2626; font-weight:bold;">No Sale or Closed Deal = Zero Fees</span>
                                 </li>
-                                <li style="margin-bottom:10px;"><b>1,000% Return on Ad Spend or higher:</b> spend $1 and get $10 in return.</li>
+                                <li style="margin-bottom:10px;"><b>Pay only when you make a sale:</b> about $1 in fees for every $10 sold, capped at $250.</li>
                                 <li style="margin-bottom:10px;"><b>No cost</b> for exclusive leads, phone calls, website or foot traffic, appointments or meetups.</li>
                                 <li style="margin-bottom:10px;"><b>You only pay after you get paid:</b> 10% of the sale, capped at $250.</li>
                                 <li style="margin-bottom:10px;"><b>Earn 1% Cash Back</b> on up to $2,500 of your sale for offering at least one perk to our members.</li>
@@ -723,7 +780,7 @@ def build_invite_email(inviter_name, join_url, video_url):
                     <!-- Secondary Image -->
                     <tr>
                         <td align="center" style="padding: 0 40px 30px;">
-                            <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791000401/biz-flyer_pfg6os.jpg" width="520" alt="PerkMiner Features"
+                            <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1791000401/biz-flyer_pfg6os.jpg" width="520" alt="Perk Miner Features"
                                  style="display:block; width:100%; max-width:520px; height:auto; border-radius:10px; border:0;" border="0">
                         </td>
                     </tr>
@@ -731,9 +788,9 @@ def build_invite_email(inviter_name, join_url, video_url):
                     <!-- Everyone Earns Section -->
                     <tr>
                         <td style="padding: 0 40px 20px; font-family: Arial, Helvetica, sans-serif; font-size: 18px; color: #374151; line-height: 1.5; text-align:left;">
-                            <p style="margin:0 0 12px; font-size:22px; font-weight:bold; color:#4f46e5;">Everyone Earns</p>
+                            <p style="margin:0 0 12px; font-size:22px; font-weight:bold; color:#1e4a4b;">Everyone Earns</p>
                             <ul style="margin:0; padding-left:22px;">
-                                <li style="margin-bottom:10px;"><b>Both Members and Business Owners earn Cash Back and generous Referral Commissions</b>, paid by Perk Miner.</li>
+                                <li style="margin-bottom:10px;"><b>Both Members and Business Owners earn Cash Back and generous Referral Commissions</b>, paid by Perk Miner LLC.</li>
                                 <li style="margin-bottom:10px;">Up to <b>6 members and 6 businesses</b> are paid from every finalized transaction.</li>
                                 <li style="margin-bottom:10px;">Up to <b>84%</b> of the ad revenue paid by our advertisers is used to pay all cash back and referral commissions (re-invested into the ecosystem).</li>
                                 <li style="margin-bottom:10px;">Advertisers pay the ad fee after making a sale. Perk Miner LLC pays the cash back and commissions.</li>
@@ -747,7 +804,7 @@ def build_invite_email(inviter_name, join_url, video_url):
                         <td align="center" style="padding: 10px 40px 40px; font-family: Arial, Helvetica, sans-serif;">
                             <p style="margin:0 0 20px; font-size:22px; font-weight:bold; color:#1f2937;">EVERYONE WINS!</p>
                             <a href="{join_url}" class="button" target="_blank" style="font-size:20px; padding:18px 48px;">
-                                Join PerkMiner Now
+                                Join Perk Miner Now
                             </a>
                         </td>
                     </tr>
@@ -757,10 +814,10 @@ def build_invite_email(inviter_name, join_url, video_url):
                         <td align="center" style="padding: 30px 40px; background-color:#f8f9fa; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #6b7280; line-height:1.5; border-top:1px solid #e5e7eb;">
                             <p style="margin:0 0 8px;">
                                 For questions regarding this email, contact
-                                <a href="mailto:fromperkminer@gmail.com" style="color:#4f46e5;">Need help?</a>
+                                <a href="mailto:fromperkminer@gmail.com" style="color:#1e4a4b;">Need help?</a>
                             </p>
                             <p style="margin:0;">
-                                Copyright &copy; PerkMiner 2026. All rights reserved.
+                                Copyright &copy; 2026 Perk Miner LLC. All rights reserved.
                             </p>
                         </td>
                     </tr>
@@ -780,13 +837,13 @@ def send_verification_email(user):
     code = user.email_code
     verify_url = url_for("activate", code=code, _external=True)
     html_body = f"""<p>Click <a href="{verify_url}">here</a> to confirm your email, or use code: <b>{code}</b></p>"""
-    send_email(user.email, "Confirm your PerkMiner email!", html_body)
+    send_email(user.email, "Confirm your Perk Miner email!", html_body)
 
 def send_business_verification_email(biz):
     code = biz.email_code
     verify_url = url_for("business_activate", code=code, _external=True)
     html_body = f"""<p>Click <a href="{verify_url}">here</a> to confirm your business email, or use code: <b>{code}</b></p>"""
-    send_email(biz.business_email, "Confirm your PerkMiner business email!", html_body)
+    send_email(biz.business_email, "Confirm your Perk Miner business email!", html_body)
 
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -807,7 +864,7 @@ def verify_reset_token(token, user_type, max_age=3600):
 def send_reset_email(recipient_email, reset_url):
     send_email(
         recipient_email,
-        "PerkMiner password reset",
+        "Perk Miner password reset",
         f"<p>You requested a password reset. Click <a href='{reset_url}'>here</a> to reset your password.</p>"
         "<p>If you didn't request this, please ignore this email.</p>"
     )
@@ -875,9 +932,59 @@ def split_mutual_commission(total_sale, n_referred):
     leftover = round(pool - sum(payouts), 2)
     return payouts, leftover
 
-def finalize_interaction(interaction, business, amount, staff_id=None, source=None, local_date_time=None):
+class AlreadyFinalizedError(Exception):
+    """Raised when a session (interaction) has already been finalized."""
+
+
+def get_finalization_summary(interaction):
+    """
+    If this interaction was already finalized, rebuild the summary from the
+    saved records (so the page shows the details instead of the entry form).
+    Returns None if the interaction has not been finalized yet.
+    """
+    bt = (BusinessTransaction.query
+          .filter_by(interaction_id=interaction.id)
+          .filter(db.or_(BusinessTransaction.sponsoree_mutual_referral_id.is_(None),
+                         BusinessTransaction.sponsoree_mutual_referral_id == ""))
+          .first())
+    if not bt:
+        return None
+
+    amount = Decimal(str(bt.amount or 0))
+    ad_fee = Decimal(str(bt.ad_fee or 0))
+    ut = UserTransaction.query.filter_by(transaction_id=bt.transaction_id).first()
+    user_cash_back = Decimal(str(ut.cash_back or 0)) if ut else Decimal("0")
+    business_cash_back = Decimal(str(bt.cash_back or 0))
+
+    return {
+        "amount": f"{amount:.2f}",
+        "user_cash_back": f"{user_cash_back:.2f}",
+        "business_cash_back": f"{business_cash_back:.2f}",
+        "ad_fee": f"{ad_fee:.2f}",
+        "net_gross": f"{amount - ad_fee:,.2f}",
+        "marketing_roi": int(((amount - ad_fee) / ad_fee) * 100) if ad_fee else 0,
+        "marketing_ratio": round(float(amount / ad_fee), 2) if ad_fee else 0,
+        "transaction_id": bt.transaction_id,
+        "already_finalized": True,
+    }
+
+def finalize_interaction(interaction, business, amount, staff_id=None, source=None,
+                         local_date_time=None, allow_repeat=False):
     import uuid
     from datetime import datetime
+
+    # ---- Guard: one finalization per session ----
+    # Lock this interaction's row so two submits at the same moment (double click,
+    # refresh, two staff members) can't both get past the check. The lock is
+    # released by the first commit below, which also saves the BusinessTransaction
+    # row, so any later attempt finds it and stops here.
+    if not allow_repeat:
+        db.session.query(Interaction).filter_by(id=interaction.id).with_for_update().first()
+        if BusinessTransaction.query.filter_by(interaction_id=interaction.id).first() is not None:
+            db.session.rollback()
+            raise AlreadyFinalizedError(
+                "This transaction was already finalized. The business was not charged again."
+            )
 
     transaction_id = str(uuid.uuid4())
 
@@ -1438,6 +1545,8 @@ class Business(db.Model):
     referral_code = db.Column(db.String(32), unique=True)
     sponsor_id = db.Column(db.Integer, db.ForeignKey('business.id'))
     user_sponsor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    # Freelancer listings keep a hidden Business row (status 'freelancer') owned by the member
+    owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     email_confirmed = db.Column(db.Boolean, default=False)
     email_code = db.Column(db.String(16))
     profile_photo = db.Column(db.String(200))
@@ -1482,6 +1591,12 @@ class Business(db.Model):
     draft_service_9 = db.Column(db.String(100))
     draft_service_10 = db.Column(db.String(100))
     draft_search_keywords = db.Column(db.String(500))
+    draft_facebook_url = db.Column(db.String(500), nullable=True)
+    draft_instagram_url = db.Column(db.String(500), nullable=True)
+    draft_x_url = db.Column(db.String(500), nullable=True)
+    draft_linkedin_url = db.Column(db.String(500), nullable=True)
+    draft_tiktok_url = db.Column(db.String(500), nullable=True)
+    draft_youtube_url = db.Column(db.String(500), nullable=True)
     account_balance = db.Column(db.Float, nullable=False, default=0.0)
     ad_fee = db.Column(db.Float)
     business_registration_doc = db.Column(db.String(255))
@@ -1490,6 +1605,8 @@ class Business(db.Model):
     manual_feature = db.Column(db.Boolean, default=False)
     approved_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     is_suspended = db.Column(db.Boolean, default=False)
+    rating_avg = db.Column(db.Float, default=0.0)
+    rating_count = db.Column(db.Integer, default=0)
     status = db.Column(db.String(20), nullable=False, default='not_submitted')
     homepage_html = db.Column(db.Text, nullable=True)
     contact_html = db.Column(db.Text, nullable=True)
@@ -1524,10 +1641,19 @@ class Business(db.Model):
     live_gps_lat = db.Column(db.Float)
     live_gps_long = db.Column(db.Float)
     location_varies = db.Column(db.Boolean, default=False)
+    # Service area beyond local: 'local' (default) or statewide / states / usa / usa_countries / countries / worldwide
+    service_area_scope = db.Column(db.String(20), nullable=False, default="local", server_default="local")
+    service_area_regions = db.Column(db.Text)  # comma-separated state or country codes
     is_founding_business = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now(), nullable=False)
     google_reviews_url = db.Column(db.String(500), nullable=True)
+    facebook_url = db.Column(db.String(500), nullable=True)
+    instagram_url = db.Column(db.String(500), nullable=True)
+    x_url = db.Column(db.String(500), nullable=True)
+    linkedin_url = db.Column(db.String(500), nullable=True)
+    tiktok_url = db.Column(db.String(500), nullable=True)
+    youtube_url = db.Column(db.String(500), nullable=True)
     promo_code_used = db.Column(db.String(50), nullable=True)
     promo_redeemed_at = db.Column(db.DateTime, nullable=True)
     licensed = db.Column(db.Boolean, nullable=False, default=False)
@@ -2255,6 +2381,73 @@ class Theme(db.Model):
     preview_contact_css = db.Column(db.Text, nullable=True)
     preview_contact_js = db.Column(db.Text, nullable=True)
 
+
+class BusinessListingRevision(db.Model):
+    """Proposed edits for an already-public listing; never used by public queries."""
+    __tablename__ = "business_listing_revision"
+    business_id = db.Column(db.Integer, db.ForeignKey('business.id'), primary_key=True)
+    changes = db.Column(db.JSON, nullable=False, default=dict)
+    faq_changes = db.Column(db.JSON, nullable=True)
+    review_status = db.Column(db.String(20), nullable=False, default='draft')
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
+
+
+def stage_live_profile_edits(biz, revision):
+    """Keep public columns unchanged while retaining proposed edits for moderation."""
+    from sqlalchemy import inspect
+    changes = dict(revision.changes or {})
+    # These account / operational fields are intentionally never staged.
+    profile_fields = {
+        'perks', 'store_slug', 'location_varies', 'is_ecommerce_site',
+        'allow_website_purchases', 'online_terms_agreed',
+        'licensed', 'license_number', 'license_state', 'bonded',
+        'bond_amount', 'bond_number', 'insured', 'ins_amount',
+        'ins_number', 'bond_company', 'ins_company',
+    }
+    for field in profile_fields:
+        history = inspect(biz).attrs[field].history
+        if history.has_changes():
+            changes[field] = getattr(biz, field)
+            if history.deleted:
+                setattr(biz, field, history.deleted[0])
+            else:
+                # Attribute was previously unloaded; refresh from DB, not proposed value.
+                db.session.expire(biz, [field])
+    revision.changes = changes
+    revision.review_status = 'draft'
+
+
+def apply_listing_revision(biz, revision):
+    if not revision:
+        return
+    for field, value in (revision.changes or {}).items():
+        if field == 'store_slug' and value:
+            collision = Business.query.filter(Business.store_slug == value, Business.id != biz.id).first()
+            if collision:
+                raise ValueError('The proposed public profile URL is now used by another business.')
+        setattr(biz, field, value)
+    if revision.faq_changes is not None:
+        BusinessFAQ.query.filter_by(business_id=biz.id).delete(synchronize_session=False)
+        for position, pair in enumerate(revision.faq_changes):
+            db.session.add(BusinessFAQ(business_id=biz.id, question=pair[0], answer=pair[1], position=position))
+    db.session.delete(revision)
+
+
+def discard_listing_revision(biz, revision):
+    if revision:
+        db.session.delete(revision)
+    for col in Business.__table__.columns:
+        if col.name.startswith('draft_'):
+            setattr(biz, col.name, None)
+
+class BusinessFAQ(db.Model):
+    __tablename__ = "business_faq"
+    id = db.Column(db.Integer, primary_key=True)
+    business_id = db.Column(db.Integer, db.ForeignKey("business.id"), nullable=False, index=True)
+    question = db.Column(db.String(240), nullable=False)
+    answer = db.Column(db.Text, nullable=False)
+    position = db.Column(db.Integer, default=0, nullable=False)
+
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'))
@@ -2514,6 +2707,14 @@ def calculate_user_earnings_split(user, delay_days=7):
         if t.date_time <= cutoff:
             available += earned_here
 
+    # Freelancer listing earnings (business-style cash back + commissions) are paid out with the member's own
+    try:
+        f_total, f_avail, _f_pend = freelance_earnings(user, delay_days)
+        total += f_total
+        available += f_avail
+    except NameError:
+        pass
+
     pending = total - available
     return total, available, pending
 
@@ -2614,15 +2815,26 @@ def get_admin_pending_counts():
             status="pending"          # <-- change if your testimonials route uses a different status
         ).count()
 
-    if current_user.has_role("customer_support"):
-        counts["support"] = Interaction.query.filter_by(
-            service_type="Support", status="active"
+    if current_user.has_role("customer_support") or current_user.has_role("super_admin"):
+        counts["support"] = Interaction.query.filter(
+            Interaction.service_type.in_(["Support", "Feedback"]), Interaction.status == "active"
         ).count()
+
+
+    if (current_user.has_role("customer_support") or current_user.has_role("feedback_moderation")
+            or current_user.has_role("super_admin")):
+        try:
+            counts["reviews"] = review_admin_count()
+        except NameError:
+            counts["reviews"] = 0
 
     if current_user.has_role("docuseries"):
         counts["support"] = Interaction.query.filter_by(
             status="pending"
         ).count()
+
+    if current_user.has_role("approve_reject_freelancers") or current_user.has_role("super_admin"):
+        counts["freelancers"] = FreelanceBusiness.query.filter_by(status="pending").count()
 
     if current_user.has_role("ecommerce"):
         counts["ecommerce"] = Business.query.filter(
@@ -2793,19 +3005,11 @@ def haversine_miles(lat1, lon1, lat2, lon2):
     return R * c
 
 def area_from_address(address):
-    """City and state live in the address string, with or without a street."""
-    parts = [p.strip() for p in (address or "").split(",") if p.strip()]
-    city = state = country = ""
-    if len(parts) >= 3:
-        city = parts[-3]
-        state = parts[-2].split()[0]
-        country = parts[-1]
-    elif len(parts) == 2:
-        city = parts[0]
-        state = parts[1].split()[0]
-    elif len(parts) == 1:
-        city = parts[0]
-    return city, state, country
+    """City, state and country text from an address string, with or without a street, ZIP or country.
+    Uses the same parser as the AI/JSON-LD code (ai_discovery.split_address) so every page agrees."""
+    from ai_discovery import split_address
+    a = split_address(address)
+    return a["city"], a["state"], a["country"]
 
 def area_served_ld(city, state, country):
     if not city and not state:
@@ -2966,8 +3170,27 @@ US_STATES = [
 ]
 TRUST_NUMBER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 \-./#]{1,58}$")
 
+import service_area as _sa
+
+
+def service_area_info(biz):
+    """Everything templates need to show a business's service area."""
+    scope = (getattr(biz, "service_area_scope", None) or "local") if not isinstance(biz, dict) else (biz.get("service_area_scope") or "local")
+    regions = getattr(biz, "service_area_regions", None) if not isinstance(biz, dict) else biz.get("service_area_regions")
+    addr = getattr(biz, "address", None) if not isinstance(biz, dict) else biz.get("address")
+    expanded = _sa.is_expanded(scope)
+    hq_state = area_from_address(addr)[1] if (expanded and addr) else ""
+    return {
+        "expanded": expanded, "scope": scope, "regions": regions or "",
+        "label": _sa.label(scope, regions, hq_state) if expanded else "",
+        "short": _sa.label(scope, regions, hq_state, limit=3) if expanded else "",
+    }
+
+
 # make these available in every template
 app.jinja_env.globals.update(
+    service_area_info=service_area_info,
+    SA_SCOPES=_sa.SCOPES, SA_STATES=_sa.US_STATES, SA_COUNTRIES=_sa.COUNTRIES,
     BOND_AMOUNT_LABELS=BOND_AMOUNT_LABELS,
     INS_AMOUNT_LABELS=INS_AMOUNT_LABELS,
     US_STATES=US_STATES,
@@ -3220,6 +3443,19 @@ def resolve_referral_code(code, include_businesses=False):
 
     return None, None
 
+
+# ---- "Continue with Google / Facebook / Microsoft / Apple" (see social_auth.py + SOCIAL_LOGIN_SETUP.md) ----
+# A provider's button only appears once that provider's environment variables are set, so this is safe to
+# deploy before the Google/Facebook/Microsoft/Apple developer accounts are ready.
+from social_auth import init_social_auth
+social_auth = init_social_auth(
+    app, csrf=csrf, db=db, User=User, Business=Business, bcrypt=bcrypt, login_user=login_user,
+    resolve_referral_code=resolve_referral_code, make_unique_referral_code=make_unique_referral_code,
+    random_referral_code=random_referral_code, random_business_code=random_business_code,
+    send_email=send_email, base_url="https://www.perkminer.com",
+)
+
+
 def apply_referral_code_change(owner_type, owner, raw_code):
     """Validates and applies the change (does NOT commit). Returns (ok, message)."""
     new_code = (raw_code or "").strip()   # case is preserved as typed
@@ -3245,6 +3481,27 @@ def apply_referral_code_change(owner_type, owner, raw_code):
 # Add others (interaction, message, etc.) as needed here
 
 # ---------------- STORE ROUTES ----------------
+
+SOCIAL_URL_RULES = {
+    "facebook_url": {"facebook.com", "www.facebook.com", "m.facebook.com"},
+    "instagram_url": {"instagram.com", "www.instagram.com"},
+    "x_url": {"x.com", "www.x.com", "twitter.com", "www.twitter.com"},
+    "linkedin_url": {"linkedin.com", "www.linkedin.com"},
+    "tiktok_url": {"tiktok.com", "www.tiktok.com"},
+    "youtube_url": {"youtube.com", "www.youtube.com", "youtu.be", "www.youtu.be"},
+}
+
+def valid_social_url(field, url):
+    """Accept only HTTPS links on the expected social platform domains."""
+    if not url:
+        return True
+    try:
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").lower().rstrip(".")
+        return parsed.scheme == "https" and host in SOCIAL_URL_RULES.get(field, set()) and bool(parsed.path and parsed.path != "/")
+    except Exception:
+        return False
+
 
 @app.route('/store_terms', methods=['GET', 'POST'])
 @business_login_required
@@ -3283,7 +3540,6 @@ def store_payment():
 
     try:
         checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
             mode='subscription',  # use 'payment' for a one-time charge
             line_items=[{
                 'price': 'price_1T3hrXCLrqYII4jepU2edWdw',  # <-- Use your Stripe PRICE ID here!
@@ -3740,7 +3996,6 @@ def buy_product(product_id):
     import stripe
     try:
         checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
             mode='payment',
             line_items=[{
                 'price_data': {
@@ -3952,7 +4207,6 @@ def start_cart_checkout():
     try:
         # Create CHECKOUT session for everything in the cart from this business
         checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
             mode='payment',
             line_items=line_items,
             payment_intent_data={
@@ -4374,7 +4628,6 @@ def business_home():
     return render_template("business_home.html")
 
 @app.route("/search")
-@login_required
 def search():
     q = request.args.get("q", "").strip()
     category = request.args.get("category", "").strip()
@@ -4463,7 +4716,6 @@ def search():
     )
 
 @app.route("/category/<name>")
-@login_required
 def category_browse(name):
     # Get user location from query params if provided
     lat = request.args.get("lat", type=float)
@@ -4552,8 +4804,9 @@ def terms():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     form = RegisterForm()
-    # Populate referral_code field from ?ref= on GET (invite link)
-    ref_code = request.args.get('ref')
+    # Populate referral_code field from ?ref= on GET (invite link), or from the invite code remembered
+    # earlier in this visit / cookie (e.g. they watched /intro?ref=CODE first, then clicked Join)
+    ref_code = request.args.get('ref') or social_auth.pending_referral("member")
     if request.method == "GET" and ref_code:
         form.referral_code.data = ref_code
 
@@ -4671,13 +4924,13 @@ def login():
                 return redirect(url_for("verify_email"))
             else:
                 # --- 2FA LOGIC ---
-                code = str(random.randint(100000, 999999))
+                code = new_2fa_code()
                 session['pending_2fa_code'] = code
                 session['pending_2fa_user_id'] = user.id
                 send_email(
                     user.email,
-                    "Your PerkMiner Login Code",
-                    f"<p>Your PerkMiner login code is: <b>{code}</b></p>"
+                    "Your Perk Miner Login Code",
+                    f"<p>Your Perk Miner login code is: <b>{code}</b></p>"
                 )
                 flash("A login code has been sent to your email.")
                 return redirect(url_for("two_factor"))
@@ -4692,15 +4945,24 @@ def two_factor():
         code_entered = form.code.data.strip()
         code_expected = session.get('pending_2fa_code')
         user_id = session.get('pending_2fa_user_id')
-        if code_expected and code_entered == code_expected and user_id:
+        lock_key = f"user:{user_id}"
+        if user_id and twofa_is_locked(lock_key):
+            session.pop('pending_2fa_code', None)
+            session.pop('pending_2fa_user_id', None)
+            flash("Too many incorrect codes. Please log in again in a few minutes.")
+            return redirect(url_for("login"))
+        if code_expected and twofa_matches(code_entered, code_expected) and user_id:
             user = User.query.get(user_id)
             if user:
+                twofa_reset(lock_key)
                 login_user(user)
                 # Clean up session
                 session.pop('pending_2fa_code', None)
                 session.pop('pending_2fa_user_id', None)
                 flash("Login successful!")
                 return redirect(url_for("dashboard"))
+        if user_id:
+            twofa_register_fail(lock_key)
         flash("Incorrect code. Please try again.")
     return render_template("two_factor.html", form=form)
 
@@ -4710,12 +4972,12 @@ def resend_login_2fa():
     if user_id:
         user = User.query.get(user_id)
         if user:
-            code = str(random.randint(100000, 999999))
+            code = new_2fa_code()
             session['pending_2fa_code'] = code
             send_email(
                 user.email,
-                "Your PerkMiner Login Code",
-                f"<p>Your PerkMiner login code is: <b>{code}</b></p>"
+                "Your Perk Miner Login Code",
+                f"<p>Your Perk Miner login code is: <b>{code}</b></p>"
             )
             flash("New code sent.")
     return redirect(url_for("two_factor"))
@@ -4726,12 +4988,12 @@ def resend_biz_2fa():
     if biz_id:
         biz = Business.query.get(biz_id)
         if biz:
-            code = str(random.randint(100000, 999999))
+            code = new_2fa_code()
             session['pending_2fa_code'] = code
             send_email(
                 biz.business_email,
-                "Your PerkMiner Business Login Code",
-                f"<p>Your PerkMiner business login code is: <b>{code}</b></p>"
+                "Your Perk Miner Business Login Code",
+                f"<p>Your Perk Miner business login code is: <b>{code}</b></p>"
             )
             flash("New code sent.")
     return redirect(url_for("two_factor_biz"))
@@ -4742,12 +5004,12 @@ def resend_admin_2fa():
     if user_id:
         user = User.query.get(user_id)
         if user:
-            code = str(random.randint(100000, 999999))
+            code = new_2fa_code()
             session['pending_2fa_code'] = code
             send_email(
                 user.email,
-                "Your PerkMiner Login Code",
-                f"<p>Your PerkMiner login code is: <b>{code}</b></p>"
+                "Your Perk Miner Login Code",
+                f"<p>Your Perk Miner login code is: <b>{code}</b></p>"
             )
             flash("New code sent.")
     return redirect(url_for("two_factor"))
@@ -4836,7 +5098,7 @@ def invite():
         reg_url = url_for('register', ref=current_user.referral_code, _external=True)
     video_url = url_for('intro', ref=current_user.referral_code, _external=True)
     html_body = build_invite_email(inviter_name, reg_url, video_url)
-    send_email(invitee_email, f"{inviter_name} has invited you to join PerkMiner.", html_body)
+    send_email(invitee_email, f"{inviter_name} has invited you to join Perk Miner.", html_body)
 
     flash(
         'Business invitation sent!' if invitee_type == "business"
@@ -4897,11 +5159,14 @@ def dashboard():
         if updated:
             db.session.commit()
             flash("Profile updated!")
+        fl_msg = freelance_handle_profile_post(user, request.form, request.files)
+        if fl_msg:
+            flash(fl_msg)
         return redirect(url_for('dashboard'))
 
-    # --- Perk Miner transfer fee preview for regular member earnings ---
-    FEE_RATE = Decimal("0.005")   # 0.5%
-    FIXED_FEE = Decimal("0.35")   # $0.35
+    # --- Perk Miner LLC transfer fee preview for regular member earnings ---
+    FEE_RATE = Decimal("0.029")   # 2.9%
+    FIXED_FEE = Decimal("0.50")   # $0.50
 
     # example basis: use current net_available if > 0, else show example on $100
     if net_available and net_available > 0:
@@ -5085,6 +5350,7 @@ def dashboard():
 
     return render_template(
         "dashboard.html",
+        **freelance_dashboard_context(current_user),
         form=form,
         profile_form=profile_form,
         invite_form=invite_form,
@@ -5833,7 +6099,7 @@ def end_session(interaction_id):
     interaction = Interaction.query.get_or_404(interaction_id)
     # Check who is ending session
     is_user = current_user.is_authenticated and getattr(current_user, 'id', None) == interaction.user_id
-    is_biz = session.get('business_id') == interaction.business_id
+    is_biz = session.get('business_id') == interaction.business_id or is_freelance_owner(interaction)
     is_staff = session.get('staff_id') is not None and interaction.business_id == Staff.query.get(session.get('staff_id')).business_id
 
     if not (is_user or is_biz or is_staff):
@@ -5845,10 +6111,12 @@ def end_session(interaction_id):
     flash("Session ended.", "success")
 
     # Redirect accordingly
-    if current_user.is_authenticated and current_user.has_role('customer_support'):
-        return redirect(url_for('support_dashboard'))
+    if is_support_staff() and not is_user and not is_biz:
+        return redirect(url_for('admin_reviews' if interaction.service_type == 'Feedback' else 'support_dashboard'))
     elif is_staff:
         return redirect(url_for('staff_dashboard'))
+    elif is_biz and is_freelance_owner(interaction):
+        return redirect(url_for('freelance_console'))
     elif is_biz:
         return redirect(url_for('biz_user_interactions'))
     else:  # user
@@ -5885,6 +6153,12 @@ def payment_qr_redirect(ref):
             return redirect(url_for('staff_finalize_transaction', interaction_id=interaction.id))
         else:
             return "No active session found for this customer.", 404
+    # A member with a freelancer listing scanned another member's QR: go straight to the sale
+    elif current_user.is_authenticated and user.id != current_user.id:
+        fl = FreelanceBusiness.query.filter_by(user_id=current_user.id, enabled=True).first()
+        if fl and fl.shadow_business_id:
+            inter = freelance_open_interaction(fl, user)
+            return redirect(url_for('freelance_finalize', interaction_id=inter.id))
     # If not logged in as business or staff, show generic landing
     return render_template("qr_user_landing.html", user=user)
 
@@ -5933,7 +6207,6 @@ def business_create_checkout_session():
 
     try:
         session_obj = stripe.checkout.Session.create(
-            payment_method_types=['card'],
             mode='payment',
             line_items=[{
                 'price_data': {
@@ -5969,30 +6242,40 @@ def finalize_transaction(interaction_id):
     business = interaction.business
     now = datetime.now()
     summary = None
+    error_message = None
     is_staff = session.get('staff_id') is not None
 
     if request.method == "POST":
         local_dt_str = request.form.get("local_datetime")
-        amount = float(request.form.get("amount", 0))
         try:
+            amount = float(request.form.get("amount", 0))
+            if amount <= 0:
+                raise ValueError("Enter an amount greater than $0.00.")
             summary = finalize_interaction(
                 interaction,
                 business,
                 amount,
                 staff_id=session.get('staff_id'),
                 source=None,
-                local_date_time=local_dt_str  # <-- pass the value!
+                local_date_time=local_dt_str
             )
             flash("Transaction finalized and all rewards/commissions assigned!", "success")
+        except AlreadyFinalizedError as e:
+            flash(str(e), "warning")
         except Exception as e:
+            db.session.rollback()
             flash(str(e), "danger")
-        # No need to instantiate BusinessTransaction here; that's done in finalize_interaction.
+
+    # Already finalized (earlier click, refresh, back button...)? Show the details, never the form.
+    if summary is None:
+        summary = get_finalization_summary(interaction)
 
     return render_template(
         "finalize_transaction.html",
         interaction=interaction,
         now=now,
         summary=summary,
+        error_message=error_message,
         account_balance=business.account_balance,
         is_staff=is_staff
     )
@@ -6053,7 +6336,7 @@ def user_biz_interactions():
 def active_session(interaction_id):
     interaction = Interaction.query.get_or_404(interaction_id)
     is_user = interaction.user_id == getattr(current_user, 'id', None)
-    is_biz = session.get('business_id') == interaction.business_id
+    is_biz = session.get('business_id') == interaction.business_id or is_freelance_owner(interaction)
     if not (is_user or is_biz):
         flash("Access denied.")
         if session.get('business_id'):
@@ -6095,7 +6378,7 @@ def active_session(interaction_id):
                 sender_type = "business"
                 # if staff is logged in, store their id; if owner, store business id
                 staff_id = session.get('staff_id')
-                sender_id = staff_id if staff_id else session['business_id']
+                sender_id = staff_id if staff_id else (session.get('business_id') or interaction.business_id)
             elif current_user.is_authenticated and current_user.has_role("customer_support"):
                 sender_type = "customer_support"
                 sender_id = current_user.id
@@ -6163,12 +6446,12 @@ def shop_confirm(business_id):
         return redirect(url_for("view_listing", biz_id=business.id))
 
     if not getattr(business, "is_ecommerce_site", False) or not getattr(business, "allow_website_purchases", False):
-        flash("This business is not configured for online purchases through PerkMiner.", "warning")
+        flash("This business is not configured for online purchases through Perk Miner.", "warning")
         return redirect(url_for("view_listing", biz_id=business.id))
 
     if (business.account_balance or 0) < 250.0:
         flash("This business must maintain at least $250 in their advertising balance "
-              "before members can shop on their website through PerkMiner.", "warning")
+              "before members can shop on their website through Perk Miner.", "warning")
         return redirect(url_for("view_listing", biz_id=business.id))
 
     # 3) if member submits the confirmation form
@@ -6187,7 +6470,7 @@ def shop_confirm(business_id):
                 business_id=business.id,
                 # minimal required fields to satisfy your model
                 service_type="Online Purchase",
-                details="Member is shopping on business e-commerce site via PerkMiner.",
+                details="Member is shopping on business e-commerce site via Perk Miner.",
                 budget_low=0,
                 budget_high=0,
                 status="active",
@@ -6211,7 +6494,7 @@ def session_messages(interaction_id):
     interaction = Interaction.query.get_or_404(interaction_id)
     is_user = False
     is_biz = False
-    if 'business_id' in session and session['business_id'] == interaction.business_id:
+    if ('business_id' in session and session['business_id'] == interaction.business_id) or is_freelance_owner(interaction):
         is_biz = True
     elif current_user.is_authenticated and getattr(current_user, 'id', None) == interaction.user_id:
         is_user = True
@@ -6251,7 +6534,7 @@ def export_business_receipts_csv():
     writer = csv.writer(si)
 
     # Header for business and Perk Miner
-    writer.writerow([f"Invoices for '{business.business_name}' from PerkMiner"])
+    writer.writerow([f"Invoices for '{business.business_name}' from Perk Miner"])
     writer.writerow([])
 
     # Table headers
@@ -6569,8 +6852,8 @@ def scan_qr(interaction_id):
 @app.route("/business/register", methods=["GET", "POST"])
 def business_register():
     form = BusinessRegisterForm()
-    # Populate referral_code field from ?ref= on GET (invite link)
-    ref_code = request.args.get('ref')
+    # Populate referral_code field from ?ref= on GET (invite link), or from the remembered invite code
+    ref_code = request.args.get('ref') or social_auth.pending_referral("business")
     if request.method == "GET" and ref_code:
         form.referral_code.data = ref_code
 
@@ -6697,13 +6980,13 @@ def business_login():
                 return redirect(url_for("business_verify_email"))
             else:
                 # --- 2FA CODE ---
-                code = str(random.randint(100000, 999999))
+                code = new_2fa_code()
                 session['pending_2fa_code'] = code
                 session['pending_2fa_biz_id'] = biz.id
                 send_email(
                     biz.business_email,
-                    "Your PerkMiner Business Login Code",
-                    f"<p>Your PerkMiner business login code is: <b>{code}</b></p>"
+                    "Your Perk Miner Business Login Code",
+                    f"<p>Your Perk Miner business login code is: <b>{code}</b></p>"
                 )
                 flash("A login code has been sent to your email.")
                 return redirect(url_for("two_factor_biz"))
@@ -6718,13 +7001,22 @@ def two_factor_biz():
         code_entered = form.code.data.strip()
         code_expected = session.get('pending_2fa_code')
         biz_id = session.get('pending_2fa_biz_id')
-        if code_expected and code_entered == code_expected and biz_id:
+        lock_key = f"biz:{biz_id}"
+        if biz_id and twofa_is_locked(lock_key):
+            session.pop('pending_2fa_code', None)
+            session.pop('pending_2fa_biz_id', None)
+            flash("Too many incorrect codes. Please log in again in a few minutes.")
+            return redirect(url_for("business_login"))
+        if code_expected and twofa_matches(code_entered, code_expected) and biz_id:
+            twofa_reset(lock_key)
             session['business_id'] = biz_id
             # Clean up session
             session.pop('pending_2fa_code', None)
             session.pop('pending_2fa_biz_id', None)
             flash("Login successful!")
             return redirect(url_for("business_dashboard"))
+        if biz_id:
+            twofa_register_fail(lock_key)
         flash("Incorrect code. Please try again.")
     return render_template("two_factor_biz.html", form=form)
 
@@ -6789,7 +7081,7 @@ def business_invite():
         flash("Business invite failed. Please log in and use a valid email.")
         return redirect(url_for("business_login"))
     invitee_email = invite_form.invitee_email.data.strip()
-    subject = f"{biz.business_name} has invited you to join PerkMiner."
+    subject = f"{biz.business_name} has invited you to join Perk Miner."
     reg_url = url_for('business_register', ref=biz.referral_code, _external=True)
     video_url = url_for('intro', ref=biz.referral_code, _external=True)
     html_body = build_invite_email(biz.business_name, reg_url, video_url)
@@ -6969,9 +7261,9 @@ def business_dashboard():
 
     db.session.commit()
 
-    # --- Perk Miner transfer fee preview for business earnings ---
-    FEE_RATE = Decimal("0.005")   # 0.5%
-    FIXED_FEE = Decimal("0.35")   # $0.35
+    # --- Perk Miner LLC transfer fee preview for business earnings ---
+    FEE_RATE = Decimal("0.029")   # 2.9%
+    FIXED_FEE = Decimal("0.50")   # $0.50
 
     if net_available_biz and net_available_biz > 0:
         example_balance_biz = net_available_biz
@@ -6987,6 +7279,7 @@ def business_dashboard():
     editable_fields = [
         "business_name", "listing_type", "category", "finalization", "perks", "phone_number", "address", "latitude", "longitude",
         "website_url", "about_us", "hours_of_operation", "search_keywords",
+        "facebook_url", "instagram_url", "x_url", "linkedin_url", "tiktok_url", "youtube_url",
         "store_slug", "service_1", "service_2", "service_3", "service_4", "service_5",
         "service_6", "service_7", "service_8", "service_9", "service_10"
     ]
@@ -7000,8 +7293,21 @@ def business_dashboard():
         except (TypeError, ValueError):
             return None
 
-    # POST: Handle profile save
+    # POST: Handle profile save and FAQs as one operation.
     if request.method == "POST":
+        # A final save includes exactly ten FAQ slots; validate before changing profile fields.
+        faq_questions = request.form.getlist("question")
+        faq_answers = request.form.getlist("answer")
+        if len(faq_questions) != 10 or len(faq_answers) != 10:
+            flash("FAQ form was incomplete. Please reopen your profile and try again.", "danger")
+            return redirect(url_for("business_dashboard") + "#business-faq-editor")
+        if any(bool(q.strip()) != bool(a.strip()) for q, a in zip(faq_questions, faq_answers)):
+            flash("Each FAQ must have both a question and an answer, or both blank.", "danger")
+            return redirect(url_for("business_dashboard") + "#business-faq-editor")
+        faq_pairs = [(q.strip(), a.strip()) for q, a in zip(faq_questions, faq_answers) if q.strip() and a.strip()]
+        if any(len(q) > 240 or len(a) > 2000 for q, a in faq_pairs):
+            flash("FAQ text is too long.", "danger")
+            return redirect(url_for("business_dashboard") + "#business-faq-editor")
         updated = False
         if not request.form.get("listing_type"):
             flash("Listing Type is required.")
@@ -7076,6 +7382,23 @@ def business_dashboard():
                     continue
 
                 setattr(biz, live_attr, form_val if form_val else None)
+                updated = True
+
+        # --- service area beyond local (controlled lists only, so it saves straight to the live profile) ---
+        if request.form.get("sa_present") == "1":
+            if request.form.get("service_area_expanded") == "1":
+                scope_in = request.form.get("service_area_scope", "")
+                regions_in = (request.form.getlist("sa_states") if scope_in in _sa.STATE_SCOPES
+                              else request.form.getlist("sa_countries") if scope_in in _sa.COUNTRY_SCOPES else [])
+                sa_scope, sa_regions, sa_err = _sa.clean(scope_in, regions_in)
+                if sa_err:
+                    flash(sa_err + " Your service area was left unchanged.", "warning")
+                    sa_scope, sa_regions = (biz.service_area_scope or "local"), (biz.service_area_regions or "")
+            else:
+                sa_scope, sa_regions = "local", ""
+            if (biz.service_area_scope or "local") != sa_scope or (biz.service_area_regions or "") != sa_regions:
+                biz.service_area_scope = sa_scope
+                biz.service_area_regions = sa_regions or None
                 updated = True
 
         # --- NEW: location_varies flag ---
@@ -7160,6 +7483,18 @@ def business_dashboard():
                 biz.google_reviews_url = new_url
                 updated = True
 
+        # --- Social media links: staged with profile edits for approved listings ---
+        for social_field in ("facebook_url", "instagram_url", "x_url", "linkedin_url", "tiktok_url", "youtube_url"):
+            if social_field in request.form:
+                new_url = (request.form.get(social_field) or "").strip()
+                if len(new_url) > 500:
+                    flash("Social media links must be 500 characters or fewer.", "danger")
+                    return redirect(url_for("business_dashboard"))
+                if new_url and not valid_social_url(social_field, new_url):
+                    label = social_field.replace("_url", "").replace("x", "X").title()
+                    flash(f"Please enter a valid HTTPS {label} profile link.", "danger")
+                    return redirect(url_for("business_dashboard"))
+
         # --- Trust fields (licensed / bonded / insured) ---
         if request.form.get("trust_form") == "1":
             trust_vals, trust_err = parse_trust_form(request.form, request.form.get("listing_type"))
@@ -7169,10 +7504,29 @@ def business_dashboard():
             if apply_trust_fields(biz, trust_vals):
                 updated = True
 
-        if updated:
+        # Replace only this business's FAQs; commit with the profile's pending changes.
+        previous_faqs = [(row.question, row.answer) for row in
+                         BusinessFAQ.query.filter_by(business_id=biz.id).order_by(BusinessFAQ.position).all()]
+        faq_changed = previous_faqs != faq_pairs
+        if biz.status == 'approved':
+            existing_revision = db.session.get(BusinessListingRevision, biz.id)
+            if existing_revision and existing_revision.faq_changes is not None:
+                faq_changed = existing_revision.faq_changes != [list(pair) for pair in faq_pairs]
+        if biz.status == 'approved':
+            revision = db.session.get(BusinessListingRevision, biz.id)
+            if revision is None:
+                revision = BusinessListingRevision(business_id=biz.id)
+                db.session.add(revision)
+            stage_live_profile_edits(biz, revision)
+            if faq_changed:
+                revision.faq_changes = [list(pair) for pair in faq_pairs]
+        elif faq_changed:
+            BusinessFAQ.query.filter_by(business_id=biz.id).delete(synchronize_session=False)
+            for i, (question, answer) in enumerate(faq_pairs):
+                db.session.add(BusinessFAQ(business_id=biz.id, question=question, answer=answer, position=i))
+        if updated or faq_changed or db.session.is_modified(biz) or db.session.new or db.session.dirty:
             db.session.commit()
-            flash("Business profile updated!")
-
+        flash("Business profile and FAQs saved.", "success")
         return redirect(url_for('business_dashboard'))
 
     # GET: Load profile form data (prefer draft if status=approved and draft exists)
@@ -7303,8 +7657,21 @@ def business_dashboard():
     # promo field: show only if no promo redeemed yet AND at least one code is still valid
     show_promo_field = (not biz.promo_code_used) and any_promo_available()
 
+    # The editor must display the saved, unapproved FAQ draft, not the older
+    # publicly approved FAQs. Public pages continue using BusinessFAQ only.
+    pending_faq_revision = (
+        db.session.get(BusinessListingRevision, biz.id)
+        if biz.status == "approved" else None
+    )
+
     return render_template(
         "business_dashboard.html",
+        has_pending_listing_changes=(biz.status == 'approved' and db.session.query(BusinessListingRevision.business_id).filter(BusinessListingRevision.business_id == biz.id, BusinessListingRevision.review_status.in_(['pending', 'in_review'])).first() is not None),
+        dashboard_faqs=(
+            [dict(question=pair[0], answer=pair[1]) for pair in pending_faq_revision.faq_changes]
+            if pending_faq_revision is not None and pending_faq_revision.faq_changes is not None
+            else BusinessFAQ.query.filter_by(business_id=biz.id).order_by(BusinessFAQ.position).all()
+        ),
         form=form,
         profile_form=profile_form,
         invite_form=invite_form,
@@ -7373,13 +7740,13 @@ def admin_login():
             # Require that this user has a super_admin role
             if user.roles and any(r.name == "super_admin" for r in user.roles):
                 # 2FA logic starts here
-                code = str(random.randint(100000, 999999))
+                code = new_2fa_code()
                 session['pending_2fa_code'] = code
                 session['pending_2fa_admin_id'] = user.id
                 send_email(
                     user.email,
-                    "Your PerkMiner Admin Login Code",
-                    f"<p>Your PerkMiner admin login code is: <b>{code}</b></p>"
+                    "Your Perk Miner Admin Login Code",
+                    f"<p>Your Perk Miner admin login code is: <b>{code}</b></p>"
                 )
                 flash("A login code has been sent to your admin email.")
                 return redirect(url_for("two_factor_admin"))
@@ -7396,15 +7763,24 @@ def two_factor_admin():
         code_entered = form.code.data.strip()
         code_expected = session.get('pending_2fa_code')
         admin_id = session.get('pending_2fa_admin_id')
-        if code_expected and code_entered == code_expected and admin_id:
+        lock_key = f"admin:{admin_id}"
+        if admin_id and twofa_is_locked(lock_key):
+            session.pop('pending_2fa_code', None)
+            session.pop('pending_2fa_admin_id', None)
+            flash("Too many incorrect codes. Please log in again in a few minutes.")
+            return redirect(url_for("admin_login"))
+        if code_expected and twofa_matches(code_entered, code_expected) and admin_id:
             user = User.query.get(admin_id)
             if user:
+                twofa_reset(lock_key)
                 login_user(user)
                 # Clean up session
                 session.pop('pending_2fa_code', None)
                 session.pop('pending_2fa_admin_id', None)
                 flash("Admin login successful!")
                 return redirect(url_for("admin_dashboard"))
+        if admin_id:
+            twofa_register_fail(lock_key)
         flash("Incorrect code. Please try again.")
     return render_template("two_factor_admin.html", form=form)
 
@@ -7786,13 +8162,23 @@ def finance_dashboard():
 @role_required("approve_reject_listings")
 @login_required
 def approve_reject_dashboard():
-    pending_listings = Business.query.filter(Business.status.in_(["pending", "in_review"])).all()
-    return render_template("approve_reject_dashboard.html", pending_listings=pending_listings)
+    pending_listings = Business.query.outerjoin(BusinessListingRevision, BusinessListingRevision.business_id == Business.id).filter(
+        db.or_(Business.status.in_(['pending', 'in_review']),
+               db.and_(Business.status == 'approved', BusinessListingRevision.review_status.in_(['pending', 'in_review'])))
+    ).all()
+    listing_revisions = {r.business_id: r for r in BusinessListingRevision.query.filter(
+        BusinessListingRevision.business_id.in_([b.id for b in pending_listings])
+    ).all()} if pending_listings else {}
+    return render_template('approve_reject_dashboard.html', pending_listings=pending_listings,
+                           listing_revisions=listing_revisions)
 
 @app.route("/feedback-dashboard")
-@role_required("feedback_moderation")
+@login_required
 def feedback_dashboard():
-    return render_template("feedback_dashboard.html")
+    # Feedback moderation lives on the Reviews & Feedback page (reviews.py)
+    if not is_support_staff():
+        abort(403)
+    return redirect(url_for("admin_reviews"))
 
 @app.route("/support/session/<int:interaction_id>", methods=["GET", "POST"])
 @login_required
@@ -7801,8 +8187,8 @@ def support_session(interaction_id):
 
     # Permissions: only user, business, or support admin can access
     is_user = (current_user.is_authenticated and getattr(current_user, 'id', None) == interaction.user_id)
-    is_biz = (session.get('business_id') == interaction.business_id)
-    is_support = (current_user.is_authenticated and current_user.has_role("customer_support"))
+    is_biz = (session.get('business_id') == interaction.business_id) or is_freelance_owner(interaction)
+    is_support = is_support_staff()
 
     if not (is_user or is_biz or is_support):
         flash("Access denied.")
@@ -7829,7 +8215,7 @@ def support_session(interaction_id):
             elif is_biz:
                 sender_type = "business"
                 staff_id = session.get('staff_id')
-                sender_id = staff_id if staff_id else session['business_id']
+                sender_id = staff_id if staff_id else (session.get('business_id') or interaction.business_id)
             elif is_support:
                 sender_type = "customer_support"
                 sender_id = current_user.id
@@ -7882,10 +8268,12 @@ def support_session(interaction_id):
     )
 
 @app.route("/support-dashboard")
-@role_required("customer_support")
+@login_required
 def support_dashboard():
+    if not is_support_staff():
+        abort(403)
     # Only show "Support" service_type
-    support_interactions = Interaction.query.filter_by(service_type="Support", status="active").order_by(Interaction.created_at.desc()).all()
+    support_interactions = Interaction.query.filter(Interaction.service_type.in_(["Support", "Feedback"]), Interaction.status == "active").order_by(Interaction.created_at.desc()).all()
     return render_template("support_dashboard.html", interactions=support_interactions)
 
 @app.route("/start-support/<int:business_id>", methods=["GET", "POST"])
@@ -7915,8 +8303,8 @@ def start_support(business_id):
 def support_session_messages(interaction_id):
     interaction = Interaction.query.get_or_404(interaction_id)
     is_user = current_user.is_authenticated and current_user.id == interaction.user_id
-    is_biz = session.get('business_id') == interaction.business_id
-    is_support = current_user.is_authenticated and current_user.has_role("customer_support")
+    is_biz = session.get('business_id') == interaction.business_id or is_freelance_owner(interaction)
+    is_support = is_support_staff()
     if not (is_user or is_biz or is_support):
         return "", 403
 
@@ -7978,7 +8366,12 @@ def admin_suspend_user(user_id):
 @login_required
 def start_review(listing_id):
     biz = Business.query.get_or_404(listing_id)
-    if biz.status == "pending":
+    revision = db.session.get(BusinessListingRevision, biz.id)
+    if biz.status == 'approved' and revision and revision.review_status == 'pending':
+        revision.review_status = 'in_review'
+        db.session.commit()
+        flash(f'Proposed changes for {biz.business_name} are now in review; the approved listing remains public.')
+    elif biz.status == "pending":
         biz.status = "in_review"
         db.session.commit()
         flash(f"Listing {biz.business_name} is now in review.")
@@ -7989,11 +8382,16 @@ def start_review(listing_id):
 @login_required
 def approve_listing(listing_id):
     biz = Business.query.get_or_404(listing_id)
+    revision = db.session.get(BusinessListingRevision, biz.id)
+    if biz.status == 'approved' and (not revision or revision.review_status != 'in_review'):
+        flash('No proposed changes are currently in review.', 'warning')
+        return redirect(url_for('approve_reject_dashboard'))
     if biz.status in ["pending", "in_review", "approved"]:
         # Promote draft fields to live fields if needed
         promote_fields = [
             "business_name", "listing_type", "category", "finalization", "phone_number", "address", "latitude", "longitude",
             "website_url", "about_us", "hours_of_operation", "search_keywords",
+            "facebook_url", "instagram_url", "x_url", "linkedin_url", "tiktok_url", "youtube_url",
             "service_1", "service_2", "service_3", "service_4", "service_5",
             "service_6", "service_7", "service_8", "service_9", "service_10",
             "profile_photo",
@@ -8030,6 +8428,13 @@ def approve_listing(listing_id):
             biz.insured and biz.ins_amount and biz.ins_company and biz.ins_number)
         # ---- end NEW ----
 
+        # Publish proposed live-field and FAQ changes only after approval.
+        try:
+            apply_listing_revision(biz, revision)
+        except ValueError as exc:
+            db.session.rollback()
+            flash(str(exc), 'danger')
+            return redirect(url_for('approve_reject_dashboard'))
         # Status update
         biz.status = "approved"
 
@@ -8044,6 +8449,13 @@ def approve_listing(listing_id):
 
         db.session.commit()
 
+        # Tell Bing/IndexNow (feeds Copilot, ChatGPT search, DuckDuckGo) about the new or updated public profile.
+        # No-op unless the INDEXNOW_KEY environment variable is set; never blocks or breaks approval.
+        try:
+            ai.indexnow_ping_profile(biz)
+        except Exception:
+            logging.exception("IndexNow ping failed")
+
         flash(
             f"Listing {biz.business_name} approved!"
             + (" Manually Featured." if getattr(biz, "manual_feature", False) else "")
@@ -8056,7 +8468,12 @@ def approve_listing(listing_id):
 @login_required
 def reject_listing(listing_id):
     biz = Business.query.get_or_404(listing_id)
-    if biz.status in ["pending", "in_review"]:
+    revision = db.session.get(BusinessListingRevision, biz.id)
+    if biz.status == 'approved' and revision and revision.review_status == 'in_review':
+        discard_listing_revision(biz, revision)
+        db.session.commit()
+        flash(f'Proposed changes for {biz.business_name} rejected. Existing public listing remains unchanged.')
+    elif biz.status in ["pending", "in_review"]:
         biz.status = "rejected"
         db.session.commit()
         flash(f"Listing {biz.business_name} rejected.")
@@ -8170,9 +8587,17 @@ def send_for_review():
     # Mark as pending and commit
     listing = Business.query.get(listing_id)
     if listing:
-        listing.status = "pending"
+        if listing.status == 'approved':
+            revision = db.session.get(BusinessListingRevision, listing.id)
+            if revision is None:
+                revision = BusinessListingRevision(business_id=listing.id)
+                db.session.add(revision)
+            revision.review_status = 'pending'
+            flash('Your updates are pending review. Your existing approved listing and public profile remain live until the changes are approved.')
+        else:
+            listing.status = 'pending'
+            flash('Your new listing was submitted for admin review.')
         db.session.commit()
-        flash("Listing submitted for admin review. You will be notified after a decision.")
     else:
         flash("Listing not found.")
 
@@ -8232,7 +8657,9 @@ from flask_login import login_required
 
 @app.route("/listing/<int:biz_id>")
 def view_listing(biz_id):
+    # Searching / browsing is public, but the full (large) listing needs a member or business login.
     if not (current_user.is_authenticated or session.get("business_id")):
+        flash("Log in or join free to view the full business listing.", "info")
         return redirect(url_for("login"))
 
     distance_mi = request.args.get("distance_mi")
@@ -8291,6 +8718,8 @@ def view_listing(biz_id):
         area_city=area_city,
         area_state=area_state,
         area_country=area_country,
+        faqs=[{"question": f.question, "answer": f.answer}
+              for f in BusinessFAQ.query.filter_by(business_id=biz.id).order_by(BusinessFAQ.position).all()],
     )
 
 @app.route("/finance/combined-detailed-report", methods=["GET"])
@@ -9207,9 +9636,9 @@ def staff_new():
 
         send_email(
             staff.email,
-            "Your PerkMiner Staff Login",
+            "Your Perk Miner Staff Login",
             f"""
-            <h3>Welcome to PerkMiner!</h3>
+            <h3>Welcome to Perk Miner!</h3>
             <p>Your staff account has been created.</p>
             <b>Temporary password:</b> {temp_password}<br>
             <b>Login here:</b> <a href="https://www.perkminer.com/staff/login">Staff Login</a><br>
@@ -9231,13 +9660,13 @@ def staff_login():
         password = form.password.data
         staff = Staff.query.filter_by(email=email, is_active=True).first()
         if staff and bcrypt.check_password_hash(staff.hashed_password, password):
-            code = str(random.randint(100000, 999999))
+            code = new_2fa_code()
             session['pending_staff_2fa_code'] = code
             session['pending_staff_id'] = staff.id
             session['pending_staff_email'] = staff.email  # <-- ADD THIS
             send_email(
                 staff.email,
-                "Your PerkMiner Staff Login Code",
+                "Your Perk Miner Staff Login Code",
                 f"<p>Your staff login code is: <b>{code}</b></p>"
             )
             flash("A login code has been sent to your email.")
@@ -9253,8 +9682,15 @@ def staff_2fa():
     code_expected = session.get('pending_staff_2fa_code')
     if form.validate_on_submit():
         code_entered = form.code.data.strip()
-        staff = Staff.query.get(staff_id)
-        if code_expected and code_entered == code_expected and staff_id:
+        lock_key = f"staff:{staff_id}"
+        if staff_id and twofa_is_locked(lock_key):
+            session.pop('pending_staff_2fa_code', None)
+            session.pop('pending_staff_id', None)
+            flash("Too many incorrect codes. Please log in again in a few minutes.", "danger")
+            return redirect(url_for("staff_login"))
+        staff = Staff.query.get(staff_id) if staff_id else None
+        if code_expected and twofa_matches(code_entered, code_expected) and staff_id and staff:
+            twofa_reset(lock_key)
             session.clear()
             session['staff_id'] = staff_id
             # Force password change if required
@@ -9262,6 +9698,8 @@ def staff_2fa():
                 return redirect(url_for("staff_change_password"))
             flash("Staff login successful!")
             return redirect(url_for("staff_dashboard"))
+        if staff_id:
+            twofa_register_fail(lock_key)
         flash("Incorrect code. Please try again.")
     return render_template("staff_2fa.html", form=form)
 
@@ -9272,11 +9710,11 @@ def staff_resend_code():
         flash("Start the login process first.", "warning")
         return redirect(url_for('staff_login'))
 
-    code = str(random.randint(100000, 999999))
+    code = new_2fa_code()
     session['pending_staff_2fa_code'] = code
     send_email(
         staff_email,
-        "Your PerkMiner Staff Login Code",
+        "Your Perk Miner Staff Login Code",
         f"<p>Your staff login code is: <b>{code}</b></p>"
     )
     flash("A new login code has been sent to your email.", "success")
@@ -9496,26 +9934,37 @@ def staff_finalize_transaction(interaction_id):
     error_message = None
 
     if request.method == "POST":
-        amount = float(request.form.get("amount"))
+        local_dt_str = request.form.get("local_datetime")
         try:
+            amount = float(request.form.get("amount", 0))
+            if amount <= 0:
+                raise ValueError("Enter an amount greater than $0.00.")
             summary = finalize_interaction(
                 interaction,
                 staff.business,
                 amount,
                 staff_id=staff.id,
-                source="barcode"  # or "message" if needed
+                source="barcode",  # or "message" if needed
+                local_date_time=local_dt_str
             )
             flash("Transaction finalized and all rewards/commissions assigned!", "success")
-            return redirect(url_for("staff_active_session", interaction_id=interaction.id))
+            # NOTE: no redirect here - the summary is shown on this page, same as the business owner.
+        except AlreadyFinalizedError as e:
+            flash(str(e), "warning")
         except Exception as e:
+            db.session.rollback()
             error_message = str(e)
+
+    # Already finalized (earlier click, refresh, back button...)? Show the details, never the form.
+    if summary is None:
+        summary = get_finalization_summary(interaction)
 
     return render_template(
         "finalize_transaction.html",
         interaction=interaction,
         now=now,
         summary=summary,
-        error_message=error_message,  # Add this to display staff fund errors, if any
+        error_message=error_message,
         account_balance=staff.business.account_balance
     )
 
@@ -9601,7 +10050,15 @@ def press_release():
 
 @app.route("/new-featured-businesses")
 def new_featured_businesses():
-    return render_template('new_featured_businesses.html')
+    # Top-ranked approved businesses (same rule as the public directory). Never block the page if the query fails.
+    try:
+        featured = (public_businesses_query()
+                    .order_by(Business.manual_feature.desc(), Business.rank.desc(), Business.business_name.asc())
+                    .limit(6).all())
+    except Exception:
+        db.session.rollback()
+        featured = []
+    return render_template('new_featured_businesses.html', featured_businesses=featured)
 
 @app.route('/onboard/stripe')
 @login_required
@@ -9855,7 +10312,7 @@ def withdraw():
     Standard member withdrawal.
 
     Platform behavior:
-      - Perk Miner transfer fee: 0.5% + $0.35 (deducted before transfer)
+      - Perk Miner LLC transfer fee: 2.9% + $0.50 (deducted before transfer)
       - We create a TRANSFER from platform balance -> member's connected account.
       - Connected account's payouts to bank are handled by Stripe (e.g., automatic payouts).
 
@@ -9868,8 +10325,8 @@ def withdraw():
     print("DEBUG: /withdraw (member standard) called for user", current_user.id)
 
     MIN_PAYOUT = Decimal("10.00")
-    FEE_RATE = Decimal("0.005")   # 0.5%
-    FIXED_FEE = Decimal("0.35")   # Perk Miner transfer fee (fixed portion)
+    FEE_RATE = Decimal("0.029")   # 2.9%
+    FIXED_FEE = Decimal("0.50")   # Perk Miner LLC transfer fee (fixed portion)
 
     user = current_user
 
@@ -9931,7 +10388,7 @@ def withdraw():
 
         print("DEBUG: member balance_to_withdraw =", balance_to_withdraw)
 
-        # Perk Miner transfer fee: 0.5% + $0.35
+        # Perk Miner LLC transfer fee: 2.9% + $0.50
         fee = (balance_to_withdraw * FEE_RATE + FIXED_FEE).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
@@ -9942,7 +10399,7 @@ def withdraw():
         print("DEBUG: member fee =", fee, "transfer_amount =", transfer_amount)
 
         if transfer_amount <= 0:
-            flash("Insufficient balance after the Perk Miner transfer fee is deducted.", "warning")
+            flash("Insufficient balance after the Perk Miner LLC transfer fee is deducted.", "warning")
             return redirect(url_for('dashboard'))
 
         amount_cents = int(transfer_amount * 100)
@@ -9984,7 +10441,7 @@ def withdraw():
 
         flash(
             f"Withdrawal of ${transfer_amount:.2f} initiated! "
-            f"Perk Miner transfer fee: ${fee:.2f} deducted. "
+            f"Perk Miner LLC transfer fee: ${fee:.2f} deducted. "
             f"Note: Stripe may also charge a separate withdrawal fee.\"",
             "success"
         )
@@ -10004,7 +10461,7 @@ def business_withdraw():
     Standard business withdrawal.
 
     Platform behavior:
-      - Perk Miner transfer fee: 0.5% + $0.35 (deducted before transfer)
+      - Perk Miner LLC transfer fee: 2.9% + $0.50 (deducted before transfer)
       - We create a TRANSFER from platform balance -> business connected account.
       - Connected account's payouts to bank are handled by Stripe (e.g., automatic payouts).
 
@@ -10017,8 +10474,8 @@ def business_withdraw():
     print("DEBUG: /business/withdraw (standard) called")
 
     MIN_PAYOUT = Decimal("10.00")
-    FEE_RATE = Decimal("0.005")   # 0.5%
-    FIXED_FEE = Decimal("0.35")
+    FEE_RATE = Decimal("0.029")   # 2.9%
+    FIXED_FEE = Decimal("0.50")
 
     business_id = session.get('business_id')
     if not business_id:
@@ -10079,7 +10536,7 @@ def business_withdraw():
 
         print("DEBUG: business balance_to_withdraw =", balance_to_withdraw)
 
-        # Perk Miner transfer fee: 0.5% + $0.35
+        # Perk Miner LLC transfer fee: 2.9% + $0.50
         fee = (balance_to_withdraw * FEE_RATE + FIXED_FEE).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
@@ -10090,7 +10547,7 @@ def business_withdraw():
         print("DEBUG: business fee =", fee, "transfer_amount =", transfer_amount)
 
         if transfer_amount <= 0:
-            flash("Insufficient balance after the Perk Miner transfer fee is deducted.", "warning")
+            flash("Insufficient balance after the Perk Miner LLC transfer fee is deducted.", "warning")
             return redirect(url_for('business_dashboard'))
 
         amount_cents = int(transfer_amount * 100)
@@ -10136,7 +10593,7 @@ def business_withdraw():
 
         flash(
             f"Business withdrawal of ${transfer_amount:.2f} initiated! "
-            f"Perk Miner transfer fee: ${fee:.2f} deducted. "
+            f"Perk Miner LLC transfer fee: ${fee:.2f} deducted. "
             f"Note: Stripe may also charge a separate withdrawal fee.\"",
             "success"
         )
@@ -10157,7 +10614,7 @@ def withdraw_investor():
     Standard silent investor withdrawal.
 
     Platform behavior:
-      - Perk Miner transfer fee: 0.5% + $0.35 (deducted before transfer)
+      - Perk Miner LLC transfer fee: 2.9% + $0.50 (deducted before transfer)
       - We create a TRANSFER from platform balance -> investor's connected account.
       - Connected account's payouts to bank are handled by Stripe (e.g., automatic payouts).
 
@@ -10170,8 +10627,8 @@ def withdraw_investor():
     print("DEBUG: /withdraw_investor (standard) called for user", current_user.id)
 
     MIN_PAYOUT = Decimal("10.00")
-    FEE_RATE = Decimal("0.005")   # 0.5%
-    FIXED_FEE = Decimal("0.35")
+    FEE_RATE = Decimal("0.029")   # 2.9%
+    FIXED_FEE = Decimal("0.50")
 
     user = current_user
 
@@ -10228,7 +10685,7 @@ def withdraw_investor():
 
         print("DEBUG: investor balance_to_withdraw =", balance_to_withdraw)
 
-        # Perk Miner transfer fee: 0.5% + $0.35
+        # Perk Miner LLC transfer fee: 2.9% + $0.50
         fee = (balance_to_withdraw * FEE_RATE + FIXED_FEE).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
@@ -10239,7 +10696,7 @@ def withdraw_investor():
         print("DEBUG: investor fee =", fee, "transfer_amount =", transfer_amount)
 
         if transfer_amount <= 0:
-            flash("Insufficient balance after the Perk Miner transfer fee is deducted.", "warning")
+            flash("Insufficient balance after the Perk Miner LLC transfer fee is deducted.", "warning")
             return redirect(url_for('dashboard'))
 
         amount_cents = int(transfer_amount * 100)
@@ -10282,7 +10739,7 @@ def withdraw_investor():
 
         flash(
             f"Silent investor withdrawal of ${transfer_amount:.2f} initiated! "
-            f"Perk Miner transfer fee: ${fee:.2f} deducted. "
+            f"Perk Miner LLC transfer fee: ${fee:.2f} deducted. "
             f"Note: Stripe may also charge a separate withdrawal fee.\"",
             "success"
         )
@@ -10380,7 +10837,7 @@ def withdraw_instant():
             amount=amount_cents,
             currency='usd',
             destination=user.stripe_account_id,
-            description=f"PerkMiner member instant earnings transfer for user {user.id}"
+            description=f"Perk Miner member instant earnings transfer for user {user.id}"
         )
 
         # instant payout from connected account
@@ -10503,7 +10960,7 @@ def business_withdraw_instant():
             amount=amount_cents,
             currency='usd',
             destination=biz.stripe_account_id,
-            description="PerkMiner Business Payout (Instant)"
+            description="Perk Miner Business Payout (Instant)"
         )
 
         print("DEBUG: creating Business Payout (instant) for", amount_cents, "cents from", biz.stripe_account_id)
@@ -10617,7 +11074,7 @@ def withdraw_investor_instant():
             amount=amount_cents,
             currency='usd',
             destination=user.stripe_account_id,
-            description="PerkMiner Silent Investor Withdrawal (instant)"
+            description="Perk Miner Silent Investor Withdrawal (instant)"
         )
 
         print("DEBUG: creating Investor Payout (instant) for", amount_cents, "cents from", user.stripe_account_id)
@@ -10801,12 +11258,21 @@ def nearby_stats():
     members_within = member_query.count()
 
     # ---- businesses within distance (optionally by category) ----
-    biz_haversine = haversine_expr(Business.latitude, Business.longitude)
+    # Same rule as the listings themselves: a business that uses live location is counted
+    # from its live GPS position; every other business is counted from its primary address.
+    use_live = db.and_(
+        Business.location_varies.is_(True),
+        Business.live_gps_lat.isnot(None),
+        Business.live_gps_long.isnot(None),
+    )
+    eff_lat = case((use_live, Business.live_gps_lat), else_=Business.latitude)
+    eff_lng = case((use_live, Business.live_gps_long), else_=Business.longitude)
+    biz_haversine = haversine_expr(eff_lat, eff_lng)
 
     biz_query = (
         Business.query
         .filter(Business.status == "approved")
-        .filter(Business.latitude.isnot(None), Business.longitude.isnot(None))
+        .filter(eff_lat.isnot(None), eff_lng.isnot(None))
         .filter(biz_haversine <= distance)
     )
 
@@ -10882,7 +11348,7 @@ def online_marketplace():
     if needed > 0:
         ranked = (
             base_query
-            .filter(Business.manual_feature.is_(False))
+            .filter(or_(Business.manual_feature.is_(False), Business.manual_feature.is_(None)))
             .order_by(Business.rank.desc())
             .limit(needed)
             .all()
@@ -11202,7 +11668,7 @@ def _complete_external_sale(biz, token, amount, order_ref, source):
         app.logger.warning("external sale failed (business %s, order %s): %s", biz.id, order_ref, e)
         if "Insufficient funds" in str(e):
             return {"error": "insufficient_balance",
-                    "message": "Add funds to your PerkMiner advertising balance, then retry."}, 402
+                    "message": "Add funds to your Perk Miner advertising balance, then retry."}, 402
         if "already been finalized" in str(e):
             return {"error": "this member session already has a recorded sale"}, 409
         return {"error": "could not record sale"}, 400
@@ -11389,6 +11855,32 @@ def admin_ecommerce_verifications():
         sale_info=sale_info,
         now=datetime.utcnow(),
     )
+
+@app.route("/admin/ecommerce-verifications/<int:biz_id>", methods=["GET", "POST"])
+@admin_required
+def admin_verify_ecommerce(biz_id):
+    business = Business.query.get_or_404(biz_id)
+    eligible = bool(business.is_ecommerce_site and business.allow_website_purchases
+                    and business.online_terms_agreed)
+
+    if request.method == "POST":
+        if business.ecommerce_verified:
+            flash("This business is already verified.", "info")
+        elif not eligible:
+            flash("Not eligible yet: all three e-commerce flags must be true.", "warning")
+        else:
+            business.ecommerce_verified = True
+            db.session.commit()
+            flash(f"{business.business_name} is now verified for e-commerce.", "success")
+        return redirect(url_for("admin_verify_ecommerce", biz_id=business.id))
+
+    recent_pings = (EcommerceVerificationPing.query
+                    .filter_by(business_id=business.id)
+                    .order_by(EcommerceVerificationPing.created_at.desc())
+                    .limit(10).all())
+    return render_template("admin_verify_ecommerce.html",
+                           business=business, recent_pings=recent_pings)
+
 
 @app.route("/business/onboarding")
 @business_login_required
@@ -11801,10 +12293,11 @@ _sitemap_cache = {"xml": None, "built": 0.0}
 
 # Public marketing pages that are always in the sitemap
 STATIC_SITEMAP_PATHS = [
-    "/", "/about", "/how-it-works", "/intro", "/faq", "/news",
-    "/press-release", "/new-featured-businesses", "/business", "/docuseries", "/docuseries/episodes",
+    "/", "/about", "/how-it-works", "/intro", "/faq", "/news", "/docuseries",
+    "/press-release", "/new-featured-businesses", "/business", "/docuseries/episodes",
     "/register", "/business/register", "/testimonials", "/earn_more_than_sponsor",
-    "/public_profiles", "/privacy", "/full_payout_sample", "/how_much_can_i_earn", "/terms"
+    "/public_profiles", "/privacy", "/full_payout_sample", "/how_much_can_i_earn", "/terms",
+    "/freelance-directory", "/freelancer-terms"
 ]
 
 
@@ -11818,7 +12311,22 @@ def public_businesses_query():
 def public_profile_url(slug):
     return f"{BASE_URL}/public_profiles/{quote(slug, safe='')}"
 
-CATEGORIES = ["All-Rentals", "Auto-Service-Repair-Parts", "Cleaning-Services", "Education-and-Training", "Events-and-Entertainment", "Financial-Services", "Gaming", "Handyman-Contractor", "Health-and-Beauty", "Home-and-Garden", "Industrial-Services", "Legal-Services", "Moving-and-Delivery", "Other", "Pet-Service-and-Supplies", "Professional-Services", "Real-Estate", "Restaurant-Food-and-Drink", "Security-and-Protection", "Shopping-and-Retail", "Sports-and-Recreation", "Transportation-Services", "Travel-Lodging-Tourism", "Wedding-Services"]  # etc.
+CATEGORIES = ["All-Rentals", "Auto-Service-Repair-Parts", "Casino", "Cleaning-Services", "Dispensary", "Education-and-Training", "Events-and-Entertainment", "Financial-Services", "Gaming", "Handyman-Contractor", "Health-and-Beauty", "Home-and-Garden", "Industrial-Services", "Legal-Services", "Liquor-Store", "Moving-and-Delivery", "Other", "Pet-Service-and-Supplies", "Professional-Services", "Real-Estate", "Restaurant-Food-and-Drink", "Security-and-Protection", "Shopping-and-Retail", "Smoke-Shop", "Sports-and-Recreation", "Transportation-Services", "Travel-Lodging-Tourism", "Wedding-Services"]  # etc.
+
+# ---- AI / assistant discoverability (see ai_discovery.py) -------------------------------------
+# Adds /api/public/search, /api/public/businesses/<slug>, /public_profiles/<slug>.json|.md,
+# /openapi.json and the MCP server at /mcp. Read-only, public profile data only.
+from ai_discovery import init_ai_discovery
+ai = init_ai_discovery(
+    app,
+    csrf=csrf,
+    Business=Business,
+    BusinessFAQ=BusinessFAQ,
+    categories=CATEGORIES,
+    public_businesses_query=public_businesses_query,
+    public_profile_url=public_profile_url,
+    base_url=BASE_URL,
+)
 
 @app.route("/public_profiles")
 def public_profiles_directory():
@@ -11932,88 +12440,48 @@ def public_profiles_directory():
         canonical_url=canonical_url,
     )
 
-@app.route("/public_profiles/<store_slug>")
-def public_profile(store_slug):
-    biz = public_businesses_query().filter_by(store_slug=store_slug).first_or_404()
-
-    name = (biz.business_name or "Perk Miner advertiser").strip()
-    category = (biz.category or "").strip()
-
-    about = ""
-    if getattr(biz, "about_us", None):
-        about = " ".join(biz.about_us.split())
-
-    lead = f"{name} - {category}." if category else f"{name}."
-    description = lead
-    if about:
-        room = 155 - len(lead) - 1
-        if room > 20:
-            if len(about) <= room:
-                snippet = about
-            else:
-                snippet = about[:room].rsplit(" ", 1)[0].rstrip(".,;:") + "…"
-            description = f"{lead} {snippet}"
-    if description == lead and not about:
-        description += " See business details and exclusive member perks on Perk Miner."
-
-    page_title = f"{name} - {category} | Perk Miner" if category else f"{name} | Perk Miner"
-
-    meta_keywords = None
-    if getattr(biz, "search_keywords", None):
-        meta_keywords = " ".join(biz.search_keywords.strip().split())
-
-    photos = [
-        biz.photo1_url, biz.photo2_url, biz.photo3_url,
-        biz.photo4_url, biz.photo5_url, biz.photo6_url,
-    ]
-    photos = [p for p in photos if p]
-
-    canonical_url = public_profile_url(biz.store_slug)
-    area_city, area_state, area_country = area_from_address(biz.address)
-
-    ld_json = {
-        "@context": "https://schema.org",
-        "@type": "LocalBusiness",
-        "name": name,
-        "url": canonical_url,
-    }
-    if about:
-        cut = about[:300]
-        if len(about) > 300:
-            cut = cut.rsplit(" ", 1)[0].rstrip(".,;:") + "…"
-        ld_json["description"] = cut
-    if photos:
-        ld_json["image"] = photos
-    phone = getattr(biz, "phone", None) or getattr(biz, "phone_number", None)
-    if phone:
-        ld_json["telephone"] = phone
-    if biz.latitude is not None and biz.longitude is not None:
+# SEO FAQ editor: only the logged-in business may edit its own content.
+@app.route("/business/seo-faq", methods=["GET", "POST"])
+@business_login_required
+def business_seo_faq():
+    from flask_wtf.csrf import validate_csrf
+    biz = db.session.get(Business, session.get("business_id"))
+    if not biz:
+        abort(403)
+    if request.method == "POST":
         try:
-            ld_json["geo"] = {
-                "@type": "GeoCoordinates",
-                "latitude": float(biz.latitude),
-                "longitude": float(biz.longitude),
-            }
-        except (TypeError, ValueError):
-            pass
-    area = area_served_ld(area_city, area_state, area_country)
-    if area:
-        ld_json["areaServed"] = area
-
-    return render_template(
-        "public_profile.html",
-        business=biz,
-        photos=photos,
-        page_title=page_title,
-        meta_description=description,
-        meta_keywords=meta_keywords,
-        canonical_url=canonical_url,
-        ld_json=ld_json,
-        area_city=area_city,
-        area_state=area_state,
-        area_country=area_country,
-        google_maps_api_key=current_app.config.get("GOOGLE_MAPS_API_KEY"),
-    )
+            validate_csrf(request.form.get("csrf_token", ""))
+        except Exception:
+            abort(400, "Invalid CSRF token")
+        questions = request.form.getlist("question")[:10]
+        answers = request.form.getlist("answer")[:10]
+        if any(bool(q.strip()) != bool(a.strip()) for q, a in zip(questions, answers)):
+            flash("Each FAQ needs both a question and an answer. Your previous FAQs were not changed.", "danger")
+            return redirect(url_for("business_dashboard") + "#business-faq-editor")
+        pairs = [(q.strip(), a.strip()) for q, a in zip(questions, answers) if q.strip() and a.strip()]
+        if any(len(q) > 240 or len(a) > 2000 for q, a in pairs):
+            abort(400, "FAQ exceeds allowed length")
+        if biz.status == 'approved':
+            revision = db.session.get(BusinessListingRevision, biz.id)
+            if revision is None:
+                revision = BusinessListingRevision(business_id=biz.id)
+                db.session.add(revision)
+            revision.faq_changes = [list(pair) for pair in pairs]
+            revision.review_status = 'draft'
+            flash('FAQ changes saved for review. Current public FAQs remain unchanged.', 'success')
+        else:
+            BusinessFAQ.query.filter_by(business_id=biz.id).delete()
+            for i, (q, a) in enumerate(pairs):
+                db.session.add(BusinessFAQ(business_id=biz.id, question=q, answer=a, position=i))
+            flash('FAQs saved.', 'success')
+        db.session.commit()
+        return redirect(url_for("business_dashboard") + "#business-faq-editor")
+    faqs = BusinessFAQ.query.filter_by(business_id=biz.id).order_by(BusinessFAQ.position).all()
+    fields = [bool(biz.business_name), bool(biz.category), bool(biz.about_us and len(biz.about_us.strip()) >= 100),
+              bool(biz.profile_photo), bool(biz.phone_number), bool(biz.address),
+              bool(any(getattr(biz, f"service_{i}", None) for i in range(1,11))),
+              bool(biz.perks), bool(faqs), bool(biz.website_url)]
+    return render_template("business_seo_faq.html", business=biz, faqs=faqs, seo_score=sum(fields)*10, seo_checks=fields)
 
 @app.route('/robots.txt')
 def serve_robots():
@@ -12231,6 +12699,113 @@ def earn_more_than_sponsor():
 @app.route("/how_much_can_i_earn")
 def how_much_can_i_earn():
     return render_template("how_much_can_i_earn.html")
+
+@app.route("/public_profiles/<store_slug>")
+def public_profile(store_slug):
+    biz = public_businesses_query().filter_by(store_slug=store_slug).first_or_404()
+
+    # One shared, plain-dict view of the business (summary, title, description, schema.org data).
+    # The same code feeds /api/public/*, /public_profiles/<slug>.json|.md and the MCP server,
+    # so the page, the JSON-LD and the AI answers can never disagree.
+    rec = ai.record(biz)
+
+    # Match visible FAQs exactly: incomplete pairs are not published or marked up.
+    faqs = ai.faqs_for(biz.id)
+
+    photos = [p for p in (
+        biz.photo1_url, biz.photo2_url, biz.photo3_url,
+        biz.photo4_url, biz.photo5_url, biz.photo6_url,
+    ) if p]
+
+    area_city, area_state, area_country = area_from_address(biz.address)
+
+    return render_template(
+        "public_profile.html",
+        business=biz,
+        finalized_tx_count=get_finalized_tx_count_for_business(biz),
+        photos=photos,
+        page_title=rec["page_title"],
+        meta_description=rec["meta_description"],
+        meta_keywords=None,  # Major search engines do not use meta keywords for ranking.
+        canonical_url=rec["url"],
+        ld_json=ai.jsonld(rec, faqs=faqs, photos=photos),
+        social_image=(biz.profile_photo or (photos[0] if photos else None)),
+        services_for_seo=rec["services"],
+        seo_faqs=faqs,
+        area_city=area_city,
+        area_state=area_state,
+        area_country=area_country,
+        google_maps_api_key=current_app.config.get("GOOGLE_MAPS_API_KEY"),
+        ai=rec,
+    )
+
+@app.route("/public_profiles.json")
+
+def public_profiles_json():
+
+    """Machine-readable feed of all public business profiles for AI agents."""
+
+    businesses = public_businesses_query().order_by(Business.business_name).all()
+
+    out = []
+
+    for biz in businesses:
+
+        area_city, area_state, area_country = area_from_address(biz.address)
+
+        entry = {
+
+            "name": (biz.business_name or "").strip(),
+
+            "slug": biz.store_slug,
+
+            "url": public_profile_url(biz.store_slug),
+
+            "category": (biz.category or "").strip() or None,
+
+            "description": (" ".join((biz.about_us or "").split())[:300] or None),
+
+            "city": area_city or None,
+
+            "state": area_state or None,
+
+            "country": area_country or "US",
+
+            "phone": (getattr(biz, "phone_number", None) or None),
+
+            "website": (getattr(biz, "website_url", None) or None),
+
+            "latitude": float(biz.latitude) if biz.latitude is not None else None,
+
+            "longitude": float(biz.longitude) if biz.longitude is not None else None,
+
+            "hours": (getattr(biz, "hours_of_operation", None) or None),
+
+            "keywords": (getattr(biz, "search_keywords", None) or None),
+
+        }
+
+        # Drop nulls for cleaner output
+
+        out.append({k: v for k, v in entry.items() if v is not None})
+
+    return jsonify({
+
+        "source": "Perk Miner Public Business Profiles",
+
+        "updated": datetime.utcnow().isoformat() + "Z",
+
+        "count": len(out),
+
+        "profiles": out,
+
+    })
+
+# Freelancer / network-marketing directory (see freelance.py)
+import freelance as _freelance
+_freelance.register(app, globals())
+import reviews as _reviews
+_reviews.register(app, globals())
 
 @app.errorhandler(500)
 def internal_server_error(error):

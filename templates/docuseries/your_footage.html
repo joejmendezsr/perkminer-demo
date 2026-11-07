@@ -1,0 +1,96 @@
+{% extends "docuseries/base_docuseries.html" %}
+{% block title %}Start Here – Your Footage – Perk Miner 45-Day Challenge{% endblock %}
+{% block robots %}<meta name="robots" content="noindex,nofollow">{% endblock %}
+
+{% block submenu %}
+<div class="submenu">
+  <div class="wrap">
+    <a href="/docuseries/member">Docuseries Dashboard</a>
+    <a href="{{ url_for('docuseries.your_footage') }}" aria-current="page"><strong>Start Here</strong></a>
+    <a href="{{ url_for('docuseries.how_to_invite_businesses') }}">Invite businesses</a>
+    <a href="{{ url_for('docuseries.episodes') }}" target="_blank" rel="noopener">Episodes ↗</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<style>
+.ft-rules{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.ft-rules li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:var(--teal-l);border-radius:12px;line-height:1.45}
+.ft-rules .n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--teal-d);color:#fff;font-weight:700;font-size:.9rem;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.ft-videos{display:grid;gap:12px}
+.ft-video{padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.ft-video h3{margin:0 0 4px;font-size:1.05rem;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.ft-video p{margin:6px 0 0;line-height:1.5}
+.ft-example{margin-top:8px;padding:8px 12px;border-left:4px solid var(--teal-d);background:var(--teal-l);border-radius:0 10px 10px 0;font-style:italic}
+.ft-total{margin:0 0 12px}
+.ft-sign{margin:0}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="wrap">
+    <h1>Start here</h1>
+    <p>How to film and upload your first videos</p>
+  </div>
+</section>
+
+<div class="wrap section">
+
+  <div class="card">
+    <h2 style="margin-top:0">Hi Participant,</h2>
+    <p>Welcome to the official Perk Miner Challenge Docuseries! We are incredibly excited to document your race to the $5k milestone.</p>
+    <p style="margin-bottom:0">To make sure your footage makes the final cut of our 20-minute premier episode, you must record and upload your first batch of videos within the next 48 hours. Please read and follow these strict production guidelines carefully:</p>
+  </div>
+
+  <div class="callout warn" role="note">
+    <span class="ic" aria-hidden="true">⏱️</span>
+    <p><strong>Deadline:</strong> record and upload your first batch of videos within the next 48 hours.</p>
+  </div>
+
+  <div class="card">
+    <h2>🚨 3 Golden Rules of Filming</h2>
+    <ol class="ft-rules">
+      <li><span class="n">1</span><div><strong>TURN YOUR PHONE SIDEWAYS:</strong> All video must be recorded in Horizontal (Landscape) mode. Vertical videos cannot be used in the broadcast edit.</div></li>
+      <li><span class="n">2</span><div><strong>LOOK AT THE CAMERA LENS:</strong> Do not look at your own face on the screen. Look directly at the physical camera lens on your phone so you are making eye contact with the audience.</div></li>
+      <li><span class="n">3</span><div><strong>FIND GOOD LIGHTING &amp; QUIET:</strong> Stand facing a bright window or record outside during daylight. Make sure all fans, TVs, and background music are turned completely off.</div></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>🎥 Your Video Checklist</h2>
+    <p class="ft-total"><span class="badge ok">Total: 60 seconds of footage</span></p>
+
+    <div class="ft-videos">
+      <div class="ft-video">
+        <h3>Video 1: Intro &amp; Hook <span class="badge">30 seconds</span></h3>
+        <p>Record yourself from the chest up. State your name, your city, and your raw, honest thoughts about hitting the $5,000 target in 45 days, why you're doing the challenge and what you would do with $5k in 45 days.</p>
+        <div class="ft-example">e.g., "Hey, I'm Alex from Denver, and I'm either about to make five grand or completely embarrass myself on internet TV and the reason I'm doing the challenge is... $5k would help me pay my college tuition..."</div>
+      </div>
+
+      <div class="ft-video">
+        <h3>Video 2: The Sign-Up <span class="badge">15 seconds</span></h3>
+        <p>Record your phone screen (using screen recording or a second phone over your shoulder) as you click 'Register'. Talk out loud about how fast or easy the form is.</p>
+      </div>
+
+      <div class="ft-video">
+        <h3>Video 3: Connecting Stripe <span class="badge">15 seconds</span></h3>
+        <p>Record your screen or yourself reacting to linking your Stripe dashboard. Ensure your live balance shows exactly $0.00 on screen so the audience can see your baseline starting point.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📤 How to Submit</h2>
+    <p style="margin-bottom:0">Once recorded and you're satisfied with your recording, upload your first two videos (Registration Experience and Intro Experience) files directly to our production server via the link provided in your participant dashboard.</p>
+  </div>
+
+  <div class="card">
+    <p><strong>Let's make some history!</strong></p>
+    <p>Best regards,</p>
+    <p class="ft-sign"><strong>The Perk Miner Docuseries Production Team</strong></p>
+  </div>
+
+</div>
+{% endblock %}

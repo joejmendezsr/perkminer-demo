@@ -62,7 +62,7 @@ def build_invite_email(inviter_name, join_url, video_url, audience="both", busin
     business_card = card(
         "For business owners", "Advertise &mdash; pay only after you get paid", "No sale or closed deal = <b style=\"color:#dc2626;\">zero fees</b>.",
         [
-            "<b>1,000% return on ad spend or higher:</b> spend $1, get $10 back.",
+            "<b>Pay only when you make a sale:</b> about $1 in fees for every $10 sold.",
             "<b>10% of the sale, capped at $250</b> &mdash; only after you get paid.",
             "<b>No cost</b> for leads, calls, website or foot traffic, appointments or meetups.",
             "<b>Earn 1% cash back</b> on up to $2,500 of your sale for offering a perk to members.",
@@ -80,7 +80,7 @@ def build_invite_email(inviter_name, join_url, video_url, audience="both", busin
     elif audience == "business":
         hero = "https://res.cloudinary.com/dmrntlcfd/image/upload/v1791000401/biz-flyer_pfg6os.jpg"
         headline = f"{inviter} invited your business to advertise on Perk Miner"
-        pre = "Zero fees unless you make a sale. 1,000% return on ad spend or higher."
+        pre = "Zero fees unless you make a sale. About $1 in fees for every $10 sold."
         cards = f'<tr><td style="padding:0 22px 8px;">{business_card}</td></tr>'
         steps = "Sign up in minutes. Just $25 in pre-funded advertising dollars gets you started."
     else:
@@ -105,7 +105,7 @@ def build_invite_email(inviter_name, join_url, video_url, audience="both", busin
     <tr><td align="center" style="padding:18px 20px; font-family:{FONT}; color:#ffffff;">
       <div style="font-size:12px; font-weight:bold; letter-spacing:1px; color:{GOLD}; text-transform:uppercase;">Everyone earns</div>
       <div style="font-size:15px; line-height:1.5; padding-top:6px;">
-        Members <b>and</b> business owners earn cash back and referral commissions &mdash; paid by Perk Miner, up to <b>6 members and 6 businesses</b> on every finalized transaction.
+        Members <b>and</b> business owners earn cash back and referral commissions &mdash; paid by Perk Miner LLC, up to <b>6 members and 6 businesses</b> on every finalized transaction.
         Up to <b>84%</b> of ad revenue goes back to the community. <b>Real money deposited to your bank account</b> &mdash; not points or gift cards.
       </div>
     </td></tr>
@@ -162,7 +162,7 @@ def build_invite_email(inviter_name, join_url, video_url, audience="both", busin
     <!-- Footer -->
     <tr><td align="center" style="padding:22px 30px 26px; background-color:#f8f9fa; font-family:{FONT}; font-size:13px; color:#6b7280; line-height:1.5; border-top:1px solid #e5e7eb;">
       <p style="margin:0 0 6px;">Questions about this email? <a href="mailto:fromperkminer@gmail.com" style="color:{TEAL};">Contact support</a></p>
-      <p style="margin:0;">Copyright &copy; PerkMiner 2026. All rights reserved.</p>
+      <p style="margin:0;">Copyright &copy; 2026 Perk Miner LLC. All rights reserved.</p>
     </td></tr>
 
   </table>

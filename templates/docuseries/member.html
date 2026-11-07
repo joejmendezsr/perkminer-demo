@@ -6,6 +6,7 @@
 <div class="submenu">
   <div class="wrap">
     <a href="/dashboard">Dashboard</a>
+    <a href="{{ url_for('docuseries.your_footage') }}"><strong>Start Here</strong></a>
     <a href="#live">Live recordings</a>
     <a href="#milestones">Milestone videos</a>
     <a href="{{ url_for('docuseries.how_to_invite_businesses') }}">Invite businesses</a>
@@ -68,6 +69,7 @@
   <div class="wrap">
     <h1>Welcome to your docuseries dashboard</h1>
     <p>{{ user.full_name or 'Participant' }}</p>
+    <p style="margin-top:14px"><a class="btn btn-gold" href="{{ url_for('docuseries.your_footage') }}">👉 Start Here: how to film your first videos</a></p>
   </div>
 </section>
 
@@ -76,7 +78,7 @@
   {% if first_time %}
   <div class="callout ok" role="status">
     <span class="ic" aria-hidden="true">🎉</span>
-    <p><strong>Congratulations! You are officially a participant in Perk Miner's 45-Day Challenge.</strong></p>
+    <p><strong>Congratulations! You are officially a participant in Perk Miner LLC's 45-Day Challenge.</strong></p>
   </div>
   {% endif %}
 
@@ -84,7 +86,7 @@
   <div class="callout warn">
     <span class="ic" aria-hidden="true">⛔</span>
     <div>
-      <p><strong>Important:</strong> Do not make any new purchases from any advertisers until day one of the challenge! On day one, if your earnings are not $0, you must document your beginning earnings before starting the challenge.</p>
+      <p><strong>Important:</strong>  <u><b>Do not</b></u> make any new purchases from any advertisers until day one of the challenge! On day one, if your earnings are not $0, you must document your beginning earnings before starting the challenge.</p>
       <p>If you have already invited people to become members or businesses to advertise, you must document how many members and businesses you have in your network before starting the challenge.</p>
     </div>
   </div>

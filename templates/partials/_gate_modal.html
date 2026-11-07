@@ -1,0 +1,40 @@
+{# Friendly "members only" prompt. Anything with data-gate opens it for visitors who are not logged in
+   (search and category browsing both require a member login). Logged-in members never see it. #}
+<div class="modal fade ps-modal" id="psGate" tabindex="-1" aria-labelledby="psGateTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
+    <div class="modal-content">
+      <div class="ps-modal-top">
+        <i class="bi bi-stars"></i>
+        <h2 id="psGateTitle">Join free to start exploring</h2>
+        <p id="psGateWhat">Create your free member account to browse local businesses and earn cash back.</p>
+      </div>
+      <div class="ps-modal-body">
+        <a class="ps-btn ps-btn-gold ps-btn-lg ps-btn-block" href="{{ url_for('register') }}">Join free</a>
+        <a class="ps-btn ps-btn-ghost-dark ps-btn-block" href="{{ url_for('login') }}">I already have an account</a>
+        <small>Free for members, always. Your contact info stays private.</small>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  function open(label) {
+    var el = document.getElementById('psGate');
+    if (!el || !window.bootstrap) return false;
+    var what = document.getElementById('psGateWhat');
+    if (what && label) what.textContent = label;
+    bootstrap.Modal.getOrCreateInstance(el).show();
+    return true;
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-gate]');
+    if (!a) return;
+    if (open(a.getAttribute('data-gate-text'))) e.preventDefault();
+  });
+  document.addEventListener('submit', function (e) {
+    var f = e.target.closest('form[data-gate]');
+    if (!f) return;
+    if (open(f.getAttribute('data-gate-text'))) e.preventDefault();
+  });
+})();
+</script>

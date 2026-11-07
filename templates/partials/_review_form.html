@@ -1,0 +1,51 @@
+{# Rating form shown on the finalized-transaction receipt. Needs: rv_biz_id (the business/freelancer Business id). #}
+{% set rv = review_widget(rv_biz_id) %}
+{% if rv.show %}
+<div class="card p-3 p-md-4 mb-3" id="rate-this" style="border:2px solid #e0a800;border-radius:16px;">
+  <h5 class="mb-1"><i class="bi bi-star-fill" style="color:#e0a800;"></i> Rate {{ rv.biz.business_name }}</h5>
+  {% if rv.review and not rv.can_edit %}
+    <p class="mb-1" style="color:#e0a800;font-size:1.3rem;letter-spacing:2px;">{{ '&#9733;'|safe * rv.review.rating }}<span style="color:#d3dcdf;">{{ '&#9733;'|safe * (5 - rv.review.rating) }}</span></p>
+    {% if rv.review.comment %}<p class="mb-1" style="white-space:pre-line;">{{ rv.review.comment }}</p>{% endif %}
+    <small class="text-muted">Thanks for your feedback. {% if rv.state == 'active' %}A resolution chat is open with this business and Perk Miner support.{% elif rv.state == 'resolved' %}This was resolved with the business.{% endif %}</small>
+  {% else %}
+    {% if rv.can_edit %}<div class="pm-note ok mb-2"><i class="bi bi-check-circle-fill"></i> Support re-opened this review. You can update your rating and comment now (one time).</div>{% endif %}
+    <p class="text-muted small mb-2">Only members with a completed purchase can leave a rating. Please be honest and respectful.</p>
+    <form method="post" action="{{ url_for('review_submit') }}" id="review-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="biz_id" value="{{ rv.biz.id }}">
+      <input type="hidden" name="next" value="{{ rv_next or request.path }}">
+      <fieldset class="mb-2" style="border:0;padding:0;">
+        <legend class="visually-hidden">Star rating</legend>
+        <div id="star-pick" style="display:flex;gap:.25rem;font-size:2.1rem;line-height:1;">
+          {% for i in range(1,6) %}
+          <label style="cursor:pointer;margin:0;">
+            <input type="radio" name="rating" value="{{ i }}" class="visually-hidden" required {% if rv.review and rv.review.rating == i %}checked{% endif %}>
+            <span class="star" data-v="{{ i }}" style="color:#d3dcdf;" title="{{ i }} star{{ '' if i == 1 else 's' }}">&#9733;</span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <label class="form-label fw-semibold" for="rv-comment">Comment <span class="text-muted fw-normal" id="rv-req">(optional)</span></label>
+      <textarea id="rv-comment" name="comment" class="form-control mb-2" rows="3" maxlength="500" placeholder="How was your experience? (500 characters max)">{{ rv.review.comment if rv.review else '' }}</textarea>
+      <div class="small text-muted text-end mb-2" id="rv-count" aria-live="polite">0 / 500</div>
+      <div class="small text-muted mb-2" id="rv-neg" hidden>With 1 or 2 stars, please explain what went wrong. The business gets a chance to fix it with Perk Miner support, and you can then update your rating.</div>
+      <button class="btn btn-primary w-100" type="submit"><i class="bi bi-send"></i> {% if rv.can_edit %}Update my review{% else %}Submit rating{% endif %}</button>
+    </form>
+    <script>
+    (function(){
+      var f=document.getElementById('review-form'); if(!f) return;
+      var stars=f.querySelectorAll('.star'), radios=f.querySelectorAll('input[type=radio]'),
+          req=document.getElementById('rv-req'), neg=document.getElementById('rv-neg'), box=document.getElementById('rv-comment');
+      function paint(v){ stars.forEach(function(s){ s.style.color = (+s.dataset.v <= v) ? '#e0a800' : '#d3dcdf'; }); }
+      function cur(){ var c=f.querySelector('input[type=radio]:checked'); return c ? +c.value : 0; }
+      function sync(){ var v=cur(); paint(v); var low = v>0 && v<=2; neg.hidden=!low; box.required=low; req.textContent = low ? '(required for 1-2 stars)' : '(optional)'; }
+      radios.forEach(function(r){ r.addEventListener('change', sync); });
+      stars.forEach(function(s){ s.addEventListener('mouseenter', function(){ paint(+s.dataset.v); }); s.addEventListener('mouseleave', function(){ paint(cur()); }); });
+      function cnt(){ document.getElementById('rv-count').textContent = box.value.length + ' / 500'; }
+      box.addEventListener('input', cnt); cnt();
+      sync();
+    })();
+    </script>
+  {% endif %}
+</div>
+{% endif %}

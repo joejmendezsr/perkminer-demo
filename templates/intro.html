@@ -1,7 +1,8 @@
-{% extends "pm_base.html" %}
-{% block title %}Welcome to PerkMiner{% endblock %}
+{% extends "pm_public_base.html" %}
+{% block title %}Welcome to Perk Miner{% endblock %}
 
 {% block head_extra %}
+{{ super() }}
 <style>
   .vid-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.2rem; }
   .vid-card { padding: 1rem 1rem 1.2rem; }
@@ -13,6 +14,9 @@
   .intro-tabs button.is-active { background: var(--pm-primary); color: #fff; }
   .intro-pane { display: none; }
   .intro-pane.is-active { display: block; }
+  .intro-cta { margin-top: 1.4rem; padding: 1.6rem 1.2rem; background: linear-gradient(150deg, #fff6dc, #ffeebb); border-color: #f2dc95; }
+  .intro-tabs button { border-color: var(--ps-teal-700); color: var(--ps-teal-700); }
+  .intro-tabs button.is-active { background: var(--ps-teal-700); }
 </style>
 {% endblock %}
 
@@ -20,10 +24,10 @@
 <div class="container pb-3">
   <div class="card pm-hero mb-3">
     <div class="pm-hero-icon"><i class="bi bi-play-btn"></i></div>
-    <div class="pm-hero-body"><div class="pm-hero-sub">Watch the short video that applies to you</div><h1>Welcome to PerkMiner</h1></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">Watch the short video that applies to you</div><h1>Welcome to Perk Miner</h1></div>
     <div class="pm-hero-actions"><button type="button" class="btn btn-light" id="close-btn"><i class="bi bi-x-lg"></i> Close</button></div>
   </div>
-  <p class="text-center text-muted">Watch the short video that applies to you, then return to complete your registration or login.</p>
+  <p class="text-center text-muted">Pick the short video that fits you. When you&rsquo;re ready, joining takes about a minute &mdash; and it&rsquo;s free.</p>
 
   <div class="intro-tabs" role="tablist">
     <button type="button" data-pane="member-videos" class="is-active" role="tab"><i class="bi bi-person-heart"></i> For Members</button>
@@ -53,6 +57,15 @@
         <div class="s">~4 minutes • member ownership and revenue share</div>
       </article>
     </div>
+
+    <div class="intro-cta card text-center">
+      <h3 class="h5 fw-bold mb-1">Ready to start earning cash back?</h3>
+      <p class="text-muted mb-3">Join free, connect with local businesses privately, and get paid 2% on qualifying purchases.</p>
+      <div class="d-flex flex-wrap justify-content-center gap-2">
+        <a class="ps-btn ps-btn-gold ps-btn-lg" href="{{ url_for('register') }}">Join free <i class="bi bi-arrow-right"></i></a>
+        <a class="ps-btn ps-btn-ghost-dark ps-btn-lg" href="{{ url_for('login') }}">I have an account</a>
+      </div>
+    </div>
   </section>
 
   <section id="business-videos" class="intro-pane" aria-labelledby="business-heading">
@@ -66,7 +79,7 @@
           Sorry, your browser doesn't support embedded videos.
         </video>
         <div class="t">Why Advertise With Us?</div>
-        <div class="s">~3.5 minutes • the paradigm shift and min 900% ROI</div>
+        <div class="s">~3.5 minutes • how pay-per-sale advertising works</div>
       </article>
       <article class="card vid-card">
         <video controls controlsList="nodownload" oncontextmenu="return false;" preload="none"
@@ -77,6 +90,15 @@
         <div class="t">Generating Additional Business $$$</div>
         <div class="s">~3.5 minutes • more revenue = greater success</div>
       </article>
+    </div>
+
+    <div class="intro-cta card text-center">
+      <h3 class="h5 fw-bold mb-1">Ready to pay only when you make a sale?</h3>
+      <p class="text-muted mb-3">List your business free. No monthly advertising fee, no contracts &mdash; a fee applies only when a sale is finalized.</p>
+      <div class="d-flex flex-wrap justify-content-center gap-2">
+        <a class="ps-btn ps-btn-gold ps-btn-lg" href="{{ url_for('business_register') }}">List my business free <i class="bi bi-arrow-right"></i></a>
+        <a class="ps-btn ps-btn-ghost-dark ps-btn-lg" href="{{ url_for('business_home') }}">See pricing</a>
+      </div>
     </div>
   </section>
 </div>
@@ -105,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('close-btn').addEventListener('click', function () {
     if (window.opener) { window.close(); return; }
     if (window.history.length > 1) { window.history.back(); }
-    else { alert('You can now close this tab or return to your previous page.'); }
+    else { window.location.href = '/'; }
   });
 });
 </script>

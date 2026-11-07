@@ -1,0 +1,56 @@
+{% extends "pm_public_base.html" %}
+{% block title %}Freelancer &amp; Network Business Terms | Perk Miner{% endblock %}
+{% block content %}
+<main id="main">
+<section class="ps-section" style="padding-top:2rem;">
+  <div class="container">
+    <div class="ps-narrow" style="max-width:780px;">
+      <div class="ps-head" style="margin-bottom:1.4rem;">
+        <span class="ps-eyebrow">Freelancers &amp; network businesses</span>
+        <h1 class="ps-title">Freelancer Terms</h1>
+        <p class="ps-sub">These terms apply to members who list themselves in the Perk Miner freelancer directory without a registered business.</p>
+      </div>
+      <div class="ps-article" style="padding:clamp(1.2rem,3vw,2rem);">
+        <div class="ps-must mb-3"><i class="bi bi-exclamation-circle"></i><span>You must keep funds in your freelancer advertising balance (minimum first deposit of $25) before your listing can be submitted for review.</span></div>
+
+        <strong>Prohibited listings:</strong>
+        <ul>
+          <li>Illegal services or products</li>
+          <li>Fraudulent, deceptive or &ldquo;get rich quick&rdquo; offers, pyramid schemes or anything that pays only for recruiting</li>
+          <li>Spam, scams, or misleading content, including false or unsubstantiated income claims</li>
+          <li>Adult content and pornographic materials</li>
+          <li>Any offensive products or services</li>
+          <li>Politically related or religious products or services with an agenda</li>
+          <li>Anything related to criminal activity</li>
+        </ul>
+        <hr>
+        <strong>Freelancer terms:</strong>
+        <ol class="mt-2">
+          <li>This directory is for individual members who are <b>not</b> registered businesses &mdash; for example freelancers, side-gig owners and independent network-marketing representatives. Registered businesses should create a regular business advertiser account.</li>
+          <li>Only members located in the U.S. and Puerto Rico may list (until we are able to conduct business in other countries).</li>
+          <li>Your listing is reviewed before it goes live. Approval or rejection is at Perk Miner LLC&rsquo;s sole discretion. Once approved, any changes must be re-submitted for review; <b>your existing approved listing stays live and unchanged until the new version is approved</b>.</li>
+          <li>You confirm that your listing, referral links and everything you say comply with these terms, with the rules of every company or program you promote, and with all applicable laws (including FTC rules on endorsements, disclosures and earnings claims).</li>
+          <li><b>Referral links lead to third-party companies.</b> Perk Miner LLC does not own, operate, endorse or guarantee those companies, products, services or opportunities, and is not a party to any agreement between you and them or between a member and them. Do not state or imply that Perk Miner LLC sponsors or is affiliated with them.</li>
+          <li><b>No income guarantees.</b> You may not promise or imply specific earnings. Sales and results are not guaranteed, and Perk Miner LLC cannot guarantee that any member will contact or buy from you.</li>
+          <li>Your advertising fee is <b>10% of a Perk Miner member&rsquo;s <u>initial purchase</u> (maximum $250)</b>, about $1 for every $10 of that purchase. The fee is charged only when you finalize that first purchase; later purchases by the same member with you are not charged.</li>
+          <li><b>YOU AGREE TO MAINTAIN ENOUGH FUNDS IN YOUR FREELANCER ADVERTISING BALANCE TO FINALIZE EACH MEMBER&rsquo;S INITIAL PURCHASE, AND <u>YOU FINALIZE IT</u></b> &mdash; in person (scan the member&rsquo;s QR code while logged in) or manually (enter the member&rsquo;s referral code) from your Freelancer Console.</li>
+          <li><b>You must enter the total amount paid by the member</b> (including taxes, if applicable, and any tips). Finalized transactions cannot be changed or refunded because several members and advertisers may earn cash back or commissions from them.</li>
+          <li><b>Failure to finalize transactions for our members will result in immediate suspension of your listing or deletion of your account.</b> If your account is closed because of a violation, any remaining balance and earnings may be forfeited.</li>
+          <li>Perk Miner LLC cannot refund advertising fees once a transaction is finalized. You are solely responsible for returns, defects, refunds, exchanges and any service issues.</li>
+          <li>You promise to provide the best possible service (in good faith) or to promote only products and services you honestly believe in.</li>
+          <li>You earn instant cash back for finalizing transactions and referral commissions (up to 4 additional tiers) in the same way as a business advertiser. All cash back and commissions are paid by Perk Miner LLC from advertising revenue &mdash; <b>not</b> by you &mdash; and pay up to 6 members and 6 businesses.</li>
+          <li>Your freelancer earnings are added to your member earnings and are withdrawn the same way as regular member earnings, after the same 7-day holding period and subject to the same transfer fees.</li>
+          <li>If you temporarily stop advertising, funds stay in your balance. If you close your account, remaining balance funds are forfeited.</li>
+          <li>Reported practices that are designed to defraud or scam members will result in immediate suspension or deletion of your account, and forfeiture of any balance and earnings due.</li>
+          <li>If a member gives you their contact information you may not sell or share it with any other person, business or entity.</li>
+          <li>Freelancer referral commissions are member-to-member: you earn them only on sales finalized by members you invited who are also approved freelancers.</li>
+          <li>If you earn $600 or more in a year you are responsible for reporting that income and paying any taxes owed. You are an independent member, not an employee or agent of Perk Miner LLC.</li>
+          <li>Perk Miner LLC may remove a listing, suspend an account or change these terms at any time. The <a href="/terms">full Perk Miner terms</a> also apply.</li>
+        </ol>
+        <p class="mt-3 mb-0"><a class="ps-btn ps-btn-gold" href="{{ url_for('dashboard') }}">Back to my dashboard</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+{% endblock %}

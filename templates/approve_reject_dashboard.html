@@ -1,3 +1,4 @@
+{%- from 'partials/_listing_views.html' import listing_small, listing_hero, listing_details -%}
 {% set SOS_LINKS = [
   ('Alabama', 'https://arc-sos.state.al.us/CGI/CORPNAME.MBR/INPUT'),
   ('Alaska', 'https://www.commerce.alaska.gov/cbp/main/search/entities'),
@@ -82,6 +83,13 @@
   }
 
     </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-theme.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-listing.css') }}">
+    <script defer src="{{ url_for('static', filename='js/pm-listing.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
 </head>
 <body>
 <div class="container py-3" style="max-width:920px;">
@@ -104,15 +112,17 @@
           </thead>
           <tbody>
             {% for biz in pending_listings %}
-              <tr {% if biz.status == "in_review" %}class="table-warning"{% endif %}>
+              {% set revision = listing_revisions.get(biz.id) %}
+              {% set review_status = revision.review_status if biz.status == 'approved' and revision else biz.status %}
+              <tr {% if review_status == "in_review" %}class="table-warning"{% endif %}>
                 <td>{{ biz.id }}</td>
-                <td>{{ biz.business_name }}</td>
+                <td>{{ biz.business_name }}{% if biz.status == "approved" %}<div class="small text-success">Existing listing remains live</div>{% endif %}</td>
                 <td>{{ biz.category }}</td>
                 <td>{{ biz.business_email }}</td>
                 <td>
-                  {% if biz.status == "pending" %}
+                  {% if review_status == "pending" %}
                     <span class="badge rounded-pill bg-secondary">Pending Review</span>
-                  {% elif biz.status == "in_review" %}
+                  {% elif review_status == "in_review" %}
                     <span class="badge rounded-pill bg-warning text-dark">In Review</span>
                   {% endif %}
                 </td>
@@ -120,7 +130,7 @@
                   <form method="post" action="{{ url_for('start_review', listing_id=biz.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-primary btn-sm"
-                      {% if biz.status != "pending" %}disabled{% endif %}>
+                      {% if review_status != "pending" %}disabled{% endif %}>
                       Start Review
                     </button>
                   </form>
@@ -146,20 +156,20 @@
     </div>
   {% endif %}
   <button type="submit" class="btn btn-success btn-sm"
-    {% if biz.status != "in_review" %}disabled{% endif %}>
+    {% if review_status != "in_review" %}disabled{% endif %}>
     Approve
   </button>
 </form>
                   <form method="post" action="{{ url_for('reject_listing', listing_id=biz.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger btn-sm"
-                      {% if biz.status != "in_review" %}disabled{% endif %}>
+                      {% if review_status != "in_review" %}disabled{% endif %}>
                       Reject
                     </button>
                   </form>
                 </td>
               </tr>
-              {% if biz.status == "in_review" %}
+              {% if review_status == "in_review" %}
               <tr>
                 <td colspan="6" class="bg-light">
                   <!-- REQUIRED DOCUMENT BUTTON -->
@@ -254,91 +264,77 @@
     </button>
   </div>
 </div>
-                  <!-- Small Listing Preview -->
+                  <!-- Small Listing Preview (same design visitors see) -->
+                  {% set pv_services = [] %}
+                  {% for n in range(1, 11) %}
+                    {% set _v = (biz.eff('service_' ~ n)) %}
+                    {% if _v %}{% set _ = pv_services.append(_v) %}{% endif %}
+                  {% endfor %}
+                  {% set pv = {
+                    'id': biz.id,
+                    'business_name': biz.draft_business_name or biz.business_name,
+                    'category': biz.draft_category or biz.category,
+                    'profile_photo': biz.draft_profile_photo or biz.profile_photo,
+                    'address': biz.draft_address or biz.address,
+                    'phone_number': biz.draft_phone_number or biz.phone_number,
+                    'business_email': biz.draft_business_email or biz.business_email,
+                    'website_url': biz.draft_website_url or biz.website_url,
+                    'about_us': biz.draft_about_us or biz.about_us,
+                    'hours_of_operation': biz.draft_hours_of_operation or biz.hours_of_operation,
+                    'finalization': biz.draft_finalization or biz.finalization,
+                    'perks': biz.perks,
+                    'price_display': biz.price_display,
+                    'google_reviews_url': biz.google_reviews_url,
+                    'location_varies': biz.location_varies,
+                    'account_balance': biz.account_balance,
+                    'badge_licensed': biz.eff('licensed'), 'badge_bonded': biz.eff('bonded'), 'badge_insured': biz.eff('insured'),
+                    'service_1': pv_services[0] if pv_services|length > 0 else None,
+                    'service_2': pv_services[1] if pv_services|length > 1 else None,
+                    'service_3': pv_services[2] if pv_services|length > 2 else None,
+                    'service_4': pv_services[3] if pv_services|length > 3 else None,
+                    'service_5': pv_services[4] if pv_services|length > 4 else None,
+                    'service_6': pv_services[5] if pv_services|length > 5 else None,
+                    'service_7': pv_services[6] if pv_services|length > 6 else None,
+                    'service_8': pv_services[7] if pv_services|length > 7 else None,
+                    'service_9': pv_services[8] if pv_services|length > 8 else None,
+                    'service_10': pv_services[9] if pv_services|length > 9 else None,
+                    'facebook_url': biz.draft_facebook_url or biz.facebook_url,
+                    'instagram_url': biz.draft_instagram_url or biz.instagram_url,
+                    'x_url': biz.draft_x_url or biz.x_url,
+                    'linkedin_url': biz.draft_linkedin_url or biz.linkedin_url,
+                    'tiktok_url': biz.draft_tiktok_url or biz.tiktok_url,
+                    'youtube_url': biz.draft_youtube_url or biz.youtube_url,
+                    'latitude': biz.draft_latitude or biz.latitude,
+                    'longitude': biz.draft_longitude or biz.longitude,
+                    'service_area_scope': biz.service_area_scope,
+                    'service_area_regions': biz.service_area_regions,
+                    'distance_mi': none,
+                  } %}
                   <div class="mb-3 p-2 border rounded bg-white">
-                    <strong>Small Preview</strong>
-                    <div class="d-flex align-items-center mt-1 mb-2 flex-wrap gap-2">
-                      {% if biz.draft_profile_photo or biz.profile_photo %}
-                        <img src="{{ biz.draft_profile_photo or biz.profile_photo }}" width="120" height="120">
-                      {% endif %}
-                      <div>
-                        <b>{{ biz.draft_business_name or biz.business_name }}</b><br/>
-                        <span class="text-muted">{{ biz.draft_category or biz.category }}</span><br/>
-                        <span>{{ biz.draft_address or biz.address }}</span><br/>
-                        <small>
-                          Services:
-                          {%- set services = [biz.draft_service_1 or biz.service_1, biz.draft_service_2 or biz.service_2, biz.draft_service_3 or biz.service_3, biz.draft_service_4 or biz.service_4, biz.draft_service_5 or biz.service_5, biz.draft_service_6 or biz.service_6, biz.draft_service_7 or biz.service_7, biz.draft_service_8 or biz.service_8, biz.draft_service_9 or biz.service_9, biz.draft_service_10 or biz.service_10] %}
-                          {{ services|select('string')|reject('equalto','')|join(', ') if services|select('string')|reject('equalto','')|list else ' ' }}
-                        </small>
-                      </div>
+                    <div class="pml-label">Small listing preview</div>
+                    <div class="pml-wrap-sm">{{ listing_small(pv, none, 'Perks Offered', false, '', true) }}</div>
+                  </div>
+                  <!-- SEO Preview / Pending SEO Changes -->
+                  <div class="mb-3 p-2 border rounded bg-white">
+                    <strong>SEO Preview</strong>
+                    <div class="mt-2">
+                      {% set seo_title = biz.draft_seo_title if biz.draft_seo_title is not none else biz.seo_title %}
+                      {% set seo_desc = biz.draft_seo_description if biz.draft_seo_description is not none else biz.seo_description %}
+                      {% set seo_primary = biz.draft_seo_primary_keyword if biz.draft_seo_primary_keyword is not none else biz.seo_primary_keyword %}
+                      <div><b>Primary search phrase:</b> {{ seo_primary or 'Automatic from listing' }}</div>
+                      <div><b>SEO title:</b> {{ seo_title or 'Automatic from listing' }}</div>
+                      <div><b>SEO description:</b> {{ seo_desc or 'Automatic from listing' }}</div>
+                      <div><b>Additional search keywords:</b> {{ biz.draft_search_keywords if biz.draft_search_keywords is not none else biz.search_keywords or 'None' }}</div>
                     </div>
                   </div>
-                  <!-- Large Listing Preview -->
+                  <!-- Large Listing Preview (same design visitors see) -->
+                  {% set photos_for_review_list = [biz.draft_photo1_url or biz.photo1_url, biz.draft_photo2_url or biz.photo2_url, biz.draft_photo3_url or biz.photo3_url, biz.draft_photo4_url or biz.photo4_url, biz.draft_photo5_url or biz.photo5_url, biz.draft_photo6_url or biz.photo6_url]|select|list %}
                   <div class="p-2 border rounded bg-white">
-                    <strong>Large Preview</strong>
-                    <div class="mb-2">
-                      {% if biz.draft_profile_photo or biz.profile_photo %}
-                        <img src="{{ biz.draft_profile_photo or biz.profile_photo }}" class="rounded-circle mb-2" style="width:100px; height:100px; object-fit:cover;">
-                      {% endif %}
-                      <h4 class="mb-1">{{ biz.draft_business_name or biz.business_name }}</h4>
-                      <div><b>Category:</b> {{ biz.draft_category or biz.category }}</div>
-                      <div><b>Address:</b> {{ biz.draft_address or biz.address }}</div>
-                      <div><b>Phone:</b> {{ biz.draft_phone_number or biz.phone_number }}</div>
-                      <div><b>Email:</b> {{ biz.draft_business_email or biz.business_email }}</div>
-                      <div><b>Website:</b>
-                        {% if biz.draft_website_url or biz.website_url %}
-                          <a href="{{ biz.draft_website_url or biz.website_url }}" target="_blank">{{ biz.draft_website_url or biz.website_url }}</a>
-                        {% else %} - {% endif %}
-                      </div>
-                      <div><b>About us:</b> {{ biz.draft_about_us or biz.about_us }}</div>
-                      <div><b>Services:</b>
-                        <ul style="padding-left: 20px;">
-                          {% set services = [
-                              biz.draft_service_1 or biz.service_1,
-                              biz.draft_service_2 or biz.service_2,
-                              biz.draft_service_3 or biz.service_3,
-                              biz.draft_service_4 or biz.service_4,
-                              biz.draft_service_5 or biz.service_5,
-                              biz.draft_service_6 or biz.service_6,
-                              biz.draft_service_7 or biz.service_7,
-                              biz.draft_service_8 or biz.service_8,
-                              biz.draft_service_9 or biz.service_9,
-                              biz.draft_service_10 or biz.service_10
-                          ] %}
-                          {% for s in services if s %}
-                            <li>{{ s }}</li>
-                          {% endfor %}
-                          {% if not services|select|string|list %}
-                            <li>N/A</li>
-                          {% endif %}
-                        </ul>
-                      </div>
-
-{% set photos_for_review = [
-    biz.draft_photo1_url or biz.photo1_url,
-    biz.draft_photo2_url or biz.photo2_url,
-    biz.draft_photo3_url or biz.photo3_url,
-    biz.draft_photo4_url or biz.photo4_url,
-    biz.draft_photo5_url or biz.photo5_url,
-    biz.draft_photo6_url or biz.photo6_url
-] %}
-{% set photos_for_review = photos_for_review | select | list %}
-
-{% if photos_for_review %}
-  <div class="mt-3">
-    <h5 class="text-center mb-2">Gallery (pending changes)</h5>
-    <div class="listing-photo-strip">
-      {% for url in photos_for_review %}
-        <div class="listing-photo-item">
-          <a href="{{ url }}" target="_blank" rel="noopener noreferrer">
-            <img src="{{ url }}" alt="Photo of {{ biz.business_name }}">
-          </a>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
-{% endif %}
-
+                    <div class="pml-label">Large listing preview</div>
+                    <div class="pml-wrap pml-admin">
+                      {{ listing_hero(pv, true, false) }}
+                      {{ listing_details(pv, photos_for_review_list, '', [], false, pv.latitude, pv.longitude) }}
+                    </div>
                     </div>
                   </div>
                 </td>

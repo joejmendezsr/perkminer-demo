@@ -1,42 +1,42 @@
-{% extends "base.html" %}
+{% extends "pm_base.html" %}
+{% block title %}Approve/Reject Testimonials - Perk Miner{% endblock %}
 
 {% block content %}
-<div class="container my-4">
-  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3">
-    <div class="mb-2 mb-md-0">
-      <h2 class="mb-1">Approve/Reject Testimonials</h2>
-      <p class="text-muted mb-0">
-        Review pending member and business testimonial videos before they go public.
-      </p>
+<div class="container pb-2" style="max-width: 1040px;">
+
+  <div class="card pm-hero">
+    <div class="pm-hero-icon"><i class="bi bi-patch-check"></i></div>
+    <div class="pm-hero-body">
+      <div class="pm-hero-sub">Review pending member and business testimonial videos before they go public.</div>
+      <h1>Approve/Reject Testimonials</h1>
     </div>
-    <div>
-      <a href="{{ url_for('admin_roles_landing') }}" class="btn btn-outline-secondary">
-        ← Back to admin roles dashboard
-      </a>
+    <div class="pm-hero-actions">
+      <a href="{{ url_for('admin_roles_landing') }}" class="btn btn-sm btn-end"><i class="bi bi-arrow-left"></i> Back to admin roles dashboard</a>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-body">
-      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3">
-        <div class="mb-2 mb-md-0">
-          <h5 class="mb-1">Pending testimonials</h5>
-          <p class="text-muted mb-0 small">
-            Only testimonials with status <strong>pending</strong> are shown here.
-          </p>
-        </div>
-      </div>
+  <div class="card p-3">
+    <div class="card-title-row"><i class="bi bi-hourglass-split"></i><h5>Pending testimonials</h5></div>
+    <p class="text-muted small mb-2">Only testimonials with status <strong>pending</strong> are shown here.</p>
 
-      <div id="testimonial-admin">
-        <p class="text-muted">Loading pending testimonials...</p>
-      </div>
+    <div id="testimonial-admin">
+      <p class="text-muted mb-0">Loading pending testimonials...</p>
     </div>
   </div>
+
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const container = document.getElementById('testimonial-admin');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
 
   async function loadTestimonials() {
     try {
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
       container.innerHTML = "";
 
       if (!data.items || data.items.length === 0) {
-        container.innerHTML = "<p class='text-muted mb-0'>No pending testimonials.</p>";
+        container.innerHTML = "<div class='pm-empty'><i class='bi bi-inbox'></i>No pending testimonials.</div>";
         return;
       }
 
@@ -79,18 +79,18 @@ document.addEventListener('DOMContentLoaded', function () {
           ? `Member #${item.owner_id}`
           : `Business #${item.owner_id}`;
 
-        // NEW: define title with a fallback
+        // title with a fallback
         const title = item.title || '(no title)';
 
         tr.innerHTML = `
-          <td>${item.id}</td>
-          <td>${ownerLabel}</td>
-          <td class="text-capitalize">${item.owner_type}</td>
-          <td>${item.level_code}</td>
-          <td>$${item.lifetime_amount_at_submission}</td>
-          <td>${title}</td>
+          <td>${esc(item.id)}</td>
+          <td>${esc(ownerLabel)}</td>
+          <td class="text-capitalize">${esc(item.owner_type)}</td>
+          <td>${esc(item.level_code)}</td>
+          <td>$${esc(item.lifetime_amount_at_submission)}</td>
+          <td>${esc(title)}</td>
           <td>
-            <a href="/admin/testimonials/${item.id}/preview" target="_blank" class="btn btn-outline-secondary btn-sm">
+            <a href="/admin/testimonials/${encodeURIComponent(item.id)}/preview" target="_blank" class="btn btn-outline-secondary btn-sm">
               View
             </a>
           </td>
@@ -98,12 +98,12 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="d-flex flex-wrap gap-1">
               <button class="btn btn-success btn-sm"
                       data-action="approve"
-                      data-id="${item.id}">
+                      data-id="${esc(item.id)}">
                 Approve
               </button>
-              <button class="btn btn-danger btn-sm"
+              <button class="btn btn-outline-danger btn-sm"
                       data-action="reject"
-                      data-id="${item.id}">
+                      data-id="${esc(item.id)}">
                 Reject
               </button>
             </div>
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
       container.appendChild(tableWrapper);
     } catch (e) {
       console.error("Error loading testimonials:", e);
-      container.innerHTML = "<p class='text-danger'>Failed to load testimonials. Check console for details.</p>";
+      container.innerHTML = "<div class='pm-note bad'>Failed to load testimonials. Check console for details.</div>";
     }
   }
 

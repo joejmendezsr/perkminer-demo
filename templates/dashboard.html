@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>User Dashboard - PerkMiner</title>
+    <title>User Dashboard - Perk Miner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -195,7 +195,7 @@
         .network-tier:hover { background: var(--pm-hover); }
 
         /* ---------- Calculators ---------- */
-        .calc-card { padding: 0; overflow: hidden; height: 100%; margin-bottom: 0; }
+        .calc-card { padding: 0; overflow: hidden; margin-bottom: 0; }
         .calc-head {
           background: linear-gradient(145deg, #1e4a4b 0%, #2a5859 70%, #3a6d6e 100%);
           color: #fff; padding: 1rem 1.25rem;
@@ -237,6 +237,7 @@
         .wizard-progress { height: 8px; background: rgba(255,255,255,.25); border-radius: 999px; overflow: hidden; margin-top: .8rem; }
         .wizard-progress-bar { height: 100%; width: 0; background: var(--pm-accent); border-radius: 999px; transition: width .3s ease; }
         .wizard-body { padding: 1.5rem 1.25rem 1.4rem; background: #fff; }
+        .fl-check { background: #fff8e1; border: 1px solid #ffd66b; border-radius: 12px; padding: .8rem .8rem .8rem 2.4rem; }
         .wizard-step { display: none; }
         .wizard-step.active { display: block; animation: wizFade .25s ease; }
         @keyframes wizFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -344,6 +345,25 @@
         document.getElementById('rewards_output').innerHTML = out;
       }
 
+      let f2fChart = null;
+      function calculateF2F() {
+        let n = parseInt(document.getElementById('f2f_people').value, 10) || 1;
+        if (n < 1) n = 1; if (n > 50) n = 50;
+        document.getElementById('f2f_people').value = n;
+        let amt = parseFloat(document.getElementById('f2f_amount').value) || 0;
+        if (amt > 2500) amt = 2500; if (amt < 0) amt = 0;
+        document.getElementById('f2f_amount').value = amt;
+        // same rules the server uses for business-style earnings (rates and per-transaction caps)
+        const per = [Math.min(amt * 0.01, 25), Math.min(amt * 0.002, 5), Math.min(amt * 0.002, 5), Math.min(amt * 0.002, 5), Math.min(amt * 0.01, 25)];
+        const counts = [1, n, Math.pow(n, 2), Math.pow(n, 3), Math.pow(n, 4)];
+        const vals = per.map(function (p, i) { return p * counts[i]; });
+        const total = vals.reduce(function (a, b) { return a + b; }, 0);
+        for (let i = 0; i < 5; i++) document.getElementById('f2f_t' + (i + 1)).innerText = vals[i].toFixed(2);
+        document.getElementById('f2f_total').innerText = total.toFixed(2);
+        document.getElementById('f2f_results').style.display = 'block';
+        f2fChart = buildTierChart(f2fChart, 'f2f_chart', vals, ['#1e4a4b', '#2a5859', '#5b9a9b', '#ffd66b', '#f0b429']);
+      }
+
       function calculateBusinessReferralEarnings() {
         let numBiz = parseInt(document.getElementById('biz_referrals').value, 10) || 3;
         if (numBiz < 1) numBiz = 1;
@@ -387,13 +407,17 @@
           ['#1e4a4b', '#2a5859', '#5b9a9b', '#ffd66b', '#f0b429']);
       }
     </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-theme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
 </head>
 <body>
 
 <!-- Persistent navbar with home link -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
     <div class="container">
-      <a class="navbar-brand" href="/">PerkMiner</a>
+      <a class="navbar-brand" href="/">Perk Miner</a>
       <div class="navbar-nav ms-auto">
         <span class="nav-link disabled">{{ email }}</span>
       </div>
@@ -490,6 +514,9 @@
         <i class="bi bi-house-door"></i> Search for Businesses
       </a>
       <a href="{{ url_for('favorites') }}" class="btn btn-outline-primary">My Favorites</a>
+      {% if fl_on %}
+      <a href="{{ url_for('freelance_console') }}" class="btn btn-warning"><i class="bi bi-person-workspace"></i> Freelancer Console</a>
+      {% endif %}
       <a href="{{ url_for('member_tutorials') }}" class="btn btn-outline-primary">
         Tutorial Videos
       </a>
@@ -508,7 +535,7 @@
     {% endif %}
   </div>
 
-  <!-- ===================== PROFILE WIZARD (2 steps) ===================== -->
+  <!-- ===================== PROFILE WIZARD (3 steps, +4 when the freelancer box is ticked) ===================== -->
   <div class="collapse" id="profileCollapse">
     <div class="card wizard-card" id="profile-wizard">
 
@@ -518,10 +545,13 @@
             <div class="wizard-step-label" id="wizard-step-label">Step 1 of 2</div>
             <div class="wizard-step-sub" id="wizard-step-sub">Profile Photo</div>
           </div>
-          <button type="button" class="btn btn-sm btn-outline-light"
-                  data-bs-toggle="collapse" data-bs-target="#profileCollapse">
-            Exit
-          </button>
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <select id="wizard-jump" class="form-select form-select-sm wizard-jump" aria-label="Jump to step" style="max-width:230px;font-size:.85rem;display:none;"></select>
+            <button type="button" class="btn btn-sm btn-outline-light"
+                    data-bs-toggle="collapse" data-bs-target="#profileCollapse">
+              Exit
+            </button>
+          </div>
         </div>
         <div class="wizard-progress" role="progressbar" aria-valuemin="0" aria-valuemax="2" aria-valuenow="1" id="wizard-progress">
           <div class="wizard-progress-bar" id="wizard-progress-bar"></div>
@@ -572,7 +602,180 @@
             <div class="step-error" role="alert"></div>
             <div class="wizard-nav">
               <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
-              {{ profile_form.submit(class="btn btn-success", value="Save Profile") }}
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 3: freelancer / network business -->
+          <div class="wizard-step" data-step="3">
+            <input type="hidden" name="fl_present" value="1">
+            <div class="wizard-title"><i class="bi bi-person-workspace"></i> Freelancer or Network Business</div>
+            <div class="form-check fl-check mb-3">
+              <input class="form-check-input" type="checkbox" id="fl_enabled" name="fl_enabled" value="1" {{ 'checked' if fl_on }}>
+              <label class="form-check-label fw-bold" for="fl_enabled">I'm a Freelancer or have a networking business</label>
+            </div>
+            <p class="wizard-help">No registered business needed. List yourself in the Perk Miner freelancer directory so members and businesses can find you and use your referral links, and earn the same cash back and referral commissions as a business advertiser.</p>
+            <ul class="small text-muted ps-3">
+              <li>Your listing is reviewed by our team before it goes live (separate directory, same approval process).</li>
+              <li>You deposit at least <b>${{ '%.0f' % fl_min_deposit }}</b> into your freelancer advertising balance to cover the <b>10% advertising fee on a member's first purchase only</b> (max $250).</li>
+              <li>You finalize each first purchase in person or manually, just like business advertisers, and you keep secure messaging with members.</li>
+              <li>Your freelancer earnings are paid out with your regular member earnings.</li>
+            </ul>
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next fl-only">Next Step <i class="bi bi-arrow-right"></i></button>
+              <button type="submit" name="submit" value="Save Profile" class="btn btn-success fl-off-only">Save Profile</button>
+            </div>
+          </div>
+
+          <!-- STEP 4: listing basics -->
+          <div class="wizard-step" data-step="4">
+            <div class="wizard-title"><i class="bi bi-card-heading"></i> Your Listing</div>
+            {% if fl and fl.status == 'rejected' and fl.rejection_reason %}<div class="alert alert-danger py-2 small"><b>Changes requested:</b> {{ fl.rejection_reason }}</div>{% endif %}
+            <div class="mb-3">
+              <label class="form-label" for="fl_name">Listing name *</label>
+              <input class="form-control" id="fl_name" name="fl_name" maxlength="100" data-required value="{{ fl_data.name }}" placeholder="Your name or brand, e.g. Jamie Lee Wellness Coaching" data-label="Listing name">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="fl_slug">Custom web address (optional)</label>
+              <div class="input-group">
+                <span class="input-group-text">perkminer.com/f/</span>
+                <input class="form-control" id="fl_slug" name="fl_slug" maxlength="40" value="{{ fl.slug if fl and fl.slug }}" placeholder="your-name" autocapitalize="none" autocomplete="off">
+              </div>
+              <div class="form-text">Letters, numbers and dashes only (3-40 characters). Leave blank to use the standard link.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="fl_tagline">Tagline</label>
+              <input class="form-control" id="fl_tagline" name="fl_tagline" maxlength="160" value="{{ fl_data.tagline }}" placeholder="One short line about what you do">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="fl_category">Category *</label>
+              <select class="form-select" id="fl_category" name="fl_category" data-required data-label="Category">
+                <option value="">Choose a category</option>
+                {% for c in fl_categories %}<option value="{{ c }}" {{ 'selected' if c == fl_data.category }}>{{ c }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="fl_about">About *</label>
+              <textarea class="form-control" id="fl_about" name="fl_about" rows="5" maxlength="3000" data-required data-label="About" placeholder="Tell members who you are, what you do and how you can help (at least 40 characters).">{{ fl_data.about }}</textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="fl_offerings">What you offer (one per line, up to 8)</label>
+              <textarea class="form-control" id="fl_offerings" name="fl_offerings" rows="4" placeholder="Health coaching&#10;Skincare products&#10;Travel planning">{{ fl_offerings_text }}</textarea>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6"><label class="form-label" for="fl_perk">Member perk (optional)</label>
+                <input class="form-control" id="fl_perk" name="fl_perk" maxlength="255" value="{{ fl_data.perk }}" placeholder="e.g. Free consultation for Perk Miner members"></div>
+              <div class="col-12 col-md-6"><label class="form-label" for="fl_region">Area you serve (optional)</label>
+                <input class="form-control" id="fl_region" name="fl_region" maxlength="120" value="{{ fl_data.region }}" placeholder="e.g. Online / Nationwide"></div>
+            </div>
+            <div class="mb-3"><label class="form-label" for="fl_keywords">Search keywords (optional)</label>
+              <input class="form-control" id="fl_keywords" name="fl_keywords" maxlength="300" value="{{ fl_data.keywords }}" placeholder="Words people might search for, separated by commas"></div>
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 5: photos and public contact -->
+          <div class="wizard-step" data-step="5">
+            <div class="wizard-title"><i class="bi bi-images"></i> Photos &amp; Contact</div>
+            <div class="mb-3">
+              <label class="form-label" for="fl_photo">Listing photo *</label>
+              {% if fl_data.photo %}<div class="mb-2"><img src="{{ fl_data.photo }}" alt="" style="width:84px;height:84px;object-fit:cover;border-radius:50%;border:2px solid var(--pm-primary);"></div>{% endif %}
+              <input type="file" class="form-control" id="fl_photo" name="fl_photo" accept="image/*" data-required {{ 'data-has-existing' if fl_data.photo }} data-label="Listing photo">
+              <div class="form-text">A clear square photo or logo works best.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Gallery photos (optional, up to {{ fl_max_gallery }})</label>
+              <div class="row g-2">
+                {% for i in range(fl_max_gallery) %}
+                <div class="col-12 col-md-6">
+                  {% if fl_data.gallery|length > i and fl_data.gallery[i] %}
+                    <div class="d-flex align-items-center gap-2 mb-1"><img src="{{ fl_data.gallery[i] }}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:10px;">
+                      <div class="form-check small"><input class="form-check-input" type="checkbox" id="fl_gallery_rm_{{ i }}" name="fl_gallery_rm_{{ i }}" value="1"><label class="form-check-label" for="fl_gallery_rm_{{ i }}">Remove</label></div></div>
+                  {% endif %}
+                  <input type="file" class="form-control form-control-sm" name="fl_gallery_{{ i }}" accept="image/*" aria-label="Gallery photo {{ i + 1 }}">
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="wizard-help">Public contact details are optional. Only fill in what you want shown on your listing.</div>
+            <div class="row g-3 mb-2">
+              <div class="col-12 col-md-6"><label class="form-label" for="fl_email">Public email</label><input type="email" class="form-control" id="fl_email" name="fl_email" maxlength="200" value="{{ fl_data.email }}"></div>
+              <div class="col-12 col-md-6"><label class="form-label" for="fl_phone">Public phone</label><input class="form-control" id="fl_phone" name="fl_phone" maxlength="40" value="{{ fl_data.phone }}"></div>
+              <div class="col-12"><label class="form-label" for="fl_website">Website</label><input class="form-control" id="fl_website" name="fl_website" maxlength="500" value="{{ fl_data.website }}" placeholder="https://"></div>
+              {% for k in ['facebook','instagram','x','linkedin','tiktok','youtube'] %}
+              <div class="col-12 col-md-6"><label class="form-label" for="fl_{{ k }}">{{ 'X (Twitter)' if k == 'x' else k|capitalize }} link</label><input class="form-control" id="fl_{{ k }}" name="fl_{{ k }}" maxlength="500" value="{{ fl_data.socials[k] }}" placeholder="https://"></div>
+              {% endfor %}
+            </div>
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 6: referral links -->
+          <div class="wizard-step" data-step="6">
+            <div class="wizard-title"><i class="bi bi-link-45deg"></i> Your Referral Links</div>
+            <p class="wizard-help">Add the links you want members and businesses to use (up to {{ fl_max_links }}), each with a photo and a short description. At least one is required.</p>
+            {% for l in fl_links %}
+            {% set i = loop.index0 %}
+            <div class="fl-slot border rounded-3 p-3 mb-3" data-slot="{{ i }}" {% if i > 0 and not (l.title or l.url) %}style="display:none;"{% endif %}>
+              <div class="fw-bold mb-2">Link {{ i + 1 }}</div>
+              <div class="row g-2">
+                <div class="col-12 col-md-5"><label class="form-label small" for="fl_link_title_{{ i }}">Title {{ '*' if i == 0 }}</label>
+                  <input class="form-control" id="fl_link_title_{{ i }}" name="fl_link_title_{{ i }}" maxlength="100" value="{{ l.title }}" {{ 'data-required data-label="Link title"'|safe if i == 0 }}></div>
+                <div class="col-12 col-md-7"><label class="form-label small" for="fl_link_url_{{ i }}">Link address {{ '*' if i == 0 }}</label>
+                  <input class="form-control" id="fl_link_url_{{ i }}" name="fl_link_url_{{ i }}" maxlength="500" value="{{ l.url }}" placeholder="https://" {{ 'data-required data-label="Link address"'|safe if i == 0 }}></div>
+                <div class="col-12"><label class="form-label small" for="fl_link_desc_{{ i }}">Description</label>
+                  <textarea class="form-control" id="fl_link_desc_{{ i }}" name="fl_link_desc_{{ i }}" rows="2" maxlength="300">{{ l.desc }}</textarea></div>
+                <div class="col-12"><label class="form-label small" for="fl_link_img_{{ i }}">Photo</label>
+                  {% if l.image %}<div class="d-flex align-items-center gap-2 mb-1"><img src="{{ l.image }}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:10px;">
+                    <div class="form-check small"><input class="form-check-input" type="checkbox" id="fl_link_rm_{{ i }}" name="fl_link_rm_{{ i }}" value="1"><label class="form-check-label" for="fl_link_rm_{{ i }}">Remove this link</label></div></div>{% endif %}
+                  <input type="file" class="form-control form-control-sm" id="fl_link_img_{{ i }}" name="fl_link_img_{{ i }}" accept="image/*"></div>
+              </div>
+            </div>
+            {% endfor %}
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="fl-add-link"><i class="bi bi-plus-circle"></i> Add another link</button>
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="button" class="btn btn-primary wizard-next">Next Step <i class="bi bi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <!-- STEP 7: terms, funding, submit -->
+          <div class="wizard-step" data-step="7">
+            <div class="wizard-title"><i class="bi bi-shield-check"></i> Terms &amp; Funding</div>
+            <div class="alert alert-warning small py-2">
+              Your advertising balance: <b>${{ '{:,.2f}'.format(fl_balance or 0) }}</b>.
+              You need at least <b>${{ '%.0f' % fl_min_deposit }}</b> to submit.
+              {% if fl %}<a href="{{ url_for('freelance_fund') }}" target="_blank" rel="noopener">Add funds</a> (opens in a new tab).{% else %}Save your profile first, then add funds from the Freelancer Console.{% endif %}
+            </div>
+            <div class="small border rounded-3 p-3 mb-3" style="max-height:170px;overflow:auto;">
+              <b>Key terms</b>
+              <ul class="ps-3 mb-1">
+                <li>You pay a <b>10% advertising fee (max $250) on a member's first purchase only</b>, charged when you finalize it, in person or manually.</li>
+                <li>You must keep enough balance to finalize every member's first purchase and you must finalize it.</li>
+                <li>No income guarantees. Your referral links lead to third-party companies that Perk Miner LLC does not own or endorse.</li>
+                <li>Listings are reviewed before going live. Failing to finalize transactions can lead to suspension.</li>
+              </ul>
+              <a href="{{ url_for('freelance_terms') }}" target="_blank" rel="noopener">Read the full Freelancer Terms</a>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="fl_agree" name="fl_agree" value="1" {{ 'checked' if fl and fl.terms_agreed_at }}>
+              <label class="form-check-label" for="fl_agree">I have read and agree to the Freelancer Terms.</label>
+            </div>
+            <input type="hidden" name="fl_submit" id="fl_submit" value="">
+            <div class="step-error" role="alert"></div>
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              <button type="submit" name="submit" value="Save Profile" class="btn btn-outline-success">Save draft</button>
+              <button type="submit" name="submit" value="Save Profile" class="btn btn-success" id="fl-submit-review"><i class="bi bi-send-check"></i> Save &amp; submit for review</button>
             </div>
           </div>
 
@@ -751,6 +954,22 @@
         <div class="summary-row"><span class="s-label">Pending Earnings</span><span class="s-value">${{ "{:,.2f}".format(pending_earnings or 0) }}</span></div>
         <div class="summary-row"><span class="s-label">Available for Withdrawal</span><span class="s-value text-success">${{ "{:,.2f}".format(net_available_earnings or 0) }}</span></div>
         <div class="summary-row"><span class="s-label">Total Withdrawn (All Time)</span><span class="s-value">${{ "{:,.2f}".format(withdrawn_total or 0) }}</span></div>
+        {% if fl_on %}
+        <div class="mt-3 p-3 rounded-3" style="background:#fff8e1;border:1px solid #ffd66b;">
+          <div class="fw-bold mb-2"><i class="bi bi-person-workspace"></i> Freelancer earnings <span class="text-muted fw-normal small">(kept separate from your member earnings)</span></div>
+          <div class="summary-row"><span class="s-label">Freelancer lifetime</span><span class="s-value">${{ "{:,.2f}".format(fl_total or 0) }}</span></div>
+          <div class="summary-row"><span class="s-label">Freelancer pending (7 days)</span><span class="s-value">${{ "{:,.2f}".format(fl_pending or 0) }}</span></div>
+          <div class="summary-row"><span class="s-label">Freelancer cleared</span><span class="s-value text-success">${{ "{:,.2f}".format(fl_avail or 0) }}</span></div>
+          <div class="summary-row"><span class="s-label">Member lifetime (purchases &amp; referrals)</span><span class="s-value">${{ "{:,.2f}".format((total_earnings or 0) - (fl_total or 0)) }}</span></div>
+          <div class="summary-row"><span class="s-label">Member pending</span><span class="s-value">${{ "{:,.2f}".format((pending_earnings or 0) - (fl_pending or 0)) }}</span></div>
+          <div class="summary-row"><span class="s-label">Advertising balance</span><span class="s-value">${{ "{:,.2f}".format(fl_balance or 0) }}</span></div>
+          {% from 'partials/_reviews.html' import rating_stars %}
+          <div class="summary-row"><span class="s-label">Your current star rating is</span><span class="s-value">{{ rating_stars(fl.shadow.rating_avg if fl and fl.shadow else 0, fl.shadow.rating_count if fl and fl.shadow else 0) }}</span></div>
+          <div class="small text-muted mt-1">The totals above combine both, and one withdrawal pays out both.</div>
+          <a href="{{ url_for('freelance_console') }}" class="btn btn-sm btn-warning mt-2"><i class="bi bi-speedometer2"></i> Freelancer Console</a>
+          <a href="{{ url_for('freelance_fund') }}" class="btn btn-sm btn-outline-secondary mt-2">Add funds</a>
+        </div>
+        {% endif %}
         <small class="text-muted mt-2 d-block">
           <a href="#" data-bs-toggle="modal" data-bs-target="#memberEarningsInfo">
             <i class="bi bi-info-circle"></i> Payout Info
@@ -843,14 +1062,14 @@
               {% set earnings = current_user.earnings_balance|float %}
               {% if earnings >= 10 %}
                 <!-- Standard Payout (Regular Earnings) -->
-                {% set std_fee = earnings * 0.005 + 0.35 %}
+                {% set std_fee = earnings * 0.029 + 0.50 %}
                 {% set std_net = earnings - std_fee %}
                 <div class="mb-3 border rounded p-3">
                   <div class="fw-bold mb-1">
                     <i class="bi bi-bank"></i> Standard Payout (1-3 business days)
                   </div>
                   <div class="text-muted mb-1" style="font-size:0.97em;">
-                        Perk Miner transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee) }} (0.5% + $0.35)<br>
+                        Perk Miner LLC transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee) }} (2.9% + $0.50)<br>
                         If you withdraw full balance to your Stripe balance, you will receive: <b>${{ '{:,.2f}'.format(std_net) }}<br>
                         Stripe may charge an additional fee to send funds to your bank account.</b>
                   </div>
@@ -915,14 +1134,14 @@
             {% set inv_net = current_user.investor_earnings_balance|float %}
             {% if inv_net >= 10 %}
               <!-- standard investor payout -->
-              {% set std_fee_inv = inv_net * 0.005 + 0.35 %}
+              {% set std_fee_inv = inv_net * 0.029 + 0.50 %}
               {% set std_net_inv = inv_net - std_fee_inv %}
               <div class="mb-3 border rounded p-3">
                 <div class="fw-bold mb-1">
                   <i class="bi bi-bank"></i> Investor Standard Payout (1-3 business days) - Note: If you withdraw regular earnings, you must wait for regular earnings to clear in order to withdraw silent investor earnings.
                 </div>
                 <div class="text-muted mb-1" style="font-size:0.95em;">
-                  Perk Miner transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee_inv) }} (0.5% + $0.35)<br>
+                  Perk Miner LLC transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee_inv) }} (2.9% + $0.50)<br>
                   If you withdraw full balance to your Stripe balance, you will receive: <b>${{ '{:,.2f}'.format(std_net_inv) }}<br>
                   Stripe may charge an additional fee to send funds to your bank account.</b>
                 </div>
@@ -1057,7 +1276,7 @@
             class="form-control mb-2"
             style="max-width:520px; font-size:0.9rem;"
           >Hey friends —
-          I’m a member of PerkMiner and wanted to share why I joined.
+          I’m a member of Perk Miner and wanted to share why I joined.
 
           •  Completely free to join and always free
 
@@ -1146,7 +1365,7 @@
             style="max-width:520px; font-size:0.9rem;"
         >Attention Business Owners:
 
-        I’m a member of PerkMiner and thought this could be a strong fit for your business.
+        I’m a member of Perk Miner and thought this could be a strong fit for your business.
 
         •  You only pay when you make a sale (10% of the sale, capped at $250). No sale = $0
 
@@ -1158,7 +1377,7 @@
 
         •  Wrong destination address?  Members can update the address, which cuts down on wasted trips
 
-        •  Earn 1% cash back on finalized sales (paid by Perk Miner) for offering a perk
+        •  Earn 1% cash back on finalized sales (paid by Perk Miner LLC) for offering a perk
 
         •  Invite other businesses and earn mutual commissions from each other’s sales
 
@@ -1195,7 +1414,7 @@
 
   <div class="row g-3">
     <!-- Single purchase calculator -->
-    <div class="col-12 col-lg-6">
+    <div class="col-12">
       <div class="card calc-card">
         <div class="calc-head">
           <div class="calc-icon"><i class="bi bi-receipt-cutoff"></i></div>
@@ -1234,7 +1453,7 @@
     </div>
 
     <!-- Member network calculator -->
-    <div class="col-12 col-lg-6">
+    <div class="col-12">
       <div class="card calc-card">
         <div class="calc-head">
           <div class="calc-icon"><i class="bi bi-diagram-3"></i></div>
@@ -1351,6 +1570,61 @@
         </div>
       </div>
     </div>
+
+    {% if fl_on %}
+    <!-- Freelancer to freelancer calculator -->
+    <div class="col-12">
+      <div class="card calc-card">
+        <div class="calc-head">
+          <div class="calc-icon"><i class="bi bi-person-workspace"></i></div>
+          <div>
+            <h4>Freelancer to Freelancer Calculator</h4>
+            <small>Estimate what you earn when freelancers you invite make sales.</small>
+          </div>
+        </div>
+        <div class="calc-body">
+          <p class="text-muted mb-3" style="font-size:.95rem;">
+            If you and every freelancer in your network each invite the same number of new members who become freelancers, and everyone finalizes just one sale of the same amount, this is how much you would earn in cash back and referral commissions (with the same per-transaction caps as business advertisers).
+          </p>
+          <div class="row g-3 mb-2">
+            <div class="col-12 col-sm-6">
+              <label class="form-label" for="f2f_people">Freelancers each freelancer invites</label>
+              <input id="f2f_people" type="number" class="form-control" min="1" max="50" value="3" />
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label" for="f2f_amount">Sale amount</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input id="f2f_amount" type="number" class="form-control" min="0" max="2500" step="0.01" value="100" />
+              </div>
+            </div>
+          </div>
+          <small class="text-muted d-block mb-3">*Maximum sale amount allowed is $2,500. Cash back is 1% (max $25) on your own finalized sales; Tiers 2-4 pay 0.2% (max $5) each; Tier 5 pays 1% (max $25).</small>
+          <button class="btn btn-primary w-100" type="button" onclick="calculateF2F()">
+            <i class="bi bi-calculator me-1"></i> Calculate
+          </button>
+          <div id="f2f_results" style="display:none;" class="mt-3">
+            <div class="row g-3 align-items-center">
+              <div class="col-12 col-lg-6">
+                <table class="tier-table">
+                  <tbody>
+                    <tr><td><strong>Tier 1</strong> (your own finalized sales)</td><td>$<span id="f2f_t1"></span></td></tr>
+                    <tr><td><strong>Tier 2</strong> (sales from the people you invited)</td><td>$<span id="f2f_t2"></span></td></tr>
+                    <tr><td><strong>Tier 3</strong> (invited by your Tier 2)</td><td>$<span id="f2f_t3"></span></td></tr>
+                    <tr><td><strong>Tier 4</strong> (invited by your Tier 3)</td><td>$<span id="f2f_t4"></span></td></tr>
+                    <tr><td><strong>Tier 5</strong> (invited by your Tier 4)</td><td>$<span id="f2f_t5"></span></td></tr>
+                  </tbody>
+                </table>
+                <div class="tier-total"><span>Estimated cash back and commissions</span><span class="tier-total-amt">$<span id="f2f_total"></span></span></div>
+              </div>
+              <div class="col-12 col-lg-6"><div class="chart-box" style="height:230px;"><canvas id="f2f_chart"></canvas></div></div>
+            </div>
+            <small class="text-muted d-block mt-2">An estimate only. Earnings depend on real sales and are not guaranteed. The advertising fee applies to each member's first purchase only.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <!-- ===================== MY NETWORK ===================== -->
@@ -1620,8 +1894,10 @@
 <!-- ===================== PROFILE WIZARD (2 STEPS) ===================== -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const TOTAL = 2;
-  const TITLES = { 1: 'Profile Photo', 2: 'Your Name' };
+  const TITLES = { 1: 'Profile Photo', 2: 'Your Name', 3: 'Freelancer or Network Business', 4: 'Your Listing', 5: 'Photos & Contact', 6: 'Referral Links', 7: 'Terms & Funding' };
+  const flBox = document.getElementById('fl_enabled');
+  // 3 steps normally; 7 when "I'm a Freelancer or have a networking business" is ticked
+  function total() { return (flBox && flBox.checked) ? 7 : 3; }
 
   const panel = document.getElementById('profileCollapse');
   const wizard = document.getElementById('profile-wizard');
@@ -1638,7 +1914,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function showStep(n, opts) {
     opts = opts || {};
+    const TOTAL = total();
     current = Math.max(1, Math.min(TOTAL, n));
+    syncFl();
+    buildJump(TOTAL);
     steps.forEach(function (s) {
       s.classList.toggle('active', parseInt(s.getAttribute('data-step'), 10) === current);
     });
@@ -1646,10 +1925,29 @@ document.addEventListener('DOMContentLoaded', function () {
     sub.textContent = TITLES[current];
     bar.style.width = ((current / TOTAL) * 100) + '%';
     if (progress) progress.setAttribute('aria-valuenow', current);
+    if (jump) jump.value = current;
     if (!opts.noScroll) {
       wizard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
+
+  // "Jump to step" menu: only for freelancers (the 7-step flow)
+  const jump = document.getElementById('wizard-jump');
+  let jumpBuilt = 0;
+  function buildJump(TOTAL) {
+    if (!jump) return;
+    const show = TOTAL > 3;
+    jump.style.display = show ? '' : 'none';
+    if (!show || jumpBuilt === TOTAL) return;
+    jump.innerHTML = '';
+    for (let i = 1; i <= TOTAL; i++) {
+      const o = document.createElement('option');
+      o.value = i; o.textContent = 'Step ' + i + ': ' + TITLES[i];
+      jump.appendChild(o);
+    }
+    jumpBuilt = TOTAL;
+  }
+  if (jump) jump.addEventListener('change', function () { showStep(parseInt(jump.value, 10)); });
 
   function stepEl(n) {
     return steps.find(function (s) { return parseInt(s.getAttribute('data-step'), 10) === n; });
@@ -1727,16 +2025,37 @@ document.addEventListener('DOMContentLoaded', function () {
     if (e.key !== 'Enter') return;
     const t = e.target;
     if (!t || t.tagName === 'TEXTAREA' || t.type === 'submit' || t.type === 'button') return;
-    if (current < TOTAL) {
+    if (current < total()) {
       e.preventDefault();
       if (!validateStep(current)) showStep(current + 1);
     }
   });
 
+  function syncFl() {
+    const on = flBox && flBox.checked;
+    wizard.querySelectorAll('.fl-only').forEach(function (b) { b.style.display = on ? '' : 'none'; });
+    wizard.querySelectorAll('.fl-off-only').forEach(function (b) { b.style.display = on ? 'none' : ''; });
+  }
+  if (flBox) flBox.addEventListener('change', function () { showStep(current, { noScroll: true }); });
+
+  // referral link slots: reveal the next empty slot
+  const addLink = document.getElementById('fl-add-link');
+  if (addLink) addLink.addEventListener('click', function () {
+    const hidden = wizard.querySelectorAll('.fl-slot');
+    for (let i = 0; i < hidden.length; i++) {
+      if (hidden[i].style.display === 'none') { hidden[i].style.display = ''; break; }
+    }
+    if (!Array.prototype.some.call(wizard.querySelectorAll('.fl-slot'), function (s) { return s.style.display === 'none'; })) addLink.style.display = 'none';
+  });
+  form.addEventListener('submit', function (e) {
+    const f = document.getElementById('fl_submit');
+    if (f) f.value = (e.submitter && e.submitter.id === 'fl-submit-review') ? '1' : '';
+  });
+
   // Final save: only from the last step, after validating every step
   form.addEventListener('submit', function (e) {
-    if (current !== TOTAL) { e.preventDefault(); return; }
-    for (let n = 1; n <= TOTAL; n++) {
+    if (current !== total()) { e.preventDefault(); return; }
+    for (let n = 1; n <= total(); n++) {
       const msg = validateStep(n);
       if (msg) {
         e.preventDefault();

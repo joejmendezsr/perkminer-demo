@@ -1,50 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>New Featured Businesses</title>
-  <style>
-    body {margin:0; font-family:system-ui,sans-serif; color:#222; background:#fff;}
-    header {background:#1769aa; color:#fff; text-align:center; padding:1rem 0.5rem;}
-    main {max-width:700px; margin:2rem auto; padding:1rem;}
-    h1 {font-size:2rem;}
-    .date {color:#888; margin-bottom:1em; font-size:1em;}
-    h2 {margin-top:2em; font-size:1.25rem; color:#1769aa;}
-    ul, ol {margin-left:1.5em;}
-    li {margin-bottom: 0.4em;}
-    .section {margin-bottom:2em;}
-    .contact {background:#f5faff; border-radius:8px; padding:1em; margin-top:2em;}
-    .press-lead, .about {margin-bottom:1.8em;}
-    .headline {font-weight: bold; font-size:1.15em;}
-    @media (max-width:700px) {main{margin:1rem 0.5rem; padding:0.7rem;} }
-    @media (max-width:480px) {h1{font-size:1.3rem;} main{padding:0.4rem;} }
-    a.nav {display:inline-block; margin-bottom:1.2em; color:#1769aa; text-decoration:none; font-weight:500;}
+{% extends "pm_public_base.html" %}
+{% block title %}Newest Featured Businesses | Perk Miner{% endblock %}
 
-    /* Footer */
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
+{% block content %}
+<main id="main">
+<section class="ps-hero ps-hero-sm ps-dhero">
+  <div class="container">
+    <a class="ps-crumb" href="{{ url_for('news') }}"><i class="bi bi-arrow-left"></i> Back to News</a><br>
+    <span class="ps-pill"><i class="bi bi-star"></i> Featured &middot; Nov. 4, 2026</span>
+    <h1>Our newest <em>featured businesses</em></h1>
+    <p class="ps-lead">Top-ranked local businesses that offer perks to Perk Miner members.</p>
+  </div>
+</section>
 
-  </style>
-</head>
-<body>
-  <header>
-    <h1>New Featured Businesses:</h1>
-  </header>
-  <main>
-    <a href="/news" class="nav">&larr; Back to News</a>
-    <div class="date">October 4, 2026</div>
-    <a href="#" target="_blank" rel="noopener noreferrer">
-        Coming Soon!
-    </a>
-  </main>
-</body>
+<section class="ps-section">
+  <div class="container">
+    {% if featured_businesses %}
+    <div class="ps-dgrid">
+      {% for biz in featured_businesses %}
+      <a href="{{ url_for('public_profile', store_slug=biz.store_slug) }}" class="ps-dcard">
+        <div class="ps-dcard-top">
+          {% if biz.profile_photo %}
+            <img src="{{ biz.profile_photo }}" class="ps-biz-img" alt="{{ biz.business_name }} logo" width="64" height="64" loading="lazy">
+          {% else %}
+            <span class="ps-biz-img"><i class="bi bi-shop"></i></span>
+          {% endif %}
+          <div style="min-width:0;">
+            <h3>{{ biz.business_name }}</h3>
+            {% if biz.category %}<span class="ps-chip">{{ biz.category }}</span>{% endif %}
+          </div>
+        </div>
+        {% if biz.city or biz.state %}<div class="ps-dcard-line"><i class="bi bi-geo-alt-fill"></i><span>{{ biz.city or '' }}{% if biz.city and biz.state %}, {% endif %}{{ biz.state or '' }}</span></div>{% endif %}
+        <div class="ps-dcard-perk"><i class="bi bi-gift"></i><span><strong>Member perk:</strong> {{ biz.perks or "Member perks available" }}</span></div>
+        <span class="ps-dcard-cta">View public profile <i class="bi bi-arrow-right"></i></span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="ps-biz-grid"><div class="ps-empty">
+      <i class="bi bi-hourglass-split"></i>
+      <h3>Featured businesses are on their way</h3>
+      <p>We&rsquo;re welcoming local businesses to Perk Miner right now. Check back soon, or be among the first.</p>
+      <a href="{{ url_for('business_register') }}" class="ps-btn ps-btn-dark">List my business free</a>
+    </div></div>
+    {% endif %}
 
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
+    <div class="ps-head" style="margin-top:3.2rem;">
+      <span class="ps-eyebrow">How featuring works</span>
+      <h2 class="ps-title">Earned, never bought</h2>
+      <p class="ps-sub">You can&rsquo;t pay to become a featured business. Featured businesses are ranked by how many transactions they complete, how much ad revenue they pay, and how many businesses they refer to Perk Miner.</p>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-4"><div class="ps-card"><span class="ps-ic"><i class="bi bi-bag-check"></i></span><h3>Complete sales</h3><p>Every finalized transaction moves your business up.</p></div></div>
+      <div class="col-md-4"><div class="ps-card"><span class="ps-ic"><i class="bi bi-people"></i></span><h3>Refer businesses</h3><p>Introduce other local businesses to Perk Miner and earn commissions as they grow.</p></div></div>
+      <div class="col-md-4"><div class="ps-card"><span class="ps-ic"><i class="bi bi-gift"></i></span><h3>Offer a member perk</h3><p>Give members a reason to choose you and earn 1% cash back on qualified sales.</p></div></div>
+    </div>
 
-</html>
+    <div class="ps-banner">
+      <div><h3>Want to be featured?</h3><p>List free. Pay only when a sale is finalized.</p></div>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('business_register') }}" class="ps-btn ps-btn-gold">List my business free <i class="bi bi-arrow-right"></i></a>
+        <a href="{{ url_for('public_profiles_directory') }}" class="ps-btn ps-btn-ghost-light">Browse all profiles</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+{% endblock %}

@@ -1,0 +1,74 @@
+{%- from 'partials/_freelance_views.html' import freelance_small, freelance_styles -%}
+{%- from 'pm_listing_card.html' import listing_card_styles -%}
+{% extends "pm_public_base.html" %}
+{% block title %}Freelancer &amp; Network Business Directory - Perk Miner{% endblock %}
+{% block meta %}
+<meta name="description" content="Find freelancers, side-gig owners and network marketers on Perk Miner. Connect through secure messaging and earn cash back and referral commissions.">
+{% endblock %}
+{% block head_extra %}{{ super() }}{{ listing_card_styles() }}{{ freelance_styles() }}{% endblock %}
+
+{% block content %}
+<main class="container pb-3">
+  <nav aria-label="breadcrumb">
+    <ol class="pm-crumbs">
+      <li><a href="{{ url_for('home') }}">Home</a></li>
+      <li aria-current="page">Freelancer directory</li>
+    </ol>
+  </nav>
+
+  <div class="card pm-hero pm-results-hero mb-3">
+    <div class="pm-hero-icon mx-auto mb-2"><i class="bi bi-person-workspace"></i></div>
+    <h1>Freelancer &amp; Network Business Directory</h1>
+    <div class="pm-hero-sub mt-1">Freelancers, side gigs and network businesses you can connect with directly.</div>
+    {% if total %}<div class="pm-stats">{{ total }} listing{{ '' if total == 1 else 's' }}</div>{% endif %}
+  </div>
+
+  <form method="get" class="card p-3 mb-4">
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold" for="fq">Search</label>
+        <input id="fq" name="q" value="{{ q }}" class="form-control" placeholder="Service, product, company or name">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label fw-semibold" for="fc">Category</label>
+        <select id="fc" name="category" class="form-select">
+          <option value="">All categories</option>
+          {% for c in categories %}<option value="{{ c }}" {{ 'selected' if c == category }}>{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-2"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-search"></i> Search</button></div>
+    </div>
+  </form>
+
+  {% if items %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      {% for f in items %}
+        <div class="col">{{ freelance_small(f, f.url) }}</div>
+      {% endfor %}
+    </div>
+
+    {% if pagination and pagination.pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if pagination.has_prev %}<li class="page-item"><a class="page-link" href="{{ url_for('freelance_directory', q=q, category=category, page=pagination.prev_num) }}">&laquo; Previous</a></li>
+        {% else %}<li class="page-item disabled"><span class="page-link">&laquo; Previous</span></li>{% endif %}
+        <li class="page-item active"><span class="page-link">{{ pagination.page }} / {{ pagination.pages }}</span></li>
+        {% if pagination.has_next %}<li class="page-item"><a class="page-link" href="{{ url_for('freelance_directory', q=q, category=category, page=pagination.next_num) }}">Next &raquo;</a></li>
+        {% else %}<li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>{% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+  {% else %}
+    <div class="card pm-noresults">
+      <div class="big-ic"><i class="bi bi-person-workspace"></i></div>
+      <h2 class="h4">No listings found</h2>
+      <p class="text-muted mb-0">Try a different search or category. Freelancers and network businesses are added as they are approved.</p>
+    </div>
+  {% endif %}
+
+  <p class="text-muted small mt-4 mb-0">
+    <i class="bi bi-info-circle"></i> Listings are created by individual members, not registered Perk Miner advertisers. Referral links lead to third-party
+    companies. Perk Miner LLC does not guarantee any product, service, income or result. <a href="{{ url_for('freelance_terms') }}">Freelancer terms</a>
+  </p>
+</main>
+{% endblock %}

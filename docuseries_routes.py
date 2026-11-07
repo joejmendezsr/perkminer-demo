@@ -834,6 +834,11 @@ def build_player(ep):
         return {"kind": "video", "src": url_for("docuseries.episode_media", episode_id=ep["id"])}
     return None
 
+@docuseries_bp.route("/your-footage")
+# @login_required            <- use the same decorator(s) as how_to_invite_businesses
+def your_footage():
+    # If how_to_invite_businesses passes extra context (user, challenge, ...), pass the same here.
+    return render_template("docuseries/your_footage.html")
 
 @docuseries_bp.route("/episodes")
 def episodes():

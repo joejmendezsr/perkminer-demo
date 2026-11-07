@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Business Dashboard - PerkMiner</title>
+    <title>Business Dashboard - Perk Miner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -253,6 +253,10 @@
         .wizard-title { font-size: 1.3rem; font-weight: 800; color: var(--pm-primary-dark); margin-bottom: .35rem; display: flex; align-items: center; gap: .5rem; }
         .wizard-title i { color: var(--pm-primary); }
         .wizard-help { color: var(--pm-muted); margin-bottom: 1.1rem; }
+        .sa-box { background: #f3f8f7; border: 1px solid #dfebe9; border-radius: 16px; padding: 1rem 1.1rem; }
+        .sa-checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: .15rem .75rem; max-height: 240px; overflow-y: auto; background: #fff; border: 1px solid #dfebe9; border-radius: 12px; padding: .6rem .75rem; }
+        .sa-check { display: flex; gap: .45rem; align-items: center; font-size: .92rem; margin: 0; padding: .15rem 0; cursor: pointer; }
+        .sa-summary { background: #fff8e1; border: 1px solid #f0dd9c; border-radius: 12px; padding: .6rem .8rem; color: #6b4a00; font-weight: 600; }
         .wizard-nav { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1.5rem; }
         .wizard-nav .btn { flex: 1 1 140px; padding: .65rem 1rem; font-weight: 600; border-radius: 12px; }
         .step-error {
@@ -491,11 +495,17 @@
         document.getElementById('rewards_output').innerHTML = out;
       }
     </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-listing.css') }}">
+  <script defer src="{{ url_for('static', filename='js/pm-listing.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
     <div class="container">
-        <a class="navbar-brand" href="/">PerkMiner</a>
+        <a class="navbar-brand" href="/">Perk Miner</a>
         <div class="navbar-nav ms-auto">
           <span class="nav-link disabled">{{ email }}</span>
         </div>
@@ -547,10 +557,19 @@
       </a>
     </div>
 
+    <!-- Overall star rating -->
+    {% from 'partials/_reviews.html' import rating_stars %}
+    <div class="d-flex align-items-center flex-wrap gap-2 mb-3" id="my-star-rating">
+      <span class="fw-semibold">Your current star rating is</span>
+      {{ rating_stars(business.rating_avg, business.rating_count, '1.3rem') }}
+    </div>
+
     <!-- Status chips -->
     <div class="d-flex flex-wrap gap-2 mb-3">
       {% if business.status %}
-        {% if business.status == "approved" %}
+        {% if business.status == "approved" and has_pending_listing_changes %}
+          <span class="status-chip warn"><i class="bi bi-hourglass-split"></i> Listing Status: Pending New Change Approval</span>
+        {% elif business.status == "approved" %}
           <span class="status-chip ok"><i class="bi bi-patch-check-fill"></i> Listing Status: Approved</span>
         {% elif business.status == "rejected" %}
           <span class="status-chip bad"><i class="bi bi-x-octagon-fill"></i> Listing Status: Rejected</span>
@@ -644,14 +663,14 @@
     </div>
   {% endif %}
 
-  <!-- ===================== PROFILE WIZARD (14 steps) ===================== -->
+  <!-- ===================== PROFILE WIZARD (15 steps) ===================== -->
   <div class="collapse" id="profileCollapse">
     <div class="card wizard-card" id="profile-wizard">
 
       <div class="wizard-head">
         <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
           <div>
-            <div class="wizard-step-label" id="wizard-step-label">Step 1 of 14</div>
+            <div class="wizard-step-label" id="wizard-step-label">Step 1 of 15</div>
             <div class="wizard-step-sub" id="wizard-step-sub">Promo Code</div>
           </div>
           <div class="d-flex gap-2 align-items-center flex-wrap">
@@ -662,7 +681,7 @@
             </button>
           </div>
         </div>
-        <div class="wizard-progress" role="progressbar" aria-valuemin="0" aria-valuemax="14" aria-valuenow="1" id="wizard-progress">
+        <div class="wizard-progress" role="progressbar" aria-valuemin="0" aria-valuemax="15" aria-valuenow="1" id="wizard-progress">
           <div class="wizard-progress-bar" id="wizard-progress-bar"></div>
         </div>
       </div>
@@ -698,7 +717,7 @@
           </div>
         </div>
 
-        <!-- ---------- MAIN PROFILE FORM (steps 2 - 14) ---------- -->
+        <!-- ---------- MAIN PROFILE FORM (steps 2 - 15, single final save) ---------- -->
         <form method="post" enctype="multipart/form-data" id="profile-form" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -790,6 +809,49 @@
               <small class="text-muted">
                 when this is checked, your listing can use your live GPS location instead of your business address.
               </small>
+            </div>
+
+            <!-- service area beyond local (online stores, statewide / national / international businesses) -->
+            {% set sa_cur = service_area_info(business) %}
+            {% set sa_list = (sa_cur.regions or '').split(',') %}
+            <input type="hidden" name="sa_present" value="1">
+            <div class="sa-box mt-3" id="sa-box">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="service_area_expanded" name="service_area_expanded" value="1" {% if sa_cur.expanded %}checked{% endif %}>
+                <label class="form-check-label fw-semibold" for="service_area_expanded">
+                  My service area extends beyond my local area (online store, statewide, nationwide or international)
+                </label>
+              </div>
+              <small class="text-muted d-block mb-2">Your address then shows as <b>Address (HQ)</b> and your service area shows what you choose below.</small>
+
+              <div id="sa-fields" style="display:none;">
+                <label class="form-label mt-2" for="service_area_scope">Where do you serve customers?</label>
+                <select class="form-select" id="service_area_scope" name="service_area_scope">
+                  <option value="">Choose a service area&hellip;</option>
+                  {% for key, text in SA_SCOPES %}
+                    <option value="{{ key }}" {% if sa_cur.scope == key %}selected{% endif %}>{{ text }}</option>
+                  {% endfor %}
+                </select>
+
+                <div id="sa-states-wrap" class="mt-3" style="display:none;">
+                  <div class="fw-semibold mb-1">Which states? <span class="text-muted fw-normal">(tick all that apply)</span></div>
+                  <div class="sa-checks">
+                    {% for code, name in SA_STATES %}
+                      <label class="sa-check"><input type="checkbox" class="sa-state-cb" name="sa_states" value="{{ code }}" data-name="{{ name }}" {% if code in sa_list %}checked{% endif %}> {{ name }}</label>
+                    {% endfor %}
+                  </div>
+                </div>
+
+                <div id="sa-countries-wrap" class="mt-3" style="display:none;">
+                  <div class="fw-semibold mb-1"><span id="sa-countries-title">Which countries?</span> <span class="text-muted fw-normal">(tick all that apply)</span></div>
+                  <div class="sa-checks">
+                    {% for code, name in SA_COUNTRIES %}
+                      <label class="sa-check"><input type="checkbox" class="sa-country-cb" name="sa_countries" value="{{ code }}" data-name="{{ name }}" {% if code in sa_list %}checked{% endif %}> {{ name }}</label>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="sa-summary mt-3" id="sa-summary" aria-live="polite"></div>
+              </div>
             </div>
 
             <div class="step-error" role="alert"></div>
@@ -899,10 +961,10 @@
                 <p class="fw-bold mb-2">online purchase terms</p>
                 <ul class="small mb-2">
                   <li>you agree to maintain an advertising account balance of at least <strong>$250</strong> at all times while online purchases are enabled.</li>
-                  <li>if your balance falls below $250, perkminer will automatically block new online purchases until you add more funds.</li>
-                  <li>you are required to install and keep perkminer’s tracking script on your order confirmation / “thank you” page so qualifying purchases are reported.</li>
+                  <li>if your balance falls below $250, Perk Miner LLC will automatically block new online purchases until you add more funds.</li>
+                  <li>you are required to install and keep Perk Miner LLC’s tracking script on your order confirmation / “thank you” page so qualifying purchases are reported.</li>
                   <li>removing, disabling, or altering the script so purchases are not reported may result in suspension; repeated or intentional violations may result in permanent account closure and forfeiture of any remaining advertising balance.</li>
-                  <li>if a member reports that they completed a purchase on your website but did not receive cashback, perkminer may suspend your account while we investigate. if we confirm that purchases were not reported as required, your account may remain suspended or be closed.</li>
+                  <li>if a member reports that they completed a purchase on your website but did not receive cashback, Perk Miner LLC may suspend your account while we investigate. if we confirm that purchases were not reported as required, your account may remain suspended or be closed.</li>
                   <li>view installation instructions <a href="{{ url_for('online_purchase_instructions') }}" target="_blank">HERE</a>.</li>
                   <li>you must contact Perk Miner LLC at <a href="mailto:support@perkminer.com">support@perkminer.com upon proper installation of the script so that it could be verified.</a>.</li>
                   <li>once verified, the online purchase option button will appear on your listing.  you can keep track of the status (website status will appear when all 3 boxes are checked).</li>
@@ -932,10 +994,47 @@
             </div>
           </div>
 
-          <!-- STEP 8: Google reviews link -->
+          <!-- STEP 8: Google Reviews + Social Media -->
           <div class="wizard-step" data-step="8">
-            <div class="wizard-title"><i class="bi bi-star-fill"></i> Google Reviews Link</div>
-            <p class="wizard-help">Optional. You can leave this blank and continue.</p>
+            <div class="wizard-title"><i class="bi bi-share"></i> Social Media &amp; Google Reviews</div>
+            <p class="wizard-help">Add your business social media pages. These links will appear as clickable social icons on your public profile and large listing. All fields are optional.</p>
+
+            <div class="border rounded p-3 mb-4 bg-light">
+              <h6 class="fw-bold mb-3"><i class="bi bi-share-fill me-1"></i> Social Media Pages</h6>
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="facebook_url"><i class="bi bi-facebook me-1"></i> Facebook</label>
+                  <input type="url" class="form-control" id="facebook_url" name="facebook_url" maxlength="500"
+                         value="{{ form_data.facebook_url or '' }}" placeholder="https://www.facebook.com/yourbusiness">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="instagram_url"><i class="bi bi-instagram me-1"></i> Instagram</label>
+                  <input type="url" class="form-control" id="instagram_url" name="instagram_url" maxlength="500"
+                         value="{{ form_data.instagram_url or '' }}" placeholder="https://www.instagram.com/yourbusiness">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="x_url"><i class="bi bi-twitter-x me-1"></i> X</label>
+                  <input type="url" class="form-control" id="x_url" name="x_url" maxlength="500"
+                         value="{{ form_data.x_url or '' }}" placeholder="https://x.com/yourbusiness">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="linkedin_url"><i class="bi bi-linkedin me-1"></i> LinkedIn</label>
+                  <input type="url" class="form-control" id="linkedin_url" name="linkedin_url" maxlength="500"
+                         value="{{ form_data.linkedin_url or '' }}" placeholder="https://www.linkedin.com/company/yourbusiness">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="tiktok_url"><i class="bi bi-tiktok me-1"></i> TikTok</label>
+                  <input type="url" class="form-control" id="tiktok_url" name="tiktok_url" maxlength="500"
+                         value="{{ form_data.tiktok_url or '' }}" placeholder="https://www.tiktok.com/@yourbusiness">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="youtube_url"><i class="bi bi-youtube me-1"></i> YouTube</label>
+                  <input type="url" class="form-control" id="youtube_url" name="youtube_url" maxlength="500"
+                         value="{{ form_data.youtube_url or '' }}" placeholder="https://www.youtube.com/@yourbusiness">
+                </div>
+              </div>
+              <div class="form-text mt-3">Use the direct public page/channel URL for your business. Links must use HTTPS and belong to the selected social platform.</div>
+            </div>
 
             <div class="mb-3">
               <label class="form-label" for="google_reviews_url">Google Reviews Link <span class="text-muted">(optional)</span></label>
@@ -945,10 +1044,11 @@
                      data-label="Your Google Reviews link"
                      data-error-msg="Enter a full web address that starts with https://"
                      {% if business.google_reviews_url %}data-required="1"{% endif %}>
-              <div class="form-text">
-                Adds a "See Google reviews" button to your listing. Changes take effect right away without re-submitting your listing.
-                Once added, it can be updated but not removed.
-              </div>
+              <div class="form-text">Adds a “See Google reviews” button to your listing. Your existing Google Reviews behavior is unchanged.</div>
+            </div>
+
+            <div class="alert alert-info mb-0">
+              <i class="bi bi-info-circle me-1"></i> Social media changes for an already-approved listing are submitted for the same listing approval process as your other profile changes. Your currently approved social links remain public until the new changes are approved.
             </div>
 
             <div class="step-error" role="alert"></div>
@@ -1020,7 +1120,7 @@
           <!-- STEP 11: Perks (required) -->
           <div class="wizard-step" data-step="11">
             <div class="wizard-title"><i class="bi bi-gift"></i> Perks Offered <span class="text-danger">*</span></div>
-            <p class="wizard-help">What special offers or perks will PerkMiner members get from your business? This step is required.</p>
+            <p class="wizard-help">What special offers or perks will Perk Miner members get from your business? This step is required.</p>
 
             <div class="mb-3">
               <label class="form-label" for="perks">Perks Offered <span class="text-danger">*</span></label>
@@ -1107,36 +1207,44 @@
               </select>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label" for="business_category">Category <span class="text-danger">*</span></label>
-              <select class="form-select" name="category" id="business_category" data-required="1" data-label="Category">
-                <option value="">Select category...</option>
-                <option value="Handyman-Contractor" {% if form_data.category == 'Handyman-Contractor' %}selected{% endif %}>Handyman-Contractor</option>
-                <option value="Restaurant-Food-and-Drink" {% if form_data.category == 'Restaurant-Food-and-Drink' %}selected{% endif %}>Restaurant/Food/Drink</option>
-                <option value="Auto-Service-Repair-Parts" {% if form_data.category == 'Auto-Service-Repair-Parts' %}selected{% endif %}>Auto Service-Repair-Parts</option>
-                <option value="Home-and-Garden" {% if form_data.category == 'Home-and-Garden' %}selected{% endif %}>Home and Garden</option>
-                <option value="Shopping-and-Retail" {% if form_data.category == 'Shopping-and-Retail' %}selected{% endif %}>Shopping and Retail</option>
-                <option value="Health-and-Beauty" {% if form_data.category == 'Health-and-Beauty' %}selected{% endif %}>Health and Beauty</option>
-                <option value="Real-Estate" {% if form_data.category == 'Real-Estate' %}selected{% endif %}>Real Estate</option>
-                <option value="Pet-Service-and-Supplies" {% if form_data.category == 'Pet-Service-and-Supplies' %}selected{% endif %}>Pet Service and Supplies</option>
-                <option value="Travel-Lodging-Tourism" {% if form_data.category == 'Travel-Lodging-Tourism' %}selected{% endif %}>Travel-Lodging-Tourism</option>
-                <option value="Financial-Services" {% if form_data.category == 'Financial-Services' %}selected{% endif %}>Financial Services</option>
-                <option value="Professional-Services" {% if form_data.category == 'Professional-Services' %}selected{% endif %}>Professional Services</option>
-                <option value="Events-and-Entertainment" {% if form_data.category == 'Events-and-Entertainment' %}selected{% endif %}>Events and Entertainment</option>
-                <option value="Education-and-Training" {% if form_data.category == 'Education-and-Training' %}selected{% endif %}>Education and Training</option>
-                <option value="Wedding-Services" {% if form_data.category == 'Wedding-Services' %}selected{% endif %}>Wedding Services</option>
-                <option value="Transportation-Services" {% if form_data.category == 'Transportation-Services' %}selected{% endif %}>Transportation Services</option>
-                <option value="Legal-Services" {% if form_data.category == 'Legal-Services' %}selected{% endif %}>Legal Services</option>
-                <option value="All-Rentals" {% if form_data.category == 'All-Rentals' %}selected{% endif %}>All Rentals</option>
-                <option value="Gaming" {% if form_data.category == 'Gaming' %}selected{% endif %}>Gaming</option>
-                <option value="Sports-and-Recreation" {% if form_data.category == 'Sports-and-Recreation' %}selected{% endif %}>Sports and Recreation</option>
-                <option value="Cleaning-Services" {% if form_data.category == 'Cleaning-Services' %}selected{% endif %}>Cleaning Services</option>
-                <option value="Moving-and-Delivery" {% if form_data.category == 'Moving-and-Delivery' %}selected{% endif %}>Moving and Delivery</option>
-                <option value="Security-and-Protection" {% if form_data.category == 'Security-and-Protection' %}selected{% endif %}>Security and Protection</option>
-                <option value="Industrial-Services" {% if form_data.category == 'Industrial-Services' %}selected{% endif %}>Industrial Services</option>
-                <option value="Other" {% if form_data.category == 'Other' %}selected{% endif %}>Other</option>
-              </select>
-            </div>
+
+<div class="mb-3">
+  <label class="form-label" for="business_category">
+    Category <span class="text-danger">*</span>
+  </label>
+  <select class="form-select" name="category" id="business_category" data-required="1" data-label="Category">
+    <option value="">Select category...</option>
+
+    <option value="All-Rentals" {% if form_data.category == 'All-Rentals' %}selected{% endif %}>All Rentals</option>
+    <option value="Auto-Service-Repair-Parts" {% if form_data.category == 'Auto-Service-Repair-Parts' %}selected{% endif %}>Auto Service-Repair-Parts</option>
+    <option value="Casino" {% if form_data.category == 'Casino' %}selected{% endif %}>Casino</option>
+    <option value="Cleaning-Services" {% if form_data.category == 'Cleaning-Services' %}selected{% endif %}>Cleaning Services</option>
+    <option value="Dispensary" {% if form_data.category == 'Dispensary' %}selected{% endif %}>Dispensary</option>
+    <option value="Education-and-Training" {% if form_data.category == 'Education-and-Training' %}selected{% endif %}>Education and Training</option>
+    <option value="Events-and-Entertainment" {% if form_data.category == 'Events-and-Entertainment' %}selected{% endif %}>Events and Entertainment</option>
+    <option value="Financial-Services" {% if form_data.category == 'Financial-Services' %}selected{% endif %}>Financial Services</option>
+    <option value="Gaming" {% if form_data.category == 'Gaming' %}selected{% endif %}>Gaming</option>
+    <option value="Handyman-Contractor" {% if form_data.category == 'Handyman-Contractor' %}selected{% endif %}>Handyman-Contractor</option>
+    <option value="Health-and-Beauty" {% if form_data.category == 'Health-and-Beauty' %}selected{% endif %}>Health and Beauty</option>
+    <option value="Home-and-Garden" {% if form_data.category == 'Home-and-Garden' %}selected{% endif %}>Home and Garden</option>
+    <option value="Industrial-Services" {% if form_data.category == 'Industrial-Services' %}selected{% endif %}>Industrial Services</option>
+    <option value="Legal-Services" {% if form_data.category == 'Legal-Services' %}selected{% endif %}>Legal Services</option>
+    <option value="Liquor Store" {% if form_data.category == 'Liquor Store' %}selected{% endif %}>Liquor Store</option>
+    <option value="Moving-and-Delivery" {% if form_data.category == 'Moving-and-Delivery' %}selected{% endif %}>Moving and Delivery</option>
+    <option value="Other" {% if form_data.category == 'Other' %}selected{% endif %}>Other</option>
+    <option value="Pet-Service-and-Supplies" {% if form_data.category == 'Pet-Service-and-Supplies' %}selected{% endif %}>Pet Service and Supplies</option>
+    <option value="Professional-Services" {% if form_data.category == 'Professional-Services' %}selected{% endif %}>Professional Services</option>
+    <option value="Real-Estate" {% if form_data.category == 'Real-Estate' %}selected{% endif %}>Real Estate</option>
+    <option value="Restaurant-Food-and-Drink" {% if form_data.category == 'Restaurant-Food-and-Drink' %}selected{% endif %}>Restaurant/Food/Drink</option>
+    <option value="Security-and-Protection" {% if form_data.category == 'Security-and-Protection' %}selected{% endif %}>Security and Protection</option>
+    <option value="Shopping-and-Retail" {% if form_data.category == 'Shopping-and-Retail' %}selected{% endif %}>Shopping and Retail</option>
+    <option value="Smoke-Shop" {% if form_data.category == 'Smoke-Shop' %}selected{% endif %}>Smoke Shop</option>
+    <option value="Sports-and-Recreation" {% if form_data.category == 'Sports-and-Recreation' %}selected{% endif %}>Sports and Recreation</option>
+    <option value="Transportation-Services" {% if form_data.category == 'Transportation-Services' %}selected{% endif %}>Transportation Services</option>
+    <option value="Travel-Lodging-Tourism" {% if form_data.category == 'Travel-Lodging-Tourism' %}selected{% endif %}>Travel-Lodging-Tourism</option>
+    <option value="Wedding-Services" {% if form_data.category == 'Wedding-Services' %}selected{% endif %}>Wedding Services</option>
+  </select>
+</div>
 
             <div class="mb-3">
               <label class="form-label" for="business_finalization">Finalization <span class="text-danger">*</span></label>
@@ -1158,7 +1266,7 @@
             </div>
           </div>
 
-          <!-- STEP 14: Keywords + Save -->
+          <!-- STEP 14: Keywords -->
           <div class="wizard-step" data-step="14">
             <div class="wizard-title"><i class="bi bi-search"></i> Keywords</div>
             <p class="wizard-help">Add words customers might search for to find your business.</p>
@@ -1172,16 +1280,36 @@
 
             <div class="alert alert-light border mb-0" style="font-size:.95rem;">
               <i class="bi bi-check-circle-fill text-success me-1"></i>
-              When you click <strong>Save Profile</strong>, you'll return to your dashboard where you can <strong>Preview Listing</strong> and submit it for review.
+              Continue to <strong>Step 15</strong> for optional FAQs, then save your entire profile.
             </div>
 
             <div class="step-error" role="alert"></div>
             <div class="wizard-nav">
               <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
-              {{ profile_form.submit(class="btn btn-success", value="Save Profile") }}
+              <button type="button" class="btn btn-primary wizard-next">Next: FAQs <i class="bi bi-arrow-right"></i></button>
             </div>
           </div>
 
+        <!-- STEP 15: FAQs are saved with the complete business profile. -->
+        <div class="wizard-step" data-step="15" id="business-faq-editor">
+          <div class="wizard-title"><i class="bi bi-question-circle"></i> Step 15: Frequently Asked Questions</div>
+          <p class="wizard-help"><strong>Optional, but helpful for SEO.</strong> Answer up to 10 common customer questions to help search engines and visitors understand your business. Only complete question-and-answer pairs appear on your public profile. If you leave this step blank, no FAQ section will be displayed.</p>
+          <div class="alert alert-info">FAQs are optional and can help visitors find useful answers. Click <strong>Save Profile</strong> below to save your business details and FAQs together and close the editor.</div>
+            {% for i in range(10) %}
+            <div class="border rounded p-3 mb-3">
+              <label for="faq-question-{{ i }}" class="form-label fw-semibold">Question {{ i + 1 }}</label>
+              <input id="faq-question-{{ i }}" name="question" type="text" class="form-control mb-2" maxlength="240" value="{{ dashboard_faqs[i].question if i < dashboard_faqs|length else '' }}" placeholder="Enter a customer question (optional)">
+              <label for="faq-answer-{{ i }}" class="form-label">Answer {{ i + 1 }}</label>
+              <textarea id="faq-answer-{{ i }}" name="answer" class="form-control" maxlength="2000" rows="3" placeholder="Provide a clear and accurate answer (optional)">{{ dashboard_faqs[i].answer if i < dashboard_faqs|length else '' }}</textarea>
+            </div>
+            {% endfor %}
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
+              {{ profile_form.submit(class="btn btn-success", value="Save Profile") }}
+              <a href="{{ url_for('business_seo_faq') }}" class="btn btn-outline-primary">SEO Readiness Score</a>
+            </div>
+          <div class="step-error" role="alert"></div>
+        </div>
         </form>
       </div>
     </div>
@@ -1439,14 +1567,14 @@
               {% set biz_net = business.earnings_balance|float %}
               {% if biz_net >= 10 %}
                 {# Standard business payout #}
-                {% set std_fee_biz = biz_net * 0.005 + 0.35 %}
+                {% set std_fee_biz = biz_net * 0.029 + 0.50 %}
                 {% set std_net_biz = biz_net - std_fee_biz %}
                 <div class="mb-3 border rounded p-3">
                   <div class="fw-bold mb-1">
                     <i class="bi bi-bank"></i> Standard Payout (1-10 business days)
                   </div>
                   <div class="text-muted mb-1" style="font-size:0.97em;">
-                    Perk Miner transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee_biz) }} (0.5% + $0.35)<br>
+                    Perk Miner LLC transfer fee to Stripe balance: ${{ '{:,.2f}'.format(std_fee_biz) }} (2.9% + $0.50)<br>
                     If you withdraw full balance to your Stripe balance, you will receive: <b>${{ '{:,.2f}'.format(std_net_biz) }}<br>
                     Stripe may charge an additional fee to send funds to your bank account.</b>
                   </div>
@@ -1485,6 +1613,9 @@
       </div>
     </div>
   </div>
+
+  {% set rv_biz_id = session.get('business_id') %}
+  {% include "partials/_review_alerts.html" %}
 
   <!-- ===================== TRANSACTIONS ===================== -->
   <div class="dash-section-head" id="transactions">
@@ -1607,9 +1738,9 @@
             style="max-width:520px; font-size:0.9rem;"
           >Attention Business owners:
  
-          I’m an advertiser on PerkMiner and this is why I think you should advertise too.
+          I’m an advertiser on Perk Miner and this is why I think you should advertise too.
 
-          •  You only pay when a sale actually closes — 10% of the sale (capped at $250). That’s 1,000% Return On Ad Spend or higher
+          •  You only pay when a sale actually closes — 10% of the sale (capped at $250). That’s about $1 in fees for every $10 sold
 
           •  No sale means zero fees. No contracts, no monthly fees, no hidden charges
 
@@ -1619,9 +1750,9 @@
 
           •  Free live tracking for your service techs when “on the way” (members can even correct the address - cuts down on wasted trips)
 
-          •  Earn 1% cash back on every finalized sale (paid by Perk Miner) just for offering a perk
+          •  Earn 1% cash back on every finalized sale (paid by Perk Miner LLC) just for offering a perk
 
-          •  Invite other businesses and earn mutual commissions from each other’s sales — all paid by Perk Miner
+          •  Invite other businesses and earn mutual commissions from each other’s sales — all paid by Perk Miner LLC
 
           •  Only $25 minimum to fund your account to start (covers up to $250 in sales)
 
@@ -1844,7 +1975,7 @@
 
   <div class="card p-4 text-center">
     <h4>This is your dashboard.</h4>
-    <p class="mb-3">Congrats on registering your business with PerkMiner!</p>
+    <p class="mb-3">Congrats on registering your business with Perk Miner!</p>
     <a href="https://perkminer.com/discontinue" class="btn btn-danger btn-sm mx-auto">
       <i class="bi bi-x-circle-fill me-1"></i>
       Discontinue Business Account
@@ -1860,7 +1991,7 @@
     <form class="modal-content" method="post" action="{{ url_for('business_invite') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="modal-header">
-        <h5 class="modal-title" id="inviteModalLabel">Invite Others to Join PerkMiner</h5>
+        <h5 class="modal-title" id="inviteModalLabel">Invite Others to Join Perk Miner</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -1942,8 +2073,13 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="listing_id" value="{{ business.id }}">
           <input type="hidden" name="referral_code" value="{{ business.referral_code }}">
+          {% if business.status == "approved" %}
+          <div class="alert alert-info small mb-2" role="status">
+            <strong>Updates require approval.</strong> Your proposed changes will not take effect until approved. Your existing approved listing and public profile will remain live and unchanged during review. If rejected, the current approved information stays in place.
+          </div>
+          {% endif %}
           <button type="submit" class="btn btn-warning w-100 mb-2">
-            Submit for Review
+            {{ 'Submit Changes for Review' if business.status == 'approved' else 'Submit for Review' }}
           </button>
         </form>
         {# -- If zero balance, show warning (optional)—keep this under the same condition -- #}
@@ -1989,103 +2125,109 @@ window.addEventListener('DOMContentLoaded', function() {
     if (!lat || isNaN(Number(lat))) lat = "";
     if (!lng || isNaN(Number(lng))) lng = "";
 
-    // MODERN SMALL LISTING PREVIEW (matches homepage)
+    const escapeFAQ = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const faqQuestions = Array.from(document.querySelectorAll('#business-faq-editor input[name="question"]'));
+    const faqAnswers = Array.from(document.querySelectorAll('#business-faq-editor textarea[name="answer"]'));
+    const previewFAQs = faqQuestions.map((field, i) => ({question: field.value.trim(), answer: faqAnswers[i]?.value.trim() || ''}))
+      .filter(faq => faq.question && faq.answer);
+    const faqPreviewHTML = previewFAQs.length ? `
+      <section class="mt-4 mb-3" aria-label="Frequently asked questions">
+        <h4>Frequently Asked Questions</h4>
+        ${previewFAQs.map(faq => `<details class="border rounded p-3 my-2"><summary class="fw-semibold">${escapeFAQ(faq.question)}</summary><p class="mt-2 mb-0" style="white-space:pre-line">${escapeFAQ(faq.answer)}</p></details>`).join('')}
+      </section>` : '';
+
+    // LISTING PREVIEW — same markup as templates/partials/_listing_views.html
+    // (the small card visitors see in search, and the full listing page), so what you see here matches live.
+    const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const val = id => (document.getElementById(id)?.value || '').trim();
+    const chk = id => !!document.getElementById(id)?.checked;
+    const social = [
+      ['facebook_url','bi-facebook','Facebook'], ['instagram_url','bi-instagram','Instagram'], ['x_url','bi-twitter-x','X'],
+      ['linkedin_url','bi-linkedin','LinkedIn'], ['tiktok_url','bi-tiktok','TikTok'], ['youtube_url','bi-youtube','YouTube']
+    ].filter(x => val(x[0]));
+    const hours = val('hours_of_operation');
+    const reviewsUrl = val('google_reviews_url');
+    const badgeHTML = () => {
+      const out = [];
+      if (chk('licensed')) out.push('<span class="trust-badge trust-lic"><i class="bi bi-patch-check-fill"></i> Licensed</span>');
+      if (chk('bonded')) out.push('<span class="trust-badge trust-bond"><i class="bi bi-shield-fill-check"></i> Bonded</span>');
+      if (chk('insured')) out.push('<span class="trust-badge trust-ins"><i class="bi bi-umbrella-fill"></i> Insured</span>');
+      return out.length ? `<div class="trust-badges">${out.join('')}</div>` : '';
+    };
+    const chipsHTML = `<span class="pml-chip"><i class="bi bi-tag"></i> ${esc(category || 'Local business')}</span>`;
+    const logoSmall = img ? `<img src="${esc(img)}" class="pml-logo" alt="${esc(name)} logo">` : `<div class="pml-logo ph"><i class="bi bi-shop"></i></div>`;
+    const svcChips = services.length
+      ? services.slice(0, 4).map(s => `<span>${esc(s)}</span>`).join('') + (services.length > 4 ? `<span class="more">+${services.length - 4} more</span>` : '')
+      : '<span class="more">Services listed on profile</span>';
+
+    const saLabel = window.pmServiceArea ? window.pmServiceArea() : '';
+    const saShort = window.pmServiceArea ? window.pmServiceArea(3) : '';
     let smallListing = `
-      <div class="small-listing-modern">
-        ${img
-          ? `<img src="${img}" class="small-listing-modern-img" alt="${name}">`
-          : `<div class="small-listing-modern-img d-flex align-items-center justify-content-center bg-light border"><i class="bi bi-shop" style="font-size:1.9em; color:#a3bdbc;"></i></div>`
-        }
-        <div class="small-listing-info">
-          <div class="small-listing-title">${name}</div>
-          <div class="small-listing-category-badge">${category}</div>
-          <div><b>Address:</b> ${address}</div>
-          <div></br>
-            <b>Services:</b> ${services.length ? services.join(', ') : 'N/A'}
-          </div></br>
-          <div>
-            <b>Perks Offered:</b> ${perks ? perks.replace(/\n/g, "<br>") : "N/A"}
-          </div>
+      <div class="pml-card is-preview">
+        <div class="pml-card-banner"></div>
+        ${logoSmall}
+        <div class="pml-card-body">
+          <h3 class="pml-name">${esc(name)}</h3>
+          <div class="pml-chips">${chipsHTML}</div>
+          ${saShort ? `<div class="pml-line"><i class="bi bi-globe-americas"></i><span>Serves ${esc(saShort)}</span></div>` : (address ? `<div class="pml-line"><i class="bi bi-geo-alt"></i><span>${esc(address)}</span></div>` : '')}
+          ${reviewsUrl ? `<div class="pml-line"><i class="bi bi-star-fill" style="color:#e0a800;"></i><span>Google reviews available</span></div>` : ''}
+          <div class="pml-badges">${badgeHTML()}</div>
+          <div class="pml-services">${svcChips}</div>
+          <div class="pml-perk"><i class="bi bi-gift-fill"></i><span><b>Perks Offered</b>${perks ? esc(perks).replace(/\n/g, '<br>') : 'Member perks available'}</span></div>
+        </div>
+      </div>`;
+
+    let largeListing = `
+      <div class="pml-hero">
+        <div class="pml-hero-banner"></div>
+        <div class="pml-hero-body">
+          ${img ? `<img src="${esc(img)}" alt="${esc(name)} logo" class="pml-hero-pic">` : `<div class="pml-hero-pic ph"><i class="bi bi-buildings"></i></div>`}
+          <h1 class="pml-hero-title">${esc(name)}</h1>
+          <div class="pml-chips">${chipsHTML}</div>
+          ${finalization ? `<span class="pml-final"><b>Finalization: ${esc(finalization)}</b></span>` : ''}
+          ${badgeHTML()}
         </div>
       </div>
+      ${social.length ? `<div class="pml-block"><h2><i class="bi bi-share-fill"></i> Follow ${esc(name)}</h2><div class="pml-social">${social.map(x => `<a href="${esc(val(x[0]))}" target="_blank" rel="noopener noreferrer" aria-label="${x[2]}" title="${x[2]}"><i class="bi ${x[1]}"></i></a>`).join('')}</div></div>` : ''}
+      <div class="pml-info">
+        ${saLabel ? `<div class="pml-info-row"><i class="bi bi-signpost-2"></i><span><strong>Area served:</strong> ${esc(saLabel)}</span></div>` : ''}
+        <div class="pml-info-row"><i class="bi bi-pin-map"></i><span><strong>${saLabel ? 'Address (HQ):' : 'Address:'}</strong> ${address ? esc(address) : '-'}</span></div>
+        <div class="pml-info-row"><i class="bi bi-telephone"></i><span><strong>Phone:</strong> ${phone ? `<a href="tel:${esc(phone)}">${esc(phone)}</a>` : '-'}</span></div>
+        <div class="pml-info-row"><i class="bi bi-envelope"></i><span><strong>Email:</strong> ${email ? `<a href="mailto:${esc(email)}">${esc(email)}</a>` : '-'}</span></div>
+        <div class="pml-info-row"><i class="bi bi-globe"></i><span><strong>Website:</strong> ${website ? `<a href="${esc(website)}" target="_blank" rel="noopener">${esc(website)}</a>` : '-'}</span></div>
+      </div>
+      <div class="pml-block"><h2><i class="bi bi-info-circle"></i> About Us</h2><div class="txt">${about ? esc(about) : '&mdash;'}</div></div>
+      <div class="pml-block perks"><h2><i class="bi bi-gift-fill"></i> Perks Offered</h2><div class="txt">${perks ? esc(perks) : '&mdash;'}</div></div>
+      <div class="pml-block"><h2><i class="bi bi-clock"></i> Hours of Operation</h2><div class="txt">${hours ? esc(hours) : '&mdash;'}</div></div>
+      <div class="pml-block"><h2><i class="bi bi-list-check"></i> Products or Services Offered</h2>
+        <ul class="pml-svc">${services.length ? services.map(s => `<li>${esc(s)}</li>`).join('') : '<li>N/A</li>'}</ul></div>
+      <div class="pml-block"><h2><i class="bi bi-map"></i> Location Map</h2>
+        ${lat && lng ? `
+          <div class="pml-map"><iframe width="100%" height="100%" style="border:0" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDo-AojTUQUwwvvywrSiDRcF-oVpw9m_w4&q=${lat},${lng}"></iframe></div>
+          <a class="pml-btn-line" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving"><i class="bi bi-sign-turn-right"></i> Driving directions</a>`
+          : '<div class="txt" style="color:#5b6f75;">Map unavailable</div>'}
+      </div>
+      ${galleryPhotos.length ? `<div class="pml-block pml-gallery-wrap"><h2><i class="bi bi-images"></i> Gallery</h2><div class="pml-gallery-note">Swipe or use the arrows &middot; tap a photo to open it full size</div>
+        <div class="pml-slider${galleryPhotos.length < 2 ? ' single' : ''}" data-pml-slider tabindex="0" aria-roledescription="carousel" aria-label="Photos of ${esc(name)}">
+          <div class="pml-slides">${galleryPhotos.map((url, i) => `<a class="pml-slide" href="${esc(url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(url)}" alt="Photo ${i + 1} of ${esc(name)}"></a>`).join('')}</div>
+          <button type="button" class="pml-nav prev" aria-label="Previous photo"><i class="bi bi-chevron-left"></i></button>
+          <button type="button" class="pml-nav next" aria-label="Next photo"><i class="bi bi-chevron-right"></i></button>
+          <span class="pml-count">1 / ${galleryPhotos.length}</span>
+          <div class="pml-dots">${galleryPhotos.map((u, i) => `<button type="button" class="${i === 0 ? 'on' : ''}" aria-label="Go to photo ${i + 1}"></button>`).join('')}</div>
+        </div>
+        ${galleryPhotos.length > 1 ? `<div class="pml-thumbs">${galleryPhotos.map((u, i) => `<button type="button" class="${i === 0 ? 'on' : ''}" aria-label="Show photo ${i + 1}"><img src="${esc(u)}" alt=""></button>`).join('')}</div>` : ''}</div>` : ''}
+      ${previewFAQs.length ? `<div class="pml-block pml-faq"><h2><i class="bi bi-question-circle"></i> Frequently Asked Questions</h2>
+        ${previewFAQs.map(f => `<details><summary>${escapeFAQ(f.question)}</summary><p>${escapeFAQ(f.answer)}</p></details>`).join('')}</div>` : ''}
     `;
 
-    // MODERN LARGE LISTING PREVIEW (matches large_listing)
-let largeListing = `
-  <div class="listing-pic-wrap">
-    ${img
-      ? `<img src="${img}" class="large-profile-pic" alt="${name}">`
-      : `<div class="large-profile-pic d-flex align-items-center justify-content-center bg-light border"><i class="bi bi-shop" style="font-size:2.9em; color:#a3bdbc;"></i></div>`
-    }
-    <h2 class="listing-title">${name}</h2>
-    <span class="biz-category-badge mb-2">${category}</span>
-    <span class="biz-finalization-badge mb-2">${finalization}</span>
-  </div>
-  <div class="main-info-row"><i class="bi bi-pin-map"></i><span><b>Address:</b> ${address}</span></div>
-  <div class="main-info-row"><i class="bi bi-telephone"></i><span><b>Phone:</b> ${phone}</span></div>
-  <div class="main-info-row"><i class="bi bi-envelope"></i><span><b>Email:</b> ${email}</span></div>
-  <div class="main-info-row"><i class="bi bi-globe"></i>
-    <b>Website:</b> ${website ? `<a href="${website}" target="_blank">${website}</a>` : "-"}
-  </div>
-  <div class="about-block">
-    <b>About Us:</b><br>${about || "&mdash;"}
-  </div>
-  <div class="perks-block">
-    <b>Perks Offered:</b> ${perks ? perks.replace(/\n/g, "<br>") : "N/A"}
-  </div>
-  <div class="service-list-label">Products or Services Offered:</div>
-  <ul class="service-list">
-    ${services.length ? services.map(s=>`<li>${s}</li>`).join('') : "<li>N/A</li>"}
-  </ul>
-  ${lat && lng ? `
-    <div class="map-wrap">
-      <iframe
-        width="100%" height="100%" style="border:0"
-        loading="lazy" allowfullscreen
-        referrerpolicy="no-referrer-when-downgrade"
-        src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDo-AojTUQUwwvvywrSiDRcF-oVpw9m_w4&q=${lat},${lng}">
-      </iframe>
-    </div>
-    <div class="mt-2 mb-3">
-      <a id="directions-link"
-         class="btn btn-outline-primary map-link-btn"
-         target="_blank"
-         href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}">
-        Driving directions
-      </a>
-    </div>
-  ` : '<div class="text-muted mb-2">Map unavailable</div>'}
-
-
-  ${galleryPhotos.length ? `
-    <hr class="mt-4 mb-3">
-    <div class="text-center mb-2">
-      <h4 style="color: var(--pm-primary); font-weight: 700; margin-bottom: 0.25rem;">
-        Gallery
-      </h4>
-      <div style="font-size: 0.9em; color: #555;">
-        (Click on image to view full size - opens in new window)
-      </div>
-    </div>
-    <div class="listing-photo-strip">
-      ${galleryPhotos.map(url => `
-        <div class="listing-photo-item">
-          <a href="${url}" target="_blank" rel="noopener noreferrer">
-            <img src="${url}" alt="Photo of ${name}">
-          </a>
-        </div>
-      `).join('')}
-    </div>
-  ` : ''}
-
-`;
-
     let html = `
-      <h5>Small Listing Preview</h5><h6> (Live will be slightly different)</h6>
-      ${smallListing}
-      <hr/>
-      <h5>Large Listing Preview</h5><h6> (Live will be slightly different)</h6>
-      ${largeListing}
+      <div class="pml">
+        <div class="pml-label">Small listing &mdash; how it looks in search results</div>
+        <div class="pml-wrap-sm">${smallListing}</div>
+        <hr class="my-4"/>
+        <div class="pml-label">Large listing &mdash; the full page</div>
+        <div class="pml-wrap">${largeListing}</div>
+      </div>
     `;
     // Only replace what follows the form in the modal body.
     let modalForm = modalContent.querySelector('form');
@@ -2265,10 +2407,10 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<!-- ===================== PROFILE WIZARD (14 STEPS) ===================== -->
+<!-- ===================== PROFILE WIZARD (15 STEPS) ===================== -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const TOTAL = 14;
+  const TOTAL = 15;
   const TITLES = {
     1: 'Promo Code',
     2: 'Profile Photo',
@@ -2283,7 +2425,8 @@ document.addEventListener('DOMContentLoaded', function () {
     11: 'Perks Offered',
     12: 'Photos from Social Media or Web',
     13: 'Listing Type, Category & Finalization',
-    14: 'Keywords'
+    14: 'Keywords',
+    15: 'Frequently Asked Questions (Optional — Helps SEO)'
   };
 
   const panel = document.getElementById('profileCollapse');
@@ -2305,7 +2448,7 @@ document.addEventListener('DOMContentLoaded', function () {
     for (let i = 1; i <= TOTAL; i++) {
       const opt = document.createElement('option');
       opt.value = i;
-      opt.textContent = (i === TOTAL ? 'Final Step' : 'Step ' + i) + ': ' + TITLES[i];
+      opt.textContent = 'Step ' + i + ': ' + TITLES[i];
       jump.appendChild(opt);
     }
     jump.addEventListener('change', function () {
@@ -2331,7 +2474,7 @@ document.addEventListener('DOMContentLoaded', function () {
     steps.forEach(function (s) {
       s.classList.toggle('active', parseInt(s.getAttribute('data-step'), 10) === current);
     });
-    label.textContent = (current === TOTAL) ? 'Final Step' : 'Step ' + current + ' of ' + TOTAL;
+    label.textContent = 'Step ' + current + ' of ' + TOTAL;
     sub.textContent = TITLES[current];
     bar.style.width = ((current / TOTAL) * 100) + '%';
     if (progress) progress.setAttribute('aria-valuenow', current);
@@ -2389,6 +2532,27 @@ document.addEventListener('DOMContentLoaded', function () {
         break;
       }
     }
+    if (!msg && n === 15) {
+      const questions = Array.from(el.querySelectorAll('input[name="question"]'));
+      const answers = Array.from(el.querySelectorAll('textarea[name="answer"]'));
+      for (let i = 0; i < questions.length; i++) {
+        if (!!questions[i].value.trim() !== !!answers[i].value.trim()) {
+          msg = 'FAQ ' + (i + 1) + ' needs both a question and an answer, or leave both blank.';
+          (questions[i].value.trim() ? answers[i] : questions[i]).classList.add('is-invalid');
+          break;
+        }
+      }
+    }
+    if (!msg && n === 4) {
+      const on = document.getElementById('service_area_expanded');
+      if (on && on.checked) {
+        const sc = document.getElementById('service_area_scope');
+        const v = sc ? sc.value : '';
+        if (!v) { msg = 'Choose where you serve customers, or untick the service area box.'; if (sc) sc.classList.add('is-invalid'); }
+        else if (v === 'states' && !el.querySelector('.sa-state-cb:checked')) msg = 'Tick at least one state you serve.';
+        else if ((v === 'usa_countries' || v === 'countries') && !el.querySelector('.sa-country-cb:checked')) msg = 'Tick at least one country you serve.';
+      }
+    }
     showError(el, msg);
     return msg;
   }
@@ -2420,8 +2584,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Final save: validate everything, add blank slots for removed fields
   form.addEventListener('submit', function (e) {
-    if (current !== TOTAL) { e.preventDefault(); return; }
-    for (let n = 2; n <= TOTAL; n++) {
+    if (current !== 15) { e.preventDefault(); return; }
+    for (let n = 2; n <= 15; n++) {
       const msg = validateStep(n);
       if (msg) {
         e.preventDefault();
@@ -2463,17 +2627,15 @@ document.addEventListener('DOMContentLoaded', function () {
     showStep(1, { noScroll: true });
   });
 
-  // initial state
-  showStep(1, { noScroll: true });
+  // Always keep View/Edit Profile collapsed on initial dashboard load.
+  // A return link from SEO Readiness selects Step 15 but does not open the editor.
+  const returningFromSeo = window.location.hash === '#business-faq-editor';
+  showStep(returningFromSeo ? 15 : 1, { noScroll: true });
 
-  let resume = null;
-  try {
-    resume = sessionStorage.getItem('pm_wizard_resume');
-    if (resume) sessionStorage.removeItem('pm_wizard_resume');
-  } catch (err) {}
-  if (resume && window.bootstrap) {
-    bootstrap.Collapse.getOrCreateInstance(panel, { toggle: false }).show();
-    showStep(1, { noScroll: true });
+  // Remove stale resume flags without opening the wizard automatically.
+  try { sessionStorage.removeItem('pm_wizard_resume'); } catch (err) {}
+  if (window.bootstrap) {
+    bootstrap.Collapse.getOrCreateInstance(panel, { toggle: false }).hide();
   }
 });
 </script>
@@ -2880,5 +3042,59 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 {% endif %}
 
+
+<script>
+/* Service area (Step 4): show/hide fields, relabel the address, and expose the same label text the live pages use. */
+(function () {
+  var on = document.getElementById('service_area_expanded');
+  if (!on) return;
+  var fields = document.getElementById('sa-fields'), scope = document.getElementById('service_area_scope');
+  var statesWrap = document.getElementById('sa-states-wrap'), countriesWrap = document.getElementById('sa-countries-wrap');
+  var title = document.getElementById('sa-countries-title'), summary = document.getElementById('sa-summary');
+  var addrLabel = document.querySelector('label[for="address-autocomplete"]');
+
+  function names(sel) { return Array.prototype.map.call(document.querySelectorAll(sel + ':checked'), function (c) { return c.getAttribute('data-name'); }); }
+  function list(a, limit) {
+    var more = '';
+    if (limit && a.length > limit) { more = ' +' + (a.length - limit) + ' more'; a = a.slice(0, limit); }
+    if (!a.length) return '';
+    if (a.length === 1) return a[0] + more;
+    return more ? a.join(', ') + more : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  }
+  function hqState() {
+    var m = (document.getElementById('address-autocomplete') || {}).value || '';
+    var st = m.match(/,\s*([A-Z]{2})(?:\s+\d{5}(?:-\d{4})?)?(?:,|\s*$)/);
+    var map = {AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',DC:'District of Columbia',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
+    return st && map[st[1]] ? map[st[1]] : '';
+  }
+  // exposed so the profile preview can show exactly what visitors will see
+  window.pmServiceArea = function (limit) {
+    if (!on.checked) return '';
+    var v = scope.value;
+    if (v === 'statewide') { var s = hqState(); return s ? 'Statewide (' + s + ')' : 'Statewide'; }
+    if (v === 'states') { var st = names('.sa-state-cb'); return st.length === 1 ? st[0] + ' (statewide)' : list(st, limit); }
+    if (v === 'usa') return 'Nationwide (USA)';
+    if (v === 'usa_countries') { var c = names('.sa-country-cb'); return c.length ? 'USA + ' + list(c, limit) : 'Nationwide (USA)'; }
+    if (v === 'countries') return list(names('.sa-country-cb'), limit);
+    if (v === 'worldwide') return 'Worldwide';
+    return '';
+  };
+  function sync() {
+    var open = on.checked, v = scope.value;
+    fields.style.display = open ? '' : 'none';
+    statesWrap.style.display = (open && v === 'states') ? '' : 'none';
+    countriesWrap.style.display = (open && (v === 'usa_countries' || v === 'countries')) ? '' : 'none';
+    if (title) title.textContent = v === 'usa_countries' ? 'Which countries besides the USA?' : 'Which countries?';
+    if (addrLabel) addrLabel.textContent = open ? 'Headquarters (HQ) Address' : 'Business Address';
+    var txt = window.pmServiceArea();
+    summary.style.display = (open && txt) ? '' : 'none';
+    summary.textContent = txt ? 'Visitors will see: Service area — ' + txt : '';
+  }
+  on.addEventListener('change', sync);
+  scope.addEventListener('change', sync);
+  document.addEventListener('change', function (e) { if (e.target.matches && e.target.matches('.sa-state-cb, .sa-country-cb')) sync(); });
+  sync();
+})();
+</script>
 </body>
 </html>

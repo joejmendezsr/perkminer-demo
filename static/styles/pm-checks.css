@@ -1,0 +1,27 @@
+/* Sitewide: every checkbox and radio button is large, bordered and easy to see. */
+input[type="checkbox"], input[type="radio"] { accent-color: #1e4a4b; }
+input[type="checkbox"]:not(.form-check-input):not(.form-switch *):not([role="switch"]) {
+  width: 1.35rem; height: 1.35rem; cursor: pointer; vertical-align: middle; flex: 0 0 auto;
+  outline: 2px solid #1e4a4b; outline-offset: -2px; border-radius: 4px;
+}
+input[type="radio"]:not(.form-check-input) { width: 1.3rem; height: 1.3rem; cursor: pointer; vertical-align: middle; }
+
+.form-check-input:not([role="switch"]) {
+  width: 1.45rem; height: 1.45rem; margin-top: 0;
+  background-color: #fff; border: 2.5px solid #1e4a4b !important; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(30,74,75,.18);
+}
+.form-check-input[type="checkbox"]:not([role="switch"]) { border-radius: .35rem; }
+.form-check-input:not([role="switch"]):hover { border-color: #0b3132 !important; background-color: #eef6f5; }
+.form-check-input:not([role="switch"]):checked { background-color: #1e4a4b; border-color: #0b3132 !important; background-size: 100% 100%; }
+.form-check-input[type="checkbox"]:not([role="switch"]):checked {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23ffd66b' stroke-linecap='round' stroke-linejoin='round' stroke-width='3.6' d='m5.5 10.5 3 3 6-7'/%3e%3c/svg%3e");
+}
+.form-check-input:not([role="switch"]):focus-visible { box-shadow: 0 0 0 4px rgba(255,214,107,.7); outline: none; }
+.form-check:not(.form-switch) { min-height: 1.45rem; padding-left: 2.1rem; }
+.form-check:not(.form-switch) .form-check-input { margin-left: -2.1rem; }
+.form-check-label { cursor: pointer; line-height: 1.45rem; }
+.form-check:not(.form-switch) .form-check-label { display: inline-block; }
+.form-switch .form-check-input[role="switch"] { width: 2.6rem; height: 1.4rem; border: 2px solid #1e4a4b; }
+.form-switch .form-check-input[role="switch"]:checked { background-color: #1e4a4b; border-color: #0b3132; }
+.form-check::after { content: ""; display: table; clear: both; }

@@ -12,7 +12,26 @@
     <meta name="keywords" content="{{ meta_keywords }}">
   {% endif %}
 
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta property="og:type" content="profile">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:site_name" content="Perk Miner">
+  <meta property="og:title" content="{{ page_title }}">
+  <meta property="og:description" content="{{ meta_description }}">
+  <meta property="og:url" content="{{ canonical_url }}">
+  {% if social_image %}<meta property="og:image" content="{{ social_image }}">
+  <meta property="og:image:alt" content="{{ business.business_name }}{% if business.category %} - {{ business.category }}{% endif %}">{% endif %}
+  <meta name="twitter:card" content="{% if social_image %}summary_large_image{% else %}summary{% endif %}">
+  <meta name="twitter:title" content="{{ page_title }}">
+  <meta name="twitter:url" content="{{ canonical_url }}">
+  <meta name="twitter:description" content="{{ meta_description }}">
+  {% if social_image %}<meta name="twitter:image" content="{{ social_image }}">
+  <meta name="twitter:image:alt" content="{{ business.business_name }}{% if business.category %} - {{ business.category }}{% endif %}">{% endif %}
   <link rel="canonical" href="{{ canonical_url }}">
+  {% if ai and ai.json_url %}
+  <link rel="alternate" type="application/json" href="{{ ai.json_url }}" title="{{ business.business_name }} (JSON)">
+  <link rel="alternate" type="text/markdown" href="{{ ai.markdown_url }}" title="{{ business.business_name }} (Markdown)">
+  {% endif %}
   <script type="application/ld+json">{{ ld_json|tojson }}</script>
 
   <link rel="stylesheet"
@@ -38,6 +57,11 @@
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    .social-links { display:flex; flex-wrap:wrap; gap:.65rem; align-items:center; }
+    .social-link { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; background:#fff; border:1px solid #dbe5e7; color:#2a5859; text-decoration:none; box-shadow:0 2px 8px rgba(30,74,75,.08); transition:transform .15s, box-shadow .15s; }
+    .social-link:hover { transform:translateY(-2px); box-shadow:0 5px 14px rgba(30,74,75,.14); color:#173d3e; }
+    .social-link i { font-size:1.25rem; }
+
       background: var(--pm-bg);
       color: var(--pm-dark);
     }
@@ -217,6 +241,13 @@
       }
     }
 
+    .glance-list { display: grid; grid-template-columns: max-content 1fr; gap: .4rem 1.1rem; margin: 0; }
+    .glance-list dt { font-weight: 700; color: #374151; }
+    .glance-list dd { margin: 0; overflow-wrap: anywhere; }
+    @media (max-width: 576px) {
+      .glance-list { grid-template-columns: 1fr; gap: 0; }
+      .glance-list dt { margin-top: .6rem; }
+    }
     .pill-tag {
       display: inline-block;
       border-radius: 999px;
@@ -307,6 +338,10 @@
     button.trust-badge { cursor:pointer; font-family:inherit; }
     button.trust-badge:hover { text-decoration:underline; filter:brightness(.97); }
   </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-theme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
 </head>
 <body>
 
@@ -328,12 +363,16 @@
       </div>
       <div class="col-12 col-md-8 text-center">
         <h1 class="hero-title">{{ business.business_name }}</h1>
+        {% from 'partials/_reviews.html' import rating_stars %}{{ rating_stars(business.rating_avg, business.rating_count, '1.3rem') }}
         <div class="hero-sub mt-2">
           <div>{{ business.category }}</div>
 
           {{ trust_badges(business, true) }}
 
-{% if area_city or area_state %}
+{% set sa = service_area_info(business) %}
+{% if sa.expanded %}
+  <div><i class="bi bi-globe-americas"></i> Service area: {{ sa.label }}</div>
+{% elif area_city or area_state %}
   <div>
     <i class="bi bi-geo-alt"></i>
     Area served:
@@ -388,6 +427,29 @@
   Perk Miner members earn 2% Cashback on up to $2,500 of every purchase from this business.<br>(Paid by Perk Miner LLC and not the business)
 </div>
 
+{% if ai %}
+<div class="section js-reveal" id="at-a-glance" aria-labelledby="glance-heading">
+  <h2 id="glance-heading"><i class="bi bi-lightning-charge-fill"></i> {{ business.business_name }} at a glance</h2>
+  <p id="pm-summary">{{ ai.summary }}</p>
+  <dl class="glance-list">
+    <dt>Category</dt><dd>{{ ai.category_label }}</dd>
+    {% if ai.has_public_address %}
+      <dt>Address</dt><dd>{{ ai.address }}</dd>
+    {% elif ai.service_area %}
+      <dt>Area served</dt><dd>{{ ai.service_area }}{% if ai.mobile %} (mobile / on-location){% endif %}</dd>
+    {% endif %}
+    {% if ai.phone %}<dt>Phone</dt><dd>{% if ai.tel %}<a href="tel:{{ ai.tel }}">{{ ai.phone }}</a>{% else %}{{ ai.phone }}{% endif %}</dd>{% endif %}
+    {% if ai.hours_text %}<dt>Hours</dt><dd>{{ ai.hours_text }}</dd>{% endif %}
+    {% if ai.services %}<dt>Services</dt><dd>{{ ai.services|join(", ") }}</dd>{% endif %}
+    {% if ai.member_perk %}<dt>Member perk</dt><dd>{{ ai.member_perk }}</dd>{% endif %}
+  </dl>
+  {% if ai.json_url %}
+  <p class="text-muted small mb-0 mt-3">Machine-readable version for assistants and apps:
+    <a href="{{ ai.json_url }}">JSON</a> &middot; <a href="{{ ai.markdown_url }}">Markdown</a></p>
+  {% endif %}
+</div>
+{% endif %}
+
 <div class="section js-reveal">
   <h2><i class="bi bi-info-circle"></i> About</h2>
   {% if business.about_us %}
@@ -439,7 +501,7 @@
             <img src="{{ photo }}"
                  class="gallery-img"
                  {% if not loop.first %}loading="lazy"{% endif %}
-                 alt="{{ business.business_name }} photo {{ loop.index }}">
+                 alt="{{ business.business_name }}{% if business.category %} &ndash; {{ business.category }}{% endif %}{% if ai and ai.service_area %} in {{ ai.service_area }}{% endif %} (photo {{ loop.index }} of {{ photos|length }})">
           </a>
         </div>
       </div>
@@ -469,7 +531,7 @@
 <div class="section js-reveal">
   <div class="row g-4">
     <div class="col-12 col-md-6">
-      <h2><i class="bi bi-list-check"></i> Services</h2>
+      <h2><i class="bi bi-list-check"></i> Services offered by {{ business.business_name }}</h2>
       {% set services = [business.service_1, business.service_2, business.service_3,
                          business.service_4, business.service_5, business.service_6,
                          business.service_7, business.service_8, business.service_9,
@@ -496,13 +558,30 @@
   </div>
 </div>
 
+{% if business.facebook_url or business.instagram_url or business.x_url or business.linkedin_url or business.tiktok_url or business.youtube_url %}
+<div class="section js-reveal" aria-labelledby="business-social-heading">
+  <h2 id="business-social-heading"><i class="bi bi-share-fill"></i> Follow {{ business.business_name }}</h2>
+  <div class="social-links">
+    {% if business.facebook_url %}<a class="social-link" href="{{ business.facebook_url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ business.business_name }} on Facebook" title="Facebook"><i class="bi bi-facebook" aria-hidden="true"></i></a>{% endif %}
+    {% if business.instagram_url %}<a class="social-link" href="{{ business.instagram_url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ business.business_name }} on Instagram" title="Instagram"><i class="bi bi-instagram" aria-hidden="true"></i></a>{% endif %}
+    {% if business.x_url %}<a class="social-link" href="{{ business.x_url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ business.business_name }} on X" title="X"><i class="bi bi-twitter-x" aria-hidden="true"></i></a>{% endif %}
+    {% if business.linkedin_url %}<a class="social-link" href="{{ business.linkedin_url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ business.business_name }} on LinkedIn" title="LinkedIn"><i class="bi bi-linkedin" aria-hidden="true"></i></a>{% endif %}
+    {% if business.tiktok_url %}<a class="social-link" href="{{ business.tiktok_url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ business.business_name }} on TikTok" title="TikTok"><i class="bi bi-tiktok" aria-hidden="true"></i></a>{% endif %}
+    {% if business.youtube_url %}<a class="social-link" href="{{ business.youtube_url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ business.business_name }} on YouTube" title="YouTube"><i class="bi bi-youtube" aria-hidden="true"></i></a>{% endif %}
+  </div>
+</div>
+{% endif %}
+
 <div class="section js-reveal">
   <h2><i class="bi bi-geo-alt-fill"></i> Location &amp; Contact</h2>
   <div class="row g-4">
     <div class="col-12 col-md-5">
+{% set sa = service_area_info(business) %}
 <p>
   <strong>Area served:</strong><br>
-  {% if area_city or area_state %}
+  {% if sa.expanded %}
+    {{ sa.label }}
+  {% elif area_city or area_state %}
     {{ area_city }}{% if area_city and area_state %}, {% endif %}{{ area_state }}{% if area_country %} {{ area_country }}{% endif %}
     {% if business.location_varies %}<br>Mobile / on-location{% endif %}
   {% else %}
@@ -510,13 +589,31 @@
   {% endif %}
 </p>
       <p>
-        <strong>Address:</strong><br>
+        <strong>{% if sa.expanded %}Address (HQ):{% else %}Address:{% endif %}</strong><br>
         {{ business.address or "N/A" }}
       </p>
       <p>
         <strong>Phone:</strong><br>
-        {{ business.phone_number or "N/A" }}
+        {% if business.phone_number and ai and ai.tel %}
+          <a href="tel:{{ ai.tel }}">{{ business.phone_number }}</a>
+        {% else %}
+          {{ business.phone_number or "N/A" }}
+        {% endif %}
       </p>
+      <p>
+        <strong>Email:</strong><br>
+        {% if business.business_email %}
+          <a href="mailto:{{ business.business_email }}">{{ business.business_email }}</a>
+        {% else %}
+          N/A
+        {% endif %}
+      </p>
+      {% if business.hours_of_operation %}
+      <p>
+        <strong>Hours:</strong><br>
+        {{ business.hours_of_operation }}
+      </p>
+      {% endif %}
       <p>
         <strong>Website:</strong><br>
         {% if business.website_url %}
@@ -531,6 +628,12 @@
            target="_blank" rel="noopener">
           <i class="bi bi-map"></i> Open in Google Maps
         </a>
+        {% if ai and ai.apple_maps_url %}
+        <a class="btn btn-outline-secondary btn-sm ms-1"
+           href="{{ ai.apple_maps_url }}" target="_blank" rel="noopener">
+          <i class="bi bi-apple"></i> Open in Apple Maps
+        </a>
+        {% endif %}
       {% endif %}
     </div>
     <div class="col-12 col-md-7">
@@ -542,6 +645,27 @@
     </div>
   </div>
 </div>
+
+{% from 'partials/_reviews.html' import reviews_block %}
+<section class="container my-4" aria-label="Member feedback">{{ reviews_block(business.id, business.rating_avg, business.rating_count) }}</section>
+
+<section class="container my-4" aria-label="Finalized transactions">
+  <div style="display:flex;align-items:center;justify-content:center;gap:.6rem;padding:1rem;font-weight:600;color:#314655;background:#fff;border:1px solid #e3eceb;border-radius:16px;">
+    <i class="bi bi-patch-check"></i><span>Finalized transactions:</span>
+    <span style="font-size:1.4rem;font-weight:800;color:#1e4a4b;">{% if not finalized_tx_count %}New Business{% else %}{{ finalized_tx_count }}{% endif %}</span>
+  </div>
+</section>
+
+{% set visible_faqs = seo_faqs %}
+{% if visible_faqs %}
+<section class="container my-5" aria-labelledby="business-faq-heading">
+  <h2 id="business-faq-heading">Frequently asked questions about {{ business.business_name }}</h2>
+  {% for faq in visible_faqs %}
+  <details class="border rounded p-3 my-2"><summary class="fw-semibold">{{ faq.question }}</summary>
+    <p class="mt-2 mb-0" style="white-space:pre-line">{{ faq.answer }}</p></details>
+  {% endfor %}
+</section>
+{% endif %}
 
 <footer>
   <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
@@ -625,6 +749,10 @@
   document.addEventListener('DOMContentLoaded', function () {
     const sections = document.querySelectorAll('.js-reveal');
 
+    if (!('IntersectionObserver' in window)) {
+      sections.forEach(sec => sec.classList.add('visible'));
+      return;
+    }
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -678,6 +806,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
+
 
 </body>
 </html>

@@ -1,23 +1,25 @@
 {% extends "auth_base.html" %}
 {% from "pm_auth_macros.html" import field, pw, recaptcha %}
 {% set auth_icon = 'box-arrow-in-right' %}
-{% set auth_title = 'Member Login' %}
-{% set auth_sub = 'Not Registered? Create Your Free Account Today.' %}
+{% set auth_title = 'Welcome back' %}
+{% set auth_sub = 'Log in to your member account.' %}
 {% set flash_safe = true %}
-{% block title %}Login - PerkMiner{% endblock %}
+{% block title %}Member Login - Perk Miner{% endblock %}
 
 {% block auth_body %}
+{% set kind = 'member' %}{% set mode = 'login' %}
+{% include 'partials/_social_buttons.html' %}
 <form method="post">
   {{ form.hidden_tag() }}
   <div class="mb-3">{{ field(form.email, ac='email') }}</div>
   <div class="mb-3">{{ pw(form.password) }}</div>
   {{ recaptcha(form) }}
-  <button type="submit" class="btn btn-primary btn-lg w-100"><i class="bi bi-box-arrow-in-right"></i> {{ form.submit.label.text }}</button>
+  <button type="submit" class="btn btn-primary btn-lg w-100"><i class="bi bi-box-arrow-in-right"></i> Log in</button>
 </form>
 {% if message %}<div class="alert alert-warning mt-3 mb-0" role="alert">{{ message }}</div>{% endif %}
 <div class="auth-links">
-  <a href="{{ url_for('register') }}">Create an account</a>
-  <a href="{{ url_for('verify_email') }}">Resend confirmation</a>
-  <a href="{{ url_for('forgot_password') }}">Forgot password?</a>
+  <a href="{{ url_for('forgot_password') }}">Forgot your password?</a>
+  <a href="{{ url_for('register') }}">New here? Join free</a>
+  <a href="{{ url_for('verify_email') }}" class="small fw-normal">Didn&rsquo;t get your confirmation email?</a>
 </div>
 {% endblock %}

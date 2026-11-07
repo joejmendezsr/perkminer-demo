@@ -1,15 +1,15 @@
 {% extends "pm_base.html" %}
 {% from 'pm_macros.html' import status_badge %}
 {% set is_provider = (staff.role == 'service_provider' and interaction.assigned_staff_id == staff.id) %}
-{% block title %}Staff Session – PerkMiner{% endblock %}
+{% block title %}Staff Session – Perk Miner{% endblock %}
 
 {% block navbar %}
 <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
   <div class="container">
-    <a class="navbar-brand" href="/">PerkMiner</a>
+    <a class="navbar-brand" href="/">Perk Miner</a>
     <div class="navbar-nav ms-auto flex-row gap-2">
-      <a href="{{ url_for('staff_dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i><span class="d-none d-sm-inline"> Back to dashboard</span></a>
-      <a href="{{ url_for('staff_logout') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i><span class="d-none d-sm-inline"> Log out</span></a>
+      <a href="{{ url_for('staff_dashboard') }}" class="btn btn-outline-secondary btn-sm text-nowrap"><i class="bi bi-arrow-left"></i> Back to dashboard</a>
+      <a href="{{ url_for('staff_logout') }}" class="btn btn-outline-danger btn-sm text-nowrap"><i class="bi bi-box-arrow-right"></i> Log out</a>
     </div>
   </div>
 </nav>
@@ -17,7 +17,7 @@
 
 {% block head_extra %}
 <style>
-  .pm-details-stack > * + * { margin-top: 1rem; }
+  .pm-details-stack > * + * { margin-top: .5rem; }
   .pm-details-stack .card { margin-bottom: 0; }
   .pm-send-row { display: flex; gap: .5rem; }
   .pm-send-row textarea { flex: 1; min-width: 0; }

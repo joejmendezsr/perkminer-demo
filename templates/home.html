@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Perk Miner – Free Membership + 2% Real Cash Back</title>
-  <meta name="description" content="Join free and earn 2% real cash back on everyday purchases. Search local businesses with total privacy. Secure messaging, no spam, real cash paid by Perk Miner.">
-  <meta name="theme-color" content="#2a5859">
+  <title>Perk Miner | Real Cash Back for Shopping Local</title>
+  <meta name="description" content="Join free and earn 2% real cash back on qualifying purchases from local businesses. Private one-to-one messaging, no spam, real cash paid by Perk Miner LLC. Businesses list free and pay only when a sale closes.">
+  <meta name="theme-color" content="#123f40">
   <link rel="canonical" href="https://www.perkminer.com/">
 
   <meta property="og:type" content="website">
@@ -21,421 +21,401 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-
-  <style>
-    :root {
-      --pm-primary: #1e4a4b;
-      --pm-primary-light: #2a5859;
-      --pm-accent: #ffd66b;
-      --pm-bg: #f8fafb;
-      --pm-card: #ffffff;
-      --pm-text: #1a1a1a;
-      --pm-muted: #5c6b73;
-      --pm-radius: 16px;
-      --pm-shadow: 0 4px 20px rgba(30,74,75,0.08);
-    }
-    * { box-sizing: border-box; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: var(--pm-bg); color: var(--pm-text); padding-bottom: 80px; margin: 0; }
-    .app-header { position: sticky; top: 0; z-index: 1000; background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid #e8eef0; padding: 0.6rem 1rem; }
-    .app-header .logo { height: 54px; width: auto; }
-    .header-cta .btn { border-radius: 50px; font-weight: 600; font-size: 0.9rem; padding: 0.4rem 1rem; }
-
-    .hero { background: linear-gradient(145deg, #1e4a4b 0%, #2a5859 60%, #3a6d6e 100%); color: white; padding: 2.5rem 1.25rem 2rem; text-align: center; position: relative; }
-    .hero::before { content: ''; position: absolute; inset: 0; background: url('https://res.cloudinary.com/dmrntlcfd/image/upload/v1782601402/Cash-Back_rignwa.jpg?auto=format&fit=crop&w=1200&q=40') center/cover; opacity: 0.12; }
-    .hero-inner { position: relative; z-index: 2; max-width: 640px; margin: 0 auto; }
-    .hero h1 { font-weight: 800; font-size: 2.1rem; line-height: 1.15; margin-bottom: 0.6rem; }
-    .hero .sub { font-size: 1.05rem; opacity: 0.95; margin-bottom: 1.2rem; }
-    .hero-cta .btn-primary { background: var(--pm-accent); border: none; color: #1e4a4b; font-weight: 700; border-radius: 50px; padding: 0.85rem 1.8rem; font-size: 1.05rem; }
-    .trust-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 1rem; }
-    .trust-pill { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 50px; padding: 0.3rem 0.8rem; font-size: 0.8rem; }
-
-    .search-wrap { margin: 1.4rem auto 0; max-width: 560px; }
-    .search-wrap .input-group { border-radius: 50px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.15); background: white; }
-    .search-wrap .form-control, .search-wrap .form-select { border: none; padding: 0.85rem 1rem; }
-    .search-wrap .btn { border-radius: 0 50px 50px 0; font-weight: 600; }
-
-    .benefit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.9rem; margin: 1.5rem 0; }
-    @media (min-width: 768px) { .benefit-grid { grid-template-columns: repeat(4, 1fr); } }
-    .benefit-card { background: var(--pm-card); border-radius: var(--pm-radius); padding: 1.1rem 0.9rem; text-align: center; box-shadow: var(--pm-shadow); }
-    .benefit-card i { font-size: 1.6rem; color: var(--pm-primary-light); margin-bottom: 0.4rem; }
-    .benefit-card h3 { font-size: 0.95rem; font-weight: 700; margin: 0 0 0.25rem; }
-    .benefit-card p { font-size: 0.8rem; color: var(--pm-muted); margin: 0; }
-
-    .section-title { font-weight: 700; font-size: 1.45rem; text-align: center; margin: 2.2rem 0 1.2rem; color: var(--pm-primary); }
-
-    /* Categories – swipe + toggle */
-    .categories-scroll-wrap {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scroll-snap-type: x mandatory;
-      scrollbar-width: none;
-      padding: 0 1rem 1rem;
-    }
-    .categories-scroll-wrap::-webkit-scrollbar { display: none; }
-    .categories-row { display: flex; flex-wrap: nowrap; gap: 0.85rem; }
-    .category-card-wrapper {
-      scroll-snap-align: start;
-      flex: 0 0 38vw;
-      max-width: 160px;
-    }
-    .category-card { border-radius: 14px; overflow: hidden; background: white; box-shadow: var(--pm-shadow); display: block; text-decoration: none; color: inherit; height: 100%; }
-    .category-image-wrap { height: 100px; overflow: hidden; position: relative; }
-    .category-image { width: 100%; height: 100%; object-fit: cover; }
-    .category-label { padding: 0.55rem 0.4rem; font-size: 0.82rem; font-weight: 600; color: var(--pm-primary); text-align: center; line-height: 1.2; }
-
-    @media (min-width: 992px) {
-      .categories-scroll-wrap { overflow-x: hidden; padding: 0; }
-      .categories-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.2rem; }
-      .category-card-wrapper { flex: 1 1 auto; max-width: none; scroll-snap-align: none; }
-      .category-image-wrap { height: 130px; }
-      .category-label { font-size: 0.95rem; padding: 0.7rem 0.5rem; }
-      .category-card-wrapper:nth-child(n+5) { display: none; } /* show first 4 initially */
-    }
-    @media (max-width: 991.98px) {
-      .more-btn-container { display: none !important; }
-    }
-    .more-btn-container { text-align: center; margin: 1.2rem 0; }
-    .more-btn { background: var(--pm-primary); color: white; border: none; padding: 0.6rem 1.6rem; border-radius: 50px; font-weight: 600; }
-
-    .small-listing-modern { border-radius: 18px; box-shadow: var(--pm-shadow); border: 1px solid #e8f0f2; }
-    .detail-card { background: white; border-radius: 20px; padding: 1.4rem 1.2rem; margin-bottom: 1rem; box-shadow: var(--pm-shadow); }
-    .steps { display: flex; flex-direction: column; gap: 0.8rem; max-width: 500px; margin: 0 auto; }
-    .step { display: flex; align-items: flex-start; gap: 0.8rem; background: white; padding: 0.9rem 1rem; border-radius: 14px; box-shadow: var(--pm-shadow); }
-    .step-num { background: var(--pm-primary-light); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
-
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e8eef0; display: flex; justify-content: space-around; padding: 0.55rem 0 calc(0.55rem + env(safe-area-inset-bottom)); z-index: 1000; }
-    .bottom-nav a { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #6b7c82; font-size: 0.7rem; font-weight: 500; }
-    .bottom-nav a i { font-size: 1.35rem; }
-    .bottom-nav a.active, .bottom-nav a:hover { color: var(--pm-primary-light); }
-
-    .marquee-container { background: #111; color: #eee; padding: 0.65rem 0; overflow: hidden; }
-    .marquee { display: flex; white-space: nowrap; animation: scroll 18s linear infinite; }
-    .marquee-content { display: inline-flex; gap: 3rem; font-weight: 600; font-size: 0.95rem; padding: 0 1rem; }
-    .marquee-content .highlight { color: var(--pm-accent); }
-    @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
-    /* Stats + Charts */
-    .stats-section { background: white; border-radius: 20px; padding: 1.5rem; margin: 2rem 0; box-shadow: var(--pm-shadow); }
-    .stat-card { text-align: center; padding: 0.8rem; }
-    .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--pm-primary); }
-    .stat-label { font-size: 0.8rem; color: var(--pm-muted); }
-    .chart-container { position: relative; height: 220px; max-width: 320px; margin: 1rem auto; }
-
-    /* Scroll animations */
-    .animate-on-scroll { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
-    .animate-on-scroll.visible { opacity: 1; transform: translateY(0); }
-
-    footer { background: #f4f7f8; padding: 2rem 1rem 1rem; text-align: center; color: #6b7c82; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--pm-primary-light); text-decoration: none; }
-
-    @media (min-width: 992px) {
-      body { padding-bottom: 0; }
-      .bottom-nav { display: none; }
-      .hero h1 { font-size: 2.6rem; }
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-site.css') }}">
+  {% if current_user.is_authenticated %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>{% endif %}
+  <script>document.documentElement.classList.remove('no-js');</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
 </head>
-<body>
+<body class="ps-body ps-has-bottom">
+{# Searching and browsing listings is open to everyone; only the full listing page requires a login. #}
+{% set can_browse = true %}
+{% set ps_active = '' %}
+{% include 'partials/_site_header.html' %}
 
-<header class="app-header">
-  <div class="container d-flex align-items-center justify-content-between">
-    <a href="/" class="d-flex align-items-center text-decoration-none">
-      <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" class="logo">
-    </a>
-    <div class="header-cta d-flex gap-2">
-      {% if current_user.is_authenticated %}
-        {% if current_user.business_email %}
-          <a href="{{ url_for('business_dashboard') }}" class="btn btn-warning btn-sm">Dashboard</a>
-        {% else %}
-          <a href="{{ url_for('dashboard') }}" class="btn btn-warning btn-sm">Dashboard</a>
-        {% endif %}
-      {% elif session.get('business_id') %}
-        <a href="{{ url_for('business_dashboard') }}" class="btn btn-warning btn-sm">Dashboard</a>
-      {% else %}
-        <a href="/login" class="btn btn-outline-secondary btn-sm">Login</a>
-        <a href="/register" class="btn btn-warning btn-sm">Join Free</a>
-      {% endif %}
-    </div>
-  </div>
-</header>
+<main id="main">
 
-<section class="hero">
-  <div class="hero-inner">
-    <h1>DEMO SITE ONLY!</h1>
-    <h1>Get 2% Real Cash Back<br>on Everyday Purchases</h1>
-    <p class="sub">Free to join. Your data stays private.<br>Real cash paid by Perk Miner — not points or coupons.</p>
-    <div class="hero-cta mb-2">
-      <a href="/register" class="btn btn-primary btn-lg">Join Free — Start Earning</a>
-    </div>
-    <div class="trust-pills">
-      <span class="trust-pill">🔒 Privacy guaranteed</span>
-      <span class="trust-pill">💰 Real cash via Stripe</span>
-      <span class="trust-pill">🚫 Not crypto</span>
-      <span class="trust-pill">✅ No fees ever</span>
-    </div>
-    <div class="search-wrap">
-      <form class="search-form" method="get" action="/search" role="search">
-        <div class="input-group">
-          <input type="text" class="form-control" name="q" placeholder="Search businesses, services, products..." aria-label="Search">
-          <select class="form-select" name="distance" style="max-width:100px;" aria-label="Distance">
-            <option value="">Closest</option>
-            <option value="5">5 mi</option>
-            <option value="10">10 mi</option>
-            <option value="25">25 mi</option>
-            <option value="all">All</option>
-          </select>
-          <button class="btn btn-primary" type="submit">Search</button>
+<!-- ================= HERO ================= -->
+<section class="ps-hero">
+  <div class="container">
+    <div class="ps-hero-grid ps-hero-solo">
+      <div>
+        <span class="ps-pill"><i class="bi bi-lightning-charge-fill"></i> Free to join &middot; Real cash back</span>
+        <h1>DEMO SITE ONLY!</h1>
+        <h1>Shop local.<br><em>Earn real cash back.</em></h1>
+        <p class="ps-lead">Join free and earn 2% cash back on qualifying purchases from local businesses &mdash; paid in real money by Perk Miner, straight to your bank. Private by design, with no spam.</p>
+        <div class="ps-cta-row">
+          <a href="{{ url_for('register') }}" class="ps-btn ps-btn-gold ps-btn-lg">Join free <i class="bi bi-arrow-right"></i></a>
+          <a href="{{ url_for('business_home') }}" class="ps-btn ps-btn-ghost-light ps-btn-lg"><i class="bi bi-shop"></i> I own a business</a>
         </div>
-        <input type="hidden" name="lat" id="search-lat">
-        <input type="hidden" name="lng" id="search-lng">
-      </form>
+
+        <ul class="ps-trust">
+          <li><i class="bi bi-check-circle-fill"></i> Free for members, always</li>
+          <li><i class="bi bi-bank"></i> Paid via Stripe</li>
+          <li><i class="bi bi-shield-lock-fill"></i> Contact info stays private</li>
+          <li><i class="bi bi-slash-circle"></i> Not crypto</li>
+        </ul>
+        {% if can_browse %}
+        <p class="mt-3 mb-0 d-flex flex-column align-items-center gap-2"><a href="{{ url_for('freelance_directory') }}" class="ps-btn ps-btn-ghost-light ps-btn-sm"><i class="bi bi-person-workspace"></i> Freelancers &amp; side gigs</a><a href="{{ url_for('online_marketplace') }}" class="ps-btn ps-btn-ghost-light ps-btn-sm"><i class="bi bi-bag-heart"></i> Online marketplace</a></p>
+        {% endif %}
+      </div>
+
     </div>
-    {% if current_user.is_authenticated %}
-    <div class="mt-3">
-      <a href="{{ url_for('online_marketplace') }}" class="btn btn-outline-light btn-sm">Online Marketplace</a>
-    </div>
-    {% endif %}
   </div>
 </section>
 
-<div class="marquee-container">
-  <div class="marquee">
-    <div class="marquee-content" id="live-marquee">
-      <span>DEMO SITE ONLY!</span>
-      <span class="highlight">Free to Join — Earn 2% real cash on purchases - deposited to your bank account</span>
-      <span>DEMO SITE ONLY!</span>
-      <span class="highlight">Free to Join — Earn 2% real cash on purchases - deposited to your bank account</span>
+<!-- ================= SEARCH (the one place to look for businesses, products or services) ================= -->
+<section class="ps-searchband" id="search" aria-labelledby="search-title">
+  <div class="container">
+    <div class="ps-sb-head">
+      <span class="ps-sb-eyebrow"><i class="bi bi-geo-alt-fill"></i> Find it near you</span>
+      <h2 id="search-title">Search</h2>
+      <p>Looking for a business, a product or a service? Type it below and we&rsquo;ll show the closest Perk Miner businesses first.</p>
+    </div>
+    <form class="ps-sb-form" method="get" action="{{ url_for('search') }}" role="search"
+          {% if not can_browse %}data-gate data-gate-text="Create your free member account to search local businesses and start earning cash back."{% endif %}>
+      <div class="ps-sb-field ps-sb-q">
+        <label for="home-q">What are you looking for?</label>
+        <div class="ps-sb-input"><i class="bi bi-search" aria-hidden="true"></i>
+          <input type="text" id="home-q" name="q" placeholder="Plumber, pizza, haircut, tires..." autocomplete="off"></div>
+      </div>
+      <div class="ps-sb-field ps-sb-d">
+        <label for="home-d">How far?</label>
+        <div class="ps-sb-input"><i class="bi bi-crosshair" aria-hidden="true"></i>
+          <select id="home-d" name="distance" aria-label="Distance">
+            <option value="">Closest first</option>
+            <option value="5">Within 5 miles</option>
+            <option value="10">Within 10 miles</option>
+            <option value="25">Within 25 miles</option>
+            <option value="all">Any distance</option>
+          </select></div>
+      </div>
+      <button class="ps-sb-go" type="submit"><i class="bi bi-search"></i> Search</button>
+      <input type="hidden" name="lat" id="search-lat">
+      <input type="hidden" name="lng" id="search-lng">
+    </form>
+    {% if not can_browse %}<p class="ps-sb-note"><i class="bi bi-lock-fill"></i> A free member account is needed to search and browse &mdash; <a href="{{ url_for('register') }}">join free</a>.</p>{% endif %}
+  </div>
+</section>
+
+<!-- ================= CASH BACK EXAMPLE ================= -->
+<section class="ps-section ps-section-tint ps-receiptband" aria-labelledby="receipt-title">
+  <div class="container">
+    <div class="ps-rb-head">
+      <h2 id="receipt-title">See what 2% back looks like</h2>
+      <p>Shop at a Perk Miner business, and the cash back lands in your account &mdash; real money, paid out to your bank.</p>
+    </div>
+    <div class="ps-receipt-wrap" aria-hidden="true">
+        <div class="ps-float ps-float-b"><i class="bi bi-chat-heart-fill"></i><div>Private chat<small>One business at a time</small></div></div>
+        <div class="ps-receipt">
+          <div class="ps-receipt-top"><span>Cash back</span><span class="ps-receipt-tag">Example</span></div>
+          <div class="ps-receipt-row"><span>Your purchase</span><b>$100.00</b></div>
+          <div class="ps-receipt-row"><span>Cash back rate</span><b>2%</b></div>
+          <div class="ps-receipt-big"><div><small>You earn</small><strong>$2.00</strong></div><i class="bi bi-cash-coin"></i></div>
+          <div class="ps-progress"><div></div></div>
+          <div class="ps-progress-cap"><span>$2 earned</span><span>Withdraw at $10</span></div>
+          <p class="ps-receipt-foot">Illustration only. Earnings clear 7 days after a sale is finalized.</p>
+        </div>
+        <div class="ps-float ps-float-a"><i class="bi bi-bank2"></i><div>Paid via Stripe<small>Straight to your bank</small></div></div>
+      </div>
+  </div>
+</section>
+
+
+<!-- ================= TRUST STRIP ================= -->
+<div class="ps-strip">
+  <div class="container">
+    <div class="ps-strip-in">
+      <div class="ps-strip-item"><i class="bi bi-person-check"></i><div><b>$0 to join</b><span>No fees, no subscriptions</span></div></div>
+      <div class="ps-strip-item"><i class="bi bi-cash-coin"></i><div><b>2% cash back</b><span>Up to $50 per purchase</span></div></div>
+      <div class="ps-strip-item"><i class="bi bi-shield-check"></i><div><b>Private by design</b><span>You choose what to share</span></div></div>
+      <div class="ps-strip-item"><i class="bi bi-wallet2"></i><div><b>Real money</b><span>Not points or gift cards</span></div></div>
     </div>
   </div>
 </div>
 
-  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-0" aria-label="Main navigation">
-    <div class="container">
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <div class="navbar-nav ms-auto">
-          <a class="nav-link" href="/login">Login</a>
-          <a class="nav-link" href="/register">Register</a>
-          <a class="nav-link" href="/about">About Us</a>
-          <a class="nav-link" href="/news">News</a>
-          <a class="nav-link" href="/faq">FAQ</a>
-          <a class="nav-link" href="/testimonials">Testimonials</a>
-          <a class="nav-link" href="/public_profiles">Public Profiles</a>
-          <a class="nav-link" href="/business">Advertise With Us</a>
+<!-- ================= HOW IT WORKS ================= -->
+<section class="ps-section">
+  <div class="container">
+    <div class="ps-head ps-reveal">
+      <span class="ps-eyebrow">How it works</span>
+      <h2 class="ps-title">From search to cash in four steps</h2>
+      <p class="ps-sub">No coupons to clip and nothing to remember. Shop the way you already do and get paid for it.</p>
+    </div>
+    <div class="ps-steps">
+      <div class="ps-step ps-reveal"><i class="bi bi-search ps-step-ic"></i><div class="ps-step-n">1</div><h3>Find a local business</h3><p>Search or browse by category and pick a business that fits what you need.</p></div>
+      <div class="ps-step ps-reveal"><i class="bi bi-chat-heart ps-step-ic"></i><div class="ps-step-n">2</div><h3>Connect privately</h3><p>Message one-to-one, then pay the business directly. No spam, no cold calls.</p></div>
+      <div class="ps-step ps-reveal"><i class="bi bi-patch-check ps-step-ic"></i><div class="ps-step-n">3</div><h3>The sale is finalized</h3><p>Once the business finalizes the sale, your 2% cash back is recorded in your account.</p></div>
+      <div class="ps-step ps-reveal"><i class="bi bi-bank ps-step-ic"></i><div class="ps-step-n">4</div><h3>Cash out</h3><p>Earnings clear after 7 days. Withdraw to your bank once you reach $10.</p></div>
+    </div>
+    <p class="text-center mt-4 mb-0 ps-reveal"><a href="{{ url_for('how_it_works') }}" class="ps-btn ps-btn-outline">See the full details</a></p>
+  </div>
+</section>
+
+<!-- ================= TWO AUDIENCES ================= -->
+<section class="ps-section ps-section-tint">
+  <div class="container">
+    <div class="ps-head ps-reveal">
+      <span class="ps-eyebrow">One platform</span>
+      <h2 class="ps-title">Two ways to win</h2>
+      <p class="ps-sub">Members get paid to shop. Businesses only pay when they make a sale.</p>
+    </div>
+    <div class="ps-aud-grid">
+      <div class="ps-aud ps-aud-member ps-reveal">
+        <span class="ps-aud-tag">For members</span>
+        <h3>Get paid for what you already buy</h3>
+        <p>Earn real cash back every time you buy from a Perk Miner business &mdash; paid by Perk Miner LLC, not by the business.</p>
+        <div class="ps-stats3">
+          <div class="ps-stat"><b>2%</b><span>cash back</span></div>
+          <div class="ps-stat"><b>$50</b><span>max per purchase</span></div>
+          <div class="ps-stat"><b>$0</b><span>to join</span></div>
         </div>
+        <ul>
+          <li><i class="bi bi-check-circle-fill"></i> Private one-to-one messaging with businesses</li>
+          <li><i class="bi bi-check-circle-fill"></i> Member-only perks from local businesses</li>
+          <li><i class="bi bi-check-circle-fill"></i> Earn when people you invite make real purchases (finalized sales only)</li>
+        </ul>
+        <a href="{{ url_for('register') }}" class="ps-btn ps-btn-gold">Join free <i class="bi bi-arrow-right"></i></a>
+      </div>
+      <div class="ps-aud ps-aud-biz ps-reveal">
+        <span class="ps-aud-tag">For businesses</span>
+        <h3>Advertise without the guesswork</h3>
+        <p>List for free. No monthly advertising fee and no paying per click &mdash; you pay 10% of finalized sales, capped at $250 per sale. No sale, no fee.</p>
+        <div class="ps-stats3">
+          <div class="ps-stat"><b>10%</b><span>of finalized sales</span></div>
+          <div class="ps-stat"><b>$250</b><span>max fee per sale</span></div>
+          <div class="ps-stat"><b>$0</b><span>monthly fee</span></div>
+        </div>
+        <ul>
+          <li><i class="bi bi-check-circle-fill"></i> Free business profile with its own web page</li>
+          <li><i class="bi bi-check-circle-fill"></i> Customers pay you directly</li>
+          <li><i class="bi bi-check-circle-fill"></i> Real-time sales and fee tracking</li>
+        </ul>
+        <a href="{{ url_for('business_home') }}" class="ps-btn ps-btn-dark">See business pricing <i class="bi bi-arrow-right"></i></a>
+        <p class="ps-fine mb-0">Pricing example only. Sales and profit are not guaranteed.</p>
       </div>
     </div>
-  </nav>
-
-<section class="container">
-  <h2 class="section-title animate-on-scroll">Why Members Join</h2>
-  <div class="benefit-grid">
-    <div class="benefit-card animate-on-scroll"><i class="bi bi-cash-coin"></i><h3>2% Real Cash Back</h3><p>Up to $50 per purchase. Paid by Perk Miner to your bank.</p></div>
-    <div class="benefit-card animate-on-scroll"><i class="bi bi-shield-check"></i><h3>Total Privacy</h3><p>You control your data. One business at a time. No spam.</p></div>
-    <div class="benefit-card animate-on-scroll"><i class="bi bi-gift"></i><h3>Exclusive Perks</h3><p>Special offers from local businesses just for members.</p></div>
-    <div class="benefit-card animate-on-scroll"><i class="bi bi-people"></i><h3>Referral Earnings</h3><p>Earn when people & businesses you invite make real sales.</p></div>
   </div>
 </section>
 
-<section class="container categories-section">
-  <h2 class="section-title animate-on-scroll">Browse by Category</h2>
-  <div class="d-md-none text-center mb-2 text-muted" style="font-size:0.85rem;">↔ Swipe to explore</div>
-  <div class="categories-scroll-wrap">
-    <div class="categories-row">
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Restaurant-Food-and-Drink', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Restaurant_d1ioep.jpg?auto=format&fit=crop&w=300&q=40" alt="Restaurant" class="category-image" loading="lazy"></div><div class="category-label">Restaurant / Food / Drink</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Shopping-and-Retail', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Retail_h510gq.jpg?auto=format&fit=crop&w=300&q=40" alt="Retail" class="category-image" loading="lazy"></div><div class="category-label">Shopping and Retail</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Home-and-Garden', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Home-Garden_lhssqa.jpg?auto=format&fit=crop&w=300&q=40" alt="Home" class="category-image" loading="lazy"></div><div class="category-label">Home and Garden</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Handyman-Contractor', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Handyman_ig9cin.jpg?auto=format&fit=crop&w=300&q=40" alt="Handyman" class="category-image" loading="lazy"></div><div class="category-label">Handyman / Contractor</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Auto-Service-Repair-Parts', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771634200/Auto-Service_iamnu3.jpg?auto=format&fit=crop&w=300&q=40" alt="Auto" class="category-image" loading="lazy"></div><div class="category-label">Auto Service / Parts</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Health-and-Beauty', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443067/health-and-beauty_pql4ha.jpg?auto=format&fit=crop&w=300&q=40" alt="Health" class="category-image" loading="lazy"></div><div class="category-label">Health and Beauty</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Sports-and-Recreation', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447451/sports_paavlw.jpg?auto=format&fit=crop&w=300&q=40" alt="Sports" class="category-image" loading="lazy"></div><div class="category-label">Sports and Recreation</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Real-Estate', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/real-estate_g40mrz.jpg?auto=format&fit=crop&w=300&q=40" alt="Real Estate" class="category-image" loading="lazy"></div><div class="category-label">Real Estate</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Pet-Service-and-Supplies', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/pet-services_j2h4pq.jpg?auto=format&fit=crop&w=300&q=40" alt="Pets" class="category-image" loading="lazy"></div><div class="category-label">Pet Services</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Travel-Lodging-Tourism', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/travel_m7izuq.jpg?auto=format&fit=crop&w=300&q=40" alt="Travel" class="category-image" loading="lazy"></div><div class="category-label">Travel / Lodging</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Gaming', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772483687/gaming_ymfsap.jpg?auto=format&fit=crop&w=300&q=40" alt="Gaming" class="category-image" loading="lazy"></div><div class="category-label">Gaming</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Professional-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/professional_iouq8n.jpg?auto=format&fit=crop&w=300&q=40" alt="Professional" class="category-image" loading="lazy"></div><div class="category-label">Professional Services</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Financial-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/financial-services_hwhybm.jpg?auto=format&fit=crop&w=300&q=40" alt="Financial" class="category-image" loading="lazy"></div><div class="category-label">Financial Services</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Events-and-Entertainment', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/entertainment_ubdbpn.jpg?auto=format&fit=crop&w=300&q=40" alt="Events" class="category-image" loading="lazy"></div><div class="category-label">Events & Entertainment</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Education-and-Training', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/education_k14lj9.jpg?auto=format&fit=crop&w=300&q=40" alt="Education" class="category-image" loading="lazy"></div><div class="category-label">Education & Training</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Wedding-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/wedding_otioqm.jpg?auto=format&fit=crop&w=300&q=40" alt="Wedding" class="category-image" loading="lazy"></div><div class="category-label">Wedding Services</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Transportation-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/transportation_himjmb.jpg?auto=format&fit=crop&w=300&q=40" alt="Transportation" class="category-image" loading="lazy"></div><div class="category-label">Transportation</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Legal-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772443066/legal_rqbeqb.jpg?auto=format&fit=crop&w=300&q=40" alt="Legal" class="category-image" loading="lazy"></div><div class="category-label">Legal Services</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='All-Rentals', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1772447452/rentals_mllbe2.jpg?auto=format&fit=crop&w=300&q=40" alt="Rentals" class="category-image" loading="lazy"></div><div class="category-label">All Rentals</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Cleaning-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/cleaning_qriysn.jpg?auto=format&fit=crop&w=300&q=40" alt="Cleaning" class="category-image" loading="lazy"></div><div class="category-label">Cleaning Services</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Moving-and-Delivery', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438233/moving_hbaqgd.jpg?auto=format&fit=crop&w=300&q=40" alt="Moving" class="category-image" loading="lazy"></div><div class="category-label">Moving & Delivery</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Security-and-Protection', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/security_wuefwm.jpg?auto=format&fit=crop&w=300&q=40" alt="Security" class="category-image" loading="lazy"></div><div class="category-label">Security</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Industrial-Services', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/industrial_g8djx5.jpg?auto=format&fit=crop&w=300&q=40" alt="Industrial" class="category-image" loading="lazy"></div><div class="category-label">Industrial Services</div></a></div>
-      <div class="category-card-wrapper animate-on-scroll"><a href="{{ url_for('category_browse', name='Other', lat=user_lat, lng=user_lng, distance=10) }}"><div class="category-image-wrap"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1773438234/other_tnemn7.jpg?auto=format&fit=crop&w=300&q=40" alt="Other" class="category-image" loading="lazy"></div><div class="category-label">Other</div></a></div>
+<!-- ================= CATEGORIES ================= -->
+{% set cats = [
+  ('Restaurant-Food-and-Drink', 'Restaurant / Food / Drink', 'v1771634200/Restaurant_d1ioep.jpg'),
+  ('Shopping-and-Retail', 'Shopping and Retail', 'v1771634200/Retail_h510gq.jpg'),
+  ('Home-and-Garden', 'Home and Garden', 'v1771634200/Home-Garden_lhssqa.jpg'),
+  ('Handyman-Contractor', 'Handyman / Contractor', 'v1771634200/Handyman_ig9cin.jpg'),
+  ('Auto-Service-Repair-Parts', 'Auto Service / Parts', 'v1771634200/Auto-Service_iamnu3.jpg'),
+  ('Health-and-Beauty', 'Health and Beauty', 'v1772443067/health-and-beauty_pql4ha.jpg'),
+  ('Sports-and-Recreation', 'Sports and Recreation', 'v1772447451/sports_paavlw.jpg'),
+  ('Real-Estate', 'Real Estate', 'v1772443066/real-estate_g40mrz.jpg'),
+  ('Pet-Service-and-Supplies', 'Pet Services', 'v1772443066/pet-services_j2h4pq.jpg'),
+  ('Travel-Lodging-Tourism', 'Travel / Lodging', 'v1772443066/travel_m7izuq.jpg'),
+  ('Gaming', 'Gaming', 'v1772483687/gaming_ymfsap.jpg'),
+  ('Professional-Services', 'Professional Services', 'v1773438234/professional_iouq8n.jpg'),
+  ('Financial-Services', 'Financial Services', 'v1772443066/financial-services_hwhybm.jpg'),
+  ('Events-and-Entertainment', 'Events &amp; Entertainment', 'v1772443066/entertainment_ubdbpn.jpg'),
+  ('Education-and-Training', 'Education &amp; Training', 'v1772443066/education_k14lj9.jpg'),
+  ('Wedding-Services', 'Wedding Services', 'v1772443066/wedding_otioqm.jpg'),
+  ('Transportation-Services', 'Transportation', 'v1772443066/transportation_himjmb.jpg'),
+  ('Legal-Services', 'Legal Services', 'v1772443066/legal_rqbeqb.jpg'),
+  ('All-Rentals', 'All Rentals', 'v1772447452/rentals_mllbe2.jpg'),
+  ('Cleaning-Services', 'Cleaning Services', 'v1773438234/cleaning_qriysn.jpg'),
+  ('Moving-and-Delivery', 'Moving &amp; Delivery', 'v1773438233/moving_hbaqgd.jpg'),
+  ('Security-and-Protection', 'Security', 'v1773438234/security_wuefwm.jpg'),
+  ('Industrial-Services', 'Industrial Services', 'v1773438234/industrial_g8djx5.jpg'),
+  ('Other', 'Other', 'v1773438234/other_tnemn7.jpg')
+] %}
+<section class="ps-section">
+  <div class="container">
+    <div class="ps-head ps-reveal">
+      <span class="ps-eyebrow">Browse</span>
+      <h2 class="ps-title">Find your next favorite local spot</h2>
+      <p class="ps-sub">{{ cats|length }} categories &mdash; from restaurants and auto care to home services and weddings.</p>
     </div>
-  </div>
-  <div class="more-btn-container">
-    <button class="more-btn" id="toggle-more">More Categories</button>
+    <div class="ps-swipe-hint"><i class="bi bi-arrow-left-right"></i> Swipe to explore</div>
+    <div class="ps-cats-wrap">
+      <div class="ps-cats is-collapsed" id="psCats">
+        {% for slug, label, img in cats %}
+        <a class="ps-cat" href="{{ url_for('category_browse', name=slug, lat=user_lat, lng=user_lng, distance=10) }}"
+           {% if not can_browse %}data-gate data-gate-text="Create your free member account to browse {{ label|striptags }} businesses near you."{% endif %}>
+          <img src="https://res.cloudinary.com/dmrntlcfd/image/upload/{{ img }}?auto=format&fit=crop&w=420&q=60" alt="" loading="lazy">
+          <span>{{ label|safe }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="ps-more"><button type="button" class="ps-btn ps-btn-ghost-dark" id="psMoreCats">Show all categories</button></div>
   </div>
 </section>
 
-<section class="container">
-  <h2 class="section-title animate-on-scroll">Featured Near You</h2>
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-    {% for biz in featured_listings %}
-    <div class="col animate-on-scroll">
-      <a href="{{ url_for('view_listing', biz_id=biz.id, distance_mi=biz.distance_mi, from_featured=1) }}" class="listing-link text-decoration-none">
-        <div class="small-listing-modern">
-          {% if biz.profile_photo %}
-            <img src="{{ biz.profile_photo }}" class="small-listing-modern-img d-block mx-auto mt-3" alt="{{ biz.business_name }}" width="100" height="100" loading="lazy" style="object-fit:cover; border-radius:12px;">
-          {% else %}
-            <div class="d-flex align-items-center justify-content-center bg-light mx-auto mt-3" style="width:100px; height:100px; border-radius:12px;"><i class="bi bi-shop" style="font-size:1.8rem; color:#2a5859;"></i></div>
+<!-- ================= FEATURED ================= -->
+<section class="ps-section ps-section-alt">
+  <div class="container">
+    <div class="ps-head ps-reveal">
+      <span class="ps-eyebrow">Featured</span>
+      <h2 class="ps-title">Featured near you</h2>
+      <p class="ps-sub">Top-ranked local businesses that offer perks to Perk Miner members.</p>
+    </div>
+    <div class="ps-biz-grid">
+      {% for biz in featured_listings %}
+      <a class="ps-biz ps-reveal" href="{{ url_for('view_listing', biz_id=biz.id, distance_mi=biz.distance_mi, from_featured=1) }}">
+        {% if biz.profile_photo %}
+          <img class="ps-biz-img" src="{{ biz.profile_photo }}" alt="{{ biz.business_name }}" width="76" height="76" loading="lazy">
+        {% else %}
+          <span class="ps-biz-img"><i class="bi bi-shop"></i></span>
+        {% endif %}
+        <div>
+          <h3>{{ biz.business_name }}</h3>
+          <span class="ps-chip">{{ biz.category }}</span>
+          {% if biz.distance_mi is defined and biz.distance_mi is not none %}
+            <small><i class="bi bi-geo-alt-fill"></i> {{ biz.distance_mi|round(1) }} mi away</small>
           {% endif %}
-          <div class="p-3 text-center">
-            <h3 class="h6 mb-1">{{ biz.business_name }}</h3>
-            <span class="badge bg-success mb-2">{{ biz.category }}</span>
-            {% if biz.distance_mi is defined and biz.distance_mi is not none %}
-              <div class="small text-muted"><i class="bi bi-geo-alt-fill"></i> {{ biz.distance_mi|round(2) }} mi</div>
-            {% endif %}
-            <div class="small mt-2"><strong>Perks:</strong> {{ biz.perks or "Member perks available" }}</div>
-          </div>
+          <small><i class="bi bi-gift"></i> {{ biz.perks or "Member perks available" }}</small>
         </div>
       </a>
+      {% endfor %}
+      {% if featured_listings|length == 0 %}
+      <div class="ps-empty ps-reveal">
+        <i class="bi bi-geo-alt"></i>
+        <h3>Featured businesses are on their way</h3>
+        <p>We&rsquo;re welcoming local businesses to Perk Miner right now. Own one? List it free and be among the first members see.</p>
+        <a href="{{ url_for('business_register') }}" class="ps-btn ps-btn-dark">List my business free</a>
+      </div>
+      {% endif %}
     </div>
-    {% endfor %}
-    {% if featured_listings|length == 0 %}
-    <div class="col-12"><div class="alert alert-light text-center">No featured businesses yet.</div></div>
-    {% endif %}
+  </div>
+</section>
+
+<!-- ================= CALCULATOR ================= -->
+<section class="ps-section">
+  <div class="container">
+    <div class="ps-split">
+      <div class="ps-reveal">
+        <span class="ps-eyebrow">Member benefits</span>
+        <h2 class="ps-title">Every purchase pays you back</h2>
+        <p class="ps-sub">Earn 2% on up to $2,500 of every purchase, for up to $50 back each time. It&rsquo;s paid by Perk Miner LLC, so it never changes the price you pay.</p>
+        <ul class="ps-checks">
+          <li><i class="bi bi-cash-stack"></i><div><b>Real cash, not points</b><span>Paid through Stripe to your bank account.</span></div></li>
+          <li><i class="bi bi-gift"></i><div><b>Member-only perks</b><span>Special offers from local businesses, just for members.</span></div></li>
+          <li><i class="bi bi-geo-alt"></i><div><b>Live tracking on the way</b><span>See your provider&rsquo;s location and ETA when they&rsquo;re on the way.</span></div></li>
+        </ul>
+      </div>
+      <div class="ps-calc ps-reveal">
+        <label for="psAmt">What would you spend?</label>
+        <div class="ps-money"><span>$</span><input id="psAmt" type="number" inputmode="decimal" min="0" max="100000" step="1" value="250"></div>
+        <input class="ps-range" id="psRange" type="range" min="10" max="2500" step="10" value="250" aria-label="Purchase amount">
+        <div class="ps-calc-out" aria-live="polite">
+          <div class="ps-calc-box hl"><span>You earn</span><b id="psEarn">$5.00</b></div>
+          <div class="ps-calc-box"><span>Cash back rate</span><b>2%</b></div>
+        </div>
+        <p class="ps-fine mt-3 mb-0">Example only. Cash back applies to the first $2,500 of a qualifying finalized purchase, up to $50.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PRIVACY ================= -->
+<section class="ps-section ps-section-tint">
+  <div class="container">
+    <div class="ps-head ps-reveal">
+      <span class="ps-eyebrow">Privacy first</span>
+      <h2 class="ps-title">You&rsquo;re in control of your information</h2>
+      <p class="ps-sub">Perk Miner LLC was built so you can shop and earn without handing your details to everyone.</p>
+    </div>
+    <div class="ps-grid3">
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-chat-heart"></i></div><h3>One business at a time</h3><p>Connect privately in secure one-to-one messaging. You decide what to share and when.</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-bell-slash"></i></div><h3>No spam, no cold calls</h3><p>Businesses can&rsquo;t blast you with offers or call out of the blue.</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-shield-lock"></i></div><h3>We don&rsquo;t sell your data</h3><p>We never sell or share your contact info. Payout details are handled securely by Stripe.</p></div>
+    </div>
   </div>
 </section>
 
 {% if current_user.is_authenticated %}
-<section class="container">
-  <div class="stats-section animate-on-scroll">
-    <h2 class="section-title">Live Platform Stats</h2>
-    <div class="row text-center mb-3">
-      <div class="col-6 col-md-3 stat-card"><div class="stat-value" id="stat-member">${{ "{:,.2f}".format(total_member_paid|default(0, true)) }}</div><div class="stat-label">Paid to Members</div></div>
-      <div class="col-6 col-md-3 stat-card"><div class="stat-value" id="stat-biz">${{ "{:,.2f}".format(total_biz_paid|default(0, true)) }}</div><div class="stat-label">Paid to Businesses</div></div>
-      <div class="col-6 col-md-3 stat-card"><div class="stat-value" id="stat-gross">${{ "{:,.2f}".format(total_gross_sales|default(0, true)) }}</div><div class="stat-label">Gross Sales</div></div>
-      <div class="col-6 col-md-3 stat-card"><div class="stat-value" id="stat-percent">{{ percent_fees_paid|default(0, true)|round(1) }}%</div><div class="stat-label">Ad Revenue Paid Out</div></div>
-    </div>
-    <div class="row align-items-center">
-      <div class="col-md-6">
-        <div class="chart-container"><canvas id="payoutChart"></canvas></div>
+<!-- ================= LIVE STATS (signed-in members) ================= -->
+<section class="ps-section">
+  <div class="container">
+    <div class="ps-live ps-reveal">
+      <div class="ps-head mb-3"><span class="ps-eyebrow">Live platform stats</span><p class="ps-sub" id="community-line">&nbsp;</p></div>
+      <div class="ps-live-grid">
+        <div><b id="stat-member">${{ "{:,.2f}".format(total_member_paid|default(0, true)) }}</b><span>Paid to members</span></div>
+        <div><b id="stat-biz">${{ "{:,.2f}".format(total_biz_paid|default(0, true)) }}</b><span>Paid to businesses</span></div>
+        <div><b id="stat-gross">${{ "{:,.2f}".format(total_gross_sales|default(0, true)) }}</b><span>Gross sales</span></div>
+        <div><b id="stat-fees">${{ "{:,.2f}".format(total_ad_fees|default(0, true)) }}</b><span>Ad fees paid</span></div>
+        <div><b id="stat-percent">{{ percent_fees_paid|default(0, true)|round(1) }}%</b><span>Ad revenue paid out</span></div>
       </div>
-      <div class="col-md-6">
-        <div class="chart-container"><canvas id="salesChart"></canvas></div>
+      <div class="row align-items-center">
+        <div class="col-md-6"><div class="ps-chart"><canvas id="payoutChart"></canvas></div></div>
+        <div class="col-md-6"><div class="ps-chart"><canvas id="salesChart"></canvas></div></div>
       </div>
     </div>
   </div>
 </section>
 {% endif %}
 
-<section class="container mt-4">
-  <h2 class="section-title animate-on-scroll">Member Benefits</h2>
-  <div class="detail-card animate-on-scroll"><h3><i class="bi bi-cash-stack me-2"></i>2% Real Cash Back</h3><ul><li>Earn 2% on up to $2,500 of every purchase (max $50).</li><li>Example: $100 → $2 back. $500 → $10 back.</li><li>Real cash paid by Perk Miner via Stripe.</li></ul></div>
-  <div class="detail-card animate-on-scroll"><h3><i class="bi bi-shield-lock me-2"></i>Your Privacy Is Protected</h3><ul><li>We never sell or share your contact info.</li><li>Secure 1-to-1 messaging. You control what you share.</li><li>No spam, no unsolicited calls.</li></ul></div>
-  <div class="detail-card animate-on-scroll"><h3><i class="bi bi-geo-alt me-2"></i>Live Tracking + Exclusive Perks</h3><ul><li>See provider location and ETA when “on the way.”</li><li>Correct destination address if needed.</li><li>Member-only perks from businesses.</li></ul></div>
-  <div class="detail-card animate-on-scroll"><h3><i class="bi bi-share me-2"></i>Referral Commissions</h3><ul><li>Earn when people and businesses you invite generate real sales.</li><li>Only on finalized transactions — never for mere invites.</li></ul></div>
-</section>
-
-<section class="container">
-  <h2 class="section-title animate-on-scroll">How It Works</h2>
-  <div class="steps">
-    <div class="step animate-on-scroll"><div class="step-num">1</div><div>Search and choose a business.</div></div>
-    <div class="step animate-on-scroll"><div class="step-num">2</div><div>Connect privately and pay the business directly.</div></div>
-    <div class="step animate-on-scroll"><div class="step-num">3</div><div>Business finalizes. Your 2% appears instantly.</div></div>
-    <div class="step animate-on-scroll"><div class="step-num">4</div><div>Withdraw real cash once you reach $10.</div></div>
-  </div>
-  <div class="text-center mt-3 animate-on-scroll"><a href="{{ url_for('how_it_works') }}" class="btn btn-outline-primary rounded-pill">See Full Details</a></div>
-</section>
-
-<section class="container mt-4 mb-5">
-  <div class="detail-card text-center animate-on-scroll" style="background:#f0f7f7;">
-    <h3 class="h5">For Business Owners</h3>
-    <p class="mb-2">Zero risk advertising. Pay only when a sale closes (minimum 1000% ROAS). Free to list.</p>
-    <a href="/business" class="btn btn-outline-success btn-sm rounded-pill">Learn More</a>
+<!-- ================= FINAL CTA ================= -->
+<section class="ps-section pt-0">
+  <div class="container">
+    <div class="ps-cta ps-reveal">
+      <h2>Ready to get paid for shopping local?</h2>
+      <p>Join free in under a minute. Invite friends and favorite local businesses, and earn commissions when they make real, finalized purchases and sales &mdash; never for invites alone.</p>
+      <div class="ps-cta-row">
+        <a href="{{ url_for('register') }}" class="ps-btn ps-btn-gold ps-btn-lg">Join free <i class="bi bi-arrow-right"></i></a>
+        <a href="{{ url_for('business_home') }}" class="ps-btn ps-btn-ghost-light ps-btn-lg">List my business</a>
+      </div>
+    </div>
   </div>
 </section>
 
-<nav class="bottom-nav">
-  <a href="/" class="active"><i class="bi bi-house-fill"></i>Home</a>
-  {% if current_user.is_authenticated %}
-    <a href="{{ url_for('dashboard') }}"><i class="bi bi-bar-chart-line-fill"></i>Dashboard</a>
-  {% else %}
-    <a href="/login"><i class="bi bi-person-circle"></i>Sign In</a>
-  {% endif %}
-  <a href="/intro"><i class="bi bi-camera-reels"></i>Videos</a>
-  <a href="/business"><i class="bi bi-building"></i>Advertise</a>
+</main>
 
-</nav>
-
-<footer>
-  <div class="mb-2"><img src="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg" alt="Perk Miner" style="height:48px;" loading="lazy"></div>
-  <div>&copy; 2026 Perk Miner LLC · Not a crypto site</div>
-  <div class="mt-2"><a href="mailto:support@perkminer.com">Support</a> · <a href="https://www.perkminer.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://www.perkminer.com/terms" target="_blank" rel="noopener">Terms</a></div>
-  <div class="mt-2"><a href="{{ url_for('public_profiles_directory') }}">Browse Public Profiles</a></div>
-</footer>
+{% include 'partials/_site_footer.html' %}
+{% set ps_bottom = 'home' %}
+{% include 'partials/_site_bottom_nav.html' %}
+{% if not can_browse %}{% include 'partials/_gate_modal.html' %}{% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-// Scroll animations
-document.addEventListener('DOMContentLoaded', () => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      }
-    });
-  }, { threshold: 0.15 });
-  document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+// scroll reveal
+document.addEventListener('DOMContentLoaded', function () {
+  var els = document.querySelectorAll('.ps-reveal');
+  if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    els.forEach(function (el) { el.classList.add('is-in'); }); return;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  els.forEach(function (el) { io.observe(el); });
 });
 
-// Categories toggle (desktop)
-const toggleBtn = document.getElementById('toggle-more');
-if (toggleBtn) {
-  toggleBtn.addEventListener('click', () => {
-    const cards = document.querySelectorAll('.category-card-wrapper');
-    const isExpanded = toggleBtn.classList.contains('expanded');
-    if (isExpanded) {
-      cards.forEach((card, i) => { if (i >= 4) card.style.display = 'none'; });
-      toggleBtn.textContent = 'More Categories';
-      toggleBtn.classList.remove('expanded');
-    } else {
-      cards.forEach(card => card.style.display = 'block');
-      toggleBtn.textContent = 'Show Fewer';
-      toggleBtn.classList.add('expanded');
-    }
+// categories: show 8 on desktop, all on request
+(function () {
+  var grid = document.getElementById('psCats'), btn = document.getElementById('psMoreCats');
+  if (!grid || !btn) return;
+  btn.addEventListener('click', function () {
+    var collapsed = grid.classList.toggle('is-collapsed');
+    btn.textContent = collapsed ? 'Show all categories' : 'Show fewer';
   });
-  if (window.innerWidth >= 992) {
-    document.querySelectorAll('.category-card-wrapper').forEach((card, i) => {
-      if (i >= 4) card.style.display = 'none';
-    });
-  }
-}
+})();
 
-// Marquee
-document.addEventListener("DOMContentLoaded", function() {
-  const marquee = document.querySelector('.marquee');
-  const content = document.querySelector('.marquee-content');
-  if (marquee && content) {
-    function setSpeed() {
-      const distance = content.offsetWidth / 2;
-      marquee.style.animationDuration = (distance / 60) + 's';
-    }
-    setSpeed();
-    window.addEventListener('resize', setSpeed);
-  }
-});
+// cash back calculator
+(function () {
+  var amt = document.getElementById('psAmt'), rng = document.getElementById('psRange'), out = document.getElementById('psEarn');
+  if (!amt || !rng || !out) return;
+  var fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  function calc(v) { v = Math.max(0, Number(v) || 0); out.textContent = fmt.format(Math.min(v, 2500) * 0.02); }
+  amt.addEventListener('input', function () { rng.value = Math.min(Math.max(amt.value, 10), 2500); calc(amt.value); });
+  rng.addEventListener('input', function () { amt.value = rng.value; calc(rng.value); });
+  calc(amt.value);
+})();
 </script>
 
 {% if current_user.is_authenticated %}
 <script>
-// Geolocation
-window.addEventListener('DOMContentLoaded', function() {
+// Geolocation: fill the search box and refresh featured businesses near the member
+window.addEventListener('DOMContentLoaded', function () {
   if ('geolocation' in navigator) {
-    navigator.geolocation.getCurrentPosition(function(position) {
-      const latInput = document.getElementById('search-lat');
-      const lngInput = document.getElementById('search-lng');
+    navigator.geolocation.getCurrentPosition(function (position) {
+      var latInput = document.getElementById('search-lat');
+      var lngInput = document.getElementById('search-lng');
       if (latInput && lngInput) {
         latInput.value = position.coords.latitude;
         lngInput.value = position.coords.longitude;
@@ -451,7 +431,8 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 // Charts
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof Chart === 'undefined') return;
   const memberPaid = {{ total_member_paid|default(0, true) }};
   const bizPaid = {{ total_biz_paid|default(0, true) }};
   const adFees = {{ total_ad_fees|default(0, true) }};
@@ -464,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
       labels: ['Paid to Members', 'Paid to Businesses', 'Platform'],
       datasets: [{ data: [memberPaid, bizPaid, remaining], backgroundColor: ['#2a5859', '#ffd66b', '#e0e0e0'], borderWidth: 0 }]
     },
-    options: { responsive: true, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Ad Fee Distribution' } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Ad Fee Distribution' } } }
   });
 
   new Chart(document.getElementById('salesChart'), {
@@ -473,42 +454,39 @@ document.addEventListener('DOMContentLoaded', function() {
       labels: ['Gross Sales', 'Ad Fees Collected'],
       datasets: [{ label: 'Amount', data: [gross, adFees], backgroundColor: ['#2a5859', '#ffd66b'], borderRadius: 8 }]
     },
-    options: { responsive: true, plugins: { legend: { display: false }, title: { display: true, text: 'Sales vs Fees' } }, scales: { y: { beginAtZero: true } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Sales vs Fees' } }, scales: { y: { beginAtZero: true } } }
   });
 });
 
-// Live marquee stats
+// Community counts (refreshes every 45 seconds)
 document.addEventListener('DOMContentLoaded', function () {
-  const marqueeEl = document.getElementById('live-marquee');
-  if (!marqueeEl) return;
-  async function updateMarquee() {
+  var line = document.getElementById('community-line');
+  if (!line) return;
+  async function update() {
     try {
       const resp = await fetch('/stats', { cache: 'no-store' });
       if (!resp.ok) return;
       const data = await resp.json();
-      const members = data.members ?? 0;
-      const advertisers = data.advertisers ?? 0;
-      marqueeEl.innerHTML = `DEMO SITE ONLY! · Members: <span class="highlight">${members.toLocaleString()}</span> · Businesses: <span class="highlight">${advertisers.toLocaleString()}</span> · Free to join & earn real money - deposited to your bank account`;
+      line.innerHTML = 'Members: <b>' + (data.members ?? 0).toLocaleString() + '</b> &middot; Businesses: <b>' + (data.advertisers ?? 0).toLocaleString() + '</b>';
     } catch (e) {}
   }
-  updateMarquee();
-  setInterval(updateMarquee, 45000);
+  update();
+  setInterval(update, 45000);
 });
 
-// Location update
-document.addEventListener('DOMContentLoaded', function() {
+// Remember the member's location for distance sorting
+document.addEventListener('DOMContentLoaded', function () {
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function(pos) {
-      fetch("/api/me/location", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      fetch('/api/me/location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude })
-      }).catch(() => {});
+      }).catch(function () {});
     });
   }
 });
 </script>
 {% endif %}
-
 </body>
 </html>

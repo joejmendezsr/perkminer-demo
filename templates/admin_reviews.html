@@ -1,0 +1,66 @@
+{% extends "pm_base.html" %}
+{% block title %}Reviews &amp; Feedback - Perk Miner Admin{% endblock %}
+{% block content %}
+{% macro stars(n) %}<span style="color:#e0a800;letter-spacing:1px;">{{ '&#9733;'|safe * n }}</span><span style="color:#d3dcdf;letter-spacing:1px;">{{ '&#9733;'|safe * (5 - n) }}</span>{% endmacro %}
+{% macro card(r, mode) %}
+<div class="border rounded-3 p-3 mb-2">
+  <div class="d-flex justify-content-between flex-wrap gap-2">
+    <div>
+      <b>{{ r.business.business_name }}</b>
+      {% if r.business.owner_user_id %}<span class="badge bg-info text-dark">Freelancer</span>{% endif %}
+      {% if r.business.is_suspended %}<span class="badge bg-dark">Suspended</span>{% endif %}
+      <div>{{ stars(r.rating) }} <span class="text-muted small">{{ r.reviewer }} ({{ r.user.email }}) &middot; {{ r.created_at.strftime('%b %d, %Y %I:%M %p') }} UTC</span></div>
+    </div>
+    <div class="text-end small text-muted">
+      State: <b>{{ r.state }}</b>{% if r.time_left %} &middot; {{ r.time_left }} left{% endif %}
+      {% if r.can_edit %}<br><span class="text-success">Member may edit until {{ r.edit_until.strftime('%b %d') }}</span>{% endif %}
+      {% if r.previous_rating %}<br>Raised from {{ r.previous_rating }}&#9733;{% endif %}
+    </div>
+  </div>
+  {% if r.comment %}<p class="my-2" style="white-space:pre-line;word-break:break-word;">{{ r.comment }}</p>{% endif %}
+  {% if r.admin_note %}<p class="small text-muted mb-2">Admin note: {{ r.admin_note }}</p>{% endif %}
+  <div class="d-flex gap-2 flex-wrap">
+    {% if r.mod_interaction_id %}<a class="btn btn-sm btn-outline-primary" href="{{ url_for('support_session', interaction_id=r.mod_interaction_id) }}"><i class="bi bi-chat-dots"></i> Open chat</a>{% endif %}
+    {% if not r.can_edit and r.state != 'none' %}
+    <form method="post" action="{{ url_for('admin_review_allow_edit', rid=r.id) }}" class="m-0" onsubmit="return confirm('Mark resolved and let the member edit their review?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-success"><i class="bi bi-check2-circle"></i> Resolved - let member edit</button></form>
+    {% elif r.can_edit %}
+    <form method="post" action="{{ url_for('admin_review_close_edit', rid=r.id) }}" class="m-0">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-secondary">Close editing</button></form>
+    {% endif %}
+    {% if mode == 'alert' %}
+    <form method="post" action="{{ url_for('admin_review_ack', rid=r.id) }}" class="m-0 d-flex gap-1">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input class="form-control form-control-sm" name="note" maxlength="500" placeholder="Note (optional)" style="min-width:160px;">
+      <button class="btn btn-sm btn-outline-dark">Dismiss alert</button></form>
+    {% endif %}
+    {% if not r.business.is_suspended %}
+    <form method="post" action="{{ url_for('admin_review_suspend', rid=r.id) }}" class="m-0 d-flex gap-1" onsubmit="return confirm('Suspend {{ r.business.business_name|e }}? Their listing will be hidden.');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input class="form-control form-control-sm" name="reason" maxlength="300" placeholder="Reason (fraud, serious)" style="min-width:160px;">
+      <button class="btn btn-sm btn-danger"><i class="bi bi-slash-circle"></i> Suspend</button></form>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+<div class="container pb-4" style="max-width:980px;">
+  <div class="card pm-hero mb-3">
+    <div class="pm-hero-icon"><i class="bi bi-star-half"></i></div>
+    <div class="pm-hero-body"><div class="pm-hero-sub">Admin</div><h1>Reviews &amp; Feedback</h1></div>
+    <div class="pm-hero-actions"><a href="{{ url_for('admin_roles_landing') }}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Admin</a></div>
+  </div>
+
+  <h5 class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> 1-star alerts ({{ alerts|length }})</h5>
+  <p class="text-muted small">Check these for fraud or anything serious. You can suspend the advertiser or freelancer from here.</p>
+  {% for r in alerts %}{{ card(r, 'alert') }}{% else %}<p class="text-muted">No new 1-star alerts.</p>{% endfor %}
+
+  <h5 class="mt-4">Moderation in progress ({{ active|length }})</h5>
+  {% for r in active %}{{ card(r, '') }}{% else %}<p class="text-muted">None.</p>{% endfor %}
+
+  <h5 class="mt-4">Resolved ({{ resolved|length }})</h5>
+  {% for r in resolved %}{{ card(r, '') }}{% else %}<p class="text-muted">None.</p>{% endfor %}
+
+  <h5 class="mt-4">Other 1-2 star reviews ({{ other|length }})</h5>
+  {% for r in other %}{{ card(r, '') }}{% else %}<p class="text-muted">None.</p>{% endfor %}
+</div>
+{% endblock %}

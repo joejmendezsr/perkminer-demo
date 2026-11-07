@@ -1,0 +1,23 @@
+{# Dashboard card: 1-2 star reviews the advertiser/freelancer can still try to resolve. Needs rv_biz_id. #}
+{% set _al = review_alerts(rv_biz_id) %}
+{% if _al %}
+<div class="card p-3 p-md-4 mb-3" id="feedback-moderation" style="border:2px solid #dc3545;border-radius:16px;">
+  <h5 class="mb-1"><i class="bi bi-chat-left-text text-danger"></i> Feedback needs your attention</h5>
+  <p class="text-muted small mb-3">You can start a private resolution chat with the member and Perk Miner support. You have {{ 3 }} days from the review to start it, then {{ 7 }} days to resolve it. If it is resolved, support can let the member update their rating. After that the review stays as posted.</p>
+  {% for r in _al %}
+  <div class="border rounded-3 p-3 mb-2">
+    <div style="color:#e0a800;font-size:1.15rem;letter-spacing:1px;">{{ '&#9733;'|safe * r.rating }}<span style="color:#d3dcdf;">{{ '&#9733;'|safe * (5 - r.rating) }}</span>
+      <span class="text-muted small" style="letter-spacing:0;">&middot; {{ r.reviewer }} &middot; {{ r.created_at.strftime('%b %d, %Y') }}</span></div>
+    {% if r.comment %}<p class="mb-2" style="white-space:pre-line;word-break:break-word;">{{ r.comment }}</p>{% endif %}
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <form method="post" action="{{ url_for('review_resolve', rid=r.id) }}" class="m-0">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger" type="submit"><i class="bi bi-chat-dots"></i> {% if r.state == 'open' %}Start feedback moderation{% else %}Open resolution chat{% endif %}</button>
+      </form>
+      <span class="small text-muted"><i class="bi bi-hourglass-split"></i>
+        {% if r.state == 'open' %}{{ r.time_left }} left to start{% else %}{{ r.time_left }} left to resolve{% endif %}</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
