@@ -40,7 +40,7 @@
   {% endif %}
 
   {% if repeat and not summary %}
-  <div class="pm-note warn mb-3"><i class="bi bi-info-circle-fill"></i> This member already made their initial purchase with you. The 10% advertising fee (and the rewards it funds) applies to a member's <b>first purchase only</b>, so there is nothing to finalize here.</div>
+  <div class="pm-note warn mb-3"><i class="bi bi-info-circle-fill"></i> This member already made their initial purchase with you. The advertising fee (10%, or 2% on the 2% ad fee plan) (and the rewards it funds) applies to a member's <b>first purchase only</b>, so there is nothing to finalize here.</div>
   {% endif %}
   {% if not summary and not repeat %}
   <div class="card p-3 p-md-4">
@@ -75,9 +75,11 @@
 
   {% if summary %}
     {% set amt = summary.amount|float %}
-    {% set user_cash_back = amt * 0.02 if amt * 0.02 < 50 else 50 %}
-    {% set ad_fee = amt * 0.10 if amt * 0.10 <= 250 else 250 %}
-    {% set business_cash_back = amt * 0.01 if amt * 0.01 < 25 else 25 %}
+    {# Use the amounts that were actually recorded (they depend on the advertiser's 10% or 2% ad fee plan). #}
+    {% set plan_low = (summary.fee_plan == 'low') %}
+    {% set user_cash_back = summary.user_cash_back|float %}
+    {% set ad_fee = summary.ad_fee|float %}
+    {% set business_cash_back = summary.business_cash_back|float %}
     {% set net_gross = amt - ad_fee %}
     {% set marketing_roi = (net_gross / ad_fee * 100) if ad_fee else 0 %}
     {% set marketing_ratio = (amt / ad_fee) if ad_fee else 0 %}
@@ -90,9 +92,9 @@
 
     <div class="card p-3 p-md-4 mb-3">
       <div class="fin-row total"><span class="k">Total Transaction</span><span class="v">${{ '%.2f' % amt }}</span></div>
-      <div class="fin-row"><span class="k">Member Earned (Paid by Perk Miner LLC)</span><span class="v member">${{ '%.2f' % user_cash_back }}</span></div>
-      <div class="fin-row"><span class="k">You Earned (Paid by Perk Miner LLC)</span><span class="v biz">${{ '%.2f' % business_cash_back }}</span></div>
-      <div class="fin-row"><span class="k">Ad Fee Paid (10% - max $250)</span><span class="v">${{ '%.2f' % ad_fee }}</span></div>
+      <div class="fin-row"><span class="k">Member Earned ({{ '0.4%' if plan_low else '2%' }} cash back, paid by Perk Miner LLC)</span><span class="v member">${{ '%.2f' % user_cash_back }}</span></div>
+      <div class="fin-row"><span class="k">You Earned ({{ '0.2%' if plan_low else '1%' }} cash back, paid by Perk Miner LLC)</span><span class="v biz">${{ '%.2f' % business_cash_back }}</span></div>
+      <div class="fin-row"><span class="k">Ad Fee Paid ({{ '2% ad fee plan, max $50' if plan_low else '10% ad fee plan, max $250' }})</span><span class="v">${{ '%.2f' % ad_fee }}</span></div>
       <div class="fin-row"><span class="k">Net Gross (Sale - Ad Fee)</span><span class="v">${{ '%.2f' % net_gross }}</span></div>
       <div class="fin-row"><span class="k">Marketing ROI</span><span class="v">{{ marketing_roi|round(0) }}%</span></div>
       <div class="fin-row"><span class="k">Marketing ROI Ratio</span><span class="v">{{ marketing_ratio|round(2) }} to 1</span></div>
@@ -142,8 +144,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var fundUrl = {{ url_for('freelance_fund')|tojson }};
   function check() {
     var amount = parseFloat(amountInput.value);
-    var fee = Math.round((amount * 0.10 + Number.EPSILON) * 100) / 100;
-    if (fee > 250) fee = 250;
+    var fee = Math.round((amount * {{ '0.02' if fee_is_low(interaction.business) else '0.10' }} + Number.EPSILON) * 100) / 100;
+    if (fee > {{ '50' if fee_is_low(interaction.business) else '250' }}) fee = {{ '50' if fee_is_low(interaction.business) else '250' }};
     box.innerHTML = '';
     if (!isNaN(amount) && amount > 0 && fee > balance) {
       var need = Math.round((fee - balance + Number.EPSILON) * 100) / 100;

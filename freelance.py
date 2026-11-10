@@ -17,6 +17,7 @@ register(app, ns) is called once from app.py, with ns = app.py's globals().
 """
 import json
 import re
+import feeplan
 import secrets
 import uuid
 from copy import deepcopy
@@ -186,14 +187,22 @@ def register(app, ns):
         sb = fb.shadow
         if sb is None:
             return
+        # Freelancer-to-freelancer: the sponsoring member is a freelancer too -> business sponsor_id (mutual
+        # commissions and F2F tiers). Otherwise the sponsoring member keeps the member-to-freelancer sale
+        # commissions through user_sponsor_id (same field a member-referred business uses).
         if sb.sponsor_id is None:
             sb.sponsor_id = sponsor_shadow_id(fb.user)
+        sb.user_sponsor_id = None if sb.sponsor_id else (fb.user.sponsor_id or None)
+        # invited freelancers that were waiting for this member to become a freelancer now hang under
+        # this shadow; their user_sponsor_id (this member) is replaced by the freelancer link.
+        # Past transactions are never rewritten, only future sales.
         waiting = (Business.query.join(FreelanceBusiness, FreelanceBusiness.shadow_business_id == Business.id)
                    .join(User, User.id == FreelanceBusiness.user_id)
                    .filter(User.sponsor_id == fb.user_id, Business.sponsor_id.is_(None),
                            Business.id != sb.id).all())
         for w in waiting:
             w.sponsor_id = sb.id
+            w.user_sponsor_id = None
 
     def ensure_shadow(user, fb, name):
         if fb.shadow_business_id and fb.shadow:
@@ -206,7 +215,7 @@ def register(app, ns):
             password=ns["bcrypt"].generate_password_hash(secrets.token_urlsafe(32)).decode("utf-8"),
             referral_code=ns["make_unique_referral_code"](base if len(base) > 3 else f"FRL{user.id}"),
             sponsor_id=sponsor_biz_id,
-            user_sponsor_id=None,          # member-to-member tree only: no member earns "business referral" pay here
+            user_sponsor_id=None if sponsor_biz_id else (user.sponsor_id or None),  # member sponsor earns M2F sale commissions
             email_confirmed=True,
             status="freelancer",
             owner_user_id=user.id,
@@ -243,7 +252,8 @@ def register(app, ns):
     def public_url(fb):
         """Always the real site address, never the host the request happened to arrive on."""
         base = site_base()
-        return base + (url_for("freelance_listing_slug", slug=fb.slug) if fb.slug
+        custom = fb.slug and not (fb.shadow and feeplan.is_low(fb.shadow))   # custom web address is a 10% plan feature
+        return base + (url_for("freelance_listing_slug", slug=fb.slug) if custom
                        else url_for("freelance_listing", fid=fb.id))
 
     def balance_of(fb):
@@ -272,6 +282,7 @@ def register(app, ns):
             "website": d.get("website"), "socials": d.get("socials") or {}, "links": d.get("links") or [],
             "account_balance": bal, "link_count": len([l for l in d.get("links", []) if l.get("url")]),
             "biz_id": fb.shadow_business_id,
+            "ad_fee_plan": feeplan.plan_of(fb.shadow) if fb.shadow else feeplan.FULL,
             "rating_avg": float(getattr(fb.shadow, "rating_avg", 0) or 0) if fb.shadow else 0.0,
             "rating_count": int(getattr(fb.shadow, "rating_count", 0) or 0) if fb.shadow else 0,
         }
@@ -285,12 +296,25 @@ def register(app, ns):
         return None
 
     # ------------------------------------------------------------------ dashboard form
+    def stripe_ready(user):
+        """Freelancers must be verified people: Stripe onboarding finished with payouts active."""
+        try:
+            return ns["get_stripe_payout_status"](user).get("payouts_status") == "active"
+        except Exception as e:
+            app.logger.warning("stripe status check failed for user %s: %s", getattr(user, "id", None), e)
+            return False
+
+    ns["freelance_stripe_ready"] = stripe_ready
+
     def handle_profile_post(user, form, files):
         """Called from the member dashboard when the profile wizard is saved. Returns a message or ''."""
         if form.get("fl_present") != "1":
             return ""
         fb = fl_for(user)
         enabled = form.get("fl_enabled") == "1"
+        if enabled and not stripe_ready(user):
+            return ("You must complete the Stripe onboarding to continue. Open Payout Setup on your dashboard and "
+                    "finish Stripe onboarding (payouts active), then come back to become a freelancer.")
         if not enabled:
             if fb and fb.enabled:
                 fb.enabled = False
@@ -385,6 +409,17 @@ def register(app, ns):
             fb.slug = slug_in or None
         ensure_shadow(user, fb, d.get("name") or user.name or f"Freelancer {user.id}")
         link_sponsors(fb)
+        plan_note = ""
+        plan_in = form.get("fl_fee_plan")
+        if plan_in in (feeplan.FULL, feeplan.LOW):
+            sb_ = fb.shadow
+            if plan_in == feeplan.LOW and not feeplan.is_low(sb_) and sb_.promo_code_used and ns["promo_lock"](sb_)[0]:
+                plan_note = (" Your plan was not changed: you can switch to the 2% plan after your promo code " +
+                             str(sb_.promo_code_used) + " funds are used.")
+            elif ns["apply_fee_plan"](sb_, plan_in):
+                plan_note = (" You are on the 2% ad fee plan (members earn 0.4% cash back, no promo codes)."
+                             if plan_in == feeplan.LOW else
+                             " You are on the 10% ad fee plan (members earn 2% cash back).")
         fb.draft_json = json.dumps(d)
         if not fb.is_live:
             refresh_cols(fb, d)
@@ -395,9 +430,71 @@ def register(app, ns):
         db.session.commit()
 
         note = f" Custom address saved: {site_base()}/f/{fb.slug}." if fb.slug else ""
+        note += plan_note
+        if (form.get("fl_promo_code") or "").strip():
+            ok, pmsg = redeem_promo(user, fb, form.get("fl_promo_code"))
+            note += " " + pmsg
         if form.get("fl_submit") == "1":
             return try_submit(fb) + note
         return "Freelancer listing saved as a draft." + note
+
+    # ------------------------------------------------------------------ promo codes (freelancers only)
+    FL_PROMOS = {
+        "referralnova50": {"label": "ReferralNova50", "max": 5000, "amount": Decimal("5.00"), "covered": 50},
+    }
+    PROMO_LOCK = 482012
+    ns["FL_PROMOS"] = FL_PROMOS
+
+    def promo_available():
+        return any(Business.query.filter(Business.promo_code_used == p["label"]).count() < p["max"]
+                   for p in FL_PROMOS.values())
+
+    def has_promo(fb):
+        return bool(fb and fb.shadow and fb.shadow.promo_code_used in {p["label"] for p in FL_PROMOS.values()})
+
+    def redeem_promo(user, fb, raw):
+        """Returns (ok, message). Adds the promo amount to the freelancer's advertising balance, once."""
+        from sqlalchemy import text
+        code = (raw or "").strip().lower()
+        if not code:
+            return False, ""
+        promo = FL_PROMOS.get(code)
+        if not promo:
+            return False, "That promo code is not valid."
+        db.session.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": PROMO_LOCK})
+        sb = Business.query.filter_by(id=fb.shadow_business_id).with_for_update().first()
+        if feeplan.is_low(sb):
+            db.session.rollback()
+            return False, "Promo codes cannot be used with the 2% ad fee plan. Choose the 10% plan to use a promo code."
+        if sb.promo_code_used:
+            db.session.rollback()
+            return False, "A promo code has already been applied to your account."
+        if Business.query.filter(Business.promo_code_used == promo["label"]).count() >= promo["max"]:
+            db.session.rollback()
+            return False, f"Sorry, the promo code {promo['label']} is no longer valid."
+        sb.account_balance = Decimal(str(sb.account_balance or 0)) + promo["amount"]
+        sb.promo_code_used = promo["label"]
+        sb.promo_redeemed_at = datetime.utcnow()
+        db.session.commit()
+        return True, (f"Promo code applied! ${promo['amount']:.2f} was added to your advertising balance, enough to cover the "
+                      f"advertising fee on your first ${promo['covered']} in sales. You can submit your listing without adding funds. "
+                      f"If your lowest sale amount will be more than ${promo['covered']}, you must add more funds "
+                      f"(minimum ${MIN_DEPOSIT:.0f}) in the Freelancer Console.")
+
+    @app.route("/freelancer/redeem-promo", methods=["POST"])
+    @login_required
+    def freelance_redeem_promo():
+        fb = fl_for(current_user)
+        if not fb:
+            fb = FreelanceBusiness(user_id=current_user.id, status="draft", enabled=True)
+            db.session.add(fb)
+        fb.enabled = True
+        ensure_shadow(current_user, fb, (request.form.get("fl_name") or "").strip()[:100]
+                      or current_user.name or f"Freelancer {current_user.id}")
+        link_sponsors(fb)
+        db.session.commit()
+        ok, msg = redeem_promo(current_user, fb, request.form.get("promo_code"))
+        return jsonify(ok=ok, message=msg or "Please enter a promo code.", balance=balance_of(fb))
 
     def try_submit(fb):
         d = fb.draft
@@ -408,9 +505,9 @@ def register(app, ns):
             return "Saved as a draft. Still needed: " + ", ".join(gaps) + "."
         if not fb.terms_agreed_at:
             return "Saved as a draft. You must agree to the Freelancer Terms before submitting."
-        if balance_of(fb) < MIN_DEPOSIT:
+        if balance_of(fb) < MIN_DEPOSIT and not (has_promo(fb) and balance_of(fb) > 0):
             return (f"Saved as a draft. Add at least ${MIN_DEPOSIT:.0f} to your freelancer account "
-                    "balance (Freelancer Console) to submit for review.")
+                    "balance (Freelancer Console) to submit for review, or use promo code ReferralNova50 in step 4.")
         fb.status = "pending"
         fb.submitted_at = datetime.utcnow()
         fb.rejection_reason = None
@@ -430,6 +527,10 @@ def register(app, ns):
         ctx.update(fl_data=d, fl_links=links, fl_offerings_text="\n".join(d.get("offerings") or []))
         ctx["fl_balance"] = balance_of(fb)
         ctx["fl_missing"] = missing_items(d) if fb else []
+        ctx["fl_promo_used"] = has_promo(fb)
+        ctx["fl_promo_available"] = promo_available()
+        ctx["fl_plan"] = feeplan.plan_of(fb.shadow) if fb and fb.shadow else feeplan.FULL
+        ctx["fl_has_promo_any"] = bool(fb and fb.shadow and fb.shadow.promo_code_used)
         ctx["fl_total"] = ctx["fl_avail"] = ctx["fl_pending"] = Decimal(0)
         if fb and fb.enabled and fb.shadow:
             t, a, p = ns["calculate_business_earnings_split"](fb.shadow, delay_days=7)
@@ -499,7 +600,9 @@ def register(app, ns):
                 query = query.filter(FreelanceBusiness.search_text.ilike(f"%{word}%"))
         if cat in CATEGORIES:
             query = query.filter(FreelanceBusiness.category == cat)
-        pag = query.order_by(FreelanceBusiness.approved_at.desc().nullslast(), FreelanceBusiness.id.desc()) \
+        low_ids = db.session.query(Business.id).filter(Business.ad_fee_plan == "low")
+        pag = query.order_by(db.case((FreelanceBusiness.shadow_business_id.in_(low_ids), 1), else_=0),
+                             FreelanceBusiness.approved_at.desc().nullslast(), FreelanceBusiness.id.desc()) \
                    .paginate(page=page, per_page=12, error_out=False)
         items = [view(fb, fb.live) for fb in pag.items]
         return render_template("freelance_directory.html", items=items, pagination=pag, q=q, category=cat,
@@ -509,7 +612,7 @@ def register(app, ns):
     @login_required
     def freelance_listing(fid):
         fb = FreelanceBusiness.query.get_or_404(fid)
-        if fb.slug and fb.is_live and fb.enabled:
+        if fb.slug and fb.is_live and fb.enabled and not (fb.shadow and feeplan.is_low(fb.shadow)):
             return redirect(url_for("freelance_listing_slug", slug=fb.slug), code=301)
         return render_listing(fb)
 
@@ -517,6 +620,9 @@ def register(app, ns):
     @login_required
     def freelance_listing_slug(slug):
         fb = FreelanceBusiness.query.filter_by(slug=slug.lower()).first_or_404()
+        if fb.shadow and feeplan.is_low(fb.shadow):
+            # 2% ad fee plan: no custom web address, so send people to the standard listing
+            return redirect(url_for("freelance_listing", fid=fb.id))
         return render_listing(fb)
 
     def render_listing(fb):
@@ -583,6 +689,12 @@ def register(app, ns):
     def freelance_terms():
         return render_template("freelance_terms.html")
 
+    # ------------------------------------------------------------------ camera scan (same idea as the business scan page)
+    @app.route("/freelancer/scan")
+    @member_fl_required
+    def freelance_scan(fb):
+        return render_template("freelance_scan.html", fb=fb)
+
     # ------------------------------------------------------------------ freelancer console
     @app.route("/freelancer")
     @member_fl_required
@@ -590,13 +702,15 @@ def register(app, ns):
         sb = fb.shadow
         convos = (Interaction.query.filter_by(business_id=sb.id, status="active")
                   .order_by(Interaction.updated_at.desc()).limit(50).all())
+        pending_tx = [c for c in convos if c.awaiting_payment or c.awaiting_finalization]
         t, a, p = ns["calculate_business_earnings_split"](sb, delay_days=7)
-        ready = not missing_items(fb.draft) and fb.terms_agreed_at and balance_of(fb) >= MIN_DEPOSIT
+        ready = (not missing_items(fb.draft) and fb.terms_agreed_at
+                 and (balance_of(fb) >= MIN_DEPOSIT or (has_promo(fb) and balance_of(fb) > 0)))
         return render_template(
-            "freelance_console.html", fb=fb, sb=sb, balance=balance_of(fb), convos=convos,
+            "freelance_console.html", fb=fb, sb=sb, balance=balance_of(fb), convos=convos, pending_tx=pending_tx,
             total=t, avail=a, pending=p, missing=missing_items(fb.draft), ready=ready,
             ref_link=site_base() + url_for("register", ref=current_user.referral_code),
-            public_url=public_url(fb),
+            public_url=public_url(fb), promo_used=has_promo(fb), plan=feeplan.plan_of(sb),
             min_deposit=MIN_DEPOSIT)
 
     @app.route("/freelancer/submit", methods=["POST"])
@@ -609,6 +723,7 @@ def register(app, ns):
     @member_fl_required
     def freelance_fund(fb):
         return render_template("freelance_fund.html", account_balance=balance_of(fb),
+                               plan=feeplan.plan_of(fb.shadow),
                                STRIPE_PUBLISHABLE=ns["os"].environ.get("STRIPE_PUBLISHABLE"))
 
     @csrf.exempt

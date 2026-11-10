@@ -91,7 +91,7 @@
             {% endif %}
 
             {# admin tracking button #}
-            {% if staff.role == 'admin'
+            {% if not fee_is_low(interaction.business) and staff.role == 'admin'
                   and staff.allow_live_tracking
                   and interaction.assigned_staff_id
                   and interaction.provider_status == 'on_the_way' %}

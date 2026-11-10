@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Perk Miner | Real Cash Back for Shopping Local</title>
-  <meta name="description" content="Join free and earn 2% real cash back on qualifying purchases from local businesses. Private one-to-one messaging, no spam, real cash paid by Perk Miner LLC. Businesses list free and pay only when a sale closes.">
+  <meta name="description" content="Join free and earn real cash back on qualifying purchases from local businesses: 2% from advertisers on the 10% ad fee plan, 0.4% from advertisers on the 2% ad fee plan. Private one-to-one messaging, no spam, real cash paid by Perk Miner LLC. Businesses list free and pay only when a sale closes.">
   <meta name="theme-color" content="#123f40">
   <link rel="canonical" href="https://www.perkminer.com/">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Perk Miner">
-  <meta property="og:title" content="Perk Miner – Free Membership + 2% Real Cash Back">
-  <meta property="og:description" content="Join free. Earn 2% real cash back on real purchases. Your data stays private.">
+  <meta property="og:title" content="Perk Miner – Free Membership + Real Cash Back (2% or 0.4%)">
+  <meta property="og:description" content="Join free. Earn 2% or 0.4% real cash back on real purchases, depending on the advertiser. Your data stays private.">
   <meta property="og:url" content="https://www.perkminer.com/">
   <meta property="og:image" content="https://res.cloudinary.com/dmrntlcfd/image/upload/v1771632656/New_Perk_Miner_Logo_xt8y0e.jpg">
 
@@ -25,6 +25,17 @@
   {% if current_user.is_authenticated %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>{% endif %}
   <script>document.documentElement.classList.remove('no-js');</script>
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
+<style>
+  .ps-hero-search { max-width: 56rem; margin: 1.4rem 0 1.4rem; }
+  .ps-hero-search-lbl { font-weight: 800; color: #ffd66b; margin: 0 0 .55rem .3rem; font-size: .95rem; }
+  .ps-hero-search .ps-sb-form { margin: 0; }
+  .ps-hero-search .ps-sb-note { text-align: left; }
+  .ps-rb-tabs { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; margin: 0 0 1.4rem; }
+  .ps-rb-tab { border: 2px solid #2a5859; background: #fff; color: #1e4a4b; font-weight: 800; border-radius: 999px; padding: .6rem 1.2rem; cursor: pointer; }
+  .ps-rb-tab.on { background: #2a5859; color: #fff; }
+  @media (min-width: 768px) { .ps-live-grid { grid-template-columns: repeat(6, 1fr); } }
+  .ps-rb-note { text-align: center; max-width: 40rem; margin: 1rem auto 0; font-size: .95rem; }
+</style>
 </head>
 <body class="ps-body ps-has-bottom">
 {# Searching and browsing listings is open to everyone; only the full listing page requires a login. #}
@@ -42,36 +53,10 @@
         <span class="ps-pill"><i class="bi bi-lightning-charge-fill"></i> Free to join &middot; Real cash back</span>
         <h1>DEMO SITE ONLY!</h1>
         <h1>Shop local.<br><em>Earn real cash back.</em></h1>
-        <p class="ps-lead">Join free and earn 2% cash back on qualifying purchases from local businesses &mdash; paid in real money by Perk Miner, straight to your bank. Private by design, with no spam.</p>
-        <div class="ps-cta-row">
-          <a href="{{ url_for('register') }}" class="ps-btn ps-btn-gold ps-btn-lg">Join free <i class="bi bi-arrow-right"></i></a>
-          <a href="{{ url_for('business_home') }}" class="ps-btn ps-btn-ghost-light ps-btn-lg"><i class="bi bi-shop"></i> I own a business</a>
-        </div>
-
-        <ul class="ps-trust">
-          <li><i class="bi bi-check-circle-fill"></i> Free for members, always</li>
-          <li><i class="bi bi-bank"></i> Paid via Stripe</li>
-          <li><i class="bi bi-shield-lock-fill"></i> Contact info stays private</li>
-          <li><i class="bi bi-slash-circle"></i> Not crypto</li>
-        </ul>
-        {% if can_browse %}
-        <p class="mt-3 mb-0 d-flex flex-column align-items-center gap-2"><a href="{{ url_for('freelance_directory') }}" class="ps-btn ps-btn-ghost-light ps-btn-sm"><i class="bi bi-person-workspace"></i> Freelancers &amp; side gigs</a><a href="{{ url_for('online_marketplace') }}" class="ps-btn ps-btn-ghost-light ps-btn-sm"><i class="bi bi-bag-heart"></i> Online marketplace</a></p>
-        {% endif %}
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- ================= SEARCH (the one place to look for businesses, products or services) ================= -->
-<section class="ps-searchband" id="search" aria-labelledby="search-title">
-  <div class="container">
-    <div class="ps-sb-head">
-      <span class="ps-sb-eyebrow"><i class="bi bi-geo-alt-fill"></i> Find it near you</span>
-      <h2 id="search-title">Search</h2>
-      <p>Looking for a business, a product or a service? Type it below and we&rsquo;ll show the closest Perk Miner businesses first.</p>
-    </div>
-    <form class="ps-sb-form" method="get" action="{{ url_for('search') }}" role="search"
+        <p class="ps-lead">Join free and earn cash back on qualifying purchases from local businesses &mdash; <b>2% or 0.4% cash back</b> &mdash; paid in real money by Perk Miner, straight to your bank. Private by design, with no spam.</p>
+        <div class="ps-hero-search" id="search">
+          <div class="ps-hero-search-lbl"><i class="bi bi-geo-alt-fill"></i> Find it near you &middot; closest businesses first</div>
+          <form class="ps-sb-form" method="get" action="{{ url_for('search') }}" role="search"
           {% if not can_browse %}data-gate data-gate-text="Create your free member account to search local businesses and start earning cash back."{% endif %}>
       <div class="ps-sb-field ps-sb-q">
         <label for="home-q">What are you looking for?</label>
@@ -93,7 +78,25 @@
       <input type="hidden" name="lat" id="search-lat">
       <input type="hidden" name="lng" id="search-lng">
     </form>
-    {% if not can_browse %}<p class="ps-sb-note"><i class="bi bi-lock-fill"></i> A free member account is needed to search and browse &mdash; <a href="{{ url_for('register') }}">join free</a>.</p>{% endif %}
+          {% if not can_browse %}<p class="ps-sb-note"><i class="bi bi-lock-fill"></i> A free member account is needed to search and browse &mdash; <a href="{{ url_for('register') }}">join free</a>.</p>{% endif %}
+        </div>
+        <div class="ps-cta-row">
+          <a href="{{ url_for('register') }}" class="ps-btn ps-btn-gold ps-btn-lg">Join free <i class="bi bi-arrow-right"></i></a>
+          <a href="{{ url_for('business_home') }}" class="ps-btn ps-btn-ghost-light ps-btn-lg"><i class="bi bi-shop"></i> I own a business</a>
+        </div>
+
+        <ul class="ps-trust">
+          <li><i class="bi bi-check-circle-fill"></i> Free for members, always</li>
+          <li><i class="bi bi-bank"></i> Paid via Stripe</li>
+          <li><i class="bi bi-shield-lock-fill"></i> Contact info stays private</li>
+          <li><i class="bi bi-slash-circle"></i> Not crypto</li>
+        </ul>
+        {% if can_browse %}
+        <p class="mt-3 mb-0 d-flex flex-column align-items-center gap-2"><a href="{{ url_for('freelance_directory') }}" class="ps-btn ps-btn-ghost-light ps-btn-sm"><i class="bi bi-person-workspace"></i> Freelancers &amp; side gigs</a><a href="{{ url_for('online_marketplace') }}" class="ps-btn ps-btn-ghost-light ps-btn-sm"><i class="bi bi-bag-heart"></i> Online marketplace</a></p>
+        {% endif %}
+      </div>
+
+    </div>
   </div>
 </section>
 
@@ -101,18 +104,22 @@
 <section class="ps-section ps-section-tint ps-receiptband" aria-labelledby="receipt-title">
   <div class="container">
     <div class="ps-rb-head">
-      <h2 id="receipt-title">See what 2% back looks like</h2>
-      <p>Shop at a Perk Miner business, and the cash back lands in your account &mdash; real money, paid out to your bank.</p>
+      <h2 id="receipt-title">See what your cash back looks like</h2>
+      <p>Shop at a Perk Miner business, and the cash back lands in your account &mdash; real money, paid out to your bank. The rate depends on the advertiser&rsquo;s ad fee plan: choose below to compare.</p>
+      <div class="ps-rb-tabs" role="group" aria-label="Compare cash back rates">
+        <button type="button" class="ps-rb-tab on" data-rb="2" aria-pressed="true">2% Cash Back (advertiser on the 10% ad fee)</button>
+        <button type="button" class="ps-rb-tab" data-rb="0.4" aria-pressed="false">0.4% Cash Back (advertiser on the 2% ad fee)</button>
+      </div>
     </div>
     <div class="ps-receipt-wrap" aria-hidden="true">
         <div class="ps-float ps-float-b"><i class="bi bi-chat-heart-fill"></i><div>Private chat<small>One business at a time</small></div></div>
         <div class="ps-receipt">
           <div class="ps-receipt-top"><span>Cash back</span><span class="ps-receipt-tag">Example</span></div>
           <div class="ps-receipt-row"><span>Your purchase</span><b>$100.00</b></div>
-          <div class="ps-receipt-row"><span>Cash back rate</span><b>2%</b></div>
-          <div class="ps-receipt-big"><div><small>You earn</small><strong>$2.00</strong></div><i class="bi bi-cash-coin"></i></div>
-          <div class="ps-progress"><div></div></div>
-          <div class="ps-progress-cap"><span>$2 earned</span><span>Withdraw at $10</span></div>
+          <div class="ps-receipt-row"><span>Cash back rate</span><b id="rbRate">2%</b></div>
+          <div class="ps-receipt-big"><div><small>You earn</small><strong id="rbEarn">$2.00</strong></div><i class="bi bi-cash-coin"></i></div>
+          <div class="ps-progress"><div id="rbBar"></div></div>
+          <div class="ps-progress-cap"><span id="rbCap">$2 earned</span><span>Withdraw at $10</span></div>
           <p class="ps-receipt-foot">Illustration only. Earnings clear 7 days after a sale is finalized.</p>
         </div>
         <div class="ps-float ps-float-a"><i class="bi bi-bank2"></i><div>Paid via Stripe<small>Straight to your bank</small></div></div>
@@ -121,12 +128,27 @@
 </section>
 
 
+<script>
+(function(){
+  var tabs=document.querySelectorAll('.ps-rb-tab');
+  if(!tabs.length) return;
+  tabs.forEach(function(t){t.addEventListener('click',function(){
+    var r=parseFloat(t.dataset.rb), earn=100*r/100;
+    tabs.forEach(function(x){var on=x===t;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on?'true':'false');});
+    document.getElementById('rbRate').textContent=(r===2?'2%':'0.4%');
+    document.getElementById('rbEarn').textContent='$'+earn.toFixed(2);
+    document.getElementById('rbCap').textContent='$'+earn.toFixed(2)+' earned';
+    document.getElementById('rbBar').style.width=(earn/10*100)+'%';
+  });});
+})();
+</script>
+
 <!-- ================= TRUST STRIP ================= -->
 <div class="ps-strip">
   <div class="container">
     <div class="ps-strip-in">
       <div class="ps-strip-item"><i class="bi bi-person-check"></i><div><b>$0 to join</b><span>No fees, no subscriptions</span></div></div>
-      <div class="ps-strip-item"><i class="bi bi-cash-coin"></i><div><b>2% cash back</b><span>Up to $50 per purchase</span></div></div>
+      <div class="ps-strip-item"><i class="bi bi-cash-coin"></i><div><b>2% or 0.4% cash back</b><span>Up to $50 (2%) or $10 (0.4%) per purchase</span></div></div>
       <div class="ps-strip-item"><i class="bi bi-shield-check"></i><div><b>Private by design</b><span>You choose what to share</span></div></div>
       <div class="ps-strip-item"><i class="bi bi-wallet2"></i><div><b>Real money</b><span>Not points or gift cards</span></div></div>
     </div>
@@ -144,7 +166,7 @@
     <div class="ps-steps">
       <div class="ps-step ps-reveal"><i class="bi bi-search ps-step-ic"></i><div class="ps-step-n">1</div><h3>Find a local business</h3><p>Search or browse by category and pick a business that fits what you need.</p></div>
       <div class="ps-step ps-reveal"><i class="bi bi-chat-heart ps-step-ic"></i><div class="ps-step-n">2</div><h3>Connect privately</h3><p>Message one-to-one, then pay the business directly. No spam, no cold calls.</p></div>
-      <div class="ps-step ps-reveal"><i class="bi bi-patch-check ps-step-ic"></i><div class="ps-step-n">3</div><h3>The sale is finalized</h3><p>Once the business finalizes the sale, your 2% cash back is recorded in your account.</p></div>
+      <div class="ps-step ps-reveal"><i class="bi bi-patch-check ps-step-ic"></i><div class="ps-step-n">3</div><h3>The sale is finalized</h3><p>Once the business finalizes the sale, your cash back (2%, or 0.4%) is recorded in your account.</p></div>
       <div class="ps-step ps-reveal"><i class="bi bi-bank ps-step-ic"></i><div class="ps-step-n">4</div><h3>Cash out</h3><p>Earnings clear after 7 days. Withdraw to your bank once you reach $10.</p></div>
     </div>
     <p class="text-center mt-4 mb-0 ps-reveal"><a href="{{ url_for('how_it_works') }}" class="ps-btn ps-btn-outline">See the full details</a></p>
@@ -165,8 +187,8 @@
         <h3>Get paid for what you already buy</h3>
         <p>Earn real cash back every time you buy from a Perk Miner business &mdash; paid by Perk Miner LLC, not by the business.</p>
         <div class="ps-stats3">
-          <div class="ps-stat"><b>2%</b><span>cash back</span></div>
-          <div class="ps-stat"><b>$50</b><span>max per purchase</span></div>
+          <div class="ps-stat"><b>2% / 0.4%</b><span>cash back, by advertiser plan</span></div>
+          <div class="ps-stat"><b>$50 / $10</b><span>max per purchase</span></div>
           <div class="ps-stat"><b>$0</b><span>to join</span></div>
         </div>
         <ul>
@@ -179,10 +201,10 @@
       <div class="ps-aud ps-aud-biz ps-reveal">
         <span class="ps-aud-tag">For businesses</span>
         <h3>Advertise without the guesswork</h3>
-        <p>List for free. No monthly advertising fee and no paying per click &mdash; you pay 10% of finalized sales, capped at $250 per sale. No sale, no fee.</p>
+        <p>List for free. No monthly advertising fee and no paying per click &mdash; choose a 10% fee on finalized sales (capped at $250 per sale) with every feature, or a 2% fee (capped at $50) built for low profit margins. No sale, no fee.</p>
         <div class="ps-stats3">
-          <div class="ps-stat"><b>10%</b><span>of finalized sales</span></div>
-          <div class="ps-stat"><b>$250</b><span>max fee per sale</span></div>
+          <div class="ps-stat"><b>10% or 2%</b><span>of finalized sales</span></div>
+          <div class="ps-stat"><b>$250 / $50</b><span>max fee per sale</span></div>
           <div class="ps-stat"><b>$0</b><span>monthly fee</span></div>
         </div>
         <ul>
@@ -269,6 +291,7 @@
           {% if biz.distance_mi is defined and biz.distance_mi is not none %}
             <small><i class="bi bi-geo-alt-fill"></i> {{ biz.distance_mi|round(1) }} mi away</small>
           {% endif %}
+          <small><span class="ps-cb{% if fee_is_low(biz) %} low{% endif %}"><i class="bi bi-cash-coin"></i> {{ fee_cashback_label(biz) }} Cash Back</span></small>
           <small><i class="bi bi-gift"></i> {{ biz.perks or "Member perks available" }}</small>
         </div>
       </a>
@@ -292,22 +315,27 @@
       <div class="ps-reveal">
         <span class="ps-eyebrow">Member benefits</span>
         <h2 class="ps-title">Every purchase pays you back</h2>
-        <p class="ps-sub">Earn 2% on up to $2,500 of every purchase, for up to $50 back each time. It&rsquo;s paid by Perk Miner LLC, so it never changes the price you pay.</p>
+        <p class="ps-sub">Earn 2% on up to $2,500 of every purchase, up to $50 back each time, from advertisers on the 10% ad fee plan.</br><br>Earn 0.4% from dvertisers on the 2% ad fee plan (built for low profit margins), up to $10 back.<br><br> All cashback and referral commissions are paid by Perk Miner LLC, so it never changes the price you pay.</p>
         <ul class="ps-checks">
           <li><i class="bi bi-cash-stack"></i><div><b>Real cash, not points</b><span>Paid through Stripe to your bank account.</span></div></li>
           <li><i class="bi bi-gift"></i><div><b>Member-only perks</b><span>Special offers from local businesses, just for members.</span></div></li>
-          <li><i class="bi bi-geo-alt"></i><div><b>Live tracking on the way</b><span>See your provider&rsquo;s location and ETA when they&rsquo;re on the way.</span></div></li>
+          <li><i class="bi bi-geo-alt"></i><div><b>Live tracking on the way</b><span>See your provider&rsquo;s location and ETA when they&rsquo;re on the way (available with advertisers on the 10% ad fee plan).</span></div></li>
         </ul>
       </div>
       <div class="ps-calc ps-reveal">
+        <label for="psPlan">Which advertiser?</label>
+        <select id="psPlan" class="form-select mb-3" aria-label="Advertiser ad fee plan">
+          <option value="2" selected>2% Cash Back (advertiser on the 10% ad fee)</option>
+          <option value="0.4">0.4% Cash Back (advertiser on the 2% ad fee)</option>
+        </select>
         <label for="psAmt">What would you spend?</label>
         <div class="ps-money"><span>$</span><input id="psAmt" type="number" inputmode="decimal" min="0" max="100000" step="1" value="250"></div>
         <input class="ps-range" id="psRange" type="range" min="10" max="2500" step="10" value="250" aria-label="Purchase amount">
         <div class="ps-calc-out" aria-live="polite">
           <div class="ps-calc-box hl"><span>You earn</span><b id="psEarn">$5.00</b></div>
-          <div class="ps-calc-box"><span>Cash back rate</span><b>2%</b></div>
+          <div class="ps-calc-box"><span>Cash back rate</span><b id="psRate">2%</b></div>
         </div>
-        <p class="ps-fine mt-3 mb-0">Example only. Cash back applies to the first $2,500 of a qualifying finalized purchase, up to $50.</p>
+        <p class="ps-fine mt-3 mb-0">Example only. Cash back applies to the first $2,500 of a qualifying finalized purchase, up to $50 (2%) or up to $10 (0.4%).</p>
       </div>
     </div>
   </div>
@@ -324,7 +352,7 @@
     <div class="ps-grid3">
       <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-chat-heart"></i></div><h3>One business at a time</h3><p>Connect privately in secure one-to-one messaging. You decide what to share and when.</p></div>
       <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-bell-slash"></i></div><h3>No spam, no cold calls</h3><p>Businesses can&rsquo;t blast you with offers or call out of the blue.</p></div>
-      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-shield-lock"></i></div><h3>We don&rsquo;t sell your data</h3><p>We never sell or share your contact info. Payout details are handled securely by Stripe.</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-shield-lock"></i></div><h3>We don&rsquo;t sell your data, track your browsing history or utilize listening technology</h3><p>We never sell or share your contact info. Payout details are handled securely by Stripe to keep your personal information safe.</p></div>
     </div>
   </div>
 </section>
@@ -340,6 +368,7 @@
         <div><b id="stat-biz">${{ "{:,.2f}".format(total_biz_paid|default(0, true)) }}</b><span>Paid to businesses</span></div>
         <div><b id="stat-gross">${{ "{:,.2f}".format(total_gross_sales|default(0, true)) }}</b><span>Gross sales</span></div>
         <div><b id="stat-fees">${{ "{:,.2f}".format(total_ad_fees|default(0, true)) }}</b><span>Ad fees paid</span></div>
+        <div><b id="stat-roas">{{ "{:,.1f}".format(avg_roas|default(0, true)) }}x</b><span>Average ROAS (all advertisers)</span></div>
         <div><b id="stat-percent">{{ percent_fees_paid|default(0, true)|round(1) }}%</b><span>Ad revenue paid out</span></div>
       </div>
       <div class="row align-items-center">
@@ -401,7 +430,10 @@ document.addEventListener('DOMContentLoaded', function () {
   var amt = document.getElementById('psAmt'), rng = document.getElementById('psRange'), out = document.getElementById('psEarn');
   if (!amt || !rng || !out) return;
   var fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
-  function calc(v) { v = Math.max(0, Number(v) || 0); out.textContent = fmt.format(Math.min(v, 2500) * 0.02); }
+  var plan = document.getElementById('psPlan'), rate = document.getElementById('psRate');
+  function pct() { return plan ? Number(plan.value) / 100 : 0.02; }
+  function calc(v) { v = Math.max(0, Number(v) || 0); out.textContent = fmt.format(Math.min(v, 2500) * pct()); if (rate) rate.textContent = (pct() * 100) + '%'; }
+  if (plan) plan.addEventListener('change', function () { calc(amt.value); });
   amt.addEventListener('input', function () { rng.value = Math.min(Math.max(amt.value, 10), 2500); calc(amt.value); });
   rng.addEventListener('input', function () { amt.value = rng.value; calc(rng.value); });
   calc(amt.value);

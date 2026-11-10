@@ -140,9 +140,10 @@
     <div class="form-check form-switch my-2">
       <input class="form-check-input" type="checkbox"
              id="manual_feature_{{ biz.id }}" name="manual_feature"
-             {% if biz.manual_feature %}checked{% endif %}>
+             {% if biz.manual_feature and not fee_is_low(biz) %}checked{% endif %}
+             {% if fee_is_low(biz) %}disabled title="2% ad fee advertisers cannot be featured"{% endif %}>
       <label class="form-check-label" for="manual_feature_{{ biz.id }}">
-        Manually Feature
+        Manually Feature{% if fee_is_low(biz) %} <span class="badge bg-secondary">Not available: 2% ad fee plan</span>{% endif %}
       </label>
     </div>
 
@@ -286,6 +287,7 @@
                     'price_display': biz.price_display,
                     'google_reviews_url': biz.google_reviews_url,
                     'location_varies': biz.location_varies,
+                    'ad_fee_plan': biz.ad_fee_plan,
                     'account_balance': biz.account_balance,
                     'badge_licensed': biz.eff('licensed'), 'badge_bonded': biz.eff('bonded'), 'badge_insured': biz.eff('insured'),
                     'service_1': pv_services[0] if pv_services|length > 0 else None,

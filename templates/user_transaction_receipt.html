@@ -36,9 +36,9 @@
     <div class="rc-row"><span class="k">Business</span><span class="v">{{ interaction.business.business_name }}</span></div>
     <div class="rc-row total"><span class="k">Total Paid</span><span class="v">${{ '%.2f' % transaction.amount }}</span></div>
     <div class="rc-cash">
-      <span class="k"><i class="bi bi-cash-coin"></i> Your Cashback (2% cap $50)</span>
+      <span class="k"><i class="bi bi-cash-coin"></i> Your Cashback ({{ '0.4% cap $10' if txn_is_low(transaction) else '2% cap $50' }})</span>
       <span class="v">${{ '%.2f' % transaction.cash_back }}
-        {% if transaction.cash_back|float >= 49.99 %}<span class="badge bg-warning text-dark ms-1 align-middle" style="font-size:.7rem;">Max Reached</span>{% endif %}
+        {% if transaction.cash_back|float >= (9.99 if txn_is_low(transaction) else 49.99) %}<span class="badge bg-warning text-dark ms-1 align-middle" style="font-size:.7rem;">Max Reached</span>{% endif %}
       </span>
     </div>
   </div>

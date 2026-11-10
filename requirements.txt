@@ -32,3 +32,5 @@ flask_simple_captcha
 authlib
 cryptography
 requests
+reportlab
+openpyxl

@@ -42,6 +42,7 @@
         {% endif %}
       {% endif %}
     </div>
+    <div class="pml-cashback{% if fee_is_low(b) %} low{% endif %}" title="What members earn on every purchase from this advertiser"><i class="bi bi-cash-coin"></i><b>{{ fee_cashback_label(b) }} Cash Back</b></div>
     {% set sa = service_area_info(b) %}
     {% if sa.expanded %}<div class="pml-line"><i class="bi bi-globe-americas"></i><span>Serves {{ sa.short }}</span></div>
     {% elif not online and b.address %}<div class="pml-line"><i class="bi bi-geo-alt"></i><span>{{ b.address }}</span></div>{% endif %}
@@ -80,10 +81,11 @@
         <span class="pml-chip live"><i class="bi bi-broadcast"></i> live location enabled</span>
       {% endif %}
     </div>
+    <div class="pml-cashback big{% if fee_is_low(b) %} low{% endif %}"><i class="bi bi-cash-coin"></i><b>{{ fee_cashback_label(b) }} Cash Back</b><span>on every purchase, paid by Perk Miner LLC</span></div>
     {% if show_final and b.finalization %}
     <span class="pml-final">
-      <b>Finalization: {{ b.finalization }}</b><br>
-      {% if bal >= 250 %}(Has enough to finalize any transaction){% else %}(Has enough to finalize ${{ '%.2f' % (bal * 10) }} in sales){% endif %}
+      <b>Finalization: {{ fin_label(b.finalization) }}</b><br>
+      {% set _cap = 50 if fee_is_low(b) else 250 %}{% set _mult = 50 if fee_is_low(b) else 10 %}{% if bal >= _cap %}(Has enough to finalize any transaction){% else %}(Has enough to finalize ${{ '%.2f' % (bal * _mult) }} in sales){% endif %}
     </span>
     {% endif %}
     {{ trust_badges(b, interactive) }}

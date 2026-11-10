@@ -23,6 +23,7 @@
       <span class="pml-chip"><i class="bi bi-tag"></i> {{ f.category or 'Freelancer' }}</span>
       {% if f.link_count %}<span class="pml-chip"><i class="bi bi-link-45deg"></i> {{ f.link_count }} link{{ '' if f.link_count == 1 else 's' }}</span>{% endif %}
     </div>
+    <div class="pml-cashback{% if fee_is_low(f) %} low{% endif %}" title="What members earn on every purchase from this freelancer"><i class="bi bi-cash-coin"></i><b>{{ fee_cashback_label(f) }} Cash Back</b></div>
     {% if f.tagline %}<div class="pml-line"><i class="bi bi-chat-quote"></i><span>{{ f.tagline }}</span></div>{% endif %}
     {% if f.region %}<div class="pml-line"><i class="bi bi-globe-americas"></i><span>Serves {{ f.region }}</span></div>{% endif %}
     <div class="pml-services">
@@ -53,9 +54,10 @@
       <span class="pml-chip"><i class="bi bi-tag"></i> {{ f.category or 'Freelancer' }}</span>
       <span class="pml-chip"><i class="bi bi-person-workspace"></i> Freelancer / network business</span>
     </div>
+    <div class="pml-cashback big{% if fee_is_low(f) %} low{% endif %}"><i class="bi bi-cash-coin"></i><b>{{ fee_cashback_label(f) }} Cash Back</b><span>on every purchase, paid by Perk Miner LLC</span></div>
     <span class="pml-final">
       <b>Finalization: Manual / in person</b><br>
-      {% if bal >= 250 %}(Has enough to finalize any transaction){% else %}(Has enough to finalize ${{ '%.2f' % (bal * 10) }} in sales){% endif %}
+      {% set _cap = 50 if fee_is_low(f) else 250 %}{% set _mult = 50 if fee_is_low(f) else 10 %}{% if bal >= _cap %}(Has enough to finalize any transaction){% else %}(Has enough to finalize ${{ '%.2f' % (bal * _mult) }} in sales){% endif %}
     </span>
   </div>
 </div>

@@ -111,6 +111,7 @@ Perk Miner Public Business Profiles Directory – Search our public profiles
         {% if biz.about_us %}
         <p class="ps-dcard-about">{{ biz.about_us[:160] }}{% if biz.about_us|length > 160 %}&hellip;{% endif %}</p>
         {% endif %}
+        <div class="ps-dcard-line"><span class="ps-cb{% if fee_is_low(biz) %} low{% endif %}"><i class="bi bi-cash-coin"></i> {{ fee_cashback_label(biz) }} Cash Back</span></div>
         <div class="ps-dcard-perk"><i class="bi bi-gift"></i><span><strong>Member perk:</strong> {{ biz.perks or "Member perks available" }}</span></div>
         <span class="ps-dcard-cta">View public profile <i class="bi bi-arrow-right"></i></span>
       </a>

@@ -138,14 +138,14 @@
         <div class="detail-row"><span class="d-label">Transaction ID</span><span class="d-value">{{ transaction.transaction_id }}</span></div>
       {% endif %}
 
-      <div class="section-label">Advertising</div>
+      <div class="section-label">Advertising &middot; {{ '2% ad fee plan' if transaction.fee_plan == 'low' else '10% ad fee plan' }}</div>
       <div class="detail-row"><span class="d-label">Sale Amount</span><span class="d-value">${{ "{:,.2f}".format(sale_amount) }}</span></div>
-      <div class="detail-row"><span class="d-label">Ad Fee (10%, capped $250)</span><span class="d-value">${{ "{:,.2f}".format(ad_fee) }}</span></div>
+      <div class="detail-row"><span class="d-label">Ad Fee ({{ '2% max $50' if transaction.fee_plan == 'low' else '10% max $250' }})</span><span class="d-value">${{ "{:,.2f}".format(ad_fee) }}</span></div>
       <div class="detail-row"><span class="d-label">Net Gross</span><span class="d-value">${{ "{:,.2f}".format(net_gross) }}</span></div>
       <div class="detail-row"><span class="d-label">Marketing ROI</span><span class="d-value">{{ roi | round(0) | int }}%</span></div>
       <div class="detail-row"><span class="d-label">Marketing ROI Ratio</span><span class="d-value">{{ ratio | round(1) }}:1</span></div>
 
-      <div class="detail-row total"><span class="d-label">Cash Back Earned</span><span class="d-value">${{ "{:,.2f}".format(cash_back) }}</span></div>
+      <div class="detail-row total"><span class="d-label">Cash Back Earned ({{ '0.2% cap $5' if transaction.fee_plan == 'low' else '1% cap $25' }})</span><span class="d-value">${{ "{:,.2f}".format(cash_back) }}</span></div>
 
       <div class="invoice-note">Invoice for finalized transaction. Perk Miner LLC · support@perkminer.com</div>
     </div>

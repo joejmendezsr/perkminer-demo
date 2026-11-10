@@ -27,6 +27,13 @@
     .ps-fee-card { position: relative; background: #fff; color: var(--ps-text); border-radius: 26px; padding: clamp(1.3rem, 3vw, 1.8rem); box-shadow: var(--ps-shadow-lg); }
     .ps-fee-card h2 { font-size: 1.05rem; font-weight: 800; color: var(--ps-ink); margin: 0 0 .9rem; display: flex; align-items: center; gap: .5rem; }
     .ps-fee-card h2 i { color: var(--ps-teal-600); }
+    .ps-plan-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin: 0 0 1rem; }
+    .ps-plan-toggle label { display: block; cursor: pointer; border: 2px solid var(--ps-line); border-radius: 14px; padding: .55rem .7rem; text-align: center; font-weight: 700; font-size: .92rem; line-height: 1.25; }
+    .ps-plan-toggle label small { display: block; font-weight: 500; color: var(--ps-muted); font-size: .76rem; }
+    .ps-plan-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .ps-plan-toggle label:has(input:checked) { border-color: var(--ps-teal-600); background: var(--ps-teal-50); box-shadow: 0 0 0 3px rgba(42,88,89,.15); }
+    .ps-plan-toggle label:has(input:focus-visible) { outline: 3px solid var(--ps-gold); outline-offset: 2px; }
+    .ps-plan-note { font-size: .84rem; line-height: 1.45; margin: .6rem 0 0; padding: .55rem .75rem; border-radius: 12px; background: #fff4f4; border: 1px solid #f3c9cc; color: #8a1f26; display: none; }
     .ps-fee-rows { display: grid; gap: .6rem; margin-top: 1rem; }
     .ps-fee-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .75rem 1rem; border-radius: 14px; background: var(--ps-teal-50); }
     .ps-fee-row span { color: var(--ps-muted); font-weight: 600; font-size: .92rem; }
@@ -66,7 +73,7 @@
       <div>
         <span class="ps-pill"><i class="bi bi-shop"></i> Pay-per-sale advertising</span>
         <h1>Stop paying for clicks.<br><em>Start paying for sales.</em></h1>
-        <p class="ps-lead">List your business free. When a sale is finalized you pay 10%, capped at $250. No sale, no fee &mdash; and no monthly advertising fee or contracts.</p>
+        <p class="ps-lead">List your business free. When a sale is finalized you pay 10%, capped at $250 (or choose the 2% plan, capped at $50, if your profit margins are low). No sale, no fee &mdash; and no monthly advertising fee or contracts.</p>
         <div class="ps-cta-row">
           <a href="{{ url_for('business_register') }}" class="ps-btn ps-btn-gold ps-btn-lg">List your business free <i class="bi bi-arrow-right"></i></a>
           <a href="{{ url_for('business_login') }}" class="ps-btn ps-btn-ghost-light ps-btn-lg">Business login</a>
@@ -80,14 +87,19 @@
 
       <div class="ps-fee-card" aria-label="Advertising fee calculator">
         <h2><i class="bi bi-calculator"></i> See your fee on any sale</h2>
+        <div class="ps-plan-toggle" role="radiogroup" aria-label="Advertising fee plan">
+          <label><input type="radio" name="pm-plan" value="10" checked> 10% ad fee<small>All features &middot; members earn 2% cash back</small></label>
+          <label><input type="radio" name="pm-plan" value="2"> 2% ad fee<small>Low margins &middot; members earn 0.4% cash back</small></label>
+        </div>
         <label for="pm-sale-amount" class="form-label fw-semibold mb-1">Sale amount</label>
         <div class="ps-money"><span>$</span><input id="pm-sale-amount" type="number" min="1" max="100000000" step="1" value="2500" inputmode="decimal"></div>
         <div class="ps-fee-rows" aria-live="polite">
-          <div class="ps-fee-row"><span>Perk Miner fee (10%, max $250)</span><b id="pm-fee">$250.00</b></div>
-          <div class="ps-fee-row cash"><span><i class="bi bi-piggy-bank-fill"></i> Your cash back (1% of the sale, max $25)</span><b id="pm-cashback">$25.00</b></div>
+          <div class="ps-fee-row"><span id="pm-fee-label">Perk Miner fee (10%, max $250)</span><b id="pm-fee">$250.00</b></div>
+          <div class="ps-fee-row cash"><span id="pm-cb-label"><i class="bi bi-piggy-bank-fill"></i> Your cash back (1% of the sale, max $25)</span><b id="pm-cashback">$25.00</b></div>
           <div class="ps-fee-row keep"><span>Revenue less fee</span><b id="pm-remainder">$2,250.00</b></div>
           <div class="ps-fee-row"><span>Fee-based ROAS</span><b id="pm-roas">10.0X</b></div>
         </div>
+        <p class="ps-plan-note" id="pm-plan-note"><b>2% ad fee plan:</b> no featured placement, no live tracking, no public profile page (so no search engine or AI discovery) and no promo codes. Members earn 0.4% cash back instead of 2%.</p>
         <p class="ps-fine mt-3 mb-0">Illustrative only. Revenue less fee is before the cost of goods, labor, taxes and other expenses. Cash back is the 1% you earn when you finalize a sale (on up to $2,500 of the sale) and is not included in revenue less fee; referral commissions are not included either. Sales and profit are not guaranteed.</p>
       </div>
     </div>
@@ -100,12 +112,38 @@
     <div class="ps-head ps-reveal">
       <span class="ps-eyebrow">Simple pricing</span>
       <h2 class="ps-title">One fee. Only when you sell.</h2>
-      <p class="ps-sub">Pay $1 for every $10 sold, capped at $250 per sale. That&rsquo;s the whole price list.</p>
+      <p class="ps-sub">Pay $1 for every $10 sold, capped at $250 per sale. Low profit margins? Choose the 2% plan: $1 for every $50 sold, capped at $50 per sale. That&rsquo;s the whole price list.</p>
     </div>
     <div class="ps-metrics ps-reveal">
       <div class="ps-metric"><b>10%</b><span>of each finalized sale</span></div>
       <div class="ps-metric"><b>$250</b><span>maximum fee per sale</span></div>
       <div class="ps-metric"><b>$0</b><span>monthly fee</span></div>
+    </div>
+    <div class="ps-grid2 ps-reveal" style="margin-top:1.6rem;display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));">
+      <div class="ps-card">
+        <h3>10% ad fee <small class="text-muted fw-normal">(max $250)</small></h3>
+        <p class="mb-2"><b>All features</b> and the most cash back for your customers.</p>
+        <ul class="mb-0 ps-fine" style="padding-left:1.1rem;">
+          <li>Members earn <b>2% cash back</b> (up to $50 per purchase)</li>
+          <li>Full referral commissions for every member who refers customers</li>
+          <li>Featured placement eligibility</li>
+          <li>Live tracking of your service providers</li>
+          <li>A public profile page found by search engines and AI assistants</li>
+          <li>Eligible for promo codes</li>
+        </ul>
+      </div>
+      <div class="ps-card">
+        <h3>2% ad fee <small class="text-muted fw-normal">(max $50)</small></h3>
+        <p class="mb-2">For businesses with <b>low profit margins</b> on the products they sell.</p>
+        <ul class="mb-0 ps-fine" style="padding-left:1.1rem;">
+          <li>Members earn <b>0.4% cash back</b> (up to $10 per purchase)</li>
+          <li>One fifth of the referral commissions</li>
+          <li><b>Cannot be featured</b></li>
+          <li><b>No live tracking</b></li>
+          <li><b>No public profile page</b>, so no search engine or AI discovery</li>
+          <li><b>No promo codes</b></li>
+        </ul>
+      </div>
     </div>
     <p class="text-center ps-fine mt-3 mb-0">A $25 minimum prepaid advertising balance covers your future transaction fees. Fees are deducted when a sale is finalized, and unused funds stay in your account.</p>
   </div>
@@ -136,15 +174,16 @@
     </div>
     <div class="ps-grid3">
       <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-cash-coin"></i></div><h3>Pay only for results</h3><p>No contracts, no commitment, no membership fees and no hidden fees. You pay when a sale is finalized &mdash; not for clicks.</p></div>
-      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-globe2"></i></div><h3>A free public profile page</h3><p>Your own page with a unique web address, built to be found on major search engines and by AI assistants once your listing is approved (visibility isn&rsquo;t guaranteed).</p></div>
-      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-people"></i></div><h3>Leads at no extra cost</h3><p>Exclusive leads, website and foot traffic, phone calls, appointments, meet-ups and live tracking of providers in the field (when status is &ldquo;on the way&rdquo;).</p></div>
-      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-piggy-bank"></i></div><h3>Earn as you grow</h3><p>Earn 1% cash back for finalizing transactions (on up to $2,500 of the sale, $25 max), plus referral and mutual commissions from businesses you refer or that referred you.</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-globe2"></i></div><h3>A free public profile page <span class="badge text-bg-success align-middle" style="font-size:.62rem;">10% ad fee plan only</span></h3><p>Your own page with a unique web address, built to be found on major search engines and by AI assistants once your listing is approved (visibility isn&rsquo;t guaranteed). Advertisers on the 2% ad fee plan do not get a public profile page.</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-people"></i></div><h3>Leads at no extra cost</h3><p>Exclusive leads, website and foot traffic, phone calls, appointments and meet-ups on both plans.</p></div>
+<div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-geo-alt"></i></div><h3>Free live tracking</h3><p>Live tracking of providers in the field (when status is &ldquo;on the way&rdquo;) is <b>only on the 10% ad fee plan</b>.</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-piggy-bank"></i></div><h3>Earn as you grow</h3><p>Earn 1% cash back <b>(2% advertisers earn 0.4%)</b> for finalizing transactions (on up to $2,500 of the sale, $25 max <b>($5 max for 2% advertisers)</b>), plus referral and mutual commissions from businesses you refer or that referred you.</p></div>
       <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-graph-up-arrow"></i></div><h3>Real-time metrics</h3><p>See where every advertising dollar goes: sale amount, ad fee paid, marketing ROI after ad spend, and marketing ratio ROI.</p></div>
-      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-megaphone"></i></div><h3>Featured exposure</h3><p>Featured exposure includes a Perk Miner LLC press release, social media and more.</p></div>
+      <div class="ps-card ps-reveal"><div class="ps-ic"><i class="bi bi-megaphone"></i></div><h3>Featured exposure <span class="badge text-bg-success align-middle" style="font-size:.62rem;">10% ad fee plan only</span></h3><p>Featured exposure includes a Perk Miner LLC press release, social media and more. Advertisers on the 2% ad fee plan cannot be featured, and they appear after all 10% ad fee advertisers in search results.</p></div>
     </div>
     <div class="ps-callout mt-4 ps-reveal">
       <i class="bi bi-arrow-repeat"></i>
-      <p><b>Where the fee goes.</b> Perk Miner LLC pays out up to 84% of the ad revenue from every transaction as cash back and commissions to members and business advertisers. Members pay you directly for every sale.</p>
+      <p><b>Where the fee goes.</b> Perk Miner LLC pays out up to 84% of the ad revenue from every transaction as cash back and commissions to members and business advertisers.  <b>Members pay you directly for every sale.</b></p>
     </div>
   </div>
 </section>
@@ -208,9 +247,11 @@
         ('When do I pay a fee?', 'The advertising fee is deducted when a qualifying transaction is successfully finalized, not for clicks or leads.'),
         ('Is there a monthly fee?', 'No monthly advertising subscription fee. Registration and your business listing are free.'),
         ('Why is a $25 balance required?', 'It is the minimum prepaid balance for advertising transaction fees. Unused funds remain in your account; consult the platform terms for withdrawal or refund rules.'),
-        ('Does 10X ROAS mean guaranteed sales?', 'No. It describes the ratio of completed sale revenue to Perk Miner advertising fees under the published pricing formula. Customer acquisition and profitability are not guaranteed.'),
+        ('Does 50X or 10X ROAS mean guaranteed sales?', 'No. It describes the ratio of completed sale revenue to Perk Miner advertising fees under the published pricing formula. Customer acquisition and profitability are not guaranteed.'),
         ('What are the requirements to become an advertiser?', 'Advertisers must be legally registered in the state where they are primarily conducting business, they must maintain enough funds in their account balance at all times to cover the ad fees and to finalize transactions, and they must offer at least one exclusive perk to our members (free non-alcoholic drink with any entrée over $35, 10% off during happy hour, etc.).'),
-        ('Do I have to do anything to my public profile page for discovery (SEO) on search engines and AI?', 'We have done the hard work for you. Once your listing is approved, your public profile should become visible on major search engines and discoverable by AI agents (not 100% guaranteed).')
+        ('Do I have to do anything to my public profile page for discovery (SEO) on search engines and AI?', 'We have done the hard work for you. Once your listing is approved, your public profile should become visible on major search engines and discoverable by AI agents (not 100% guaranteed). This applies to advertisers on the 10% ad fee plan only: the 2% ad fee plan has no public profile page, and if you switch from 10% to 2% your public profile is suspended and you lose its existing search engine and AI discovery. If you switch back, it can take days or weeks for search engines and AI to pick it up again.'),
+        ('What is the difference between the 10% and 2% ad fee plans?', 'Both are pay-per-sale: no sale, no fee. The 10% ad fee plan (max $250 per transaction) includes every feature: eligibility to be featured, live tracking, a public profile page found by search engines and AI assistants, eligibility for promo codes, and 2% cash back for your customers (up to $50 per purchase). The 2% ad fee plan (max $50 per transaction) is built for businesses with low profit margins. It has no featured placement, no live tracking, no public profile page, no promo codes, and members earn 0.4% cash back (up to $10 per purchase). Search results list 10% ad fee advertisers first and 2% ad fee advertisers after them.'),
+        ('Can I change plans later?', 'Yes. You choose a plan before submitting your listing for final approval, and you can switch from your business dashboard at any time. A change applies to transactions finalized after the switch. Switching to 2% suspends your public profile page, removes featured placement and turns off live tracking and promo codes, and you lose existing search engine and AI discovery; if you switch back to 10%, it can take days or weeks for search engines and AI to pick your profile up again. If you redeemed a promo code on the 10% plan, you can switch to 2% after the promo funds are used.')
       ] %}
       {% for q, a in faqs %}
       <div class="accordion-item">
@@ -266,13 +307,20 @@ document.addEventListener('DOMContentLoaded', function () {
     var fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
     var update = function () {
       var sale = Math.max(0, Number(saleInput.value) || 0);
-      var fee = Math.min(sale * 0.10, 250);
+      var low = (document.querySelector('input[name="pm-plan"]:checked') || {}).value === '2';
+      var rate = low ? 0.02 : 0.10, feeCap = low ? 50 : 250;          // ad fee
+      var cbRate = low ? 0.002 : 0.01, cbCap = low ? 5 : 25;           // the advertiser's own cash back
+      var fee = Math.min(sale * rate, feeCap);
+      document.getElementById('pm-fee-label').textContent = 'Perk Miner fee (' + (low ? '2%, max $50' : '10%, max $250') + ')';
+      document.getElementById('pm-cb-label').innerHTML = '<i class="bi bi-piggy-bank-fill"></i> Your cash back (' + (low ? '0.2%' : '1%') + ' of the sale, max $' + cbCap + ')';
       document.getElementById('pm-fee').textContent = fmt.format(fee);
       document.getElementById('pm-roas').textContent = fee > 0 ? (sale / fee).toFixed(1) + 'X' : '—';
-      document.getElementById('pm-cashback').textContent = fmt.format(Math.min(sale * 0.01, 25));
+      document.getElementById('pm-cashback').textContent = fmt.format(Math.min(sale * cbRate, cbCap));
       document.getElementById('pm-remainder').textContent = fmt.format(sale - fee);
+      document.getElementById('pm-plan-note').style.display = low ? 'block' : 'none';
     };
     saleInput.addEventListener('input', update);
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="pm-plan"]'), function (r) { r.addEventListener('change', update); });
     update();
   }
 });

@@ -152,3 +152,12 @@ button.trust-badge:hover { text-decoration: underline; filter: brightness(.97); 
   .pml-admin .pml-gallery-wrap .pml-slider { border-radius: 14px; }
   .pml-admin .pml-nav { width: 34px; height: 34px; font-size: 1rem; }
 }
+
+
+/* ---- Cash back badge (2% on the 10% ad fee plan, 0.4% on the 2% plan) ---- */
+.pml-cashback { display: inline-flex; align-items: center; gap: .4rem; margin: .45rem 0 .1rem; padding: .3rem .75rem; border-radius: 999px;
+  background: #e5f4e4; color: #146c43; font-size: .9rem; font-weight: 700; line-height: 1.2; }
+.pml-cashback.low { background: #fdecc8; color: #7a5200; }
+.pml-cashback i { font-size: 1rem; }
+.pml-cashback.big { font-size: 1.05rem; padding: .45rem 1rem; flex-wrap: wrap; justify-content: center; margin: .6rem auto .3rem; }
+.pml-cashback.big span { font-weight: 500; font-size: .82rem; opacity: .85; }

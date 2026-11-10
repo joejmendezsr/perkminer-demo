@@ -4,6 +4,7 @@ from flask import (
 )
 
 from flask_sqlalchemy import SQLAlchemy
+import feeplan
 from sqlalchemy import Numeric
 from flask_mail import Mail, Message as MailMessage
 from flask_bcrypt import Bcrypt
@@ -965,6 +966,7 @@ def get_finalization_summary(interaction):
         "marketing_roi": int(((amount - ad_fee) / ad_fee) * 100) if ad_fee else 0,
         "marketing_ratio": round(float(amount / ad_fee), 2) if ad_fee else 0,
         "transaction_id": bt.transaction_id,
+        "fee_plan": bt.fee_plan or "full",
         "already_finalized": True,
     }
 
@@ -989,13 +991,16 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     transaction_id = str(uuid.uuid4())
 
     # ---- Rewards setup ----
-    ad_fee = min(round(amount * 0.10, 2), 250.00)
+    # The advertiser's plan sets the fee (10% max $250, or 2% max $50) and scales EVERY payout:
+    # the 2% plan pays exactly one fifth of each rate and cap (see feeplan.py).
+    plan_scale = feeplan.scale(business)
+    ad_fee = feeplan.ad_fee(business, amount)
     if business.account_balance is None or business.account_balance < ad_fee:
         raise Exception("Insufficient funds to complete this transaction. Please fund your account.")
 
     user_referral_id = interaction.user.referral_code or "JoeJMendez"
-    user_cash_back_raw = amount * 0.02
-    user_cash_back = round(min(user_cash_back_raw, 50), 2)
+    user_cash_back_raw = amount * 0.02 * plan_scale
+    user_cash_back = round(min(user_cash_back_raw, 50 * plan_scale), 2)
 
     u2 = User.query.filter_by(id=interaction.user.sponsor_id).first()
     tier2_user_referral_id = u2.referral_code if u2 else "MarjorieMendez"
@@ -1006,14 +1011,14 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     u5 = User.query.filter_by(id=u4.sponsor_id).first() if u4 and u4.sponsor_id else None
     tier5_user_referral_id = u5.referral_code if u5 else "JoeJMendez"
 
-    tier2_commission_raw = amount * 0.002
-    tier2_commission = round(min(tier2_commission_raw, 5.00), 2)
-    tier3_commission_raw = amount * 0.002
-    tier3_commission = round(min(tier3_commission_raw, 5.00), 2)
-    tier4_commission_raw = amount * 0.002
-    tier4_commission = round(min(tier4_commission_raw, 5.00), 2)
-    tier5_commission_raw = amount * 0.02
-    tier5_commission = round(min(tier5_commission_raw, 50), 2)
+    tier2_commission_raw = amount * 0.002 * plan_scale
+    tier2_commission = round(min(tier2_commission_raw, 5.00 * plan_scale), 2)
+    tier3_commission_raw = amount * 0.002 * plan_scale
+    tier3_commission = round(min(tier3_commission_raw, 5.00 * plan_scale), 2)
+    tier4_commission_raw = amount * 0.002 * plan_scale
+    tier4_commission = round(min(tier4_commission_raw, 5.00 * plan_scale), 2)
+    tier5_commission_raw = amount * 0.02 * plan_scale
+    tier5_commission = round(min(tier5_commission_raw, 50 * plan_scale), 2)
 
     top_biz = find_top_business_with_user_sponsor(business)
     root_user = User.query.get(top_biz.user_sponsor_id) if top_biz and top_biz.user_sponsor_id else None
@@ -1038,19 +1043,19 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     if root_user:
         if downline_tier == 1:
             tier1_business_user_referral_id = root_user.referral_code
-            tier1_business_user_commission = round(min(amount * 0.01, 25), 2)
+            tier1_business_user_commission = round(min(amount * 0.01 * plan_scale, 25 * plan_scale), 2)
         elif downline_tier == 2:
             tier2_business_user_referral_id = root_user.referral_code
-            tier2_business_user_commission = round(min(amount * 0.002, 5.00), 2)
+            tier2_business_user_commission = round(min(amount * 0.002 * plan_scale, 5.00 * plan_scale), 2)
         elif downline_tier == 3:
             tier3_business_user_referral_id = root_user.referral_code
-            tier3_business_user_commission = round(min(amount * 0.002, 5.00), 2)
+            tier3_business_user_commission = round(min(amount * 0.002 * plan_scale, 5.00 * plan_scale), 2)
         elif downline_tier == 4:
             tier4_business_user_referral_id = root_user.referral_code
-            tier4_business_user_commission = round(min(amount * 0.002, 5.00), 2)
+            tier4_business_user_commission = round(min(amount * 0.002 * plan_scale, 5.00 * plan_scale), 2)
         elif downline_tier == 5:
             tier5_business_user_referral_id = root_user.referral_code
-            tier5_business_user_commission = round(min(amount * 0.01, 25), 2)
+            tier5_business_user_commission = round(min(amount * 0.01 * plan_scale, 25 * plan_scale), 2)
 
     user_trans = UserTransaction(
         transaction_id=transaction_id,
@@ -1083,19 +1088,19 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     business_referral_id = business.referral_code or "PerkMinerLLC"
     b2 = Business.query.filter_by(id=business.sponsor_id).first()
     tier2_business_referral_id = b2.referral_code if b2 else ""
-    tier2_commission_biz = round(min(amount * 0.002, 5.00), 2)
+    tier2_commission_biz = round(min(amount * 0.002 * plan_scale, 5.00 * plan_scale), 2)
     b3 = Business.query.filter_by(id=b2.sponsor_id).first() if b2 and b2.sponsor_id else None
     tier3_business_referral_id = b3.referral_code if b3 else ""
-    tier3_commission_biz = round(min(amount * 0.002, 5.00), 2)
+    tier3_commission_biz = round(min(amount * 0.002 * plan_scale, 5.00 * plan_scale), 2)
     b4 = Business.query.filter_by(id=b3.sponsor_id).first() if b3 and b3.sponsor_id else None
     tier4_business_referral_id = b4.referral_code if b4 else ""
-    tier4_commission_biz = round(min(amount * 0.002, 5.00), 2)
+    tier4_commission_biz = round(min(amount * 0.002 * plan_scale, 5.00 * plan_scale), 2)
     b5 = Business.query.filter_by(id=b4.sponsor_id).first() if b4 and b4.sponsor_id else None
     tier5_business_referral_id = b5.referral_code if b5 else "PerkMinerLLC"
-    tier5_commission_biz = round(min(amount * 0.01, 25), 2)
+    tier5_commission_biz = round(min(amount * 0.01 * plan_scale, 25 * plan_scale), 2)
 
-    business_cash_back_raw = amount * 0.01
-    business_cash_back = round(min(business_cash_back_raw, 25), 2)
+    business_cash_back_raw = amount * 0.01 * plan_scale
+    business_cash_back = round(min(business_cash_back_raw, 25 * plan_scale), 2)
 
     business.account_balance = (business.account_balance or 0.0) - ad_fee
 
@@ -1107,6 +1112,7 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
         date_time=datetime.utcnow(),
         local_date_time=local_date_time,
         ad_fee=ad_fee,
+        fee_plan=feeplan.plan_of(business),
         business_referral_id=business_referral_id,
         cash_back=business_cash_back,
         tier2_business_referral_id=tier2_business_referral_id,
@@ -1136,6 +1142,7 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
             date_time=datetime.utcnow(),
             local_date_time=local_date_time,
             ad_fee=ad_fee,
+            fee_plan=feeplan.plan_of(business),
             business_referral_id=business_referral_id,
             cash_back=0,
             tier2_business_referral_id="",
@@ -1159,8 +1166,8 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     amount = Decimal(str(amount))
 
     # 2. Calculate and print Ad fee
-    raw_ad_fee = amount * Decimal("0.10")
-    ad_fee = min(raw_ad_fee, Decimal("250.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    raw_ad_fee = amount * Decimal(str(feeplan.fee_rate(business)))
+    ad_fee = min(raw_ad_fee, Decimal(str(feeplan.fee_cap(business)))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     print(f"Ad fee: {ad_fee}")
 
     # 3. Charity from ad fee ONLY
@@ -1211,11 +1218,12 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
     # ... your tier assignment code ...
 
     ad_fee_dec = Decimal(str(ad_fee))
-    t1_payout = min(ad_fee_dec * Decimal("0.10"), Decimal("25.00"))
-    t2_payout = min(ad_fee_dec * Decimal("0.02"), Decimal("5.00"))
-    t3_payout = min(ad_fee_dec * Decimal("0.02"), Decimal("5.00"))
-    t4_payout = min(ad_fee_dec * Decimal("0.02"), Decimal("5.00"))
-    t5_payout = min(ad_fee_dec * Decimal("0.10"), Decimal("25.00"))
+    dscale = feeplan.dec_scale(business)
+    t1_payout = min(ad_fee_dec * Decimal("0.10"), Decimal("25.00") * dscale)
+    t2_payout = min(ad_fee_dec * Decimal("0.02"), Decimal("5.00") * dscale)
+    t3_payout = min(ad_fee_dec * Decimal("0.02"), Decimal("5.00") * dscale)
+    t4_payout = min(ad_fee_dec * Decimal("0.02"), Decimal("5.00") * dscale)
+    t5_payout = min(ad_fee_dec * Decimal("0.10"), Decimal("25.00") * dscale)
 
     business_payouts = Decimal("0")
     business_payouts += biz_tier_commission_val(tier1_business_user_referral_id, t1_payout)
@@ -1298,6 +1306,7 @@ def finalize_interaction(interaction, business, amount, staff_id=None, source=No
         "marketing_roi": int(((amount - ad_fee) / ad_fee) * 100) if ad_fee else 0,
         "marketing_ratio": round(((amount - ad_fee) + ad_fee) / ad_fee, 2) if ad_fee else 0,
         "transaction_id": transaction_id,
+        "fee_plan": feeplan.plan_of(business),
     }
     return summary
 
@@ -1382,11 +1391,12 @@ def issue_store_sale_rewards(business, amount, buyer_email=None):
       - All user and business commissions, for up to 5 tiers
     """
     # Example: TIER SETUP (adjust if you change reward rates/caps)
-    user_cash_back = round(min(amount * 0.02, 50), 2)
-    tier2_commission = round(min(amount * 0.002, 5.00), 2)
-    tier3_commission = round(min(amount * 0.002, 5.00), 2)
-    tier4_commission = round(min(amount * 0.002, 5.00), 2)
-    tier5_commission = round(min(amount * 0.02, 50), 2)
+    ps = feeplan.scale(business)   # 1.0 on the 10% plan, 0.2 on the 2% plan
+    user_cash_back = round(min(amount * 0.02 * ps, 50 * ps), 2)
+    tier2_commission = round(min(amount * 0.002 * ps, 5.00 * ps), 2)
+    tier3_commission = round(min(amount * 0.002 * ps, 5.00 * ps), 2)
+    tier4_commission = round(min(amount * 0.002 * ps, 5.00 * ps), 2)
+    tier5_commission = round(min(amount * 0.02 * ps, 50 * ps), 2)
 
     # User sponsor/referrer lookups (adjust how you find users per your referral chain)
     user = None
@@ -1438,7 +1448,7 @@ def issue_store_sale_rewards(business, amount, buyer_email=None):
         date_time=datetime.utcnow(),
         amount=amount,
         business_referral_id=business_referral_code,
-        cash_back=round(min(amount * 0.01, 25), 2),
+        cash_back=round(min(amount * 0.01 * ps, 25 * ps), 2),
         # Similarly fill tier2-tiers, sponsor mutual, etc.
         tier2_business_referral_id="", # Add logic for business referral tree
         tier2_commission=0,
@@ -1448,7 +1458,8 @@ def issue_store_sale_rewards(business, amount, buyer_email=None):
         tier4_commission=0,
         tier5_business_referral_id="",
         tier5_commission=0,
-        ad_fee=round(amount * 0.10, 2)  # Store ad fee for record-keeping
+        ad_fee=feeplan.ad_fee(business, amount),  # Store ad fee for record-keeping
+        fee_plan=feeplan.plan_of(business),
     )
     db.session.add(business_txn)
 
@@ -1599,6 +1610,9 @@ class Business(db.Model):
     draft_youtube_url = db.Column(db.String(500), nullable=True)
     account_balance = db.Column(db.Float, nullable=False, default=0.0)
     ad_fee = db.Column(db.Float)
+    # Advertising fee plan: 'full' = 10% ad fee with every feature, 'low' = 2% ad fee (see feeplan.py)
+    ad_fee_plan = db.Column(db.String(8), nullable=False, default="full", server_default="full")
+    ad_fee_plan_changed_at = db.Column(db.DateTime)
     business_registration_doc = db.Column(db.String(255))
     featured = db.Column(db.Boolean, default=False)
     rank = db.Column(db.Float, default=0.0)
@@ -2311,6 +2325,8 @@ class BusinessTransaction(db.Model):
     tier5_business_referral_id = db.Column(db.String(32), nullable=False)
     tier5_commission = db.Column(db.Float, nullable=False)
     ad_fee = db.Column(db.Float)
+    # Which advertising fee plan applied when this transaction was finalized ('full' 10% or 'low' 2%)
+    fee_plan = db.Column(db.String(8), nullable=False, default="full", server_default="full")
     # The business who was sponsored (sponsoree) earns 0.25% whenever their sponsor generates a paid invoice
     sponsoree_mutual_referral_id = db.Column(db.String(32))
     sponsoree_mutual_commission = db.Column(db.Float, default=0)
@@ -2977,7 +2993,9 @@ def get_business_coords_for_distance(biz):
     - if location_varies and live_gps is set → use live_gps_lat/long
     - else → use static latitude/longitude
     """
-    if getattr(biz, "location_varies", False) and biz.live_gps_lat is not None and biz.live_gps_long is not None:
+    # live GPS is a 10% plan feature; 2% advertisers always use their fixed address
+    if (getattr(biz, "location_varies", False) and biz.live_gps_lat is not None and biz.live_gps_long is not None
+            and not feeplan.is_low(biz)):
         return biz.live_gps_lat, biz.live_gps_long
     return biz.latitude, biz.longitude
 
@@ -3051,6 +3069,21 @@ def valid_google_reviews_url(url):
         return False
     return True
 
+def not_low_plan():
+    """SQL condition: the advertiser is on the 10% plan. Only these can be featured or have a public profile."""
+    return db.or_(Business.ad_fee_plan.is_(None), Business.ad_fee_plan != "low")
+
+
+def not_suspended():
+    """SQL filter: businesses an admin has suspended are removed from every directory and search."""
+    return db.or_(Business.is_suspended.is_(None), Business.is_suspended.is_(False))
+
+
+def plan_first():
+    """SQL ORDER BY term: advertisers on the 10% plan come before advertisers on the 2% plan."""
+    return db.case((Business.ad_fee_plan == "low", 1), else_=0)
+
+
 def get_featured_businesses(lat, lng):
     RADIUS = 10  # miles
     N_FEATURED = 10
@@ -3058,7 +3091,8 @@ def get_featured_businesses(lat, lng):
     # 1. get all approved businesses that have *some* coords (static or live)
     candidates = (
         Business.query
-        .filter(Business.status == "approved")
+        .filter(Business.status == "approved", not_suspended())
+        .filter(not_low_plan())          # 2% ad fee advertisers cannot be featured
         .filter(
             (Business.latitude.isnot(None) & Business.longitude.isnot(None)) |
             (Business.live_gps_lat.isnot(None) & Business.live_gps_long.isnot(None))
@@ -3991,7 +4025,7 @@ def buy_product(product_id):
         return redirect(request.referrer or '/')
 
     amount_usd = product.price
-    ad_fee = int(amount_usd * 100 * 0.10)  # 10% fee to platform, in cents
+    ad_fee = int(amount_usd * 100 * feeplan.fee_rate(biz))  # platform fee in cents (10% or 2% by plan)
 
     import stripe
     try:
@@ -4195,7 +4229,7 @@ def start_cart_checkout():
 
     discount = subtotal * discount_pct
     grand_total = subtotal - discount
-    ad_fee = int(grand_total * 0.10 * 100)   # 10% of cart total in cents
+    ad_fee = int(grand_total * feeplan.fee_rate(biz) * 100)   # platform fee in cents (10% or 2% by plan)
 
     metadata = {
         "cart_items": ",".join(str(p.id) for p in products),
@@ -4210,7 +4244,7 @@ def start_cart_checkout():
             mode='payment',
             line_items=line_items,
             payment_intent_data={
-                'application_fee_amount': ad_fee,         # 10% platform fee in cents
+                'application_fee_amount': ad_fee,         # platform fee in cents (10% or 2% by plan)
                 'transfer_data': {
                     'destination': biz.stripe_account_id,
                 },
@@ -4446,7 +4480,7 @@ def edit_variant(variant_id):
 
 @app.route("/")
 def home():
-    approved_listings = Business.query.filter_by(status="approved").all()
+    approved_listings = Business.query.filter(not_suspended()).filter_by(status="approved").all()
     N_FEATURED = 10  # show 10 at a time
 
     # User/location detection (GET params: lat/lng)
@@ -4458,6 +4492,7 @@ def home():
         # get approved businesses that have either static or live coords
         candidates = (
             Business.query
+            .filter(not_suspended())
             .filter_by(status="approved")
             .filter(
                 (Business.latitude.isnot(None) & Business.longitude.isnot(None)) |
@@ -4483,13 +4518,13 @@ def home():
 
         # if nothing nearby, just fall back to no-location logic
         if not nearby_businesses:
-            manual_featured = Business.query.filter_by(status="approved", manual_feature=True) \
-                                            .order_by(Business.rank.desc()) \
+            manual_featured = Business.query.filter(not_suspended()).filter_by(status="approved", manual_feature=True).filter(not_low_plan()) \
+                                            .order_by(plan_first(), Business.rank.desc()) \
                                             .limit(N_FEATURED).all()
             needed = N_FEATURED - len(manual_featured)
             if needed > 0:
-                ranked = Business.query.filter_by(status="approved", manual_feature=False) \
-                                       .order_by(Business.rank.desc()) \
+                ranked = Business.query.filter(not_suspended()).filter_by(status="approved", manual_feature=False).filter(not_low_plan()) \
+                                       .order_by(plan_first(), Business.rank.desc()) \
                                        .limit(needed).all()
                 for b in manual_featured + ranked:
                     b.distance_mi = None
@@ -4500,7 +4535,7 @@ def home():
                 featured_listings = manual_featured[:N_FEATURED]
         else:
             # manual featured first within nearby group
-            manual_featured = [b for (b, d) in nearby if b.manual_feature]
+            manual_featured = [b for (b, d) in nearby if b.manual_feature and feeplan.plan_of(b) == feeplan.FULL]
 
             # map for distances
             dist_lookup = {b.id: d for (b, d) in nearby}
@@ -4534,7 +4569,7 @@ def home():
                 }
                 max_ref = max(referrals.values() or [1])
 
-                not_manual = [b for b in nearby_businesses if not b.manual_feature]
+                not_manual = [b for b in nearby_businesses if not b.manual_feature and feeplan.plan_of(b) == feeplan.FULL]
                 for b in not_manual:
                     tx_score = (tx_counts[b.id] / max_tx) * 250 if max_tx else 0
                     ad_score = (ad_fees[b.id] / max_ad_fee) * 150 if max_ad_fee else 0
@@ -4552,13 +4587,13 @@ def home():
 
     else:
         # No location: show 10, manual first, then highest rank
-        manual_featured = Business.query.filter_by(status="approved", manual_feature=True) \
-                                        .order_by(Business.rank.desc()) \
+        manual_featured = Business.query.filter(not_suspended()).filter_by(status="approved", manual_feature=True).filter(not_low_plan()) \
+                                        .order_by(plan_first(), Business.rank.desc()) \
                                         .limit(N_FEATURED).all()
         needed = N_FEATURED - len(manual_featured)
         if needed > 0:
-            ranked = Business.query.filter_by(status="approved", manual_feature=False) \
-                                   .order_by(Business.rank.desc()) \
+            ranked = Business.query.filter(not_suspended()).filter_by(status="approved", manual_feature=False).filter(not_low_plan()) \
+                                   .order_by(plan_first(), Business.rank.desc()) \
                                    .limit(needed).all()
             for b in manual_featured + ranked:
                 b.distance_mi = None
@@ -4610,8 +4645,21 @@ def home():
     total_paid_out = total_member_paid + total_biz_paid
     percent_fees_paid = ((total_paid_out / total_ad_fees) * 100) if total_ad_fees > 0 else 0
 
+    # Average ROAS across advertisers: each advertiser's gross sales / ad fees paid, then averaged
+    # (advertisers with no ad fees paid yet are left out).
+    _per_adv = {}
+    for t in main_btxns:
+        k = t.business_referral_id
+        if not k:
+            continue
+        g, f_ = _per_adv.get(k, (0.0, 0.0))
+        _per_adv[k] = (g + float(t.amount or 0), f_ + float(t.ad_fee or 0))
+    _roas = [g / f_ for g, f_ in _per_adv.values() if f_ > 0]
+    avg_roas = (sum(_roas) / len(_roas)) if _roas else 0
+
     return render_template(
         "home.html",
+        avg_roas=avg_roas,
         approved_listings=approved_listings,
         featured_listings=featured_listings,
         total_member_paid=total_member_paid,
@@ -4639,7 +4687,7 @@ def search():
     per_page = 20
 
     # base query: approved businesses
-    base_query = Business.query.filter_by(status="approved")
+    base_query = Business.query.filter(not_suspended()).filter_by(status="approved")
 
     if category:
         base_query = base_query.filter(Business.category == category)
@@ -4679,7 +4727,7 @@ def search():
                 pass
 
         # Order by distance
-        listings_with_dist.sort(key=lambda x: x[1])
+        listings_with_dist.sort(key=lambda x: (feeplan.is_low(x[0]), x[1]))
 
         # Manual pagination
         total = len(listings_with_dist)
@@ -4699,7 +4747,7 @@ def search():
         # No lat/lng: paginate plain business query (by rank/name)
         pagination = (
             base_query
-            .order_by(Business.rank.desc(), Business.business_name.asc())
+            .order_by(plan_first(), Business.rank.desc(), Business.business_name.asc())
             .paginate(page=page, per_page=per_page, error_out=False)
         )
         listings = pagination.items
@@ -4726,7 +4774,7 @@ def category_browse(name):
     per_page = 20
 
     # Base query: only approved businesses in this category
-    base_query = Business.query.filter_by(category=name, status="approved")
+    base_query = Business.query.filter(not_suspended()).filter_by(category=name, status="approved")
 
     use_location = lat is not None and lng is not None
 
@@ -4760,7 +4808,7 @@ def category_browse(name):
                 pass
 
         # Sort by nearest
-        listings_with_dist.sort(key=lambda x: x[1])
+        listings_with_dist.sort(key=lambda x: (feeplan.is_low(x[0]), x[1]))
 
         total = len(listings_with_dist)
         start = (page - 1) * per_page
@@ -4778,7 +4826,7 @@ def category_browse(name):
         # No lat/lng: just paginate all in this category
         pagination = (
             base_query
-            .order_by(Business.rank.desc(), Business.business_name.asc())
+            .order_by(plan_first(), Business.rank.desc(), Business.business_name.asc())
             .paginate(page=page, per_page=per_page, error_out=False)
         )
         listings = pagination.items
@@ -5205,8 +5253,8 @@ def dashboard():
             rewards_desc = "When you make a purchase, you earn"
             cap = None
         elif downline_level in [2, 3, 4]:
-            rate = 0.0025
-            cap = 6.25
+            rate = 0.002
+            cap = 5.0
             reward = min(invoice_amount * rate, cap)
             rewards_desc = f"If a person in your Tier {downline_level} level makes a purchase"
         elif downline_level == 5:
@@ -5449,6 +5497,7 @@ def user_receipts():
         )
         .all()
     )
+    preload_txn_plans(transactions)
     return render_template("user_receipts.html", transactions=transactions)
 
 @app.route("/export_user_receipts_csv")
@@ -5473,7 +5522,7 @@ def export_user_receipts_csv():
         "Date/Time",
         "Transaction ID",
         "Amount",
-        "Tier 1 (2% Cash Back)",
+        "Tier 1 (Cash Back: 2%, or 0.4% from a 2% ad fee advertiser)",
         "Tier 2 (Commission)",
         "Tier 3 (Commission)",
         "Tier 4 (Commission)",
@@ -6183,6 +6232,7 @@ def fund_account():
     return render_template(
         "fund_account.html",
         account_balance=account_balance,
+        plan=feeplan.plan_of(biz),
         STRIPE_PUBLISHABLE=os.environ.get("STRIPE_PUBLISHABLE")
     )
 
@@ -6284,6 +6334,9 @@ def finalize_transaction(interaction_id):
 @login_required
 def service_request(biz_id):
     biz = Business.query.get_or_404(biz_id)
+    if biz.is_suspended:
+        flash("This business is not available right now.", "warning")
+        return redirect(url_for("home"))
     form = ServiceRequestForm()
 
     if form.validate_on_submit():
@@ -6542,11 +6595,12 @@ def export_business_receipts_csv():
         "Date/Time",
         "Interaction ID",
         "Sale Amount",
-        "Ad Fee (10%, capped $250)",
+        "Ad Fee (10% max $250, or 2% max $50)",
         "Net Gross",
         "Marketing ROI",
         "Marketing ROI Ratio",
-        "Cash Back"
+        "Cash Back (1% on 10% plan, 0.2% on 2% plan)",
+        "Ad Fee Plan"
     ])
 
     for txn in transactions:
@@ -6563,7 +6617,8 @@ def export_business_receipts_csv():
             f"{net_gross:,.2f}",
             f"{roi:.0f}%",
             f"{ratio:.1f}:1",
-            f"{txn.cash_back:,.2f}"
+            f"{txn.cash_back:,.2f}",
+            "2% ad fee" if (txn.fee_plan == "low") else "10% ad fee"
         ])
 
     output = si.getvalue()
@@ -6785,7 +6840,7 @@ def export_business_earnings_csv():
     writer.writerow([f"Business summary for '{business.business_name}' from Perk Miner"])
     writer.writerow([])
     writer.writerow([f"Gross Sales (Tier1/Self):", f"${gross_earnings:,.2f}"])
-    writer.writerow([f"Advertising Fee (10%, cap $250):", f"${ad_fee:,.2f}"])
+    writer.writerow([f"Advertising Fee (10% max $250, or 2% max $50):", f"${ad_fee:,.2f}"])
     writer.writerow([f"Net Gross Sales:", f"${net_gross:,.2f}"])
     writer.writerow([f"Marketing ROI:", f"{marketing_roi}%"])
     writer.writerow([f"Marketing ROI Ratio:", f"{marketing_ratio}:1"])
@@ -7298,6 +7353,12 @@ def business_dashboard():
         # A final save includes exactly ten FAQ slots; validate before changing profile fields.
         faq_questions = request.form.getlist("question")
         faq_answers = request.form.getlist("answer")
+        low_plan = feeplan.is_low(biz)
+        locked_slug = biz.store_slug
+        if low_plan:
+            # 2% ad fee plan: no public profile page, so the Public URL (Step 6) and FAQs (Step 15) are
+            # locked. Whatever was submitted is ignored and the saved values stay exactly as they are.
+            faq_questions, faq_answers = [""] * 10, [""] * 10
         if len(faq_questions) != 10 or len(faq_answers) != 10:
             flash("FAQ form was incomplete. Please reopen your profile and try again.", "danger")
             return redirect(url_for("business_dashboard") + "#business-faq-editor")
@@ -7305,6 +7366,9 @@ def business_dashboard():
             flash("Each FAQ must have both a question and an answer, or both blank.", "danger")
             return redirect(url_for("business_dashboard") + "#business-faq-editor")
         faq_pairs = [(q.strip(), a.strip()) for q, a in zip(faq_questions, faq_answers) if q.strip() and a.strip()]
+        if low_plan:
+            faq_pairs = [(row.question, row.answer) for row in
+                         BusinessFAQ.query.filter_by(business_id=biz.id).order_by(BusinessFAQ.position).all()]
         if any(len(q) > 240 or len(a) > 2000 for q, a in faq_pairs):
             flash("FAQ text is too long.", "danger")
             return redirect(url_for("business_dashboard") + "#business-faq-editor")
@@ -7447,6 +7511,9 @@ def business_dashboard():
 
         # handle store_slug separately to enforce uniqueness
         slug = request.form.get("store_slug", "").strip() or None
+        if low_plan:
+            slug = locked_slug  # 2% ad fee plan cannot set or change a Public Profile URL
+            biz.store_slug = locked_slug
         if slug:
             # normalize to lower-case if you want
             slug = slug.lower()
@@ -7655,7 +7722,7 @@ def business_dashboard():
     preview_photos = [p for p in preview_photos if p]
 
     # promo field: show only if no promo redeemed yet AND at least one code is still valid
-    show_promo_field = (not biz.promo_code_used) and any_promo_available()
+    show_promo_field = (not biz.promo_code_used) and any_promo_available() and not feeplan.is_low(biz)
 
     # The editor must display the saved, unapproved FAQ draft, not the older
     # publicly approved FAQs. Public pages continue using BusinessFAQ only.
@@ -7997,7 +8064,13 @@ def finance_dashboard():
 
     # Totals for MAIN transactions only
     total_gross_sales = sum(t.amount for t in main_btxns)
-    total_ad_revenue = sum(min(t.amount * 0.10, 250) for t in main_btxns)
+    # Ad revenue = the ad fee actually charged on each sale (10% max $250, or 2% max $50 by plan).
+    def _fee_of(t):
+        if t.ad_fee is not None:
+            return float(t.ad_fee)
+        rate, cap = (0.02, 50) if getattr(t, "fee_plan", "full") == "low" else (0.10, 250)
+        return min(float(t.amount or 0) * rate, cap)
+    total_ad_revenue = sum(_fee_of(t) for t in main_btxns)
     total_transactions = len(main_btxns)
 
     total_sponsoree_mutual_commission = sum(t.sponsoree_mutual_commission or 0 for t in mutual_btxns)
@@ -8443,7 +8516,7 @@ def approve_listing(listing_id):
 
         # Only super_admin can update manual_feature and founding flag
         if current_user.is_authenticated and getattr(current_user, "has_role", None) and current_user.has_role("super_admin"):
-            biz.manual_feature = bool(request.form.get("manual_feature"))
+            biz.manual_feature = bool(request.form.get("manual_feature")) and not feeplan.is_low(biz)  # 2% plan cannot be featured
             biz.is_founding_business = bool(request.form.get("is_founding_business"))
         # Otherwise, ignore both
 
@@ -8564,6 +8637,29 @@ def send_for_review():
             business=biz
         )
 
+    # Advertising fee plan (10% with every feature, or 2% for low-margin sellers). Chosen here before the
+    # first submission; an already-approved listing changes plans from the dashboard (with a warning).
+    if biz.status != "approved":
+        chosen_plan = request.form.get("ad_fee_plan")
+        if chosen_plan not in (feeplan.FULL, feeplan.LOW):
+            flash("Please choose your advertising fee: 10% (all features) or 2% (low profit margins).")
+            return render_template(
+                "listing_disclaimer.html",
+                listing_id=listing_id,
+                referral_code=referral_code,
+                business=biz
+            )
+        if chosen_plan == feeplan.LOW and biz.promo_code_used and promo_lock(biz)[0]:
+            flash("You already redeemed the promo code " + str(biz.promo_code_used) + ". The 2% plan can be chosen once your "
+                  "promo funds are used. Please choose the 10% plan for now.")
+            return render_template(
+                "listing_disclaimer.html",
+                listing_id=listing_id,
+                referral_code=referral_code,
+                business=biz
+            )
+        apply_fee_plan(biz, chosen_plan)
+
     # Only require/upload a doc if it hasn't been uploaded yet (first submission)
     if not biz.business_registration_doc:
         file = request.files.get("business_registration_doc")
@@ -8664,6 +8760,9 @@ def view_listing(biz_id):
 
     distance_mi = request.args.get("distance_mi")
     biz = Business.query.get_or_404(biz_id)
+    # A suspended business is not shown to anyone but itself.
+    if biz.is_suspended and session.get("business_id") != biz.id:
+        abort(404)
     biz.distance_mi = float(distance_mi) if distance_mi else None
 
     has_website = bool(biz.website_url)
@@ -8721,251 +8820,6 @@ def view_listing(biz_id):
         faqs=[{"question": f.question, "answer": f.answer}
               for f in BusinessFAQ.query.filter_by(business_id=biz.id).order_by(BusinessFAQ.position).all()],
     )
-
-@app.route("/finance/combined-detailed-report", methods=["GET"])
-@role_required("finance")
-def combined_detailed_report():
-    period = request.args.get("period", "all")
-    year = int(request.args.get("year", 0)) if request.args.get("year") else 0
-    month = int(request.args.get("month", 0)) if request.args.get("month") else 0
-    interaction_id = request.args.get("interaction_id", "").strip()
-    user_email = (request.args.get("user_email", "") or "").strip().lower()
-    business_email = (request.args.get("business_email", "") or "").strip().lower()
-
-    uq = UserTransaction.query
-    bq = BusinessTransaction.query
-
-    if period == "year" and year:
-        uq = uq.filter(UserTransaction.date_time >= datetime(year, 1, 1), UserTransaction.date_time < datetime(year+1, 1, 1))
-        bq = bq.filter(BusinessTransaction.date_time >= datetime(year, 1, 1), BusinessTransaction.date_time < datetime(year+1, 1, 1))
-    elif period == "month" and year and month:
-        start = datetime(year, month, 1)
-        if month == 12:
-            end = datetime(year + 1, 1, 1)
-        else:
-            end = datetime(year, month + 1, 1)
-        uq = uq.filter(UserTransaction.date_time >= start, UserTransaction.date_time < end)
-        bq = bq.filter(BusinessTransaction.date_time >= start, BusinessTransaction.date_time < end)
-    if interaction_id:
-        uq = uq.filter(UserTransaction.interaction_id == interaction_id)
-        bq = bq.filter(BusinessTransaction.interaction_id == interaction_id)
-
-    user_lookup = {u.referral_code: u for u in User.query.all()}
-    business_lookup = {b.referral_code: b for b in Business.query.all()}
-
-    if user_email:
-        utrans = [t for t in uq.all() if t.user_referral_id in user_lookup and user_lookup[t.user_referral_id].email.lower() == user_email]
-        btrans = []
-    elif business_email:
-        btrans = [t for t in bq.all() if t.business_referral_id in business_lookup and business_lookup[t.business_referral_id].business_email.lower() == business_email]
-        utrans = []
-    else:
-        utrans = uq.all()
-        btrans = bq.all()
-
-    # ==== USER TABS ====
-    def user_tier_rows(utrans, ref_field, val_field, tier_label):
-        res = []
-        for t in utrans:
-            uid = getattr(t, ref_field)
-            amount = getattr(t, val_field) or 0
-            if uid and amount > 0 and uid in user_lookup:
-                res.append({
-                    "tier": tier_label,
-                    "date_time": t.date_time,
-                    "interaction_id": t.interaction_id,
-                    "user_referral_id": uid,
-                    "user_name": user_lookup[uid].name or "",
-                    "user_email": user_lookup[uid].email or "",
-                    "earning": amount,
-                    "transaction_id": t.transaction_id
-                })
-        return res
-
-    user_rows = []
-    user_rows += user_tier_rows(utrans, "user_referral_id", "cash_back", "Tier 1 Cashback")
-    user_rows += user_tier_rows(utrans, "tier2_user_referral_id", "tier2_commission", "Tier 2 Commission")
-    user_rows += user_tier_rows(utrans, "tier3_user_referral_id", "tier3_commission", "Tier 3 Commission")
-    user_rows += user_tier_rows(utrans, "tier4_user_referral_id", "tier4_commission", "Tier 4 Commission")
-    user_rows += user_tier_rows(utrans, "tier5_user_referral_id", "tier5_commission", "Tier 5 Commission")
-    user_rows += user_tier_rows(utrans, "tier1_business_user_referral_id", "tier1_business_user_commission", "Tier 1 User-Biz")
-    user_rows += user_tier_rows(utrans, "tier2_business_user_referral_id", "tier2_business_user_commission", "Tier 2 User-Biz")
-    user_rows += user_tier_rows(utrans, "tier3_business_user_referral_id", "tier3_business_user_commission", "Tier 3 User-Biz")
-    user_rows += user_tier_rows(utrans, "tier4_business_user_referral_id", "tier4_business_user_commission", "Tier 4 User-Biz")
-    user_rows += user_tier_rows(utrans, "tier5_business_user_referral_id", "tier5_business_user_commission", "Tier 5 User-Biz")
-
-    # ==== BUSINESS TABS ====
-    def biz_tier_rows(btrans, ref_field, val_field, tier_label):
-        res = []
-        for t in btrans:
-            bid = getattr(t, ref_field)
-            earning = getattr(t, val_field) or 0
-            if bid and earning > 0 and bid in business_lookup:
-                res.append({
-                    "tier": tier_label,
-                    "date_time": t.date_time,
-                    "interaction_id": t.interaction_id,
-                    "business_referral_id": bid,
-                    "business_name": business_lookup[bid].business_name or "",
-                    "business_email": business_lookup[bid].business_email or "",
-                    "earning": earning,
-                    "transaction_id": t.transaction_id
-                })
-        return res
-
-    tier1_biz_rows = biz_tier_rows(btrans, "business_referral_id", "cash_back", "Tier 1 Biz Cashback")
-    tier2_biz_rows = biz_tier_rows(btrans, "tier2_business_referral_id", "tier2_commission", "Tier 2 Biz Cashback")
-    tier3_biz_rows = biz_tier_rows(btrans, "tier3_business_referral_id", "tier3_commission", "Tier 3 Biz Cashback")
-    tier4_biz_rows = biz_tier_rows(btrans, "tier4_business_referral_id", "tier4_commission", "Tier 4 Biz Cashback")
-    tier5_biz_rows = biz_tier_rows(btrans, "tier5_business_referral_id", "tier5_commission", "Tier 5 Biz Cashback")
-    mutual_rows = biz_tier_rows(btrans, "sponsoree_mutual_referral_id", "sponsoree_mutual_commission", "Mutual Sponsoree")
-
-    # ========== SUMMARY LOGIC ==========
-    total_user_paid = sum(row["earning"] for row in user_rows)
-    total_tier1_biz_paid = sum(row["earning"] for row in tier1_biz_rows)
-    total_tier2_biz_paid = sum(row["earning"] for row in tier2_biz_rows)
-    total_tier3_biz_paid = sum(row["earning"] for row in tier3_biz_rows)
-    total_tier4_biz_paid = sum(row["earning"] for row in tier4_biz_rows)
-    total_tier5_biz_paid = sum(row["earning"] for row in tier5_biz_rows)
-    total_mutual_paid = sum(row["earning"] for row in mutual_rows)
-    grand_total_paid = (
-        total_user_paid +
-        total_tier1_biz_paid + total_tier2_biz_paid + total_tier3_biz_paid +
-        total_tier4_biz_paid + total_tier5_biz_paid + total_mutual_paid
-    )
-    summary = dict(
-        total_user_paid = f"{total_user_paid:,.2f}",
-        total_tier1_biz_paid = f"{total_tier1_biz_paid:,.2f}",
-        total_tier2_biz_paid = f"{total_tier2_biz_paid:,.2f}",
-        total_tier3_biz_paid = f"{total_tier3_biz_paid:,.2f}",
-        total_tier4_biz_paid = f"{total_tier4_biz_paid:,.2f}",
-        total_tier5_biz_paid = f"{total_tier5_biz_paid:,.2f}",
-        total_mutual_paid = f"{total_mutual_paid:,.2f}",
-        grand_total_paid = f"{grand_total_paid:,.2f}"
-    )
-
-    return render_template(
-        "combined_detailed_report.html",
-        user_rows=user_rows,
-        tier1_biz_rows=tier1_biz_rows,
-        tier2_biz_rows=tier2_biz_rows,
-        tier3_biz_rows=tier3_biz_rows,
-        tier4_biz_rows=tier4_biz_rows,
-        tier5_biz_rows=tier5_biz_rows,
-        mutual_rows=mutual_rows,
-        user_lookup=user_lookup,
-        business_lookup=business_lookup,
-        period=period,
-        year=year,
-        month=month,
-        interaction_id=interaction_id,
-        user_email=user_email,
-        business_email=business_email,
-        months=[(f"{i}", datetime(2026, i, 1).strftime('%B')) for i in range(1, 13)],
-        years=[str(y) for y in range(2026, 2051)],
-        summary=summary
-    )
-
-@app.route('/finance/combined-detailed-report/export/csv')
-@role_required("finance")
-def export_combined_detailed_report_csv():
-    period = request.args.get("period", "all")
-    year = int(request.args.get("year", 0)) if request.args.get("year") else 0
-    month = int(request.args.get("month", 0)) if request.args.get("month") else 0
-    interaction_id = request.args.get("interaction_id", "").strip()
-    user_email = (request.args.get("user_email", "") or "").strip().lower()
-    business_email = (request.args.get("business_email", "") or "").strip().lower()
-
-    uq = UserTransaction.query
-    bq = BusinessTransaction.query
-
-    # Date/month/year filter logic
-    if period == "year" and year:
-        uq = uq.filter(UserTransaction.date_time >= datetime(year, 1, 1), UserTransaction.date_time < datetime(year+1, 1, 1))
-        bq = bq.filter(BusinessTransaction.date_time >= datetime(year, 1, 1), BusinessTransaction.date_time < datetime(year+1, 1, 1))
-    elif period == "month" and year and month:
-        start = datetime(year, month, 1)
-        if month == 12:
-            end = datetime(year + 1, 1, 1)
-        else:
-            end = datetime(year, month + 1, 1)
-        uq = uq.filter(UserTransaction.date_time >= start, UserTransaction.date_time < end)
-        bq = bq.filter(BusinessTransaction.date_time >= start, BusinessTransaction.date_time < end)
-    if interaction_id:
-        uq = uq.filter(UserTransaction.interaction_id == interaction_id)
-        bq = bq.filter(BusinessTransaction.interaction_id == interaction_id)
-
-    user_lookup = {u.referral_code: u for u in User.query.all()}
-    business_lookup = {b.referral_code: b for b in Business.query.all()}
-
-    utrans = uq.all()
-    btrans = bq.all()
-
-    csv_rows = []
-
-    def user_tier_rows(utrans, ref_field, val_field, tier_label):
-        for t in utrans:
-            uid = getattr(t, ref_field)
-            amount = getattr(t, val_field) or 0
-            if uid and amount > 0 and uid in user_lookup:
-                csv_rows.append([
-                    "User",
-                    tier_label,
-                    t.date_time.strftime('%Y-%m-%d %I:%M %p'),
-                    t.interaction_id,
-                    uid,
-                    user_lookup[uid].name or "",
-                    user_lookup[uid].email or "",
-                    f"{amount:.2f}",
-                    t.transaction_id
-                ])
-
-    user_tier_rows(utrans, "user_referral_id", "cash_back", "Tier 1 Cashback")
-    user_tier_rows(utrans, "tier2_user_referral_id", "tier2_commission", "Tier 2 Commission")
-    user_tier_rows(utrans, "tier3_user_referral_id", "tier3_commission", "Tier 3 Commission")
-    user_tier_rows(utrans, "tier4_user_referral_id", "tier4_commission", "Tier 4 Commission")
-    user_tier_rows(utrans, "tier5_user_referral_id", "tier5_commission", "Tier 5 Commission")
-    user_tier_rows(utrans, "tier1_business_user_referral_id", "tier1_business_user_commission", "Tier 1 User-Biz")
-    user_tier_rows(utrans, "tier2_business_user_referral_id", "tier2_business_user_commission", "Tier 2 User-Biz")
-    user_tier_rows(utrans, "tier3_business_user_referral_id", "tier3_business_user_commission", "Tier 3 User-Biz")
-    user_tier_rows(utrans, "tier4_business_user_referral_id", "tier4_business_user_commission", "Tier 4 User-Biz")
-    user_tier_rows(utrans, "tier5_business_user_referral_id", "tier5_business_user_commission", "Tier 5 User-Biz")
-
-    def biz_tier_rows(btrans, ref_field, val_field, tier_label):
-        for t in btrans:
-            bid = getattr(t, ref_field)
-            earning = getattr(t, val_field) or 0
-            if bid and earning > 0 and bid in business_lookup:
-                csv_rows.append([
-                    "Business",
-                    tier_label,
-                    t.date_time.strftime('%Y-%m-%d %I:%M %p'),
-                    t.interaction_id,
-                    bid,
-                    business_lookup[bid].business_name or "",
-                    business_lookup[bid].business_email or "",
-                    f"{earning:.2f}",
-                    t.transaction_id
-                ])
-    biz_tier_rows(btrans, "business_referral_id", "cash_back", "Tier 1 Biz Cashback")
-    biz_tier_rows(btrans, "tier2_business_referral_id", "tier2_commission", "Tier 2 Biz Cashback")
-    biz_tier_rows(btrans, "tier3_business_referral_id", "tier3_commission", "Tier 3 Biz Cashback")
-    biz_tier_rows(btrans, "tier4_business_referral_id", "tier4_commission", "Tier 4 Biz Cashback")
-    biz_tier_rows(btrans, "tier5_business_referral_id", "tier5_commission", "Tier 5 Biz Cashback")
-    biz_tier_rows(btrans, "sponsoree_mutual_referral_id", "sponsoree_mutual_commission", "Mutual Sponsoree")
-
-    import csv
-    from io import StringIO
-    si = StringIO()
-    writer = csv.writer(si)
-    writer.writerow([
-        "RecordType","Tier","Date/Time","Interaction ID","Referral ID","Name","Email","Earning","Transaction ID"
-    ])
-    for row in csv_rows:
-        writer.writerow(row)
-    output = si.getvalue()
-    return Response(output, mimetype="text/csv",
-                    headers={"Content-Disposition": "attachment;filename=perkminer_combined_detailed_report.csv"})
 
 @app.route("/finance/business-detailed-report", methods=["GET"])
 @role_required("finance")
@@ -10053,7 +9907,7 @@ def new_featured_businesses():
     # Top-ranked approved businesses (same rule as the public directory). Never block the page if the query fails.
     try:
         featured = (public_businesses_query()
-                    .order_by(Business.manual_feature.desc(), Business.rank.desc(), Business.business_name.asc())
+                    .order_by(plan_first(), Business.manual_feature.desc(), Business.rank.desc(), Business.business_name.asc())
                     .limit(6).all())
     except Exception:
         db.session.rollback()
@@ -11197,7 +11051,7 @@ def stats():
     member_count = User.query.filter_by(email_confirmed=True).count()
 
     # count approved businesses as advertisers
-    advertiser_count = Business.query.filter_by(status="approved").count()
+    advertiser_count = Business.query.filter(not_suspended()).filter_by(status="approved").count()
 
     data = {
         "members": member_count,
@@ -11271,7 +11125,7 @@ def nearby_stats():
 
     biz_query = (
         Business.query
-        .filter(Business.status == "approved")
+        .filter(Business.status == "approved", not_suspended())
         .filter(eff_lat.isnot(None), eff_lng.isnot(None))
         .filter(biz_haversine <= distance)
     )
@@ -11327,6 +11181,7 @@ def shop_link(interaction_id):
 def online_marketplace():
     base_query = Business.query.filter(
         Business.status == "approved",
+        not_suspended(),
         Business.website_url.isnot(None),
         Business.website_url != "",
         Business.is_ecommerce_site.is_(True),
@@ -11339,7 +11194,7 @@ def online_marketplace():
     # featured e-commerce businesses
     manual_featured = (
         base_query
-        .filter(Business.manual_feature.is_(True))
+        .filter(Business.manual_feature.is_(True), not_low_plan())
         .order_by(Business.rank.desc())
         .limit(10)
         .all()
@@ -11348,7 +11203,7 @@ def online_marketplace():
     if needed > 0:
         ranked = (
             base_query
-            .filter(or_(Business.manual_feature.is_(False), Business.manual_feature.is_(None)))
+            .filter(or_(Business.manual_feature.is_(False), Business.manual_feature.is_(None)), not_low_plan())
             .order_by(Business.rank.desc())
             .limit(needed)
             .all()
@@ -11366,6 +11221,7 @@ def online_marketplace():
 def online_marketplace_results():
     base_query = Business.query.filter(
         Business.status == "approved",
+        not_suspended(),
         Business.website_url.isnot(None),
         Business.website_url != "",
         Business.is_ecommerce_site.is_(True),
@@ -11388,7 +11244,7 @@ def online_marketplace_results():
 
     pagination = (
         filtered
-        .order_by(Business.rank.desc(), Business.business_name.asc())
+        .order_by(plan_first(), Business.rank.desc(), Business.business_name.asc())
         .paginate(page=page, per_page=per_page, error_out=False)
     )
 
@@ -11906,6 +11762,8 @@ def update_live_location():
         return jsonify({"status": "unauthorized"}), 401
 
     biz = Business.query.get_or_404(biz_id)
+    if feeplan.is_low(biz):
+        return jsonify({"status": "not_available", "message": "Live tracking is not included in the 2% ad fee plan."}), 403
 
     lat = request.form.get("lat")
     lng = request.form.get("lng")
@@ -11929,6 +11787,8 @@ def staff_update_live_location():
         return jsonify({"status": "unauthorized"}), 401
 
     staff = Staff.query.get_or_404(staff_id)
+    if feeplan.is_low(staff.business):
+        return jsonify({"status": "not_available", "message": "Live tracking is not included in the 2% ad fee plan."}), 403
 
     lat = request.form.get("lat")
     lng = request.form.get("lng")
@@ -12036,6 +11896,9 @@ def staff_update_status(interaction_id):
 @app.route("/session/<int:interaction_id>/provider_status_location")
 def provider_status_location(interaction_id):
     interaction = Interaction.query.get_or_404(interaction_id)
+    if feeplan.is_low(interaction.business):
+        return jsonify({"has_location": False, "tracking_disabled": True,
+                        "provider_status": interaction.provider_status})
 
     # identities
     business_id = session.get('business_id')
@@ -12118,6 +11981,14 @@ def track_provider(interaction_id):
     """
 
     interaction = Interaction.query.get_or_404(interaction_id)
+
+    # live tracking is a 10% ad fee plan feature
+    if feeplan.is_low(interaction.business):
+        return render_template(
+            "track_provider_unavailable.html",
+            interaction=interaction,
+            reason="Live tracking is not available for this business (it is on the 2% ad fee plan)."
+        )
 
     # identities
     business_id = session.get("business_id")
@@ -12305,7 +12176,9 @@ def public_businesses_query():
     """Single definition of 'has a public profile'. The directory, the profile
     page and the sitemap all use it, so a business that returns 404 can never
     appear in the sitemap or the directory."""
-    return Business.query.filter_by(status="approved", is_suspended=False)
+    # 2% ad fee advertisers have no public profile page: it is suspended (404/410), out of the sitemap,
+    # the directory and every AI endpoint, because they all use this one query.
+    return Business.query.filter(not_suspended()).filter_by(status="approved", is_suspended=False).filter(not_low_plan())
 
 
 def public_profile_url(slug):
@@ -12394,7 +12267,7 @@ def public_profiles_directory():
             except ValueError:
                 pass
 
-        businesses_with_dist.sort(key=lambda x: x[1])
+        businesses_with_dist.sort(key=lambda x: (feeplan.is_low(x[0]), x[1]))
 
         total = len(businesses_with_dist)
         start = (page - 1) * per_page
@@ -12412,7 +12285,7 @@ def public_profiles_directory():
         # With no filters this is the browse-all list that crawlers follow.
         pagination = (
             base_query
-            .order_by(Business.rank.desc(), Business.business_name.asc())
+            .order_by(plan_first(), Business.rank.desc(), Business.business_name.asc())
             .paginate(page=page, per_page=per_page, error_out=False)
         )
         businesses = pagination.items
@@ -12448,6 +12321,10 @@ def business_seo_faq():
     biz = db.session.get(Business, session.get("business_id"))
     if not biz:
         abort(403)
+    if feeplan.is_low(biz):
+        flash("FAQs and the SEO Readiness Score are for the public profile page, which is not included on the "
+              "2% ad fee plan. Switch to the 10% ad fee plan to use them.", "warning")
+        return redirect(url_for("business_dashboard"))
     if request.method == "POST":
         try:
             validate_csrf(request.form.get("csrf_token", ""))
@@ -12598,6 +12475,11 @@ def business_redeem_promo():
         flash("Please log in and confirm your business email to access the dashboard.")
         return redirect(url_for("business_login"))
 
+    if feeplan.is_low(biz):
+        db.session.rollback()
+        flash("Promo codes cannot be used with the 2% ad fee plan. Switch to the 10% ad fee plan to use a promo code.")
+        return redirect(url_for("business_dashboard"))
+
     if biz.promo_code_used:
         db.session.rollback()
         flash("A promo code has already been applied to your account.")
@@ -12702,6 +12584,10 @@ def how_much_can_i_earn():
 
 @app.route("/public_profiles/<store_slug>")
 def public_profile(store_slug):
+    # A business on the 2% ad fee plan has its public profile page suspended: 410 Gone tells search engines to drop it.
+    low = Business.query.filter(not_suspended()).filter_by(store_slug=store_slug, status="approved").first()
+    if low is not None and feeplan.is_low(low):
+        return render_template("errors/profile_suspended.html", business=low), 410
     biz = public_businesses_query().filter_by(store_slug=store_slug).first_or_404()
 
     # One shared, plain-dict view of the business (summary, title, description, schema.org data).
@@ -12805,7 +12691,12 @@ def public_profiles_json():
 import freelance as _freelance
 _freelance.register(app, globals())
 import reviews as _reviews
+import reports as _reports
 _reviews.register(app, globals())
+_reports.register(app, globals())
+import feeplan_routes as _feeplan_routes
+feeplan.register(app, globals())
+_feeplan_routes.register(app, globals())
 
 @app.errorhandler(500)
 def internal_server_error(error):

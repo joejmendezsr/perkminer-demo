@@ -143,7 +143,7 @@
             <th>Interaction ID</th>
             <th>Business</th>
             <th>Amount</th>
-            <th>Cashback (2%)</th>
+            <th>Cashback (2% or 0.4%)</th>
             <th class="d-print-none">Receipt</th>
           </tr>
         </thead>
@@ -159,7 +159,7 @@
               {{ interaction.business.business_name if interaction else 'N/A' }}
             </td>
             <td data-label="Amount">${{ "{:,.2f}".format(txn.amount) }}</td>
-            <td data-label="Cashback (2%)">${{ "{:,.2f}".format(txn.cash_back) }}</td>
+            <td data-label="Cashback">${{ "{:,.2f}".format(txn.cash_back) }} <small class="text-muted">({{ '0.4%' if txn_is_low(txn) else '2%' }})</small></td>
             <td data-label="Receipt" class="d-print-none">
               <a href="{{ url_for('show_user_receipt', interaction_id=txn.interaction_id) }}" class="btn btn-info btn-sm">View</a>
             </td>

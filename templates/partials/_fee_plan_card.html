@@ -1,0 +1,93 @@
+{# Advertising fee plan card + "Change plan" dialog.
+   Include with:  {% set plan_biz = business %}{% set plan_switch_url = url_for('business_switch_ad_fee_plan') %}{% set plan_kind = 'business' %}{% include 'partials/_fee_plan_card.html' %}
+   plan_kind is 'business' or 'freelancer'. #}
+{% set _low = fee_is_low(plan_biz) %}
+{% set _dom = plan_kind or 'business' %}
+{% set _plock = promo_lock(plan_biz) if (plan_biz.promo_code_used and not _low) else none %}
+<div class="card border-0 shadow-sm mb-3" id="fee-plan-card" style="border-radius:16px;">
+  <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+    <div>
+      <div class="small text-uppercase fw-bold text-muted">Your advertising fee plan</div>
+      <div class="fs-5 fw-bold">
+        {% if _low %}2% ad fee <span class="badge text-bg-warning align-middle">Low margins</span>
+        {% else %}10% ad fee <span class="badge text-bg-success align-middle">All features</span>{% endif %}
+      </div>
+      <div class="small text-muted">
+        Members earn <b>{{ fee_cashback_label(plan_biz) }} cash back</b> on purchases from you.
+        {% if _low %}
+          Featured placement, live tracking, promo codes{% if _dom == 'business' %} and your public profile page{% else %} and your custom web address{% endif %} are off.
+        {% else %}
+          You have every feature{% if _dom == 'business' %}, including featured eligibility, live tracking and your public profile page{% endif %}.
+        {% endif %}
+      </div>
+      {% if _low and _dom == 'business' %}
+        <div class="small mt-1" style="color:#8a1f26;"><i class="bi bi-slash-circle"></i> Public profile page: <b>suspended</b> (not live)</div>
+      {% endif %}
+    </div>
+    <button type="button" class="btn btn-outline-primary flex-shrink-0" data-bs-toggle="modal" data-bs-target="#feePlanModal">
+      <i class="bi bi-arrow-left-right me-1"></i>Change plan
+    </button>
+  </div>
+</div>
+
+<div class="modal fade" id="feePlanModal" tabindex="-1" aria-labelledby="feePlanModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <form class="modal-content" method="post" action="{{ plan_switch_url }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if not _low %}
+      <input type="hidden" name="ad_fee_plan" value="low">
+      <div class="modal-header">
+        <h5 class="modal-title" id="feePlanModalLabel">Switch to the 2% ad fee plan?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">The 2% plan is built for businesses with low profit margins. You will pay <b>2% (max $50)</b> per finalized transaction instead of 10% (max $250), but you will <b>lose</b>:</p>
+        <ul class="small">
+          {% for m in fee_low_missing %}
+            {% if _dom == 'business' or ('profile' not in m and 'Live tracking' not in m and 'Featured' not in m) %}<li>{{ m }}</li>{% endif %}
+          {% endfor %}
+        </ul>
+        {% if _dom == 'business' %}
+        <div class="alert alert-danger small">
+          <b>Warning about search and AI visibility:</b> your public profile page goes into <b>suspended status</b> and is no longer live.
+          You will <b>lose any existing SEO and AI discovery</b> built by that page. If you switch back to the 10% plan later, your page will
+          have to be found again by the major search engines and AI assistants, which <b>could take days or weeks</b>.
+        </div>
+        {% endif %}
+        <p class="small mb-2">Your listing will show <b>0.4% Cash Back</b> instead of <b>2% Cash Back</b>. The change applies to transactions finalized from now on.</p>
+        {% if _plock and _plock[0] %}
+          <div class="alert alert-danger small mb-2">You redeemed the promo code <b>{{ plan_biz.promo_code_used }}</b>. You can switch to the 2% plan after your promo funds are used (about <b>${{ '%.2f' % _plock[1] }}</b> of the promo credit is still unused).</div>
+        {% endif %}
+      </div>
+      {% else %}
+      <input type="hidden" name="ad_fee_plan" value="full">
+      <div class="modal-header">
+        <h5 class="modal-title" id="feePlanModalLabel">Switch to the 10% ad fee plan?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">You will pay <b>10% (max $250)</b> per finalized transaction and get every feature:</p>
+        <ul class="small">
+          {% for m in fee_full_has %}
+            {% if _dom == 'business' or ('profile' not in m and 'Search engine' not in m) %}<li>{{ m }}</li>{% endif %}
+          {% endfor %}
+        </ul>
+        {% if _dom == 'business' %}
+        <div class="alert alert-info small">Your public profile page goes live again, but search engines and AI assistants will need to find it again, which <b>could take days or weeks</b>.</div>
+        {% endif %}
+        <p class="small mb-2">Your listing will show <b>2% Cash Back</b>. The change applies to transactions finalized from now on.</p>
+      </div>
+      {% endif %}
+      <div class="modal-footer flex-column align-items-stretch">
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="confirmPlanChange" name="confirm_plan_change" value="1" required>
+          <label class="form-check-label small" for="confirmPlanChange">I understand and want to change my plan.</label>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary flex-fill" data-bs-dismiss="modal">Keep my current plan</button>
+          <button type="submit" class="btn {{ 'btn-danger' if not _low else 'btn-success' }} flex-fill"{% if not _low and _plock and _plock[0] %} disabled title="Available after your promo funds are used"{% endif %}>{{ 'Switch to 2%' if not _low else 'Switch to 10%' }}</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

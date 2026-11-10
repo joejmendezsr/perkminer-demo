@@ -472,3 +472,8 @@
 .ps-hero .container > h2 { font-size: clamp(1.9rem, 4.6vw, 3.2rem); font-weight: 800; line-height: 1.08; margin: 1rem 0 1rem; color: #fff; text-wrap: balance; letter-spacing: -.01em; }
 .ps-hero-grid > div:not(.ps-fee-card) > h2 em,
 .ps-hero .container > h2 em { font-style: normal; color: var(--ps-gold); }
+
+
+/* Cash back chip on directory cards (2% on the 10% ad fee plan, 0.4% on the 2% plan) */
+.ps-cb { display: inline-flex; align-items: center; gap: .35rem; padding: .22rem .65rem; border-radius: 999px; background: #e5f4e4; color: #146c43; font-weight: 700; font-size: .85rem; }
+.ps-cb.low { background: #fdecc8; color: #7a5200; }

@@ -420,11 +420,12 @@
         let amount = parseFloat(document.getElementById('network_amount').value) || 0;
         if (amount > 2500) amount = 2500;
         document.getElementById('network_amount').value = amount;
-        let t1 = 0.01 * amount;
-        let t2 = 0.002 * amount * numPeople;
-        let t3 = 0.002 * amount * Math.pow(numPeople, 2);
-        let t4 = 0.002 * amount * Math.pow(numPeople, 3);
-        let t5 = 0.01 * amount * Math.pow(numPeople, 4);
+        const sc = parseFloat(document.getElementById('network_plan').value) || 1;   // 1 = 10% ad fee, 0.2 = 2% ad fee
+        let t1 = 0.01 * sc * amount;
+        let t2 = 0.002 * sc * amount * numPeople;
+        let t3 = 0.002 * sc * amount * Math.pow(numPeople, 2);
+        let t4 = 0.002 * sc * amount * Math.pow(numPeople, 3);
+        let t5 = 0.01 * sc * amount * Math.pow(numPeople, 4);
         let total = t1 + t2 + t3 + t4 + t5;
         document.getElementById('network_t1').innerText = t1.toFixed(2);
         document.getElementById('network_t2').innerText = t2.toFixed(2);
@@ -468,28 +469,33 @@
         if (amount > 2500) amount = 2500;
         document.getElementById('reward_amount').value = amount;
         let tier = document.getElementById('reward_tier').value;
+        const sc = parseFloat(document.getElementById('reward_plan').value) || 1;   // 1 = 10% ad fee, 0.2 = 2% ad fee
         let reward = 0;
         let desc = "";
         let cap = null;
         if (tier === "1") {
-            reward = amount * 0.01; desc = "As the business, from a paid invoice you generate";
+            reward = amount * 0.01 * sc; cap = 25 * sc; if (reward > cap) reward = cap;
+            desc = "As the business, from a paid invoice you generate";
         } else if (["2","3","4"].includes(tier)) {
-            reward = amount * 0.002;
-            cap = 5.00;
+            reward = amount * 0.002 * sc;
+            cap = 5.00 * sc;
             if (reward > cap) reward = cap;
             desc = `If your Tier ${tier} referral generates a paid invoice`;
         } else if (tier === "5") {
-            reward = amount * 0.01;
-            cap = 50;
+            reward = amount * 0.01 * sc;
+            cap = 25 * sc;
             if (reward > cap) reward = cap;
             desc = "If your Tier 5 generates a paid invoice";
         }
+        const feeRate = sc === 1 ? 0.10 : 0.02, feeCap = sc === 1 ? 250 : 50;
+        const adFee = Math.min(amount * feeRate, feeCap);
         let out = '';
         if (amount > 0) {
           out += `<div class="calc-result">`;
           out += `<div class="calc-result-desc">${desc} of $${amount.toFixed(2)}:</div>`;
           out += `<div class="calc-result-amt">$${reward.toFixed(2)}</div>`;
           out += `<div class="calc-result-note">You earn <strong>$${reward.toFixed(2)}</strong> as cashback${cap?` (capped at $${cap.toFixed(2)}).`:"."}</div>`;
+          if (tier === "1") out += `<div class="calc-result-note">The ${sc === 1 ? '10%' : '2%'} ad fee on a $${amount.toFixed(2)} sale is <strong>$${adFee.toFixed(2)}</strong> (max $${feeCap}). Members who buy earn ${sc === 1 ? '2%' : '0.4%'} cash back.</div>`;
           out += `</div>`;
         }
         document.getElementById('rewards_output').innerHTML = out;
@@ -564,6 +570,23 @@
       {{ rating_stars(business.rating_avg, business.rating_count, '1.3rem') }}
     </div>
 
+    {% set plan_biz = business %}{% set plan_switch_url = url_for('business_switch_ad_fee_plan') %}{% set plan_kind = 'business' %}
+    {% include 'partials/_fee_plan_card.html' %}
+
+    {% if payment_alerts %}
+      <div class="alert alert-warning text-center p-3 mb-3" role="alert">
+        <b><i class="bi bi-upc-scan"></i> New Scan:</b> A customer is awaiting for you to scan their QR code!
+        {% for ia in payment_alerts %}
+          <div class="mt-2">
+            <a class="btn btn-success btn-sm w-100"
+               href="{{ url_for('scan_qr', interaction_id=ia.id) }}">
+               Scan Payment QR for {{ ia.user.name or ia.user.email }}
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     <!-- Status chips -->
     <div class="d-flex flex-wrap gap-2 mb-3">
       {% if business.status %}
@@ -593,7 +616,7 @@
       {% endif %}
     </div>
 
-    {% if business.location_varies %}
+    {% if business.location_varies and not fee_is_low(business) %}
       <div class="alert alert-info d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3">
         <div class="mb-2 mb-md-0">
           <strong>live location enabled:</strong>
@@ -631,7 +654,9 @@
         Tutorials
       </a>
 
-      {% if business.status == "approved" and not business.is_suspended %}
+      {% if business.status == "approved" and not business.is_suspended and fee_is_low(business) %}
+        <span class="btn btn-outline-secondary disabled" aria-disabled="true" title="Switch to the 10% ad fee plan to bring your public profile page back">Public profile page: suspended (2% plan)</span>
+      {% elif business.status == "approved" and not business.is_suspended %}
         <a href="{{ url_for('public_profile', store_slug=business.store_slug) }}"
            target="_blank"
            rel="noopener noreferrer"
@@ -648,20 +673,6 @@
       </div>
     {% endif %}
   </div>
-
-  {% if payment_alerts %}
-    <div class="alert alert-warning text-center p-3 mb-4">
-      <b>New Scan:</b> A customer is awaiting for you to scan their QR code!
-      {% for ia in payment_alerts %}
-        <div class="mt-2">
-          <a class="btn btn-success btn-sm w-100"
-             href="{{ url_for('scan_qr', interaction_id=ia.id) }}">
-             Scan Payment QR for {{ ia.user.name or ia.user.email }}
-          </a>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
 
   <!-- ===================== PROFILE WIZARD (15 steps) ===================== -->
   <div class="collapse" id="profileCollapse">
@@ -883,7 +894,10 @@
           <!-- STEP 6: Public profile URL -->
           <div class="wizard-step" data-step="6">
             <div class="wizard-title"><i class="bi bi-link-45deg"></i> Public Profile URL</div>
-            <p class="wizard-help">Choose the web address for your free public profile page.</p>
+            <p class="wizard-help">{% if fee_is_low(business) %}Not available on the 2% ad fee plan.{% else %}Choose the web address for your free public profile page.{% endif %}</p>
+            {% if fee_is_low(business) %}
+              <div class="alert alert-warning small"><b>You are on the 2% ad fee plan, which does not include a public profile page.</b> Your page stays suspended (not live) until you switch to the 10% plan from the Change plan button at the top of your dashboard.</div>
+            {% endif %}
 
             <div class="mb-3">
               <label class="form-label" for="store_slug">Public profile URL</label>
@@ -898,11 +912,14 @@
                   data-error-msg="Use letters, numbers, and dashes only (no spaces)."
                   value="{{ form_data.get('store_slug', business.store_slug or '') }}"
                   placeholder="your-business-name"
+                  {% if fee_is_low(business) %}readonly aria-disabled="true" tabindex="-1" style="background:#e9ecef;cursor:not-allowed;"{% endif %}
                 >
               </div>
-              <small class="text-muted">
+              {% if fee_is_low(business) %}
+              <small class="text-danger"><i class="bi bi-lock-fill"></i> Locked: the 2% ad fee plan has no public profile page, so you cannot enter a Public Profile URL. Switch to the 10% ad fee plan to unlock it.</small>
+              {% else %}<small class="text-muted">
                 Letters, numbers, and dashes only. Example: <code>my-plumbing-co</code>
-              </small>
+              </small>{% endif %}
             </div>
 
             <div class="step-error" role="alert"></div>
@@ -1256,8 +1273,27 @@
                 <option value="Exchange-Only" {% if form_data.finalization == 'Exchange-Only' %}selected{% endif %}>Exchange Only</option>
                 <option value="Exchange-Store-Credit" {% if form_data.finalization == 'Exchange-Store-Credit' %}selected{% endif %}>Exchange or Store Credit</option>
                 <option value="Returns-Accepted" {% if form_data.finalization == 'Returns-Accepted' %}selected{% endif %}>Returns Accepted</option>
+                <option value="Finalized-Upon-Final-Payment" {% if form_data.finalization == 'Finalized-Upon-Final-Payment' %}selected{% endif %}>Finalized upon final payment of project</option>
+                <option value="Finalized-In-Steps" {% if form_data.finalization == 'Finalized-In-Steps' %}selected{% endif %}>Finalized in steps - up to $2,500 of entire project</option>
               </select>
+              <div class="form-text" id="finalization_project_note" style="display:none;">
+                <b>For large projects such as construction jobs that are paid over time.</b>
+                <span id="fin_note_final">The sale is finalized once, when the final payment of the project is made.</span>
+                <span id="fin_note_steps" style="display:none;">The sale is finalized in steps as payments are made, for up to $2,500 of the entire project (cash back and commissions are paid on up to $2,500 of each purchase).</span>
+              </div>
             </div>
+
+            <script>
+(function(){
+  var sel=document.getElementById('business_finalization'); if(!sel) return;
+  function sync(){var v=sel.value, box=document.getElementById('finalization_project_note');
+    var a=(v==='Finalized-Upon-Final-Payment'), b=(v==='Finalized-In-Steps');
+    box.style.display=(a||b)?'block':'none';
+    document.getElementById('fin_note_final').style.display=a?'inline':'none';
+    document.getElementById('fin_note_steps').style.display=b?'inline':'none';}
+  sel.addEventListener('change',sync); sync();
+})();
+</script>
 
             <div class="step-error" role="alert"></div>
             <div class="wizard-nav">
@@ -1293,20 +1329,21 @@
         <!-- STEP 15: FAQs are saved with the complete business profile. -->
         <div class="wizard-step" data-step="15" id="business-faq-editor">
           <div class="wizard-title"><i class="bi bi-question-circle"></i> Step 15: Frequently Asked Questions</div>
+          {% if fee_is_low(business) %}<div class="alert alert-warning"><i class="bi bi-lock-fill"></i> <b>Locked on the 2% ad fee plan.</b> FAQs are shown on the public profile page and help SEO and AI discovery, which the 2% ad fee plan does not include. Switch to the 10% ad fee plan to add FAQs.</div>{% endif %}
           <p class="wizard-help"><strong>Optional, but helpful for SEO.</strong> Answer up to 10 common customer questions to help search engines and visitors understand your business. Only complete question-and-answer pairs appear on your public profile. If you leave this step blank, no FAQ section will be displayed.</p>
           <div class="alert alert-info">FAQs are optional and can help visitors find useful answers. Click <strong>Save Profile</strong> below to save your business details and FAQs together and close the editor.</div>
             {% for i in range(10) %}
             <div class="border rounded p-3 mb-3">
               <label for="faq-question-{{ i }}" class="form-label fw-semibold">Question {{ i + 1 }}</label>
-              <input id="faq-question-{{ i }}" name="question" type="text" class="form-control mb-2" maxlength="240" value="{{ dashboard_faqs[i].question if i < dashboard_faqs|length else '' }}" placeholder="Enter a customer question (optional)">
+              <input id="faq-question-{{ i }}" name="question" type="text"{% if fee_is_low(business) %} readonly tabindex="-1" style="background:#e9ecef;cursor:not-allowed;"{% endif %} class="form-control mb-2" maxlength="240" value="{{ dashboard_faqs[i].question if i < dashboard_faqs|length else '' }}" placeholder="Enter a customer question (optional)">
               <label for="faq-answer-{{ i }}" class="form-label">Answer {{ i + 1 }}</label>
-              <textarea id="faq-answer-{{ i }}" name="answer" class="form-control" maxlength="2000" rows="3" placeholder="Provide a clear and accurate answer (optional)">{{ dashboard_faqs[i].answer if i < dashboard_faqs|length else '' }}</textarea>
+              <textarea id="faq-answer-{{ i }}" name="answer"{% if fee_is_low(business) %} readonly tabindex="-1" style="background:#e9ecef;cursor:not-allowed;"{% endif %} class="form-control" maxlength="2000" rows="3" placeholder="Provide a clear and accurate answer (optional)">{{ dashboard_faqs[i].answer if i < dashboard_faqs|length else '' }}</textarea>
             </div>
             {% endfor %}
             <div class="wizard-nav">
               <button type="button" class="btn btn-outline-secondary wizard-back"><i class="bi bi-arrow-left"></i> Back</button>
               {{ profile_form.submit(class="btn btn-success", value="Save Profile") }}
-              <a href="{{ url_for('business_seo_faq') }}" class="btn btn-outline-primary">SEO Readiness Score</a>
+              {% if not fee_is_low(business) %}<a href="{{ url_for('business_seo_faq') }}" class="btn btn-outline-primary">SEO Readiness Score</a>{% else %}<button type="button" class="btn btn-outline-secondary" disabled title="Not available on the 2% ad fee plan (no public profile page)"><i class="bi bi-lock-fill"></i> SEO Readiness Score (10% plan only)</button>{% endif %}
             </div>
           <div class="step-error" role="alert"></div>
         </div>
@@ -1840,6 +1877,14 @@
             <div class="form-text">Maximum sale amount allowed is $2,500.</div>
           </div>
           <div class="mb-3">
+            <label class="form-label" for="reward_plan">Advertising fee plan</label>
+            <select id="reward_plan" class="form-select">
+              <option value="1" {% if not fee_is_low(business) %}selected{% endif %}>10% ad fee (max $250), members earn 2% cash back</option>
+              <option value="0.2" {% if fee_is_low(business) %}selected{% endif %}>2% ad fee (max $50), members earn 0.4% cash back</option>
+            </select>
+            <div class="form-text">The 2% ad fee plan pays one fifth of every cash back and commission rate and cap.</div>
+          </div>
+          <div class="mb-3">
             <label class="form-label" for="reward_tier">Whose invoice is it?</label>
             <select id="reward_tier" class="form-select" required>
               <option value="1" selected>Tier 1 (your paid invoices)</option>
@@ -1873,6 +1918,14 @@
           <p class="text-muted mb-3" style="font-size:.95rem;">
             If your business and every business in your network refers a number of businesses, and every business finalizes just one transaction (sale), this is how much your business would earn in Cashback and Referral Commissions.
           </p>
+          <div class="mb-3">
+            <label class="form-label" for="network_plan">Advertising fee plan</label>
+            <select id="network_plan" class="form-select">
+              <option value="1" {% if not fee_is_low(business) %}selected{% endif %}>10% ad fee (max $250), members earn 2% cash back</option>
+              <option value="0.2" {% if fee_is_low(business) %}selected{% endif %}>2% ad fee (max $50), members earn 0.4% cash back</option>
+            </select>
+            <div class="form-text">The 2% ad fee plan pays one fifth of every cash back and commission rate and cap.</div>
+          </div>
           <div class="row g-3 mb-2">
             <div class="col-12 col-sm-6">
               <label class="form-label" for="network_people">Businesses referred by each</label>
@@ -2109,6 +2162,8 @@ window.addEventListener('DOMContentLoaded', function() {
     let address = document.getElementById('address-autocomplete')?.value || {{ business.address | tojson }};
     let category = document.getElementById('business_category')?.value || {{ business.category | tojson }};
     let finalization = document.getElementById('business_finalization')?.value || {{ business.finalization | tojson }};
+    const FIN_LABELS = {'Finalized-Upon-Final-Payment': 'Finalized upon final payment of project', 'Finalized-In-Steps': 'Finalized in steps - up to $2,500 of entire project'};
+    const finLabel = (v) => FIN_LABELS[v] || v;
     let perks = document.getElementById('perks')?.value || {{ business.perks | tojson }};
     let phone = document.getElementById('us-phone')?.value || {{ business.phone_number | tojson }};
     let website = document.getElementById('website_url')?.value || {{ business.website_url | tojson }};
@@ -2155,6 +2210,8 @@ window.addEventListener('DOMContentLoaded', function() {
       return out.length ? `<div class="trust-badges">${out.join('')}</div>` : '';
     };
     const chipsHTML = `<span class="pml-chip"><i class="bi bi-tag"></i> ${esc(category || 'Local business')}</span>`;
+    const cashbackLow = {{ 'true' if fee_is_low(business) else 'false' }};
+    const cashbackHTML = (big) => `<div class="pml-cashback${big ? ' big' : ''}${cashbackLow ? ' low' : ''}"><i class="bi bi-cash-coin"></i><b>${cashbackLow ? '0.4%' : '2%'} Cash Back</b>${big ? '<span>on every purchase, paid by Perk Miner LLC</span>' : ''}</div>`;
     const logoSmall = img ? `<img src="${esc(img)}" class="pml-logo" alt="${esc(name)} logo">` : `<div class="pml-logo ph"><i class="bi bi-shop"></i></div>`;
     const svcChips = services.length
       ? services.slice(0, 4).map(s => `<span>${esc(s)}</span>`).join('') + (services.length > 4 ? `<span class="more">+${services.length - 4} more</span>` : '')
@@ -2169,6 +2226,7 @@ window.addEventListener('DOMContentLoaded', function() {
         <div class="pml-card-body">
           <h3 class="pml-name">${esc(name)}</h3>
           <div class="pml-chips">${chipsHTML}</div>
+          ${cashbackHTML(false)}
           ${saShort ? `<div class="pml-line"><i class="bi bi-globe-americas"></i><span>Serves ${esc(saShort)}</span></div>` : (address ? `<div class="pml-line"><i class="bi bi-geo-alt"></i><span>${esc(address)}</span></div>` : '')}
           ${reviewsUrl ? `<div class="pml-line"><i class="bi bi-star-fill" style="color:#e0a800;"></i><span>Google reviews available</span></div>` : ''}
           <div class="pml-badges">${badgeHTML()}</div>
@@ -2184,7 +2242,8 @@ window.addEventListener('DOMContentLoaded', function() {
           ${img ? `<img src="${esc(img)}" alt="${esc(name)} logo" class="pml-hero-pic">` : `<div class="pml-hero-pic ph"><i class="bi bi-buildings"></i></div>`}
           <h1 class="pml-hero-title">${esc(name)}</h1>
           <div class="pml-chips">${chipsHTML}</div>
-          ${finalization ? `<span class="pml-final"><b>Finalization: ${esc(finalization)}</b></span>` : ''}
+          ${cashbackHTML(true)}
+          ${finalization ? `<span class="pml-final"><b>Finalization: ${esc(finLabel(finalization))}</b></span>` : ''}
           ${badgeHTML()}
         </div>
       </div>

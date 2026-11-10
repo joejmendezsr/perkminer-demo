@@ -1,0 +1,16 @@
+{% extends "pm_public_base.html" %}
+{% block title %}Profile unavailable | Perk Miner{% endblock %}
+{% block head_extra %}{{ super() }}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block content %}
+<main id="main">
+<section class="ps-section" style="padding-top:3rem;">
+  <div class="container">
+    <div class="ps-narrow text-center" style="max-width:640px;">
+      <h1 class="ps-title">This public profile page is not available</h1>
+      <p class="ps-sub">This business no longer has a public profile page. You can still find it by logging in and searching the directories.</p>
+      <a class="ps-btn ps-btn-gold" href="{{ url_for('public_profiles_directory') }}">Browse public profiles</a>
+    </div>
+  </div>
+</section>
+</main>
+{% endblock %}

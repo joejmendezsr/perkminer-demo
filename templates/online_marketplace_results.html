@@ -47,6 +47,7 @@
         {% set services = [biz.service_1, biz.service_2, biz.service_3, biz.service_4, biz.service_5, biz.service_6, biz.service_7, biz.service_8, biz.service_9, biz.service_10] %}
         {% set valid_services = services|select|reject('equalto', '')|list %}
         <div class="ps-dcard-line"><i class="bi bi-tag"></i><span><strong>Offers:</strong> {% if valid_services %}{{ valid_services|join(', ') }}{% else %}Visit the listing for details{% endif %}</span></div>
+        <div class="ps-dcard-line"><span class="ps-cb{% if fee_is_low(biz) %} low{% endif %}"><i class="bi bi-cash-coin"></i> {{ fee_cashback_label(biz) }} Cash Back</span></div>
         <div class="ps-dcard-perk"><i class="bi bi-gift"></i><span><strong>Member perk:</strong> {{ biz.perks or "Member perks available" }}</span></div>
         <span class="ps-dcard-cta">View listing <i class="bi bi-arrow-right"></i></span>
       </a>

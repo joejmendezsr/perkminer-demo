@@ -179,7 +179,7 @@
       </div>
 
       <span class="lh-final">
-        <b>Finalization: {{ business.finalization }}</b><br>
+        <b>Finalization: {{ fin_label(business.finalization) }}</b><br>
         {% if business.account_balance >= 250 %}
           (Has enough to finalize any transaction)
         {% else %}

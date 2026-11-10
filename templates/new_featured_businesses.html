@@ -30,6 +30,7 @@
           </div>
         </div>
         {% if biz.city or biz.state %}<div class="ps-dcard-line"><i class="bi bi-geo-alt-fill"></i><span>{{ biz.city or '' }}{% if biz.city and biz.state %}, {% endif %}{{ biz.state or '' }}</span></div>{% endif %}
+        <div class="ps-dcard-line"><span class="ps-cb{% if fee_is_low(biz) %} low{% endif %}"><i class="bi bi-cash-coin"></i> {{ fee_cashback_label(biz) }} Cash Back</span></div>
         <div class="ps-dcard-perk"><i class="bi bi-gift"></i><span><strong>Member perk:</strong> {{ biz.perks or "Member perks available" }}</span></div>
         <span class="ps-dcard-cta">View public profile <i class="bi bi-arrow-right"></i></span>
       </a>

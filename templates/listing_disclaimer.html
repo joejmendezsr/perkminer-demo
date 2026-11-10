@@ -12,6 +12,23 @@
   .ps-must { background: #fff4f4; border: 1px solid #f3c9cc; color: #8a1f26; border-radius: 16px; padding: .8rem 1rem; font-weight: 700; display: flex; gap: .6rem; }
   .ps-note { background: var(--ps-teal-100); color: var(--ps-teal-900); border-radius: 16px; padding: .85rem 1rem; font-size: .93rem; line-height: 1.5; }
   .ps-disc { font-size: .93rem; line-height: 1.6; color: var(--ps-text); }
+  .fp-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0,1fr); }
+  @media (min-width: 720px) { .fp-grid { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } }
+  .fp-card { display: block; position: relative; border: 2px solid var(--ps-line); border-radius: 18px; padding: 1rem 1.1rem 1.1rem; background: #fff; cursor: pointer; height: 100%; }
+  .fp-card input { position: absolute; opacity: 0; pointer-events: none; }
+  .fp-card:has(input:checked) { border-color: var(--ps-teal-600); box-shadow: 0 0 0 3px rgba(42,88,89,.18); background: var(--ps-teal-50); }
+  .fp-card:has(input:focus-visible) { outline: 3px solid var(--ps-gold, #e0a800); outline-offset: 2px; }
+  .fp-top { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .35rem; }
+  .fp-fee { font-size: 1.9rem; font-weight: 800; line-height: 1; color: var(--ps-teal-800); }
+  .fp-tag { font-size: .72rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; border-radius: 999px; padding: .2rem .6rem; background: var(--ps-teal-100); color: var(--ps-teal-900); }
+  .fp-tag.low { background: #fdecc8; color: #7a5200; }
+  .fp-card ul { list-style: none; padding: 0; margin: .6rem 0 0; font-size: .9rem; line-height: 1.45; }
+  .fp-card li { position: relative; padding-left: 1.45rem; margin-bottom: .4rem; }
+  .fp-card li::before { position: absolute; left: 0; top: 0; font-family: "bootstrap-icons"; }
+  .fp-card li.yes::before { content: "\F26A"; color: #146c43; }
+  .fp-card li.no::before { content: "\F623"; color: #c0262d; }
+  .fp-warn { background: #fff4f4; border: 1px solid #f3c9cc; color: #8a1f26; border-radius: 14px; padding: .7rem .9rem; font-size: .9rem; margin-top: .8rem; display: none; }
+  .fp-warn.show { display: block; }
 </style>
 {% endblock %}
 
@@ -34,7 +51,55 @@
 
         <div class="ps-must mb-3" aria-label="Funds"><i class="bi bi-exclamation-circle"></i><span>You must have funds in your account balance before submitting your listing for review.</span></div>
 
-        <label class="form-label fw-bold">Prohibited listings &amp; terms <span class="text-muted fw-normal">&mdash; scroll to read all 23 terms</span></label>
+
+        {# ---- Choose your advertising fee plan (new listings only; live listings switch from the dashboard) ---- #}
+        {% set cur_plan = fee_plan(biz) if biz else 'full' %}
+        {% if biz and biz.status == "approved" %}
+        <div class="ps-note mb-3" role="status"><strong>Your advertising fee plan: {{ fee_plan_label(biz) }}.</strong>
+          To change plans, use the <em>Change plan</em> button on your business dashboard (it explains what you gain or lose).
+        </div>
+        {% else %}
+        <h2 class="h5 fw-bold mb-1" id="fee-plan-h">Choose your advertising fee</h2>
+        <p class="small text-muted mb-3">Pick the plan that fits your margins. You are only charged when a transaction is finalized, and you can change plans later from your business dashboard.</p>
+        <div class="fp-grid mb-2" role="radiogroup" aria-labelledby="fee-plan-h">
+          <label class="fp-card">
+            <input type="radio" name="ad_fee_plan" value="full" id="plan_full" {{ 'checked' if cur_plan == 'full' }} required form="submitForm">
+            <div class="fp-top"><span class="fp-fee">10%</span><span class="fp-tag">All features</span></div>
+            <div class="fw-bold">10% ad fee (max $250 per transaction)</div>
+            <div class="small text-muted">Best for most businesses. Gives members the most cash back and the best experience.</div>
+            <ul>
+              <li class="yes"><b>2% cash back</b> for members on every purchase (up to $50 each)</li>
+              <li class="yes">Full referral commissions for every member who refers customers to you</li>
+              <li class="yes"><b>Featured placement</b> eligibility on the homepage and the featured listings</li>
+              <li class="yes"><b>Live tracking</b> of your staff and service providers</li>
+              <li class="yes"><b>Public profile page</b> that search engines and AI assistants can discover</li>
+              <li class="yes">Eligible for promo codes</li>
+            </ul>
+          </label>
+          <label class="fp-card">
+            <input type="radio" name="ad_fee_plan" value="low" id="plan_low" {{ 'checked' if cur_plan == 'low' }} required form="submitForm"{% if business and business.promo_code_used and fee_plan(business) != 'low' and promo_lock(business)[0] %} disabled{% endif %}>
+            <div class="fp-top"><span class="fp-fee">2%</span><span class="fp-tag low">For low margins</span></div>
+            <div class="fw-bold">2% ad fee (max $50 per transaction)</div>
+            <div class="small text-muted">Built for businesses with low profit margins on the products they sell.</div>
+            <ul>
+              <li class="yes">Pay only 2% of each finalized sale</li>
+              <li class="yes">Still listed in the directories and marketplace, with ratings and reviews</li>
+              <li class="no"><b>Members earn 0.4% cash back</b> instead of 2% (and one fifth of the referral commissions)</li>
+              <li class="no"><b>Cannot be featured</b></li>
+              <li class="no"><b>No live tracking</b></li>
+              <li class="no"><b>No public profile page</b>, so no search engine or AI discovery</li>
+              <li class="no"><b>No promo codes</b></li>
+            </ul>
+          </label>
+          {% if business and business.promo_code_used and fee_plan(business) != 'low' and promo_lock(business)[0] %}<div class="small text-danger mt-1">The 2% plan is not available until your promo funds ({{ business.promo_code_used }}) are used. You can switch from your dashboard afterwards.</div>{% endif %}
+        </div>
+        <div class="fp-warn" id="fpWarn" role="status" aria-live="polite">
+          <b>Before you choose 2%:</b> your listing will show <b>0.4% Cash Back</b> instead of <b>2% Cash Back</b>, which can make members less likely to choose you. You can switch to the 10% plan later from your dashboard.
+        </div>
+        <div class="ps-note mt-3 mb-3" id="fpNote10">With the <b>10% plan</b>, your listing shows <b>2% Cash Back</b>, the most cash back for members, and you have every feature.</div>
+        {% endif %}
+
+        <label class="form-label fw-bold mt-3">Prohibited listings &amp; terms <span class="text-muted fw-normal">&mdash; scroll to read all 23 terms</span></label>
         <div class="ps-terms-box mb-3" tabindex="0" aria-label="Terms and Conditions">
           <strong>Prohibited listings:</strong>
           <ul>
@@ -55,7 +120,7 @@
             <li>By submitting, you confirm your listing complies with Perk Miner LLC’s terms and all local laws.</li>
             <li>If one of our members informs you that they a Perk Miner LLC member and require the transaction to be finalized, <b>YOU AGREE TO MAINTAIN ENOUGH FUNDS IN YOUR ACCOUNT BALANCE TO FINALIZE THE TRANSACTION AND <u>YOU FINALIZE THE TRANSACTION.</u></b></li>
             <li><b>Failure to finalize all transactions for our members <span class="ps-red">will result in immediate suspension of your listing or deletion of your account.</span></b></li>
-            <li>Your company pays 10% of the total sale or closed deal (max of $250) from each transaction (about $1 for every $10 sold, capped at $250 per transaction). Fees are charged only when a sale is finalized. Sales and results are not guaranteed.</li>
+            <li><b>10% plan:</b> your company pays 10% of the total sale or closed deal (max of $250) from each transaction (about $1 for every $10 sold, capped at $250 per transaction). <b>2% plan:</b> your company pays 2% of the total sale or closed deal (max of $50) from each transaction (about $1 for every $50 sold, capped at $50 per transaction), and you do not get featured placement, live tracking, a public profile page or promo codes, and members earn 0.4% cash back instead of 2%. Fees are charged only when a sale is finalized. Sales and results are not guaranteed.</li>
             <li>Finalizing the transaction must be completed from your dashboard using any mobile device.</li>
             <li><b>You must enter total amount paid by our members (including taxes, if applicable and tips paid)</b>.  Amount paid applies to manually finalized transactions as well.</li>
             <li><b>Delayed Finalization:</b>  You are required to finalize all transactions in your active sessions manually (once the delayed time-frame has lapsed).  <b>YOU CANNOT END THE SESSION FOR PENDING TRANSACTIONS THAT HAVE DELAYED FINALIZATION</b> or your account will be suspended or closed (If closed due to more than one violation, any remaining funds in your account balance and any earnings <span>will be forfeited.</span></li>
@@ -67,7 +132,7 @@
             <li>If your business refers other businesses to join, your business will earn referral commissions (up to 4 additional Tiers).</li>
             <li>You understand that all cash back and commissions paid pays up to 6 Members and 6 Businesses (including your business cash back) and is paid from the advertising revenue you pay (ALL CASH BACK AND COMMISSIONS ARE PAID BY PERK MINER LLC ... NOT PAID BY YOUR COMPANY).</li>
             <li><b><u>Perk Miner LLC cannot guarantee</u></b> that our members will select your business.  In the event that you add funds to your account balance and you do not generate any sales, funds in your account balance will remain in your account indefinitely.</li>
-            <li>If your business is manually featured, you will remain featured on the homepage for a minimum of 1 year.</li>
+            <li>If your business is manually featured, you will remain featured on the homepage for a minimum of 1 year. Only businesses on the 10% plan can be featured.</li>
             <li>You cannot pay to become a featured business.  Featured businesses are ranked according to number of transactions, ad revenue paid and number of businesses you directly refer to advertise with Perk Miner LLC.</li>
             <li>You reserve the right to delay finalizing transactions for a reasonable amount of time to make sure your sale is completed beforehand since Perk Miner LLC cannot and will not refund advertising fees paid once the transaction has been finalized.</li>
             <li>You are solely responsible for any returned products.  We cannot reverse any advertising fees paid since there are several members and businesses that earn cash back and/or commission.</li>
@@ -85,7 +150,7 @@
           <p class="mb-0"><b>Recommendation:</b> Select Delayed Finalization for up to 30 days and for any days after 30, only accept exchanges (no refunds after 30 days).</p>
         </div>
 
-        <form method="post" action="{{ url_for('send_for_review') }}" enctype="multipart/form-data">
+        <form method="post" action="{{ url_for('send_for_review') }}" enctype="multipart/form-data" id="submitForm">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="listing_id" value="{{ listing_id }}">
           <input type="hidden" name="referral_code" value="{{ referral_code }}">
@@ -108,4 +173,17 @@
   </div>
 </section>
 </main>
+<script>
+(function () {
+  var low = document.getElementById('plan_low'), full = document.getElementById('plan_full');
+  var warn = document.getElementById('fpWarn'), note = document.getElementById('fpNote10');
+  if (!low || !full) return;
+  function sync() {
+    var isLow = low.checked;
+    if (warn) warn.classList.toggle('show', isLow);
+    if (note) note.style.display = isLow ? 'none' : '';
+  }
+  low.addEventListener('change', sync); full.addEventListener('change', sync); sync();
+})();
+</script>
 {% endblock %}

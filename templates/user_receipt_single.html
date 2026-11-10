@@ -119,9 +119,9 @@
         <div class="big">${{ '%.2f' % amount_paid }}</div>
       </div>
       <div class="text-sm-end">
-        <div class="label">Your Cashback (2% cap $50)</div>
+        <div class="label">Your Cashback ({{ '0.4% cap $10' if txn_is_low(transaction) else '2% cap $50' }})</div>
         <div class="big" style="font-size:1.5rem;">${{ '%.2f' % cashback_earned }}</div>
-        {% if cashback_earned|float >= 49.99 %}
+        {% if cashback_earned|float >= (9.99 if txn_is_low(transaction) else 49.99) %}
           <span class="badge bg-warning text-dark">Max Reached</span>
         {% endif %}
       </div>
@@ -147,7 +147,7 @@
       <div class="section-label">Rewards</div>
       <div class="detail-row"><span class="d-label">Total Paid</span><span class="d-value">${{ '%.2f' % amount_paid }}</span></div>
       <div class="detail-row total">
-        <span class="d-label">Your Cashback (2% cap $50)</span>
+        <span class="d-label">Your Cashback ({{ '0.4% cap $10' if txn_is_low(transaction) else '2% cap $50' }})</span>
         <span class="d-value">${{ '%.2f' % cashback_earned }}</span>
       </div>
 

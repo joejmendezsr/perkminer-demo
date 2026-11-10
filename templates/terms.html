@@ -1,4 +1,157 @@
 {% extends "pm_public_base.html" %}
+{% macro sec5(P) %}
+                        <p>All calculations based on gross transaction volume up to $2,500 per transaction.</p>
+                        <div class="ps-leg-sum">
+                            <h3>At a glance: who can be paid on one finalized transaction</h3>
+                            <p>On any single finalized transaction, Perk Miner LLC can pay <strong>up to 6 members</strong> and <strong>up to 6 businesses</strong>, with total payouts of up to {{ P.pct }} of the advertising fee. Everyone is paid by Perk Miner LLC from the advertising fee &mdash; never by the buyer and never by the advertiser on top of the fee. Example: a $1,000 sale carries a {{ P.fee1000 }} advertising fee.</p>
+                            <div class="ps-leg-sumwrap"><table>
+                                <thead><tr><th>Who is paid</th><th>How many</th><th>Rate</th><th>On a $1,000 sale</th></tr></thead>
+                                <tbody>
+                                <tr><td>Member who made the purchase (cash back)</td><td>1 member</td><td>{{ P.cb }}</td><td>{{ P.cbd }}</td></tr>
+                                <tr><td>Member sponsors of the buyer, Tiers 2&ndash;4</td><td>up to 3 members</td><td>{{ P.t }} each</td><td>up to {{ P.t3d }}</td></tr>
+                                <tr><td>Member sponsor, Tier 5</td><td>1 member</td><td>{{ P.cb }}</td><td>{{ P.cbd }}</td></tr>
+                                <tr><td>Member who referred the business (one tier applies)</td><td>1 member</td><td>{{ P.refr }}</td><td>up to {{ P.refd }}</td></tr>
+                                <tr class="tot"><td>Members total</td><td>up to 6</td><td></td><td>up to {{ P.mtot }}</td></tr>
+                                <tr><td>The business itself (cash back for finalizing)</td><td>1 business</td><td>{{ P.b1 }}</td><td>{{ P.b1d }}</td></tr>
+                                <tr><td>Sponsoring businesses, Tiers 2&ndash;4</td><td>up to 3 businesses</td><td>{{ P.t }} each</td><td>up to {{ P.t3d }}</td></tr>
+                                <tr><td>Sponsoring business, Tier 5</td><td>1 business</td><td>{{ P.b1 }}</td><td>{{ P.b1d }}</td></tr>
+                                <tr><td>Split mutual commission (businesses you directly sponsor share it)</td><td>1 business pool</td><td>0.2%</td><td>up to $2.00</td></tr>
+                                <tr class="tot"><td>Businesses total</td><td>up to 6</td><td></td><td>up to {{ P.btot }}</td></tr>
+                                <tr class="tot all"><td>All payouts</td><td>6 members + 6 businesses</td><td></td><td>up to {{ P.alltot }} of the {{ P.fee1000 }} fee</td></tr>
+                                </tbody>
+                            </table></div>
+                            <p class="small">Each payout is capped per transaction ({{ P.capex }}) and applies to the first $2,500 of a purchase. One person can hold more than one role on the same transaction. Where a tier has no sponsor, that payout is not made to a member or business. Examples are illustrative; no sale or earnings are guaranteed.</p>
+                        </div>
+
+                        <div class="ps-leg-rows">
+                                <div class="ps-leg-band">Member earnings from purchases from Businesses and Freelancers</div>
+                            <div class="ps-leg-two">
+                                <div class="ps-leg-box">
+                                    <h3>A. Member and Member-Referred Purchases from Businesses</h3>
+                                    <ul>
+                                    <li><strong>Tier 1 - Tree Trunk - (Your purchases from a Business):</strong> {{ P.cb }} Cashback (max {{ P.cbm }})</li>
+                                    <li><strong>Tier 2 - 1st Set of Branches - (Purchases by directly Sponsored Member):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 3 - 2nd Set of Branches - (Purchases by Member Sponsored by Tier 2 Member):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 4 - 3rd Set of Branches - (Purchases by Member Sponsored by Tier 3 Member):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Purchases by Member Sponsored by Tier 4 Member):</strong> {{ P.cb }} Commission (max {{ P.cbm }})</li>
+                                    </ul>
+                                    <h3 style="margin-top:1.1rem">Sample Payout ($3,000 Purchase from a Business by Tier 5 Member):</h3>
+                                    <ul>
+                                        <li><strong>Tier 1 (Your Commission):</strong> {{ P.cb }} Commission ({{ P.cbm }})</li>
+                                        <li><strong>Tier 2 Member Commission:</strong> {{ P.t }} Commission ({{ P.tm }})</li>
+                                        <li><strong>Tier 3 Member Commission:</strong> {{ P.t }} Commission ({{ P.tm }})</li>
+                                        <li><strong>Tier 4 Member Commission:</strong> {{ P.t }} Commission ({{ P.tm }})</li>
+                                        <li><strong>Tier 5 Member Cash Back <b>(Member who made the purchase)</b>:</strong> {{ P.cb }} Cash Back ({{ P.cbm }})</li>
+                                    </ul>
+                                </div>
+                                <div class="ps-leg-box">
+                                    <h3>B. Member and Member-Referred Purchases from Freelancers</h3>
+                                    <ul>
+                                    <li><strong>Tier 1 - Tree Trunk - (Your purchases from a Freelancer):</strong> {{ P.cb }} Cashback (max {{ P.cbm }})</li>
+                                    <li><strong>Tier 2 - 1st Set of Branches - (Purchases by directly Sponsored Member):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 3 - 2nd Set of Branches - (Purchases by Member Sponsored by Tier 2 Member):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 4 - 3rd Set of Branches - (Purchases by Member Sponsored by Tier 3 Member):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Purchases by Member Sponsored by Tier 4 Member):</strong> {{ P.cb }} Commission (max {{ P.cbm }})</li>
+                                    </ul>
+                                    <h3 style="margin-top:1.1rem">Sample Payout ($3,000 Purchase from a Freelancer by Tier 5 Member):</h3>
+                                    <ul>
+                                        <li><strong>Tier 1 (Your Commission):</strong> {{ P.cb }} Commission ({{ P.cbm }})</li>
+                                        <li><strong>Tier 2 Member Commission:</strong> {{ P.t }} Commission ({{ P.tm }})</li>
+                                        <li><strong>Tier 3 Member Commission:</strong> {{ P.t }} Commission ({{ P.tm }})</li>
+                                        <li><strong>Tier 4 Member Commission:</strong> {{ P.t }} Commission ({{ P.tm }})</li>
+                                        <li><strong>Tier 5 Member Cash Back <b>(Member who made the purchase)</b>:</strong> {{ P.cb }} Cash Back ({{ P.cbm }})</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                                <div class="ps-leg-band">Member earnings from sales from Businesses and Freelancers</div>
+                            <div class="ps-leg-two">
+                                <div class="ps-leg-box">
+                                    <h3>C. Member-Referred Businesses</h3>
+                                    <ul>
+                                    <li><strong>Tier 1 - Tree Trunk - (Sales by a business you directly sponsor):</strong> {{ P.b1 }} Commission (max {{ P.b1m }})</li>
+                                    <li><strong>Tier 2 - 1st Set of Branches - (Sales by businesses referred by Tier 1 business):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 3 - 2nd Set of Branches - (Sales by businesses referred by Tier 2 business):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 4 - 3rd Set of Branches - (Sales by businesses referred by Tier 3 business):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Sales by business referred by Tier 4 business):</strong> {{ P.b1 }} Commission (max {{ P.b1m }})</li>
+                                    </ul>
+                                </div>
+                                <div class="ps-leg-box">
+                                    <h3>D. Member-Referred Freelancers</h3>
+                                    <ul>
+                                    <li><strong>Tier 1 - Tree Trunk - (Sales by a Freelancer you directly sponsor):</strong> {{ P.b1 }} Commission (max {{ P.b1m }})</li>
+                                    <li><strong>Tier 2 - 1st Set of Branches - (Sales by Freelancers referred by Tier 1 Freelancer):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 3 - 2nd Set of Branches - (Sales by Freelancers referred by Tier 2 Freelancer):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 4 - 3rd Set of Branches - (Sales by Freelancers referred by Tier 3 Freelancer):</strong> {{ P.t }} Commission (max {{ P.tm }})</li>
+                                    <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Sales by Freelancer referred by Tier 4 Freelancer):</strong> {{ P.b1 }} Commission (max {{ P.b1m }})</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="ps-leg-two">
+                                <div>
+                                <div class="ps-leg-band">Business earnings from Business sales</div>
+                                <div class="ps-leg-box">
+                                    <h3>E. Business-to-Business Referrals</h3>
+                                    <ul>
+                                    <li><strong>Tier 1 - Tree Trunk - (Sales by your business):</strong> {{ P.b1 }} (max {{ P.b1m }})</li>
+                                    <li><strong>Tier 2 - 1st Set of Branches - (Sales by directly Sponsored Business):</strong> {{ P.t }} (max {{ P.tm }})</li>
+                                    <li><strong>Tier 3 - 2nd Set of Branches - (Sales by Business Sponsored by Tier 2 Business):</strong> {{ P.t }} (max {{ P.tm }})</li>
+                                    <li><strong>Tier 4 - 3rd Set of Branches - (Sales by Business Sponsored by Tier 3 Business):</strong> {{ P.t }} (max {{ P.tm }})</li>
+                                    <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Sales by Business Sponsored by Tier 4 Business):</strong> {{ P.b1 }} (max {{ P.b1m }})</li>
+                                    </ul>
+                                </div>
+                                </div>
+                                <div>
+                                <div class="ps-leg-band">Freelancer earnings from Freelancer sales</div>
+                                <div class="ps-leg-box">
+                                    <h3>F. Freelancer-to-Freelancer Referrals</h3>
+                                    <ul>
+                                    <li><strong>Tier 1 - Tree Trunk - (Sales by you as a Freelancer):</strong> {{ P.b1 }} (max {{ P.b1m }})</li>
+                                    <li><strong>Tier 2 - 1st Set of Branches - (Sales by directly Sponsored Freelancer):</strong> {{ P.t }} (max {{ P.tm }})</li>
+                                    <li><strong>Tier 3 - 2nd Set of Branches - (Sales by Freelancer Sponsored by Tier 2 Freelancer):</strong> {{ P.t }} (max {{ P.tm }})</li>
+                                    <li><strong>Tier 4 - 3rd Set of Branches - (Sales by Freelancer Sponsored by Tier 3 Freelancer):</strong> {{ P.t }} (max {{ P.tm }})</li>
+                                    <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Sales by Freelancer Sponsored by Tier 4 Freelancer):</strong> {{ P.b1 }} (max {{ P.b1m }})</li>
+                                    </ul>
+                                </div>
+                                </div>
+                            </div>
+
+                                <div class="ps-leg-band">Mutual Commissions</div>
+                            <div class="ps-leg-two">
+                                <div class="ps-leg-box">
+                                    <h3>G. Split Mutual Commission for Businesses (Amount businesses you directly sponsor earn from your sales)</h3>
+                                    <ul>
+                                    <li><strong>Tier 2 Businesses sponsored by Your Business:</strong> 0.2% of your sales (max $5) divided by the Total Number of Businesses directly sponsored by Your Business</li>
+                                    </ul>
+                                </div>
+                                <div class="ps-leg-box">
+                                    <h3>H. Split Mutual Commission for Freelancers (Amount Freelancers you directly sponsor earn from your sales)</h3>
+                                    <ul>
+                                    <li><strong>Tier 2 Freelancers sponsored by You:</strong> 0.2% of your sales (max $5) divided by the Total Number of Freelancers directly sponsored by You</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                                <div class="ps-leg-band">Maximum payout and withdrawals</div>
+                            <div class="ps-leg-stack">
+                                <div class="ps-leg-box">
+                                    <h3>I. Maximum Payout by Perk Miner LLC On Finalized Transactions (when all payouts are active with up to 6 members and up to 6 businesses)</h3>
+                                    <ul>
+                                        <li><strong>{{ P.pct }} of the advertising revenue re-invested back into the ecosystem:</strong> If Perk Miner LLC receives {{ P.fee1000 }} in advertising fees from one finalized transaction, with every payout active, Perk Miner LLC pays out {{ P.alltot }}, keeping {{ P.keep }} of the advertising fee paid.<br><br>One member can earn from multiple payouts.<br><br>Member refers their own business, member also refers other members, and their business refers another business.<br><br>If a purchase is made from a Tier 5 business by a Tier 5 Member:<br><br>Member earns Tier 5 Member Referral Commissions for the purchase and Tier 5 Member to Business Commissions for the sale.<br><br>Their business earns Tier 5 Business to Business Commissions for the sale.</li>
+                                    </ul>
+                                    <p class="small">Freelancers are paid exactly like business advertisers. Freelancer earnings are paid out with regular member earnings, and the Freelancer advertising fee ({{ P.feepct }} of a member&rsquo;s first purchase, max {{ P.feecap }}) funds every payout above.</p>
+                                </div>
+                                <div class="ps-leg-box">
+                                    <h3>J. Earnings are withdrawable earnings to a bank account (upon successful onboarding with Stripe through the platform)</h3>
+                                    <ul>
+                                        <li><strong>All payouts are real money deposited to bank account:</strong> Once members and advertisers have earned a minimum of $10, they are able to complete a standard withdrawal for their earnings (minus applicable Perk Miner LLC transfer fees) deposited into the bank account setup through Stripe.  All earnings are real cash and not coupons, gift cards or points.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+{% endmacro %}
+
 {% block title %}Terms of Service | Perk Miner{% endblock %}
 
 {% block head_extra %}
@@ -24,6 +177,14 @@
   .ps-leg-two { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px) { .ps-leg-two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
   .ps-leg-stack > * + * { margin-top: 1rem; }
+  .ps-leg-rows > * + * { margin-top: 1rem; }
+  .ps-leg-band { background: linear-gradient(135deg, var(--ps-teal-800), var(--ps-teal-600)); color: #fff; font-weight: 800; font-size: clamp(1.02rem, 2vw, 1.2rem); line-height: 1.3; border-radius: 16px; padding: .85rem 1.1rem; margin-top: 1.6rem; text-wrap: balance; }
+  .ps-leg-two > div > .ps-leg-band { margin-top: 0; margin-bottom: 1rem; border-radius: 16px; }
+  .ps-leg-two > div > .ps-leg-box { height: calc(100% - 4.6rem); }
+  .ps-leg-two { align-items: stretch; margin-top: 1rem; }
+  .ps-leg-two > .ps-leg-box { margin-top: 0; height: 100%; }
+  .ps-leg-two > div { display: flex; flex-direction: column; }
+  .ps-leg-box p.small { font-size: .84rem; color: var(--ps-muted); margin: .8rem 0 0; }
   .ps-leg-rest > div { margin-bottom: 1.8rem; }
   .ps-leg-rest p { color: var(--ps-muted); margin: 0; }
   .ps-leg-guar { background: linear-gradient(135deg, var(--ps-teal-800), var(--ps-teal-600)); color: #fff; border-radius: 24px; padding: 1.6rem 1.5rem; margin-top: 2.6rem; }
@@ -42,6 +203,13 @@
   .ps-leg-foot { margin-top: 2.2rem; padding-top: 1.2rem; border-top: 1px solid var(--ps-line); text-align: center; color: var(--ps-muted); font-size: .88rem; }
   @media (max-width: 600px) { .ps-leg-doc { padding: 1.1rem .95rem; border-radius: 22px; } .ps-leg-sum { padding: .9rem .7rem; } .ps-leg-sum table { font-size: .8rem; } .ps-leg-sum td, .ps-leg-sum th { padding: .4rem .3rem; } }
   @media print { .ps-header, .ps-footer, .ps-crumb, .ps-bottom { display: none !important; } .ps-leg-doc { border: 0; box-shadow: none; padding: 0; } .ps-hero { display: none; } }
+  .ps-plan-tabs { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1rem 0 1.2rem; }
+  .ps-plan-tab { flex: 1 1 240px; border: 2px solid var(--ps-teal-300); background: #fff; color: var(--ps-teal-800); font-weight: 800; border-radius: 16px; padding: .85rem 1rem; cursor: pointer; }
+  .ps-plan-tab.active { background: linear-gradient(135deg, var(--ps-teal-800), var(--ps-teal-600)); color: #fff; border-color: var(--ps-teal-800); }
+  .ps-plan-panel[hidden] { display: none; }
+  .ps-plan-feat { margin-bottom: 1rem; }
+  .ps-plan-feat.warn { background: #fff4e5; border-color: #f2c98a; }
+  @media print { .ps-plan-tabs { display: none; } .ps-plan-panel[hidden] { display: block; } }
 </style>
 {% endblock %}
 
@@ -101,12 +269,12 @@
 
                     <!-- Section 3 -->
                     <div class="ps-leg-sec">
-                        <h2>3. ADVERTISER PREPAID ACCOUNT &amp; THE 10% ADVERTISING FEE</h2>
+                        <h2>3. ADVERTISER PREPAID ACCOUNT &amp; THE ADVERTISING FEE (10% OR 2% PLAN)</h2>
                         <ul>
-                            <li><strong>The Advertising Fee:</strong> 10% of the total gross transaction amount (capped at $250.00 per transaction).</li>
+                            <li><strong>The Advertising Fee (advertiser's choice of plan):</strong> <strong>10% Ad Fee plan:</strong> 10% of the total gross transaction amount (capped at $250.00 per transaction), with all features. <strong>2% Ad Fee plan</strong> (for sellers with low profit margins): 2% of the total gross transaction amount (capped at $50.00 per transaction), without featured placement, live tracking, a public profile page or promo codes; members earn 0.4% cashback instead of 2%. The plan is chosen on the listing disclaimer page before the listing is submitted for final approval and may later be changed from the advertiser's dashboard; a change applies to transactions finalized after the change. Switching to the 2% plan suspends the public profile page, and the advertiser loses existing search engine and AI discovery until it is picked up again, which can take days or weeks.</li>
                             <li><strong>Prepaid Account Funding:</strong> Business Advertisers must fund an in-app prepaid advertising account via Stripe.</li>
                             <li><strong>Hard Account Balance Restrictions:</strong> Transactions are blocked if account balance is insufficient.</li>
-                            <li><strong>Refundability and Escheatment:</strong> The 10% ad fees are final and cannot be refunded or modified due to multiple payouts from each finalized transaction.  Escheatment is governed by Nevada unclaimed property laws.</li>
+                            <li><strong>Refundability and Escheatment:</strong> The ad fees (10% or 2%, depending on the plan) are final and cannot be refunded or modified due to multiple payouts from each finalized transaction.  Escheatment is governed by Nevada unclaimed property laws.</li>
                             <li><strong>Discontinued Business Account:</strong> A $25 fee applies.  Any remaining funds in the advertiser's account balance over $25 will be refunded to the advertiser.  Advertiser is responsible for the $25 fee if account balance is below $25.</li>
                         </ul>
                     </div>
@@ -118,99 +286,36 @@
                             <li>Mandatory in-app finalization by Business Advertisers.</li>
                             <li>In-Person QR Code Verification for fraud protection or manual finalization by the business as needed.</li>
                             <li>Delayed finalization option with mandatory disclosure.</li>
-                            <li>Standard withdrawals via Stripe (minimum $10). A Perk Miner LLC transfer fee applies (2.9% of the withdrawal amount + $0.50).</li>
+                            <li>Delayed finalization on large projects have 2 options (“Finalized upon final payment of project” and “Finalized in steps - up to $2,500 of entire project”, which must be selected as a finalization option by the advertiser to let members know.</li>
+                            <li>Standard withdrawals via Stripe (minimum $10) have a 7-day holding period (per individual transaction) to allow funds to become available via Stripe for all payouts. A Perk Miner LLC transfer fee applies (2.9% of the withdrawal amount + $0.50).</li>
                         </ul>
                     </div>
 
                     <!-- Section 5 -->
-                    <div class="ps-leg-sec">
+                    <div class="ps-leg-sec" id="compensation-plan">
                         <h2>5. COMPENSATION PLAN &amp; MULTI-TIER REWARD STRUCTURES (THE TREE OF OPPORTUNITY)</h2>
-                        <p>All calculations based on gross transaction volume up to $2,500 per transaction.</p>
-                        <div class="ps-leg-sum">
-                            <h3>At a glance: who can be paid on one finalized transaction</h3>
-                            <p>On any single finalized transaction, Perk Miner LLC can pay <strong>up to 6 members</strong> and <strong>up to 6 businesses</strong>, with total payouts of up to 84% of the advertising fee. Everyone is paid by Perk Miner LLC from the advertising fee &mdash; never by the buyer and never by the advertiser on top of the fee. Example: a $1,000 sale carries a $100 advertising fee.</p>
-                            <div class="ps-leg-sumwrap"><table>
-                                <thead><tr><th>Who is paid</th><th>How many</th><th>Rate</th><th>On a $1,000 sale</th></tr></thead>
-                                <tbody>
-                                <tr><td>Member who made the purchase (cash back)</td><td>1 member</td><td>2.00%</td><td>$20.00</td></tr>
-                                <tr><td>Member sponsors of the buyer, Tiers 2&ndash;4</td><td>up to 3 members</td><td>0.2% each</td><td>up to $6.00</td></tr>
-                                <tr><td>Member sponsor, Tier 5</td><td>1 member</td><td>2.00%</td><td>$20.00</td></tr>
-                                <tr><td>Member who referred the business (one tier applies)</td><td>1 member</td><td>1.00% or 0.2%</td><td>up to $10.00</td></tr>
-                                <tr class="tot"><td>Members total</td><td>up to 6</td><td></td><td>up to $56.00</td></tr>
-                                <tr><td>The business itself (cash back for finalizing)</td><td>1 business</td><td>1.00%</td><td>$10.00</td></tr>
-                                <tr><td>Sponsoring businesses, Tiers 2&ndash;4</td><td>up to 3 businesses</td><td>0.2% each</td><td>up to $6.00</td></tr>
-                                <tr><td>Sponsoring business, Tier 5</td><td>1 business</td><td>1.00%</td><td>$10.00</td></tr>
-                                <tr><td>Split mutual commission (businesses you directly sponsor share it)</td><td>1 business pool</td><td>0.2%</td><td>up to $2.00</td></tr>
-                                <tr class="tot"><td>Businesses total</td><td>up to 6</td><td></td><td>up to $28.00</td></tr>
-                                <tr class="tot all"><td>All payouts</td><td>6 members + 6 businesses</td><td></td><td>up to $84.00 of the $100 fee</td></tr>
-                                </tbody>
-                            </table></div>
-                            <p class="small">Each payout is capped per transaction (for example, $50 for 2% payouts and $25 for 1% payouts) and applies to the first $2,500 of a purchase. One person can hold more than one role on the same transaction. Where a tier has no sponsor, that payout is not made to a member or business. Examples are illustrative; no sale or earnings are guaranteed.</p>
+                        <p>Advertisers choose one of two plans before their listing is approved: the <strong>10% Ad Fee plan</strong> (all features) or the <strong>2% Ad Fee plan</strong> (for sellers with low profit margins, with fewer features). Select a plan below to see exactly how every tier is paid. Payouts on every plan are calculated on the first $2,500 of each purchase.</p>
+                        <div class="ps-plan-tabs" role="tablist" aria-label="Choose an advertising fee plan">
+                            <button type="button" class="ps-plan-tab active" id="tab-full" role="tab" aria-selected="true" aria-controls="panel-full" data-plan="full">10% Ad Fee &middot; 2% Cashback &middot; All features</button>
+                            <button type="button" class="ps-plan-tab" id="tab-low" role="tab" aria-selected="false" aria-controls="panel-low" data-plan="low">2% Ad Fee &middot; 0.4% Cashback</button>
                         </div>
-
-                        <div class="ps-leg-two">
-                            <!-- A -->
-                            <div class="ps-leg-box">
-                                <h3>A. Member and Member-Referred Purchases</h3>
-                                <ul>
-                                    <li><strong>Tier 1 - Tree Trunk - (Your purchases):</strong> 2.00% Cashback (max $50)</li>
-                                    <li><strong>Tier 2 - 1st Set of Branches - (Purchases by directly Sponsored Member):</strong> 0.2% Commission (max $5)</li>
-                                    <li><strong>Tier 3 - 2nd Set of Branches - (Purchases by Member Sponsored by Tier 2 Member):</strong> 0.2% Commission (max $5)</li>
-                                    <li><strong>Tier 4 - 3rd Set of Branches - (Purchases by Member Sponsored by Tier 3 Member):</strong> 0.2% Commission (max $5)</li>
-                                    <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Purchases by Member Sponsored by Tier 4 Member):</strong> 2.00% Commission (max $50)</li>
-                                </ul><br><br>
-                                <h3>Sample Payout ($3,000 Purchase by Tier 5 Member):</h3>
-                                <ul>
-                                    <li><strong>Tier 1 (Your Commission):</strong> 2.00% Commission ($50)</li>
-                                    <li><strong>Tier 2 Member Commission:</strong> 0.2% Commission ($5)</li>
-                                    <li><strong>Tier 3 Member Commission:</strong> 0.2% Commission ($5)</li>
-                                    <li><strong>Tier 4 Member Commission:</strong> 0.2% Commission ($5)</li>
-                                    <li><strong>Tier 5 Member Cash Back <b>(Member who made the purchase)</b>:</strong> 2.00% Cash Back ($50)</li>
-                                </ul>
+                        <div class="ps-plan-panel" id="panel-full" role="tabpanel" aria-labelledby="tab-full">
+                            <div class="ps-leg-box ps-plan-feat ok">
+                                <h3>10% Ad Fee plan (max $250 per transaction): every feature</h3>
+                                <ul>{% for f in fee_full_has %}<li>{{ f }}</li>{% endfor %}</ul>
                             </div>
-                            <!-- B & C -->
-                            <div class="ps-leg-stack">
-                                <div class="ps-leg-box">
-                                    <h3>B. Member-Referred Businesses</h3>
-                                    <ul>
-                                        <li><strong>Tier 1 - Tree Trunk - (Sales by business you directly sponsor):</strong> 1.00% Commission (max $25)</li>
-                                        <li><strong>Tier 2 - 1st Set of Branches - (Sales by businesses referred by Tier 1 business):</strong> 0.2% Commission (max $5)</li>
-                                        <li><strong>Tier 3 - 2nd Set of Branches - (Sales by businesses referred by Tier 2 business):</strong> 0.2% Commission (max $5)</li>
-                                        <li><strong>Tier 4 - 3rd Set of Branches - (Sales by businesses referred by Tier 3 business):</strong> 0.2% Commission (max $5)</li>
-                                        <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Sales by business referred by Tier 4 business):</strong> 1.00% Commission (max $25)</li>
-                                    </ul>
-                                </div>
-                                <div class="ps-leg-box">
-                                    <h3>C. Business-to-Business Referrals</h3>
-                                    <ul>
-                                        <li><strong>Tier 1 - Tree Trunk - (Sales by your business):</strong> 1.00% (max $25)</li>
-                                        <li><strong>Tier 2 - 1st Set of Branches - (Sales by directly Sponsored Business):</strong> 0.2% (max $5)</li>
-                                        <li><strong>Tier 3 - 2nd Set of Branches - (Sales by Business Sponsored by Tier 2 Business):</strong> 0.2% (max $5)</li>
-                                        <li><strong>Tier 4 - 3rd Set of Branches - (Sales by Business Sponsored by Tier 3 Business):</strong> 0.2% (max $5)</li>
-                                        <li><strong>Tier 5 - Leaves (Fruit of the Tree) - (Sales by Business Sponsored by Tier 4 Business):</strong> 1.00% (max $25)</li>
-                                    </ul>
-                                </div>
-                                <div class="ps-leg-box">
-                                    <h3>D. Split Mutual Commission (Amount businesses you directly sponsor earn from your sales)</h3>
-                                    <ul>
-                                        <li><strong>Tier 2 Businesses sponsored by Your Business:</strong> 0.2% of your sales (max $5) divided by number of Total Number of Businesses directly sponsored by Your Business</li>
-                                    </ul>
-                                </div>
-                                <div class="ps-leg-box">
-                                    <h3>E. Maximum Payout by Perk Miner LLC On Finalized Transactions (when all payouts are active with up to 6 members and up to 6 businesses)</h3>
-                                    <ul>
-                                        <li><strong>84% of the advertising revenue re-invested back into the ecosystem:</strong> If Perk Miner LLC receives $100 in advertising fees from one finalized transaction, with every payout active, Perk Miner LLC pays out $84, keeping $16 of the advertising fee paid.<br><br>One member can earn from multiple payouts.<br><br>Member refers their own business, member also refers other members, and their business refers another business.<br><br>If a purchase is made from a Tier 5 business by a Tier 5 Member:<br><br>Member earns Tier 5 Member Referral Commissions for the purchase and Tier 5 Member to Business Commissions for the sale.<br><br>Their business earns Tier 5 Business to Business Commissions for the sale.</li>
-                                    </ul>
-                                </div>
-                                <div class="ps-leg-box">
-                                    <h3>F. Earnings are withdrawable earnings to a bank account (upon successful onboarding with Stripe through the platform)</h3>
-                                    <ul>
-                                        <li><strong>All payouts are real money deposited to bank account:</strong> Once members and advertisers have earned a minimum of $10, they are able to complete a standard withdrawal for their earnings (minus applicable Perk Miner LLC transfer fees) deposited into the bank account setup through Stripe.  All earnings are real cash and not coupons, gift cards or points.</li>
-                                    </ul>
-                                </div>
+                            {{ sec5({'pct': '84%', 'fee1000': '$100', 'mtot': '$56.00', 'btot': '$28.00', 'alltot': '$84.00', 'keep': '$16', 'cb': '2.00%', 'cbd': '$20.00', 'cbm': '$50', 't': '0.2%', 'tm': '$5', 't3d': '$6.00', 'b1': '1.00%', 'b1d': '$10.00', 'b1m': '$25', 'refr': '1.00% or 0.2%', 'refd': '$10.00', 'capex': 'for example, $50 for 2% payouts and $25 for 1% payouts', 'feepct': '10%', 'feecap': '$250'}) }}
+                        </div>
+                        <div class="ps-plan-panel" id="panel-low" role="tabpanel" aria-labelledby="tab-low" hidden>
+                            <div class="ps-leg-box ps-plan-feat warn">
+                                <h3>2% Ad Fee plan (max $50 per transaction): features NOT included</h3>
+                                <ul>{% for f in fee_low_missing %}<li>{{ f }}</li>{% endfor %}</ul>
+                                <p class="small">Members who buy from a 2% Ad Fee advertiser earn the 0.4% cashback and the reduced commissions shown below, not the 2% cashback and full commissions of the 10% Ad Fee plan. Every payout on this plan is one fifth of the 10% Ad Fee plan, except the split mutual commission, which is 0.2% on both plans. Promo codes cannot be used with the 2% Ad Fee plan. An advertiser may switch plans from its dashboard; a change applies to transactions finalized after the switch, and moving to the 2% plan suspends the public profile page, so existing search engine and AI discovery is lost until it is picked up again, which can take days or weeks.</p>
                             </div>
+                            {{ sec5({'pct': '92%', 'fee1000': '$20', 'mtot': '$11.20', 'btot': '$7.20', 'alltot': '$18.40', 'keep': '$1.60', 'cb': '0.40%', 'cbd': '$4.00', 'cbm': '$10', 't': '0.04%', 'tm': '$1', 't3d': '$1.20', 'b1': '0.2%', 'b1d': '$2.00', 'b1m': '$5', 'refr': '0.2% or 0.04%', 'refd': '$2.00', 'capex': 'for example, $10 for 0.4% payouts and $5 for 0.2% payouts', 'feepct': '2%', 'feecap': '$50'}) }}
                         </div>
                     </div>
+
 
                     <!-- Remaining Sections -->
                     <div class="ps-leg-rest">
@@ -235,7 +340,7 @@
                         <h2>THE PERK MINER LLC MERCHANT GUARANTEE</h2>
                         <ul>
                             <li>100% Free Listing • No monthly fees • $25 minimum account balance deposit required to start</li>
-                            <li>Pay-Per-Sale Model: 10% advertising fee capped at $250 &mdash; about $1 in fees for every $10 sold, charged only when a sale is finalized. Results and sales are not guaranteed.</li>
+                            <li>Pay-Per-Sale Model: choose a 10% advertising fee capped at $250 (about $1 in fees for every $10 sold, with all features) or a 2% advertising fee capped at $50 (with fewer features), charged only when a sale is finalized. Results and sales are not guaranteed.</li>
                             <li>Lead Exclusivity &amp; Strict Privacy Mandates</li>
                         </ul>
                     </div>
@@ -249,5 +354,14 @@
     </div>
   </div>
 </section>
+<script>
+(function(){
+  var tabs=document.querySelectorAll('.ps-plan-tab');
+  function show(p){tabs.forEach(function(t){var on=t.dataset.plan===p;t.classList.toggle('active',on);t.setAttribute('aria-selected',on?'true':'false');});
+    ['full','low'].forEach(function(k){var el=document.getElementById('panel-'+k);if(el){el.hidden=(k!==p);}});}
+  tabs.forEach(function(t){t.addEventListener('click',function(){show(t.dataset.plan);});});
+  if(/plan=low|#plan-low/.test(location.search+location.hash)){show('low');var c=document.getElementById('compensation-plan');if(c){c.scrollIntoView();}}
+})();
+</script>
 </main>
 {% endblock %}

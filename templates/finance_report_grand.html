@@ -1,0 +1,15 @@
+{% extends "finance_report_base.html" %}
+{% set export_endpoint = 'export_grand_total_report' %}
+{% set last_bold = true %}
+{% set money_cols = ['Business Purchase Earnings', 'Freelancer Purchase Earnings', 'M2B Sales Earnings', 'M2F Sales Earnings', 'Gross Sales', 'Sales Cash Back', 'Tier 2-5 Commissions', 'Mutual Commissions', 'Grand Total'] %}
+{% block title %}Grand Total Earnings &amp; Sales Report{% endblock %}
+{% block heading %}Grand Total Earnings &amp; Sales Report{% endblock %}
+{% block filters %}
+<div class="row g-2">
+  <div class="col-12 col-md-5"><label class="form-label small mb-0">Search by Referral ID or Name</label><input class="form-control" name="q" value="{{ f.q }}" placeholder="Referral ID or name"></div>
+  <div class="col-4 col-md-2"><label class="form-label small mb-0">Day</label><input class="form-control" name="day" type="number" min="1" max="31" value="{{ f.day }}" placeholder="DD"></div>
+  <div class="col-4 col-md-2"><label class="form-label small mb-0">Month</label><input class="form-control" name="month" type="number" min="1" max="12" value="{{ f.month }}" placeholder="MM"></div>
+  <div class="col-4 col-md-3"><label class="form-label small mb-0">Year</label><input class="form-control" name="year" type="number" min="2026" max="2100" value="{{ f.year }}" placeholder="YYYY"></div>
+</div>
+<div class="fr-hint mt-2">Each person appears once, sorted from highest to lowest earnings. Leave the date boxes blank for all time.</div>
+{% endblock %}

@@ -136,7 +136,8 @@
             <th>Date/Time</th>
             <th>Interaction ID</th>
             <th>Sale Amount</th>
-            <th>Ad Fee (10%, capped $250)</th>
+            <th>Ad Fee (10% max $250, or 2% max $50)</th>
+            <th>Ad Fee Plan</th>
             <th>Net Gross</th>
             <th>Marketing ROI</th>
             <th>Marketing ROI Ratio</th>
@@ -156,6 +157,7 @@
             <td data-label="Interaction ID">{{ t.interaction_id }}</td>
             <td data-label="Sale Amount">${{ "{:,.2f}".format(t.amount) }}</td>
             <td data-label="Ad Fee">${{ "{:,.2f}".format(t.ad_fee or 0) }}</td>
+            <td data-label="Ad Fee Plan">{{ '2% plan' if t.fee_plan == 'low' else '10% plan' }}</td>
             <td data-label="Net Gross">
               {% set net_gross = t.amount - (t.ad_fee or 0) %}
               ${{ "{:,.2f}".format(net_gross) }}
@@ -168,7 +170,7 @@
               {% set ratio = (net_gross + (t.ad_fee or 0)) / (t.ad_fee or 1) if t.ad_fee else 0 %}
               {{ ratio|round(1) }}:1
             </td>
-            <td data-label="Cash Back">${{ "{:,.2f}".format(t.cash_back or 0) }}</td>
+            <td data-label="Cash Back">${{ "{:,.2f}".format(t.cash_back or 0) }} <small class="text-muted">({{ '0.2%' if t.fee_plan == 'low' else '1%' }})</small></td>
             <td data-label="Status">
               {% if t.status == "available" %}
                 <span class="badge bg-success">Available</span>

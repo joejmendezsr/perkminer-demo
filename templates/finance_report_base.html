@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Report{% endblock %} - Finance Admin</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/pm-checks.css') }}">
+  <style>
+    body { background:#f4f8f8; font-family:Inter,system-ui,sans-serif; }
+    .fr-head { background:linear-gradient(135deg,#1e4a4b,#2f7c7d); color:#fff; border-radius:16px; padding:1rem 1.25rem; }
+    .fr-head h1 { font-size:1.35rem; margin:0; font-weight:800; }
+    .fr-tabs .nav-link { font-weight:700; color:#1e4a4b; border:1px solid #cfe0e0; margin-right:.35rem; border-radius:999px; padding:.4rem 1rem; background:#fff; }
+    .fr-tabs .nav-link.active { background:#1e4a4b; color:#fff; border-color:#1e4a4b; }
+    .fr-card { background:#fff; border:1px solid #dbe7e7; border-radius:16px; padding:1rem; }
+    .fr-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid #dbe7e7; border-radius:12px; background:#fff; max-height:70vh; }
+    .fr-table { margin:0; font-size:.86rem; white-space:nowrap; }
+    .fr-table thead th { position:sticky; top:0; background:#1e4a4b; color:#fff; font-weight:700; z-index:1; border:0; }
+    .fr-table td.num, .fr-table th.num { text-align:right; font-variant-numeric:tabular-nums; }
+    .fr-table td.big { font-weight:800; color:#1e4a4b; }
+    .fr-total { font-weight:800; color:#1e4a4b; }
+    .fr-hint { font-size:.8rem; color:#5c6b73; }
+    @media print {
+      .no-print { display:none !important; }
+      body { background:#fff; }
+      .fr-wrap { max-height:none; overflow:visible; border:0; }
+      .fr-table { font-size:9px; white-space:normal; }
+      .fr-table thead th { position:static; background:#1e4a4b !important; color:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      @page { size: landscape; margin: 10mm; }
+    }
+  </style>
+</head>
+<body>
+<div class="container-fluid py-3" style="max-width:1500px;">
+  <div class="fr-head d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1><i class="bi bi-graph-up-arrow"></i> {% block heading %}{% endblock %}</h1>
+    <a href="{{ url_for('finance_dashboard') }}" class="btn btn-light btn-sm no-print"><i class="bi bi-arrow-left"></i> Finance Dashboard</a>
+  </div>
+
+  <ul class="nav fr-tabs mb-3 no-print">
+    {% for key, label in tabs %}
+    <li class="nav-item"><a class="nav-link {{ 'active' if tab == key }}" href="{{ request.path }}?tab={{ key }}">{{ label }}</a></li>
+    {% endfor %}
+  </ul>
+
+  <form method="get" class="fr-card mb-3 no-print" id="fr-form">
+    <input type="hidden" name="tab" value="{{ tab }}">
+    {% block filters %}{% endblock %}
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Search</button>
+      <a class="btn btn-outline-secondary" href="{{ request.path }}?tab={{ tab }}">Clear</a>
+    </div>
+  </form>
+
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+    <div><span class="fr-total">{{ count }}</span> {{ 'line' if count == 1 else 'lines' }} &middot; Total <span class="fr-total">${{ total }}</span>
+      {% if truncated %}<div class="fr-hint">Showing the first {{ max_rows }}. Downloads include every row.</div>{% endif %}</div>
+    <div class="d-flex flex-wrap gap-2 no-print">
+      <button type="button" class="btn btn-outline-dark btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+      <a class="btn btn-outline-danger btn-sm" href="{{ url_for(export_endpoint, fmt='pdf', tab=tab, **params) }}"><i class="bi bi-file-earmark-pdf"></i> Download PDF</a>
+      <a class="btn btn-outline-success btn-sm" href="{{ url_for(export_endpoint, fmt='xlsx', tab=tab, **params) }}"><i class="bi bi-file-earmark-excel"></i> Excel (.xlsx)</a>
+      <a class="btn btn-outline-success btn-sm" href="{{ url_for(export_endpoint, fmt='csv', tab=tab, **params) }}"><i class="bi bi-filetype-csv"></i> CSV</a>
+    </div>
+  </div>
+  <div class="fr-hint mb-2 no-print d-md-none"><i class="bi bi-arrow-left-right"></i> Swipe the table sideways to see every column.</div>
+
+  <div class="fr-wrap">
+    <table class="table table-striped table-hover fr-table">
+      <thead><tr>{% for h in headers %}<th class="{{ 'num' if h in money_cols else '' }}">{{ h }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for row in data %}
+        <tr>{% for c in row %}<td class="{{ 'num' if headers[loop.index0] in money_cols else '' }}{{ ' big' if loop.last and last_bold else '' }}">{% if headers[loop.index0] in money_cols %}${{ c }}{% else %}{{ c }}{% endif %}</td>{% endfor %}</tr>
+      {% else %}
+        <tr><td colspan="{{ headers|length }}" class="text-center text-muted py-4">No matching records.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

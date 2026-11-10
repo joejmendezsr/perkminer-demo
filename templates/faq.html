@@ -139,12 +139,12 @@
           {% endcall %}
 
           {% call qa('faq-members', 'm-rewards', 'Can I earn rewards?') %}
-            <p>Absolutely! Members get 2% cash back on purchases up to $2,500, paid by Perk Miner LLC and not the business (real cash, not points or gift cards).</p>
+            <p>Absolutely! Members get 2% cash back on purchases up to $2,500 (up to $50 each time) from advertisers on the 10% ad fee plan, or 0.4% cash back (up to $10 each time) from advertisers on the 2% ad fee plan. Every listing shows its cash back rate. Cash back is paid by Perk Miner LLC and not the business (real cash, not points or gift cards).</p>
             <p>Members can also earn referral commissions by inviting people to become members and businesses to become advertisers. Real-time earnings are displayed upon finalization of each transaction.</p>
           {% endcall %}
 
           {% call qa('faq-members', 'm-commissions', 'How much can I earn in commissions?') %}
-            <p>Members can estimate earnings with the calculators in their dashboard. Our payout model allows members to earn more than they spend. Perk Miner LLC pays out up to 84% of the revenue paid by advertisers from every finalized transaction, as cash back or referral commissions.
+            <p>Members can estimate earnings with the calculators in their dashboard. Our payout model allows members to earn more than they spend. Perk Miner LLC pays out up to 84% of the revenue paid by advertisers from every finalized transaction on the 10% ad fee plan (up to 92% on the 2% ad fee plan), as cash back or referral commissions. The calculators let you choose 2% or 0.4% cash back.
             <a href="/full_payout_sample">See the full payout sample</a> or <a href="/how_much_can_i_earn">How much can I earn?</a></p>
           {% endcall %}
 
@@ -207,7 +207,7 @@
           {% endcall %}
 
           {% call qa('faq-advertisers', 'a-charged', 'How are businesses charged?') %}
-            <p>Business advertisers only pay a 10% fee (capped at $250) after a completed sale. The fee is deducted from the business account balance automatically upon successful finalization of a transaction. There are no fees for exclusive leads (one member to one business), calls, phone calls, appointments, meet-ups, website or foot traffic.</p>
+            <p>Business advertisers only pay an ad fee after a completed sale: 10% (capped at $250) on the 10% Ad Fee plan with all features, or 2% (capped at $50) on the 2% Ad Fee plan for low-margin sellers, which does not include featured placement, live tracking, a public profile page or promo codes and pays members 0.4% cashback instead of 2%. The fee is deducted from the business account balance automatically upon successful finalization of a transaction. There are no fees for exclusive leads (one member to one business), calls, phone calls, appointments, meet-ups, website or foot traffic.</p>
           {% endcall %}
 
           {% call qa('faq-advertisers', 'a-requirements', 'What are the requirements to becoming an advertiser?') %}
@@ -228,7 +228,7 @@
           {% endcall %}
 
           {% call qa('faq-advertisers', 'a-finalize', 'How are transactions finalized?') %}
-            <p>Advertisers must keep enough funds in their account balance to cover the 10% capped advertising fee. If a business doesn't have enough funds (for example, $50 for a $1,000 sale), the system won't let them finalize and they are redirected to the "Add Funds" page. This prevents the account from going negative.</p>
+            <p>Advertisers must keep enough funds in their account balance to cover the capped advertising fee (10% capped at $250, or 2% capped at $50 on the 2% Ad Fee plan). If a business doesn't have enough funds (for example, $100 for a $1,000 sale on the 10% plan, or $20 on the 2% plan), the system won't let them finalize and they are redirected to the "Add Funds" page. This prevents the account from going negative.</p>
             <p><b>Finalizing the transaction:</b></p>
             <ol>
               <li>The member clicks "Show QR" from the listing page of the business where they made the purchase (a QR code is displayed).</li>
@@ -249,20 +249,33 @@
 
           {% call qa('faq-advertisers', 'a-rewards', 'Can advertisers earn rewards?') %}
             <p>Yes. Business advertisers earn 1% cash back on closed sales up to $2,500, and can earn referral commissions by inviting other businesses (businesses can only invite other businesses). Real-time earnings are displayed upon finalization of each transaction.</p>
-            <p>Advertisers earn 1% cash back on up to $2,500 of every finalized sale, so instead of earning 1% or 2% of the advertising fee paid, they actually earn 10% cash back on the fee paid (example: ad fee = $50, cash back = $5) in exchange for offering a perk to our members.</p>
+            <p>Advertisers earn 1% cash back on up to $2,500 of every finalized sale, so instead of earning 1% or 2% of the advertising fee paid, they actually earn 10% cash back on the fee paid (example: ad fee = $50, cash back = $5) in exchange for offering a perk to our members. On the 2% Ad Fee plan, advertisers earn 0.2% cash back on up to $2,500 of every finalized sale, which is also 10% of the fee paid.</p>
           {% endcall %}
 
           {% call qa('faq-advertisers', 'a-commissions', 'How much can my business earn in commissions?') %}
-            <p>Advertisers can estimate earnings with the calculators in their dashboard. Our payout model allows businesses to earn more than they sell. Perk Miner LLC pays out up to 84% of the revenue paid by advertisers from every finalized transaction, as cash back or referral commissions.
+            <p>Advertisers can estimate earnings with the calculators in their dashboard, where you can choose the 10% or 2% ad fee. Our payout model allows businesses to earn more than they sell. Perk Miner LLC pays out up to 84% of the revenue paid by advertisers from every finalized transaction on the 10% ad fee plan (up to 92% on the 2% ad fee plan), as cash back or referral commissions.
             <a href="/full_payout_sample">See the full payout sample</a> or <a href="/how_much_can_i_earn">How much can I earn?</a></p>
           {% endcall %}
 
+          {% call qa('faq-advertisers', 'a-plans', 'What is the difference between the 10% and 2% ad fee plans?') %}
+            <p>Both plans are pay-per-sale: no sale, no fee. You choose your plan before your listing is submitted for final approval.</p>
+            <ul>
+              <li><b>10% ad fee plan</b> (capped at $250 per transaction): every feature. You can be featured, you get live tracking and a public profile page found by search engines and AI assistants, you are eligible for promo codes, and members earn 2% cash back (up to $50 per purchase) on purchases from you.</li>
+              <li><b>2% ad fee plan</b> (capped at $50 per transaction), built for businesses with low profit margins: no featured placement, no live tracking, no public profile page (so no search engine or AI discovery of a profile) and no promo codes. Members earn 0.4% cash back (up to $10 per purchase) and referral commissions are one fifth of the 10% plan amounts, except the 0.2% mutual commission, which is the same on both plans.</li>
+            </ul>
+            <p>In search results, advertisers on the 10% ad fee plan are listed before advertisers on the 2% ad fee plan. See the Compensation Plan in the <a href="{{ url_for('terms') }}#compensation-plan">Terms</a> for every payout on each plan.</p>
+          {% endcall %}
+
+          {% call qa('faq-advertisers', 'a-switch-plan', 'Can I switch between the 10% and 2% ad fee plans?') %}
+            <p>Yes, from your business dashboard (or freelancer console), and the change applies to transactions finalized after the switch. Switching from 10% to 2% suspends your public profile page, removes featured placement and turns off live tracking and promo codes, and you lose your existing search engine and AI discovery. If you later switch back to 10%, it can take days or weeks for search engines and AI to pick your profile up again. If you redeemed a promo code on the 10% plan, you can switch to 2% once the promo funds have been used. Advertisers on the 2% plan cannot redeem promo codes.</p>
+          {% endcall %}
+
           {% call qa('faq-advertisers', 'a-featured', 'How do I get my business listing featured?') %}
-            <p>Perk Miner LLC automatically features its founding business advertisers. All other advertisers are featured based on rank (total transactions finalized, total final sales, ad fees paid, etc.). Advertisers cannot pay to be featured, which gives every business a fair opportunity. Featured advertisers must remain compliant and finalize all transactions to keep their featured status.</p>
+            <p>Perk Miner LLC automatically features its founding business advertisers. All other advertisers on the 10% ad fee plan are featured based on rank (total transactions finalized, total final sales, ad fees paid, etc.). Advertisers cannot pay to be featured, which gives every business a fair opportunity. Advertisers on the 2% ad fee plan cannot be featured. Featured advertisers must remain compliant and finalize all transactions to keep their featured status.</p>
           {% endcall %}
 
           {% call qa('faq-advertisers', 'a-seo', 'Do I have to do anything to my included public profile page for discovery (SEO) on major search engines and AI?') %}
-            <p>We have done the hard work for you and once your listing is approved, your public profile should become visible on major search engines and discoverable with AI agents (not 100% guaranteed).</p>
+            <p>We have done the hard work for you and once your listing is approved, your public profile should become visible on major search engines and discoverable with AI agents (not 100% guaranteed). This applies to advertisers on the 10% ad fee plan only. The 2% ad fee plan has no public profile page. If you switch from 10% to 2%, your public profile is suspended and you lose its existing search engine and AI discovery; if you switch back, it can take days or weeks for search engines and AI to pick it up again.</p>
           {% endcall %}
 
           {% call qa('faq-advertisers', 'a-sponsor', "Can I change sponsors once I've created my account?") %}
@@ -290,7 +303,7 @@
           {% call qa('faq-about', 'g-what', 'What is Perk Miner?') %}
             <p>Perk Miner LLC is a Nevada registered business located in Las Vegas, NV that connects members and businesses (one member to one business at a time) through its platform (perkminer.com), which is built around consumer privacy.</p>
             <p><b>For members:</b> a safe way to search for a business, product or service without ever compromising your personal data. We don't share, sell or exploit member contact information or treat members like a lead.</p>
-            <p><b>For advertisers:</b> a Pay-Per-Sale / Pay-Per-Close model with a flat 10% advertising fee (capped at $250), charged only on completed sales &mdash; about $1 in fees per $10 sold, before your own costs (no hidden fees, contracts or commitment).</p>
+            <p><b>For advertisers:</b> a Pay-Per-Sale / Pay-Per-Close model with your choice of a 10% advertising fee (capped at $250, all features) or a 2% advertising fee (capped at $50, fewer features), charged only on completed sales &mdash; about $1 in fees per $10 sold, before your own costs (no hidden fees, contracts or commitment).</p>
           {% endcall %}
 
           {% call qa('faq-about', 'g-name', 'Why is it called Perk Miner?') %}
@@ -302,7 +315,7 @@
           {% call qa('faq-about', 'g-does', 'Does Perk Miner LLC sell any of the products or provide any of the services offered by advertisers?') %}
             <p>No.  Perk Miner LLC does not sell any products or provide any services other than the one-member-to-one-business connection.</p>
             <p><b>For members:</b> we provide a safe browsing experience when searching for a business, product or service, but we do not handle any advertiser products or services.  We just make it easier for members to make a better-informed decision.  We do not control product or service quality, handle returns, etc.</p>
-            <p><b>For advertisers:</b> we provide the exclusive leads, website and foot traffic, phone calls, meet-ups and live service-provider tracking at no cost, but advertisers are responsible for the quality of service or quality of products offered and handle everything as if they conducted business outside of perkminer.com.</p>
+            <p><b>For advertisers:</b> we provide the exclusive leads, website and foot traffic, phone calls, meet-ups and (on the 10% ad fee plan) live service-provider tracking at no cost, but advertisers are responsible for the quality of service or quality of products offered and handle everything as if they conducted business outside of perkminer.com.</p>
           {% endcall %}
 
           {% call qa('faq-about', 'g-whopays', 'Why does Perk Miner LLC pay the cash back and referral commissions and not the advertiser?') %}

@@ -295,11 +295,12 @@
         let amount = parseFloat(document.getElementById('network_amount').value) || 0;
         if (amount > 2500) amount = 2500;
         document.getElementById('network_amount').value = amount;
-        let t1 = 0.02 * amount;
-        let t2 = 0.002 * amount * numPeople;
-        let t3 = 0.002 * amount * Math.pow(numPeople, 2);
-        let t4 = 0.002 * amount * Math.pow(numPeople, 3);
-        let t5 = 0.02 * amount * Math.pow(numPeople, 4);
+        const sc = parseFloat(document.getElementById('network_plan').value) || 1;   // 1 = 2% cash back, 0.2 = 0.4% cash back
+        let t1 = 0.02 * sc * amount;
+        let t2 = 0.002 * sc * amount * numPeople;
+        let t3 = 0.002 * sc * amount * Math.pow(numPeople, 2);
+        let t4 = 0.002 * sc * amount * Math.pow(numPeople, 3);
+        let t5 = 0.02 * sc * amount * Math.pow(numPeople, 4);
         let total = t1 + t2 + t3 + t4 + t5;
         document.getElementById('network_t1').innerText = t1.toFixed(2);
         document.getElementById('network_t2').innerText = t2.toFixed(2);
@@ -318,21 +319,24 @@
         if (amount > 2500) amount = 2500;
         document.getElementById('reward_amount').value = amount;
         let tier = document.getElementById('reward_tier').value;
+        const sc = parseFloat(document.getElementById('reward_plan').value) || 1;   // 1 = 2% cash back, 0.2 = 0.4% cash back
+        const planTxt = sc === 1 ? ' (advertiser on the 10% ad fee, 2% cash back)' : ' (advertiser on the 2% ad fee, 0.4% cash back)';
         let reward = 0;
         let desc = "";
         let cap = null;
         if (tier === "1") {
-            reward = amount * 0.02; desc = "As the customer, from a purchase you make";
+            reward = amount * 0.02 * sc; cap = 50 * sc; if (reward > cap) reward = cap;
+            desc = "As the customer, from a purchase you make" + planTxt;
         } else if (["2","3","4"].includes(tier)) {
-            reward = amount * 0.002;
-            cap = 5.00;
+            reward = amount * 0.002 * sc;
+            cap = 5.00 * sc;
             if (reward > cap) reward = cap;
-            desc = `If your Tier ${tier} referral makes a purchase`;
+            desc = `If your Tier ${tier} referral makes a purchase` + planTxt;
         } else if (tier === "5") {
-            reward = amount * 0.02;
-            cap = 50;
+            reward = amount * 0.02 * sc;
+            cap = 50 * sc;
             if (reward > cap) reward = cap;
-            desc = "If your Tier 5 referral makes a purchase";
+            desc = "If your Tier 5 referral makes a purchase" + planTxt;
         }
         let out = '';
         if (amount > 0) {
@@ -354,7 +358,8 @@
         if (amt > 2500) amt = 2500; if (amt < 0) amt = 0;
         document.getElementById('f2f_amount').value = amt;
         // same rules the server uses for business-style earnings (rates and per-transaction caps)
-        const per = [Math.min(amt * 0.01, 25), Math.min(amt * 0.002, 5), Math.min(amt * 0.002, 5), Math.min(amt * 0.002, 5), Math.min(amt * 0.01, 25)];
+        const sc = parseFloat(document.getElementById('f2f_plan').value) || 1;   // 1 = 10% ad fee, 0.2 = 2% ad fee
+        const per = [Math.min(amt * 0.01 * sc, 25 * sc), Math.min(amt * 0.002 * sc, 5 * sc), Math.min(amt * 0.002 * sc, 5 * sc), Math.min(amt * 0.002 * sc, 5 * sc), Math.min(amt * 0.01 * sc, 25 * sc)];
         const counts = [1, n, Math.pow(n, 2), Math.pow(n, 3), Math.pow(n, 4)];
         const vals = per.map(function (p, i) { return p * counts[i]; });
         const total = vals.reduce(function (a, b) { return a + b; }, 0);
@@ -383,7 +388,8 @@
         ];
 
         // Commission rates per tier
-        const rates = [0.01, 0.002, 0.002, 0.002, 0.01]; // 1%, 0.2%, 0.2%, 0.2%, 1%
+        const sc = parseFloat(document.getElementById('biz_plan').value) || 1;   // 1 = 10% ad fee, 0.2 = 2% ad fee
+        const rates = [0.01 * sc, 0.002 * sc, 0.002 * sc, 0.002 * sc, 0.01 * sc]; // 10% plan: 1%, 0.2%, 0.2%, 0.2%, 1% (2% plan: one fifth)
 
         let earnings = [];
         let total = 0;
@@ -614,10 +620,15 @@
               <input class="form-check-input" type="checkbox" id="fl_enabled" name="fl_enabled" value="1" {{ 'checked' if fl_on }}>
               <label class="form-check-label fw-bold" for="fl_enabled">I'm a Freelancer or have a networking business</label>
             </div>
+            <div id="fl-stripe-warn" class="alert alert-danger fw-semibold" role="alert" hidden>
+              <i class="bi bi-exclamation-triangle-fill"></i> You must complete the Stripe onboarding to continue.
+              <div class="fw-normal small mt-1">To keep freelancers real and verified, Stripe onboarding must be finished with payouts active before you can become a freelancer.
+                <a href="{{ url_for('onboard_stripe') }}" class="alert-link">Complete Stripe onboarding</a>, then come back and tick this box.</div>
+            </div>
             <p class="wizard-help">No registered business needed. List yourself in the Perk Miner freelancer directory so members and businesses can find you and use your referral links, and earn the same cash back and referral commissions as a business advertiser.</p>
             <ul class="small text-muted ps-3">
               <li>Your listing is reviewed by our team before it goes live (separate directory, same approval process).</li>
-              <li>You deposit at least <b>${{ '%.0f' % fl_min_deposit }}</b> into your freelancer advertising balance to cover the <b>10% advertising fee on a member's first purchase only</b> (max $250).</li>
+              <li>You deposit at least <b>${{ '%.0f' % fl_min_deposit }}</b> into your freelancer advertising balance to cover the <b>advertising fee on a member's first purchase only</b> (10%, max $250, or 2%, max $50, depending on the plan you choose in step 4).</li>
               <li>You finalize each first purchase in person or manually, just like business advertisers, and you keep secure messaging with members.</li>
               <li>Your freelancer earnings are paid out with your regular member earnings.</li>
             </ul>
@@ -632,6 +643,48 @@
           <!-- STEP 4: listing basics -->
           <div class="wizard-step" data-step="4">
             <div class="wizard-title"><i class="bi bi-card-heading"></i> Your Listing</div>
+            <div class="border rounded-3 p-3 mb-3" id="fl-plan-box" style="background:#f6fbfb;">
+              <div class="fw-bold mb-1"><i class="bi bi-percent"></i> Choose your advertising fee</div>
+              <div class="small text-muted mb-2">You pay it only when a member's first purchase is finalized. You can change plans later from the Freelancer Console.</div>
+              <div class="row g-2">
+                <div class="col-12 col-md-6">
+                  <label class="d-block border rounded-3 p-3 h-100" style="cursor:pointer;" for="fl_plan_full">
+                    <input class="form-check-input me-1" type="radio" name="fl_fee_plan" id="fl_plan_full" value="full" {{ 'checked' if fl_plan != 'low' }}>
+                    <b>10% ad fee</b> (max $250) <span class="badge text-bg-success ms-1">All features</span>
+                    <ul class="small mb-0 mt-2 ps-3">
+                      <li>Members earn <b>2% cash back</b> (up to $50) and the full referral commissions: the most cash back and the best experience</li>
+                      <li>Eligible for promo codes</li>
+                      <li>Custom web address ({{ 'perkminer.com/f/your-name' }})</li>
+                    </ul>
+                  </label>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="d-block border rounded-3 p-3 h-100" style="cursor:pointer;" for="fl_plan_low">
+                    <input class="form-check-input me-1" type="radio" name="fl_fee_plan" id="fl_plan_low" value="low" {{ 'checked' if fl_plan == 'low' }}>
+                    <b>2% ad fee</b> (max $50) <span class="badge text-bg-warning ms-1">Low margins</span>
+                    <ul class="small mb-0 mt-2 ps-3">
+                      <li class="text-danger"><b>Members earn only 0.4% cash back</b> and one fifth of the referral commissions</li>
+                      <li class="text-danger"><b>No promo codes</b> (including ReferralNova50)</li>
+                      <li class="text-danger"><b>No custom web address</b>, no featured placement and no live tracking</li>
+                    </ul>
+                  </label>
+                </div>
+              </div>
+              <div class="small text-danger mt-2" id="fl-plan-warn" style="display:none;"><b>Your listing will show 0.4% Cash Back instead of 2% Cash Back.</b></div>
+            </div>
+            {% if fl_promo_used %}
+              <div class="alert alert-success py-2 small"><i class="bi bi-gift-fill"></i> Promo code applied. Your advertising balance covers the fee on your first $50 in sales. If your lowest sale amount will be more than $50, you must add more funds (minimum ${{ '%.0f' % fl_min_deposit }}).</div>
+            {% elif fl_promo_available %}
+              <div class="border rounded-3 p-3 mb-3" id="fl-promo-box" style="background:#fffbe9;border-color:#e0a800 !important;{% if fl_plan == 'low' %}display:none;{% endif %}">
+                <label class="form-label fw-semibold mb-1" for="fl_promo_code"><i class="bi bi-gift-fill" style="color:#e0a800;"></i> Have a promo code?</label>
+                <div class="input-group">
+                  <input class="form-control" id="fl_promo_code" name="fl_promo_code" maxlength="40" autocomplete="off" autocapitalize="none" placeholder="Enter promo code">
+                  <button type="button" class="btn btn-warning" id="fl-promo-apply">Apply code</button>
+                </div>
+                <div class="form-text">A valid code adds funds to your advertising balance, so you can submit your listing without adding any. If your lowest sale amount will be greater than the amount it covers, you must add more funds (minimum ${{ '%.0f' % fl_min_deposit }}).</div>
+                <div id="fl-promo-msg" class="small mt-2" role="status" aria-live="polite"></div>
+              </div>
+            {% endif %}
             {% if fl and fl.status == 'rejected' and fl.rejection_reason %}<div class="alert alert-danger py-2 small"><b>Changes requested:</b> {{ fl.rejection_reason }}</div>{% endif %}
             <div class="mb-3">
               <label class="form-label" for="fl_name">Listing name *</label>
@@ -759,7 +812,8 @@
             <div class="small border rounded-3 p-3 mb-3" style="max-height:170px;overflow:auto;">
               <b>Key terms</b>
               <ul class="ps-3 mb-1">
-                <li>You pay a <b>10% advertising fee (max $250) on a member's first purchase only</b>, charged when you finalize it, in person or manually.</li>
+                <li id="fl-terms-fee10" {% if fl_plan == 'low' %}style="display:none;"{% endif %}>10% plan: you pay a <b>10% advertising fee (max $250) on a member's first purchase only</b>, charged when you finalize it, in person or manually. Members earn 2% cash back.</li>
+                <li id="fl-terms-fee2" {% if fl_plan != 'low' %}style="display:none;"{% endif %}>2% plan: you pay a <b>2% advertising fee (max $50) on a member's first purchase only</b>, charged when you finalize it, in person or manually. Members earn only 0.4% cash back, and promo codes and the custom web address are not available.</li>
                 <li>You must keep enough balance to finalize every member's first purchase and you must finalize it.</li>
                 <li>No income guarantees. Your referral links lead to third-party companies that Perk Miner LLC does not own or endorse.</li>
                 <li>Listings are reviewed before going live. Failing to finalize transactions can lead to suspension.</li>
@@ -1433,6 +1487,14 @@
             <div class="form-text">Maximum purchase amount allowed is $2,500.</div>
           </div>
           <div class="mb-3">
+            <label class="form-label" for="reward_plan">Which advertiser plan?</label>
+            <select id="reward_plan" class="form-select">
+              <option value="1" selected>2% Cash Back (advertiser on the 10% ad fee)</option>
+              <option value="0.2">0.4% Cash Back (advertiser on the 2% ad fee)</option>
+            </select>
+            <div class="form-text">The 2% ad fee plan pays one fifth of every cash back and commission rate and cap.</div>
+          </div>
+          <div class="mb-3">
             <label class="form-label" for="reward_tier">Whose purchase is it?</label>
             <select id="reward_tier" class="form-select" required>
               <option value="1" selected>Tier 1 (your purchases)</option>
@@ -1466,6 +1528,14 @@
           <p class="text-muted mb-3" style="font-size:.95rem;">
             If you and everyone in your network refers a number of people and you each make <b><u>one single purchase</u></b> from any advertiser in the same amount, this is how much you would earn in Cashback and Commission.
           </p>
+          <div class="mb-3">
+            <label class="form-label" for="network_plan">Which advertiser plan?</label>
+            <select id="network_plan" class="form-select">
+              <option value="1" selected>2% Cash Back (advertiser on the 10% ad fee)</option>
+              <option value="0.2">0.4% Cash Back (advertiser on the 2% ad fee)</option>
+            </select>
+            <div class="form-text">The 2% ad fee plan pays one fifth of every cash back and commission rate and cap.</div>
+          </div>
           <div class="row g-3 mb-2">
             <div class="col-12 col-sm-6">
               <label class="form-label" for="network_people">People referred by each</label>
@@ -1522,6 +1592,14 @@
           <p class="text-muted mb-3" style="font-size:.95rem;">
             If you invite a number of businesses to join, and each business you invited also invited the same number of new businesses (same as you) to become advertisers, AND each business generates one paid invoice in the same amount (max $2,500), you would earn <b><u>(even if you don't make any purchases from any of these businesses)</u></b>:
           </p>
+          <div class="mb-3">
+            <label class="form-label" for="biz_plan">Which ad fee plan do the businesses use?</label>
+            <select id="biz_plan" class="form-select">
+              <option value="1" selected>10% ad fee (2% Cash Back for customers)</option>
+              <option value="0.2">2% ad fee (0.4% Cash Back for customers)</option>
+            </select>
+            <div class="form-text">The 2% ad fee plan pays one fifth of every commission rate and cap.</div>
+          </div>
           <div class="row g-3 mb-2">
             <div class="col-12 col-sm-6 col-lg-4">
               <label class="form-label" for="biz_referrals">Businesses you invite</label>
@@ -1586,6 +1664,14 @@
           <p class="text-muted mb-3" style="font-size:.95rem;">
             If you and every freelancer in your network each invite the same number of new members who become freelancers, and everyone finalizes just one sale of the same amount, this is how much you would earn in cash back and referral commissions (with the same per-transaction caps as business advertisers).
           </p>
+          <div class="mb-3">
+            <label class="form-label" for="f2f_plan">Advertising fee plan</label>
+            <select id="f2f_plan" class="form-select">
+              <option value="1" selected>10% ad fee (all features)</option>
+              <option value="0.2">2% ad fee (low profit margins)</option>
+            </select>
+            <div class="form-text">The 2% ad fee plan pays one fifth of every cash back and commission rate and cap.</div>
+          </div>
           <div class="row g-3 mb-2">
             <div class="col-12 col-sm-6">
               <label class="form-label" for="f2f_people">Freelancers each freelancer invites</label>
@@ -1599,7 +1685,7 @@
               </div>
             </div>
           </div>
-          <small class="text-muted d-block mb-3">*Maximum sale amount allowed is $2,500. Cash back is 1% (max $25) on your own finalized sales; Tiers 2-4 pay 0.2% (max $5) each; Tier 5 pays 1% (max $25).</small>
+          <small class="text-muted d-block mb-3">*Maximum sale amount allowed is $2,500. 10% ad fee: cash back is 1% (max $25) on your own finalized sales; Tiers 2-4 pay 0.2% (max $5) each; Tier 5 pays 1% (max $25). 2% ad fee: cash back is 0.2% (max $5); Tiers 2-4 pay 0.04% (max $1) each; Tier 5 pays 0.2% (max $5).</small>
           <button class="btn btn-primary w-100" type="button" onclick="calculateF2F()">
             <i class="bi bi-calculator me-1"></i> Calculate
           </button>
@@ -1893,9 +1979,25 @@
 
 <!-- ===================== PROFILE WIZARD (2 STEPS) ===================== -->
 <script>
+(function () {
+  var lo = document.getElementById('fl_plan_low'), hi = document.getElementById('fl_plan_full');
+  if (!lo || !hi) return;
+  function sync() {
+    var isLow = lo.checked;
+    var box = document.getElementById('fl-promo-box'); if (box) box.style.display = isLow ? 'none' : '';
+    var w = document.getElementById('fl-plan-warn'); if (w) w.style.display = isLow ? '' : 'none';
+    var a = document.getElementById('fl-terms-fee10'), b = document.getElementById('fl-terms-fee2');
+    if (a) a.style.display = isLow ? 'none' : ''; if (b) b.style.display = isLow ? '' : 'none';
+  }
+  lo.addEventListener('change', sync); hi.addEventListener('change', sync); sync();
+})();
+</script>
+<script>
 document.addEventListener('DOMContentLoaded', function () {
   const TITLES = { 1: 'Profile Photo', 2: 'Your Name', 3: 'Freelancer or Network Business', 4: 'Your Listing', 5: 'Photos & Contact', 6: 'Referral Links', 7: 'Terms & Funding' };
   const flBox = document.getElementById('fl_enabled');
+  const FL_STRIPE_OK = {{ 'true' if stripe_status and stripe_status.payouts_status == 'active' else 'false' }};
+  const FL_STRIPE_MSG = 'You must complete the Stripe onboarding to continue.';
   // 3 steps normally; 7 when "I'm a Freelancer or have a networking business" is ticked
   function total() { return (flBox && flBox.checked) ? 7 : 3; }
 
@@ -1976,6 +2078,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!el) return '';
     let msg = '';
     el.querySelectorAll('.is-invalid').forEach(function (x) { x.classList.remove('is-invalid'); });
+    if (n === 3 && flBox && flBox.checked && !FL_STRIPE_OK) { showError(el, FL_STRIPE_MSG); return FL_STRIPE_MSG; }
 
     const fields = el.querySelectorAll('input, select, textarea');
     for (let i = 0; i < fields.length; i++) {
@@ -2033,10 +2136,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function syncFl() {
     const on = flBox && flBox.checked;
+    const blocked = on && !FL_STRIPE_OK;
+    const warn = document.getElementById('fl-stripe-warn');
+    if (warn) warn.hidden = !blocked;
+    wizard.querySelectorAll('.wizard-next.fl-only').forEach(function (b) { b.disabled = blocked; b.title = blocked ? FL_STRIPE_MSG : ''; });
+    wizard.querySelectorAll('.fl-off-only').forEach(function (b) { b.disabled = false; });
     wizard.querySelectorAll('.fl-only').forEach(function (b) { b.style.display = on ? '' : 'none'; });
     wizard.querySelectorAll('.fl-off-only').forEach(function (b) { b.style.display = on ? 'none' : ''; });
   }
-  if (flBox) flBox.addEventListener('change', function () { showStep(current, { noScroll: true }); });
+  if (flBox) flBox.addEventListener('change', function () {
+    showStep(current, { noScroll: true });
+    if (flBox.checked && !FL_STRIPE_OK) {
+      const warn = document.getElementById('fl-stripe-warn');
+      if (warn) { warn.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }
+  });
 
   // referral link slots: reveal the next empty slot
   const addLink = document.getElementById('fl-add-link');
@@ -2047,6 +2161,27 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     if (!Array.prototype.some.call(wizard.querySelectorAll('.fl-slot'), function (s) { return s.style.display === 'none'; })) addLink.style.display = 'none';
   });
+  const promoBtn = document.getElementById('fl-promo-apply');
+  if (promoBtn) {
+    promoBtn.addEventListener('click', function () {
+      const code = document.getElementById('fl_promo_code').value.trim();
+      const msg = document.getElementById('fl-promo-msg');
+      if (!code) { msg.className = 'small mt-2 text-danger'; msg.textContent = 'Please enter a promo code.'; return; }
+      promoBtn.disabled = true;
+      const fd = new FormData();
+      fd.append('csrf_token', form.querySelector('input[name=csrf_token]').value);
+      fd.append('promo_code', code);
+      const nm = document.getElementById('fl_name'); if (nm) fd.append('fl_name', nm.value);
+      fetch("{{ url_for('freelance_redeem_promo') }}", {method: 'POST', body: fd, credentials: 'same-origin'})
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          msg.className = 'small mt-2 ' + (d.ok ? 'text-success fw-semibold' : 'text-danger');
+          msg.textContent = d.message;
+          if (d.ok) { document.getElementById('fl_promo_code').value = ''; document.getElementById('fl_promo_code').disabled = true; } else { promoBtn.disabled = false; }
+        })
+        .catch(function () { msg.className = 'small mt-2 text-danger'; msg.textContent = 'Could not apply the code. Please try again.'; promoBtn.disabled = false; });
+    });
+  }
   form.addEventListener('submit', function (e) {
     const f = document.getElementById('fl_submit');
     if (f) f.value = (e.submitter && e.submitter.id === 'fl-submit-review') ? '1' : '';

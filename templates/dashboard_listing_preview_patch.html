@@ -230,7 +230,7 @@ window.addEventListener('DOMContentLoaded', function () {
       '<div class="card lh-card"><div class="lh-banner"></div><div class="lh-body">' + bigPic +
         '<h1 class="lh-title">' + esc(name) + '</h1>' +
         '<div class="lh-chips"><span class="lh-chip"><i class="bi bi-tag"></i> ' + esc(category) + '</span></div>' +
-        '<span class="lh-final"><b>Finalization: ' + esc(finalization) + '</b><br>' + finalNote + '</span>' +
+        '<span class="lh-final"><b>Finalization: ' + esc(({'Finalized-Upon-Final-Payment':'Finalized upon final payment of project','Finalized-In-Steps':'Finalized in steps - up to $2,500 of entire project'})[finalization] || finalization) + '</b><br>' + finalNote + '</span>' +
         tpl('pv-trust-large') +
       '</div></div>' +
       actions + info +

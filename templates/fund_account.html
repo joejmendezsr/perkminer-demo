@@ -39,9 +39,9 @@
     </form>
     <div id="calc-result" class="pm-note ok mt-3 d-none"></div>
     <div class="small mt-3 text-muted">
-      <b>Note:</b> Only $25 is needed to get started (covers up to $250 in sales).<br><br>
-      If your lowest sale is over $250, you must deposit enough funds to cover 10% of the sale amount.<br><br>
-      <b>For high-value transactions, the ad fee per sale is capped at $250 — so you must deposit at least $250 to be able to finalize 1 transaction.</b>
+      <b>Note:</b> Only $25 is needed to get started (covers up to {{ "$1,250" if plan == "low" else "$250" }} in sales).<br><br>
+      If your lowest sale is over {{ "$1,250" if plan == "low" else "$250" }}, you must deposit enough funds to cover {{ "2%" if plan == "low" else "10%" }} of the sale amount.<br><br>
+      <b>For high-value transactions, the ad fee per sale is capped at {{ "$50" if plan == "low" else "$250" }} — so you must deposit at least {{ "$50" if plan == "low" else "$250" }} to be able to finalize 1 transaction.</b>
     </div>
   </div>
 </div>
@@ -50,6 +50,8 @@
 {% block scripts %}
 <script src="https://js.stripe.com/v3/"></script>
 <script>
+  const PM_PLAN_LOW = {{ "true" if plan == "low" else "false" }};
+  const PM_RATE = PM_PLAN_LOW ? 0.02 : 0.10, PM_CAP = PM_PLAN_LOW ? 50 : 250;
   // Stripe payment handling
   const stripe = Stripe("{{ STRIPE_PUBLISHABLE|safe }}");
   function showStripeError(msg) {
@@ -81,18 +83,18 @@
     $result.classList.add("d-none");
     if (lowest > 0 && highest > 0) {
       const avg = (lowest + highest) / 2;
-      const perSaleFee = Math.min(avg * 0.10, 250);
+      const perSaleFee = Math.min(avg * PM_RATE, PM_CAP);
       const numSales = 10;
       const recommendation = Math.ceil(perSaleFee * numSales * 100) / 100; // round up to cents
-      let lowestAdFee = Math.min(lowest * 0.10, 250);
+      let lowestAdFee = Math.min(lowest * PM_RATE, PM_CAP);
       let msg = `Recommended deposit for <b>10 average sales</b>: <b>$${recommendation.toFixed(2)}</b><br>`;
-      if (perSaleFee === 250) {
-        msg += `<span class="text-danger">Because your average sale is high, the ad fee per transaction is capped at $250.<br><br>Minimum deposit recommended is <b>$250</b>.</span><br>`;
+      if (perSaleFee === PM_CAP) {
+        msg += `<span class="text-danger">Because your average sale is high, the ad fee per transaction is capped at $${PM_CAP}.<br><br>Minimum deposit recommended is <b>$${PM_CAP}</b>.</span><br>`;
       }
-      if (lowest > 250) {
-        msg += `<span class="text-danger"><br>Since your lowest sale is above $250, for your first transaction you must deposit at least <b>$${lowestAdFee.toFixed(2)}</b> (10% of $${lowest.toFixed(2)}, capped at $250).</span><br>`;
+      if (lowest > (PM_PLAN_LOW ? 1250 : 250)) {
+        msg += `<span class="text-danger"><br>Since your lowest sale is above ${PM_PLAN_LOW ? "$1,250" : "$250"}, for your first transaction you must deposit at least <b>$${lowestAdFee.toFixed(2)}</b> (${PM_PLAN_LOW ? "2%" : "10%"} of $${lowest.toFixed(2)}, capped at $${PM_CAP}).</span><br>`;
       } else {
-        msg += 'You only need <b>$25</b> to get started (enough for up to $250 in sales).';
+        msg += 'You only need <b>$25</b> to get started (enough for up to ' + (PM_PLAN_LOW ? '$1,250' : '$250') + ' in sales).';
       }
       $result.innerHTML = msg;
       $result.classList.remove("d-none");
